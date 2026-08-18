@@ -23,6 +23,24 @@ elegir una** con criterio, no por simpatía.
 
 ---
 
+## Criterio de selección aplicado
+
+De las diez propuestas relevadas quedan **cinco en carrera**. Se descartaron las
+que caían en alguno de estos dos casos:
+
+1. **Sin evidencia disponible.** No hay datos públicos citables y tampoco un
+   camino claro para relevarlos, así que el diagnóstico no se podría sostener.
+2. **Solución ya existente y masiva.** Hay productos gratuitos y consolidados
+   que resuelven lo mismo, y no aparece un ángulo diferencial que se pueda
+   defender frente a la pregunta "¿por qué no usan el que ya existe?".
+
+Las descartadas **no se borran de este documento**: quedan al final con el
+motivo del descarte. El plan de aprendizaje pide explícitamente la *selección de
+la alternativa de intervención*, y mostrar qué se evaluó y por qué se dejó de
+lado es parte de esa justificación. Borrarlas haría parecer que nunca se
+consideraron.
+
+---
 ## Propuesta 1 (PRINCIPAL) — Aplicación web para centro de estética integral
 
 **Usuario / cliente:** dueño de un centro de estética integral (cliente real ya
@@ -111,8 +129,6 @@ pitch. El riesgo es de sobredimensionamiento: son cuatro integraciones externas
 y conviene marcar cuáles son núcleo (reserva + calendario) y cuáles son
 deseables (quiz, reseñas).
 
----
-
 ## Propuesta 2 — Gestión de inventario y punto de venta (POS simplificado)
 
 **Usuario / cliente:** dueño y personal de atención de un kiosco o restaurante
@@ -186,107 +202,6 @@ catálogo es trabajo real y hay que preverla como actividad.
 **Alta.** Alcance chico y muy claro. Es la alternativa más segura si la de
 estética resulta demasiado ambiciosa.
 
----
-
-## Propuesta 3 — Organizador de tareas e intercambio de turnos de trabajo
-
-**Usuario / cliente:** empleados a tiempo parcial, típicamente jóvenes que
-estudian y trabajan, y el encargado que arma la grilla.
-
-### Problema central (borrador)
-
-*Los empleados a tiempo parcial no tienen un lugar único donde ver su horario
-actualizado ni estimar lo que van a cobrar, y los cambios de turno se arreglan
-por mensajes sueltos, lo que genera confusiones y ausencias no cubiertas.*
-
-### Evidencia
-
-**Datos públicos**
-
-- En Argentina, **13% de los jóvenes de 19 a 25 años trabaja y estudia**, mientras
-  que el **52%** de los alumnos del último año de secundaria planea hacerlo — una
-  brecha grande entre expectativa y realidad
-  ([Argentinos por la Educación](https://argentinosporlaeducacion.org/informe/educacion-y-trabajo-expectativa-y-realidad-de-jovenes-en-argentina/)).
-- La desocupación de 18 a 24 años ronda el **19%, casi el triple** que la de los
-  adultos ([IDESA](https://idesa.org/por-que-el-desempleo-de-los-jovenes-triplica-al-de-los-adultos/)).
-- El **45,1%** de los jóvenes ocupados son asalariados informales, contra 22,2%
-  en adultos ([Infobae](https://www.infobae.com/sociedad/2026/05/01/radar-del-empleo-joven-en-argentina-la-informalidad-la-precariedad-las-expectativas-rotas-y-el-rol-de-la-formacion-laboral/)).
-
-**Advertencia sobre este dato:** la alta informalidad juega **en contra** de la
-propuesta. En un empleo informal no hay grilla formal ni liquidación que
-verificar, y el sistema pierde sentido. Conviene acotar el usuario a un comercio
-o cadena concreta con turnos formalizados.
-
-**A relevar**
-
-- `[RELEVAR]` En el local elegido: cuántos cambios de turno se piden por mes y
-  por qué canal.
-- `[RELEVAR]` Cuántas veces al mes alguien se presenta en un horario equivocado.
-- `[RELEVAR]` Si el encargado aceptaría delegar la aprobación de los cambios.
-
-### Fuera de alcance
-
-Liquidación de sueldos real, integración con el sistema de RR.HH. de la empresa,
-control de presentismo por fichaje biométrico.
-
-### Riesgos
-
-El sistema necesita al encargado del lado de adentro: si él no aprueba los
-cambios en la app, todo vuelve al grupo de WhatsApp. **Sin un local concreto que
-acepte usarlo, la propuesta no tiene usuario.**
-
-### Viabilidad para el bimestre
-
-**Media.** Depende por completo de conseguir un comercio con turnos formales que
-acepte participar del relevamiento.
-
----
-
-## Propuesta 4 — Comparador de precios de hardware
-
-**Usuario / cliente:** persona que quiere armar o actualizar una PC.
-
-### Problema central (borrador)
-
-*Quien quiere comprar componentes de PC debe consultar los precios comercio por
-comercio, porque el mismo producto tiene valores muy distintos según el canal, y
-no tiene forma de saber si el precio que le ofrecen es razonable.*
-
-### Evidencia
-
-**Datos públicos**
-
-- La dispersión de precios es real y creciente: para un mismo producto, la
-  diferencia según el canal de venta lleva a que el consumidor "pierda la noción"
-  de lo que valen las cosas; una brecha que era del 7% en promedio hoy llega al
-  **20%** ([iProUP](https://www.iproup.com/economia-digital/30520-inflacion-en-la-argentina-diferencia-de-precios-segun-comercios)).
-- El mercado de componentes se reactivó y la brecha contra Estados Unidos pasó
-  de **100–150% a cerca del 15%**
-  ([El Cronista](https://www.cronista.com/infotechnology/actualidad/pc-y-gaming-las-ventas-se-reaniman-y-los-precios-en-argentina-ya-se-acercan-al-nivel-internacional/)).
-
-### Problema serio de esta propuesta: ya existe
-
-**[HardGamers](https://www.hardgamers.com.ar/) es exactamente esto**: comparador
-de precios de hardware en Argentina, con historial de precios, funcionando hoy.
-No es un detalle menor — la cátedra evalúa la justificación de la solución, y
-"ya existe y es gratis" es la primera objeción que va a aparecer en el pitch.
-
-Para sostenerla habría que encontrar un ángulo que el existente no cubra
-(por ejemplo: armado de configuraciones completas con control de compatibilidad
-y presupuesto tope), y eso hay que **verificar que efectivamente no esté
-resuelto**, no suponerlo.
-
-Además, alimentar el comparador exige scraping de sitios de terceros: es frágil,
-puede violar términos de servicio y es una dependencia externa fuerte.
-
-### Viabilidad para el bimestre
-
-**Baja.** Competidor consolidado, problema de obtención de datos y usuario
-difuso. **Recomendación: descartarla**, salvo que aparezca un ángulo diferencial
-comprobado.
-
----
-
 ## Propuesta 5 — Buscador de adopción y registro de mascotas
 
 **Usuario / cliente:** refugios y proteccionistas independientes, y personas que
@@ -335,112 +250,6 @@ animales perdidos.
 refugio de la zona acepta participar. **Sin refugio que acepte, no hay
 relevamiento y la propuesta se cae.**
 
----
-
-## Propuesta 6 — Gestor de gastos compartidos para viajes o eventos
-
-**Usuario / cliente:** grupos que comparten gastos: un viaje de egresados, un
-equipo, un grupo de convivientes.
-
-### Problema central (borrador)
-
-*Los grupos que comparten gastos llevan las cuentas en papel o en una planilla
-improvisada, por lo que al momento de saldar nadie coincide en cuánto debe cada
-uno y las rendiciones se demoran o quedan sin cerrar.*
-
-### Evidencia
-
-- `[RELEVAR]` **No hay datos públicos citables** para esta problemática, y eso es
-  en sí un dato: es un problema cotidiano pero poco medido. Todo el diagnóstico
-  tendría que salir de una encuesta propia a grupos que hayan compartido gastos.
-
-**Problema de la propuesta:** existen soluciones muy instaladas (Splitwise y
-similares) y la funcionalidad es acotada — es esencialmente una calculadora de
-deudas cruzadas. Cuesta sostener un bimestre de formulación sobre esto y cuesta
-más defenderla en el pitch.
-
-### Viabilidad para el bimestre
-
-**Baja.** Alcance demasiado chico y competencia gratuita instalada.
-**Recomendación: descartarla.**
-
----
-
-## Propuesta 7 — Menú digital para comedores
-
-**Usuario / cliente:** responsable del comedor y sus comensales.
-
-### Problema central (borrador)
-
-*Los comensales del comedor no saben qué se sirve cada día hasta llegar, y quien
-planifica el menú no tiene forma de conocer qué platos se aceptan y cuáles se
-desperdician.*
-
-### Evidencia
-
-- `[RELEVAR]` **Sin datos públicos aplicables** al caso concreto. Habría que
-  relevar en el comedor elegido: raciones preparadas contra raciones servidas,
-  cantidad de comensales por día, y una encuesta de preferencias.
-
-El ángulo con más sustancia no es publicar el menú (eso es un cartel) sino
-**reducir el desperdicio ajustando la producción a la demanda real** medida con
-las votaciones y la asistencia. Con ese encuadre, la propuesta tiene un problema
-medible; sin él, es una cartelera digital.
-
-### Viabilidad para el bimestre
-
-**Media.** Viable y con usuarios a mano si hay un comedor accesible, pero exige
-reformular el problema hacia el desperdicio para que valga la pena.
-
----
-
-## Propuesta 8 — Entradas con código QR
-
-**Usuario / cliente:** organizador de eventos y personas que asisten.
-
-### Problema central (borrador)
-
-*Los organizadores de eventos chicos controlan el ingreso con listas en papel y
-comprobantes enviados por mensajería, que se duplican y reenvían con facilidad,
-por lo que no pueden verificar si una entrada ya fue usada ni saber cuánta gente
-ingresó.*
-
-### Evidencia
-
-**Datos públicos**
-
-- El fraude documentado en el circuito argentino de fiestas y recitales es
-  exactamente el descrito: **la misma captura de pantalla reenviada a varias
-  personas, copias impresas del mismo PDF y entradas vendidas por redes**
-  ([Passcore](https://passcore.net/como-evitar-entradas-falsas)).
-- En plataformas reguladas con validación, los casos de entradas falsificadas
-  **no superan el 0,02%** de las transacciones
-  ([Veridas](https://veridas.com/es/fraude-compra-entradas/)) — sirve como
-  referencia de a dónde se puede llegar con validación única.
-- Hay un proyecto legislativo para que las entradas se entreguen en un formato
-  que permita **validación y trazabilidad**
-  ([iProfesional](https://www.iprofesional.com/economia/425203-buscan-regular-reventa-entradas-tras-mega-estafa-en-partido-argentina-versus-brasil)),
-  lo que empuja al sector en esta dirección.
-
-**A relevar**
-
-- `[RELEVAR]` En un evento concreto (fiesta escolar, torneo, peña): cuántos
-  ingresos se controlan, cuánto tarda la fila, cuántos casos de entrada
-  duplicada aparecieron.
-
-### Riesgo principal
-
-El mercado está muy cubierto por plataformas comerciales. El nicho defendible es
-el **evento chico y autogestionado** que no puede pagar una plataforma: fiesta
-de egresados, torneo de club, evento escolar.
-
-### Viabilidad para el bimestre
-
-**Media-alta.** Problema concreto, solución acotada y demostrable. Pierde puntos
-por competencia, los recupera si se acota bien al evento autogestionado.
-
----
-
 ## Propuesta 9 (NUEVA) — Reserva y control de laboratorios y equipamiento
 
 *Derivada del cruce de la propuesta 1 (reserva con agenda), la 2 (stock y
@@ -488,8 +297,6 @@ aulas comunes.
 
 **Alta.** Es la propuesta con relevamiento más barato y validación de maquetado
 más fácil: los usuarios están en el edificio.
-
----
 
 ## Propuesta 10 (NUEVA) — Registro y seguimiento de reclamos de mantenimiento
 
@@ -541,26 +348,26 @@ anterior. Requiere aval de la institución antes de arrancar.
 
 ---
 
-## Comparación y recomendación
+## Comparación de las cinco propuestas en carrera
 
 | # | Propuesta | Usuario accesible | Evidencia pública | Competencia | Viabilidad |
 |---|---|---|---|---|---|
 | 1 | Centro de estética | Sí, cliente real | Buena | Media | **Alta** |
 | 2 | POS / inventario | A conseguir | Buena | Alta | **Alta** |
-| 3 | Turnos de trabajo | A conseguir | Contradictoria | Media | Media |
-| 4 | Comparador hardware | Difuso | Buena | **Ya existe** | Baja |
 | 5 | Adopción de mascotas | A conseguir | Buena | Baja | Media-alta |
-| 6 | Gastos compartidos | Fácil | Nula | **Ya existe** | Baja |
-| 7 | Menú de comedor | Sí | Nula | Baja | Media |
-| 8 | Entradas QR | A conseguir | Buena | Alta | Media-alta |
 | 9 | Laboratorios y equipamiento | **Sí, acá mismo** | A relevar | Baja | **Alta** |
 | 10 | Reclamos de mantenimiento | **Sí, acá mismo** | Buena | Baja | Alta |
 
-**Recomendación:** sostener la **1 (estética)** como principal — tiene cliente
-real, que es lo más difícil de conseguir — y mantener la **9** como alternativa
-firme, porque el relevamiento y la validación del maquetado se hacen sin salir
-del edificio. Descartar la **4** y la **6**: ambas tienen competidores gratuitos
-instalados y no aparece un ángulo diferencial que se pueda defender.
+**Sobre la 2:** es la única que sobrevive teniendo competencia alta. Se sostiene
+porque la evidencia del sector es contundente y porque el segmento al que apunta
+—el kiosco chico que hoy no paga ningún sistema— está desatendido justamente por
+precio. Ese argumento hay que poder defenderlo en el pitch.
+
+**Recomendación:** sostener la **1 (estética)** como principal, porque tiene
+cliente real y conseguir eso es lo más difícil de todo el proceso. Mantener la
+**9** como alternativa firme: el relevamiento y la validación del maquetado se
+hacen sin salir del edificio, lo que reduce a casi cero el riesgo de quedarse
+sin usuarios a mitad del bimestre.
 
 **Lo que hay que hacer ahora, en este orden:**
 
@@ -570,3 +377,23 @@ instalados y no aparece un ángulo diferencial que se pueda defender.
    propuesta elegida.
 3. Relevar y **completar las líneas de base**. Recién con esos números se puede
    escribir el Árbol de Problemas y, después, los indicadores de la MML.
+
+---
+
+# Anexo — Propuestas descartadas y motivo
+
+Se mantienen registradas como evidencia del proceso de selección.
+
+| # | Propuesta | Motivo del descarte |
+|---|---|---|
+| 3 | Organizador de turnos de trabajo | La evidencia juega en contra: el 45,1% de los jóvenes ocupados es informal, y sin empleo formal no hay grilla ni liquidación que gestionar. Además depende por completo de conseguir un comercio que acepte usarlo, y compite con soluciones de gestión de personal ya instaladas |
+| 4 | Comparador de precios de hardware | Ya existe idéntico y gratuito: HardGamers, con historial de precios y funcionando hoy. Además exige scraping de terceros, que es frágil y de legalidad dudosa |
+| 6 | Gestor de gastos compartidos | Sin ningún dato público citable, y Splitwise resuelve exactamente lo mismo desde hace años. El alcance además es demasiado chico para sostener un bimestre |
+| 7 | Menú digital para comedores | Sin datos públicos aplicables. En su versión básica es una cartelera digital; el único ángulo con sustancia (reducir desperdicio ajustando producción a demanda) exigía reformular el problema entero |
+| 8 | Entradas con código QR | Tiene buena evidencia, pero el mercado está muy cubierto por plataformas comerciales y gratuitas. El nicho defendible —evento chico autogestionado— es demasiado estrecho para justificar el desarrollo frente a las alternativas existentes |
+
+**La más discutible de las cinco es la 8**: la evidencia de fraude es sólida y la
+solución es demostrable. Si el equipo consigue un evento concreto donde relevar
+(una fiesta escolar, un torneo de club), puede reabrirse. Se descarta por
+competencia, no por falta de problema.
+

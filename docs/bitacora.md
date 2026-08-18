@@ -115,13 +115,18 @@ fuente citada**, que contextualizan la problemática, y las marcas `[RELEVAR]`,
 que señalan lo que solo puede salir de nuestras propias entrevistas y
 observaciones. Ninguna cifra de línea de base se completa sin medirla.
 
-Del análisis salieron tres conclusiones: la propuesta del **centro de estética**
-sigue siendo la principal porque tiene un cliente real identificado; la de
-**laboratorios y equipamiento** es la alternativa más firme porque el
-relevamiento se hace dentro de la institución; y las de **comparador de
-hardware** y **gastos compartidos** conviene descartarlas, porque ya existen
-soluciones gratuitas instaladas (HardGamers y Splitwise) y no aparece un ángulo
-diferencial defendible en el pitch.
+Con ese análisis se aplicó un **criterio de descarte**: quedan fuera las
+propuestas sin evidencia disponible y las que duplican una solución gratuita ya
+masiva. Se descartaron cinco —organizador de turnos de trabajo, comparador de
+hardware, gastos compartidos, menú de comedor y entradas con QR— y quedan
+**cinco en carrera**: centro de estética, POS de inventario, adopción de
+mascotas, laboratorios y equipamiento, y reclamos de mantenimiento. Las
+descartadas quedaron registradas con su motivo, porque la selección de la
+alternativa de intervención es parte de lo que se evalúa.
+
+La propuesta del **centro de estética** sigue siendo la principal, por tener un
+cliente real identificado; la de **laboratorios y equipamiento** queda como
+alternativa firme, porque el relevamiento se hace dentro de la institución.
 
 ### Pendientes que quedaron abiertos
 

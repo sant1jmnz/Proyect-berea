@@ -28,18 +28,38 @@ Se lee de abajo hacia arriba con un **"si… entonces"**:
 
 - El **Fin** y el **Propósito** vienen directo del Árbol de Objetivos, no se
   reinventan.
-- Los **Componentes** son los módulos del sistema, redactados como productos ya
-  terminados: "Módulo de carga de asistencia implementado y en uso", no
-  "Desarrollar el módulo".
+- El **Fin** es un objetivo de **nivel estratégico**: describe el impacto a largo
+  plazo al que el proyecto *contribuye*. Dos consecuencias que la cátedra
+  subraya: alcanza con que el proyecto contribuya **significativamente** al Fin,
+  y **el Fin no se logra poco después** de que el proyecto esté funcionando.
+- El **Propósito** se redacta **en forma de hipótesis**: es el efecto directo que
+  se espera al utilizar los componentes. Y algo que sorprende pero es central:
+  **el logro del Propósito no es responsabilidad de la gerencia del proyecto** —
+  el equipo responde por entregar los componentes; que eso produzca el cambio
+  esperado depende también del entorno. Por eso los supuestos existen.
+- Los **Componentes** son las obras, estudios, servicios y capacitaciones que el
+  proyecto entrega dentro del presupuesto asignado, redactados **como resultados
+  terminados**: "obras terminadas", "capacitación terminada", "Módulo de carga de
+  asistencia implementado y en uso" — nunca "Desarrollar el módulo".
 - Las **Actividades** sí van en infinitivo, y cada una se numera bajo su
   componente: `A.1.1` es la primera actividad del componente `R1`.
+- **No van todas las actividades dentro de la matriz.** La cátedra recomienda
+  dejar en la MML las principales y presentar **el detalle de acciones aparte,
+  con sus tiempos y recursos**. Una matriz con cuarenta filas de actividades no
+  se lee.
 
 ## Lógica horizontal (semana 5)
 
 Para cada fila, de izquierda a derecha:
 
-- **Indicador (IOV)** — qué se mide, cuánto y para cuándo. Necesita línea de
-  base. Ejemplos válidos: "Tiempo de respuesta menor a 2 segundos",
+- **Indicador (IOV)** — hace específico el resultado esperado en **tres
+  dimensiones: cantidad, calidad y tiempo**. Si al indicador le falta alguna de
+  las tres, está incompleto: "reducir el tiempo de carga" no dice cuánto ni para
+  cuándo; "reducir el tiempo de carga de 40 a 5 minutos, sin errores de
+  registro, antes de fin de bimestre" sí. Necesita línea de base.
+  Sobre la cantidad de indicadores: hay muchos posibles, pero la matriz debe
+  quedarse con **la cantidad mínima necesaria** para concluir que el Propósito y
+  el Fin se lograron. Ejemplos válidos: "Tiempo de respuesta menor a 2 segundos",
   "Reducción del 50% en el tiempo de gestión respecto de los 40 min actuales",
   "30 usuarios activos al cierre del bimestre". Si no tiene número, no es
   indicador.

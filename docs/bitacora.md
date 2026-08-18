@@ -1,5 +1,9 @@
 # Bitácora personal — Santiago Jiménez
 
+**Autor:** Santiago Jiménez — bitácora individual, de autoría exclusiva.
+Los demás integrantes del equipo llevan la suya por separado; este archivo
+no se edita por terceros (ver `.github/CODEOWNERS`).
+
 **Materia:** Proyecto Informático I — Prof. Cynthia Berea
 **Año y especialidad:** 4to año, Computación — Escuela Técnica de CABA
 **Marco pedagógico:** Buenos Aires Aprende

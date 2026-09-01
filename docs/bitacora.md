@@ -39,3 +39,39 @@ Qué falta:
 - Confirmar con el dueño del centro de estética que acepta la entrevista.
 - Definir los roles del equipo.
 - Relevar los datos reales que hoy faltan para poder armar el Árbol de Problemas.
+
+---
+
+## 1 de septiembre de 2026
+
+Vimos 4 de los 10 videos de cátedra y sumamos lo que faltaba de ahí a las
+guías del repo: la tabla de mal/bien formulado del Árbol de Problemas, la
+conversión exacta a Árbol de Objetivos, y cómo se completa la MML paso a
+paso.
+
+Con eso terminamos el Árbol de Problemas y el Árbol de Objetivos de la
+propuesta de estética, tanto en el repo como en post-its en el Miro del
+equipo. Nos dimos cuenta de que veníamos redactando como si Bella Piel fuera
+un cliente real con el que había que coordinar una entrevista, cuando en
+realidad es un caso imaginario que armamos nosotros. Corregimos eso en
+`propuestas.md` y en el árbol.
+
+Seguimos con la Matriz de Marco Lógico, los requerimientos funcionales y no
+funcionales, y armamos 5 pantallas del maquetado en Figma. También hicimos
+el FODA del equipo.
+
+Por último nos repartimos los roles: yo quedo en Marco Lógico y
+coordinación, Bautista en requerimientos, Nicolás en diseño y maquetado, y
+Clovis en el pitch.
+
+Dónde quedó la decisión:
+
+Sigue Bella Piel como propuesta principal, ahora ya aclarado en todos los
+documentos que es un ejercicio imaginario: los datos de partida los
+inventamos nosotros a propósito, no hay relevamiento real posible.
+
+Qué falta:
+
+- El pitch, la última pieza de la Carpeta de Proyecto.
+- Pasar el maquetado por la revisión cruzada con otro equipo.
+- Ver los 6 videos de cátedra que quedan.

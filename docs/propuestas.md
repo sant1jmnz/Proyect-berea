@@ -43,8 +43,9 @@ consideraron.
 ---
 ## Propuesta 1 (PRINCIPAL) — Aplicación web para centro de estética integral
 
-**Usuario / cliente:** dueño de un centro de estética integral (cliente real ya
-identificado) y sus clientas y clientes actuales y potenciales.
+**Usuario / cliente:** dueño de un centro de estética integral (caso
+imaginario, Bella Piel — Centro de Estética Integral) y sus clientas y
+clientes actuales y potenciales.
 
 ### Problema central (borrador)
 
@@ -351,7 +352,7 @@ anterior. Requiere aval de la institución antes de arrancar.
 
 | # | Propuesta | Usuario accesible | Evidencia pública | Competencia | Viabilidad |
 |---|---|---|---|---|---|
-| 1 | Centro de estética | Sí, cliente real | Buena | Media | **Alta** |
+| 1 | Centro de estética | Caso imaginario (Bella Piel) | Buena | Media | **Alta** |
 | 2 | POS / inventario | A conseguir | Buena | Alta | **Alta** |
 | 5 | Adopción de mascotas | A conseguir | Buena | Baja | Media-alta |
 | 9 | Laboratorios y equipamiento | **Sí, acá mismo** | A relevar | Baja | **Alta** |
@@ -362,20 +363,22 @@ porque la evidencia del sector es contundente y porque el segmento al que apunta
 —el kiosco chico que hoy no paga ningún sistema— está desatendido justamente por
 precio. Ese argumento hay que poder defenderlo en el pitch.
 
-**Recomendación:** sostener la **1 (estética)** como principal, porque tiene
-cliente real y conseguir eso es lo más difícil de todo el proceso. Mantener la
-**9** como alternativa firme: el relevamiento y la validación del maquetado se
-hacen sin salir del edificio, lo que reduce a casi cero el riesgo de quedarse
-sin usuarios a mitad del bimestre.
+**Recomendación:** sostener la **1 (estética)** como principal. Es un ejercicio
+sobre un caso **imaginario** (Bella Piel no existe): no hay relevamiento real
+posible ni entrevista que hacer, así que los datos de partida se inventan a
+propósito por el equipo y se presentan como tales — es la decisión que ya se
+tomó con la cátedra al plantear el proyecto así. La **9** queda igual anotada
+como alternativa que sí tendría relevamiento real disponible, si en algún
+momento se decide cambiar de enfoque.
 
 **Lo que hay que hacer ahora, en este orden:**
 
-1. Confirmar con el dueño del centro de estética que acepta ser entrevistado.
-   **De esto depende toda la propuesta 1.**
-2. Armar el cuestionario de entrevista a partir de los `[RELEVAR]` de la
-   propuesta elegida.
-3. Relevar y **completar las líneas de base**. Recién con esos números se puede
-   escribir el Árbol de Problemas y, después, los indicadores de la MML.
+1. Terminar de definir los datos de partida de la propuesta elegida (ya
+   hecho, ver "Datos del centro" arriba).
+2. Con esos números, escribir el Árbol de Problemas y los indicadores de la
+   MML (ya hecho, ver `docs/01-arbol-de-problemas.md` y
+   `docs/03-matriz-marco-logico.md`).
+3. Definir roles del equipo y avanzar con el resto de la Carpeta de Proyecto.
 
 ---
 

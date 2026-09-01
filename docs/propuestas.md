@@ -1,87 +1,78 @@
 # Propuestas de proyecto — desarrollo y evidencia
 
 Documento de trabajo de la etapa de detección de necesidades (semana 1). Cada
-propuesta está desarrollada con el mismo esquema para poder **compararlas y
-elegir una** con criterio, no por simpatía.
+propuesta sigue el mismo esquema para poder compararlas y elegir una con
+criterio.
 
-## Cómo leer este documento
+El problema central va redactado como pide la cátedra: en negativo, en
+presente, describiendo la necesidad y nunca la solución faltante. Es el
+candidato a tronco del Árbol de Problemas.
 
-- **Problema central (borrador):** redactado como pide la cátedra — en negativo,
-  en presente, describiendo la necesidad y **nunca la solución faltante**. Es el
-  candidato a tronco del Árbol de Problemas.
-- **Evidencia:** se distinguen dos cosas que no son lo mismo.
-  - **Datos públicos** con fuente citada. Sirven para **contextualizar** la
-    problemática y mostrar que no es un invento.
-  - **`[RELEVAR]`** marca lo que **solo puede salir de nuestro propio
-    relevamiento** (entrevistas, encuestas, observación). El plan de aprendizaje
-    pide relevamiento propio y la rúbrica evalúa el diagnóstico: un dato
-    nacional no reemplaza medir el caso concreto.
-
-> **Regla que no se negocia:** ninguna cifra `[RELEVAR]` se completa a ojo. Si no
-> la medimos, no va. Un indicador inventado invalida toda la Matriz de Marco
-> Lógico que se apoye en él.
+La evidencia distingue dos cosas. Los datos públicos, con fuente citada,
+sirven para contextualizar la problemática. Lo marcado `[RELEVAR]` es lo que
+solo puede salir del relevamiento propio del equipo (entrevistas, encuestas,
+observación): un dato nacional no reemplaza medir el caso concreto, y ninguna
+cifra `[RELEVAR]` se completa a ojo, porque un indicador inventado invalida
+toda la Matriz de Marco Lógico que se apoye en él.
 
 ---
 
 ## Criterio de selección aplicado
 
-De las diez propuestas relevadas quedan **cinco en carrera**. Se descartaron las
+De las diez propuestas relevadas quedan cinco en carrera. Se descartaron las
 que caían en alguno de estos dos casos:
 
-1. **Sin evidencia disponible.** No hay datos públicos citables y tampoco un
-   camino claro para relevarlos, así que el diagnóstico no se podría sostener.
-2. **Solución ya existente y masiva.** Hay productos gratuitos y consolidados
-   que resuelven lo mismo, y no aparece un ángulo diferencial que se pueda
-   defender frente a la pregunta "¿por qué no usan el que ya existe?".
+1. Sin evidencia disponible: no hay datos públicos citables y tampoco un
+   camino claro para relevarlos.
+2. Solución ya existente y masiva: hay productos gratuitos y consolidados que
+   resuelven lo mismo, sin un ángulo diferencial defendible.
 
-Las descartadas **no se borran de este documento**: quedan al final con el
-motivo del descarte. El plan de aprendizaje pide explícitamente la *selección de
-la alternativa de intervención*, y mostrar qué se evaluó y por qué se dejó de
-lado es parte de esa justificación. Borrarlas haría parecer que nunca se
-consideraron.
+Las descartadas quedan al final del documento con el motivo del descarte, en
+vez de borrarse, porque mostrar qué se evaluó y por qué se dejó de lado es
+parte de la justificación de la alternativa elegida.
 
 ---
+
 ## Propuesta 1 (PRINCIPAL) — Aplicación web para centro de estética integral
 
-**Usuario / cliente:** dueño de un centro de estética integral (caso
-imaginario, Bella Piel — Centro de Estética Integral) y sus clientas y
-clientes actuales y potenciales.
+Usuario / cliente: dueño de un centro de estética integral (caso imaginario,
+Bella Piel — Centro de Estética Integral) y sus clientas y clientes actuales
+y potenciales.
 
 ### Problema central (borrador)
 
-*La gestión de turnos y consultas del centro de estética depende de la atención
-manual del dueño por WhatsApp, lo que consume horas de trabajo, produce
-superposiciones y turnos perdidos, y demora las respuestas a quienes consultan.*
+*La gestión de turnos y consultas del centro de estética depende de la
+atención manual del dueño por WhatsApp, lo que consume horas de trabajo,
+produce superposiciones y turnos perdidos, y demora las respuestas a quienes
+consultan.*
 
-Nótese que el problema **no** es "no hay una app": es la carga operativa y la
-pérdida de turnos que hoy existen.
+El problema no es "no hay una app": es la carga operativa y la pérdida de
+turnos que hoy existen.
 
 ### Evidencia
 
-**Datos públicos**
+Datos públicos:
 
 - El 97% de los argentinos usa WhatsApp a diario y el 58% lo usa para
-  **consultas comerciales**; el 28% ya compra por ese canal. Es decir: el canal
-  por el que hoy se satura la atención es exactamente donde está el cliente
+  consultas comerciales; el 28% ya compra por ese canal: es el mismo canal
+  donde hoy se satura la atención
   ([estudio sobre WhatsApp y compras](https://dialecto.com/blog/whatsapp-marketing/estudio-impacto-de-whatsapp-en-compras/)).
 - El ausentismo a turnos reservados es un problema reconocido del rubro: en
-  España los centros de estética y peluquerías empezaron a **cobrar por
-  adelantado** para frenar las "reservas fantasma", y reportan que las
-  inasistencias bajaron
+  España los centros de estética y peluquerías empezaron a cobrar por
+  adelantado para frenar las "reservas fantasma", y reportan menos
+  inasistencias
   ([Cuatro](https://www.cuatro.com/noticias/economia/20250116/reservas-fantasma-centros-estetica-peluquerias_18_014508640.html)).
-  Esto respalda directamente la decisión de cobrar la seña.
-- Un caso documentado de red de clínicas con recordatorios automáticos de turno
-  reporta una **reducción del 50% en las inasistencias**
-  ([WhatsApp Business API](https://developargentina.com/blog/whatsapp-business-api-argentina-automatizacion-ventas-2025)).
-  Sirve como referencia para fijar la meta del indicador, no como resultado
-  propio.
+- Un caso documentado de red de clínicas con recordatorios automáticos de
+  turno reporta una reducción del 50% en las inasistencias
+  ([WhatsApp Business API](https://developargentina.com/blog/whatsapp-business-api-argentina-automatizacion-ventas-2025)),
+  y sirve de referencia para fijar la meta del indicador.
 
-**Datos del centro**
+Datos del centro:
 
 - 25 consultas por WhatsApp por día, de las cuales ≈70% (18) son repetidas
   (precios, horarios, "¿qué incluye el tratamiento?").
-- 95 minutos por día dedicados a responderlas. **Es la línea de base del
-  indicador principal.**
+- 95 minutos por día dedicados a responderlas. Es la línea de base del
+  indicador principal.
 - 6 turnos por semana perdidos por inasistencia, ≈ $48.000/semana.
 - 5 superposiciones de turno por mes.
 
@@ -90,7 +81,7 @@ pérdida de turnos que hoy existen.
 | Módulo | Función |
 |---|---|
 | Reserva en 3 pasos | Servicio → horario disponible → confirmación, con sincronización automática al Google Calendar del dueño |
-| Cobro de seña | Mercado Pago; el backend **no** almacena datos de tarjeta |
+| Cobro de seña | Mercado Pago; el backend no almacena datos de tarjeta |
 | Asistente virtual | Gemini 2.5 Flash restringido por RAG a una base local con precios, protocolos y políticas; si no puede responder, deriva a WhatsApp del dueño |
 | Mis Turnos | Acceso por cookies y enlace mágico, sin registro ni contraseña |
 | Vitrina | Antes y después, quiz de diagnóstico de piel, reseñas vía Google Maps API |
@@ -98,7 +89,7 @@ pérdida de turnos que hoy existen.
 ### Fuera de alcance
 
 Historia clínica de tratamientos, gestión de stock de insumos, liquidación de
-comisiones, app nativa. **Este bimestre no se programa nada:** se formula y se
+comisiones, app nativa. Este bimestre no se programa nada: se formula y se
 diseña.
 
 ### Indicadores preliminares
@@ -112,60 +103,58 @@ diseña.
 
 ### Riesgos
 
-- **Adopción:** que las clientas sigan escribiendo por WhatsApp igual. Mitigación:
+- Adopción: que las clientas sigan escribiendo por WhatsApp igual. Mitigación:
   responder desde WhatsApp con el enlace de reserva.
-- **Resistencia a la seña:** puede espantar clientes nuevos. Se estima que
-  ≈10% de clientas nuevas podría dudar; falta relevar qué hacen los
-  competidores de la zona.
-- **Dependencia de terceros:** si cambian las condiciones de las APIs de Google o
+- Resistencia a la seña: puede espantar clientes nuevos. Se estima que ≈10%
+  de clientas nuevas podría dudar; falta relevar qué hacen los competidores
+  de la zona.
+- Dependencia de terceros: si cambian las condiciones de las APIs de Google o
   de Gemini, se cae una parte del sistema.
-- **Datos personales:** fotos de "antes y después" son dato sensible; requieren
+- Datos personales: fotos de "antes y después" son dato sensible y requieren
   consentimiento explícito.
 
 ### Viabilidad para el bimestre
 
-**Alta.** Cliente real, alcance delimitado, decisiones técnicas defendibles en el
-pitch. El riesgo es de sobredimensionamiento: son cuatro integraciones externas
-y conviene marcar cuáles son núcleo (reserva + calendario) y cuáles son
-deseables (quiz, reseñas).
+Alta. Alcance delimitado, decisiones técnicas defendibles en el pitch. El
+riesgo es de sobredimensionamiento: son cuatro integraciones externas y
+conviene marcar cuáles son núcleo (reserva + calendario) y cuáles deseables
+(quiz, reseñas).
 
 ## Propuesta 2 — Gestión de inventario y punto de venta (POS simplificado)
 
-**Usuario / cliente:** dueño y personal de atención de un kiosco o restaurante
+Usuario / cliente: dueño y personal de atención de un kiosco o restaurante
 chico.
 
 ### Problema central (borrador)
 
-*El control de stock y el registro de ventas de los comercios minoristas chicos
-se lleva de memoria o en papel, por lo que el personal no sabe qué hay
+*El control de stock y el registro de ventas de los comercios minoristas
+chicos se lleva de memoria o en papel, por lo que el personal no sabe qué hay
 disponible sin ir a mirar y el dueño no conoce el resultado del día hasta
 cerrar la caja a mano.*
 
 ### Evidencia
 
-**Datos públicos**
+Datos públicos:
 
-- El sector atraviesa una crisis severa: cerraron **41.000 kioscos desde
-  diciembre de 2023**, pasando de unos 100.000 a 59.000 — alrededor de **50
-  cierres por día** según UKRA
+- El sector atraviesa una crisis severa: cerraron 41.000 kioscos desde
+  diciembre de 2023, pasando de unos 100.000 a 59.000, alrededor de 50
+  cierres por día según UKRA
   ([Infobae](https://www.infobae.com/economia/2026/08/03/cerraron-41000-kioscos-desde-diciembre-de-2023-y-en-el-sector-ven-una-crisis-similar-a-la-de-2001/)).
-- Un relevamiento de ARCA registró una caída de **112.000 a 96.000 kioscos
-  activos** en un año
+- Un relevamiento de ARCA registró una caída de 112.000 a 96.000 kioscos
+  activos en un año
   ([Infobae](https://www.infobae.com/economia/2025/08/12/crisis-en-los-kioscos-cerraron-16000-locales-en-el-ultimo-ano-y-el-sector-cae-a-minimos-historicos/)),
-  con **más de 72.000 puestos de trabajo perdidos** en dos años
+  con más de 72.000 puestos de trabajo perdidos en dos años
   ([BAE Negocios](https://www.baenegocios.com/negocios/cerraron-mas-de-36-000-kioscos-y-se-perdieron-72-000-puestos-de-trabajo-en-los-ultimos-dos-anos/)).
 
-**Cómo se usa esta evidencia — y cómo no**
+Estos números prueban que el sector está bajo presión, no que la causa sea la
+falta de un sistema de gestión: las fuentes atribuyen los cierres a la caída
+del consumo, los alquileres y los servicios. Presentarlo como "cierran
+kioscos porque no tienen software" sería el error metodológico que la
+cátedra penaliza. El encuadre correcto: en un margen tan ajustado, el
+descontrol de stock y la falta de visibilidad de la caja dejan de ser
+molestias y pasan a ser pérdidas que el comercio ya no puede absorber.
 
-Estos números prueban que el sector está bajo presión, **no** que la causa sea la
-falta de un sistema de gestión. Las fuentes atribuyen los cierres a la caída del
-consumo, los alquileres y los servicios. Presentarlo como "cierran kioscos porque
-no tienen software" sería exactamente el error metodológico que la cátedra
-penaliza. El encuadre honesto: en un margen así de ajustado, **el descontrol de
-stock y la falta de visibilidad de la caja dejan de ser molestias y pasan a ser
-pérdidas que el comercio ya no puede absorber**.
-
-**A relevar en el comercio elegido**
+A relevar en el comercio elegido:
 
 - `[RELEVAR]` Cuántas veces por semana se pierde una venta por faltante no detectado.
 - `[RELEVAR]` Cuánto tarda el cierre de caja diario hoy.
@@ -175,8 +164,8 @@ pérdidas que el comercio ya no puede absorber**.
 ### Qué hace el sistema
 
 Catálogo con precio, categoría y stock; registro de venta en pocos clics con
-descuento automático de inventario; panel de "Movimientos del Día" con ingresos,
-historial y alertas de bajo stock.
+descuento automático de inventario; panel de "Movimientos del Día" con
+ingresos, historial y alertas de bajo stock.
 
 ### Fuera de alcance
 
@@ -193,46 +182,46 @@ proveedores y compras, balance contable.
 
 ### Riesgos
 
-Que el personal siga sin cargar las ventas en momentos de mucha gente — si el
+Que el personal siga sin cargar las ventas en momentos de mucha gente: si el
 registro no es más rápido que el cuaderno, no se usa. La carga inicial del
 catálogo es trabajo real y hay que preverla como actividad.
 
 ### Viabilidad para el bimestre
 
-**Alta.** Alcance chico y muy claro. Es la alternativa más segura si la de
-estética resulta demasiado ambiciosa.
+Alta. Alcance chico y claro. Es la alternativa más segura si la de estética
+resulta demasiado ambiciosa.
 
 ## Propuesta 5 — Buscador de adopción y registro de mascotas
 
-**Usuario / cliente:** refugios y proteccionistas independientes, y personas que
+Usuario / cliente: refugios y proteccionistas independientes, y personas que
 quieren adoptar.
 
 ### Problema central (borrador)
 
 *Los refugios gestionan las solicitudes de adopción por redes sociales y
-mensajes privados, sin un registro de los animales disponibles ni seguimiento de
-cada solicitud, por lo que se pierden contactos de posibles adoptantes y se
-repite el trabajo de responder lo mismo.*
+mensajes privados, sin un registro de los animales disponibles ni
+seguimiento de cada solicitud, por lo que se pierden contactos de posibles
+adoptantes y se repite el trabajo de responder lo mismo.*
 
 ### Evidencia
 
-**Datos públicos**
+Datos públicos:
 
-- Una ONG estima **más de 20 millones de animales en la calle** en Argentina
+- Una ONG estima más de 20 millones de animales en la calle en Argentina
   ([Infobae](https://www.infobae.com/sociedad/2024/07/27/dia-del-perro-callejero-una-ong-estima-que-en-la-argentina-hay-mas-de-20-millones-de-animales-que-viven-en-las-calles/));
   un estudio del Colegio de Veterinarios de Buenos Aires de 2018 calculaba
   6 millones de perros sin hogar.
-- En CABA se estiman **100.000 perros y gatos en situación de abandono**: uno
+- En CABA se estiman 100.000 perros y gatos en situación de abandono, uno
   cada 30 habitantes
   ([La Nación](https://www.lanacion.com.ar/lifestyle/dia-mundial-del-perro-callejero-cual-es-la-cifra-local-de-animales-que-no-tienen-hogar-nid27072021/)).
-- Las fuentes coinciden en que **los refugios no dan abasto** y que sostienen la
+- Las fuentes coinciden en que los refugios no dan abasto y sostienen la
   situación sin política pública detrás
   ([Ámbito](https://www.ambito.com/maltrato-animal/sos-refugios-tres-historias-lucha-contra-el-abandono-y-el-n5623609)).
 
 Las cifras de animales en calle son estimaciones de ONG con metodologías
-distintas: hay que citarlas **como estimación**, no como dato oficial.
+distintas: hay que citarlas como estimación, no como dato oficial.
 
-**A relevar en un refugio concreto**
+A relevar en un refugio concreto:
 
 - `[RELEVAR]` Cuántas solicitudes de adopción recibe por mes y por qué canal.
 - `[RELEVAR]` Cuántas se pierden sin respuesta y por qué.
@@ -241,44 +230,46 @@ distintas: hay que citarlas **como estimación**, no como dato oficial.
 
 ### Fuera de alcance
 
-Historia clínica veterinaria, gestión de donaciones y cobros, geolocalización de
-animales perdidos.
+Historia clínica veterinaria, gestión de donaciones y cobros, geolocalización
+de animales perdidos.
 
 ### Viabilidad para el bimestre
 
-**Media-alta.** Problemática con impacto social claro y usuarios accesibles si un
-refugio de la zona acepta participar. **Sin refugio que acepte, no hay
-relevamiento y la propuesta se cae.**
+Media-alta. Problemática con impacto social claro y usuarios accesibles si un
+refugio de la zona acepta participar. Sin refugio que acepte, no hay
+relevamiento y la propuesta se cae.
 
 ## Propuesta 9 (NUEVA) — Reserva y control de laboratorios y equipamiento
 
-*Derivada del cruce de la propuesta 1 (reserva con agenda), la 2 (stock y
-alertas) y la 8 (identificación por QR).*
+Derivada del cruce de la propuesta 1 (reserva con agenda), la 2 (stock y
+alertas) y la 8 (identificación por QR).
 
-**Usuario / cliente:** docentes, encargado de laboratorio y quien administra el
+Usuario / cliente: docentes, encargado de laboratorio y quien administra el
 equipamiento de la institución.
 
 ### Problema central (borrador)
 
 *La reserva de laboratorios y el préstamo de equipamiento se registran de
 palabra o en un cuaderno, por lo que se superponen reservas, no se puede
-reconstruir quién usó cada equipo por última vez y los desperfectos se descubren
-recién en el momento de usarlos.*
+reconstruir quién usó cada equipo por última vez y los desperfectos se
+descubren recién en el momento de usarlos.*
 
 ### Evidencia
 
-- `[RELEVAR]` **Ventaja decisiva de esta propuesta: el relevamiento está a mano.**
-  Se puede entrevistar al encargado y a los docentes en la misma institución, y
-  observar directamente cómo se reserva hoy.
+La ventaja de esta propuesta es que el relevamiento está a mano: se puede
+entrevistar al encargado y a los docentes en la misma institución, y observar
+directamente cómo se reserva hoy.
+
 - `[RELEVAR]` Cuántas superposiciones de reserva ocurren por mes.
 - `[RELEVAR]` Cuántos equipos hay y cuántos figuran como no localizados.
 - `[RELEVAR]` Cuánto tiempo de clase se pierde por equipo fallado no informado.
 
 ### Qué hace el sistema
 
-Grilla semanal de disponibilidad en vivo; reserva en tres pasos; etiqueta QR por
-equipo que abre la ficha para registrar retiro y devolución; panel con préstamos
-activos, vencidos y equipos fuera de servicio; acceso por enlace sin contraseñas.
+Grilla semanal de disponibilidad en vivo; reserva en tres pasos; etiqueta QR
+por equipo que abre la ficha para registrar retiro y devolución; panel con
+préstamos activos, vencidos y equipos fuera de servicio; acceso por enlace
+sin contraseñas.
 
 ### Fuera de alcance
 
@@ -295,39 +286,41 @@ aulas comunes.
 
 ### Viabilidad para el bimestre
 
-**Alta.** Es la propuesta con relevamiento más barato y validación de maquetado
+Alta. Es la propuesta con relevamiento más barato y validación de maquetado
 más fácil: los usuarios están en el edificio.
 
 ## Propuesta 10 (NUEVA) — Registro y seguimiento de reclamos de mantenimiento
 
-*Derivada del cruce de la propuesta 5 (solicitudes con estados), la 8 (QR) y el
-panel de la 2.*
+Derivada del cruce de la propuesta 5 (solicitudes con estados), la 8 (QR) y
+el panel de la 2.
 
-**Usuario / cliente:** toda la comunidad educativa como reportantes; el
+Usuario / cliente: toda la comunidad educativa como reportantes; el
 encargado de mantenimiento y la dirección como gestores.
 
 ### Problema central (borrador)
 
-*Los desperfectos edilicios se avisan por canales informales y sin registro, por
-lo que no queda constancia de quién recibió el reclamo, quien lo reportó no sabe
-si se está resolviendo, y no hay información para priorizar las reparaciones.*
+*Los desperfectos edilicios se avisan por canales informales y sin registro,
+por lo que no queda constancia de quién recibió el reclamo, quien lo reportó
+no sabe si se está resolviendo, y no hay información para priorizar las
+reparaciones.*
 
 ### Evidencia
 
-**Datos públicos**
+Datos públicos:
 
-- Un relevamiento de UTE encontró que el **20% de las escuelas de CABA tiene
-  problemas edilicios y el 10% no tiene calefacción**
+- Un relevamiento de UTE encontró que el 20% de las escuelas de CABA tiene
+  problemas edilicios y el 10% no tiene calefacción
   ([UTE](https://ute.org.ar/escuelas-de-caba-20-con-problemas-edilicios-y-10-sin-calefaccion/)).
-- Se documentaron **más de 200 escuelas** de CABA con problemas de
-  infraestructura ([ANCCOM](https://anccom.sociales.uba.ar/2022/09/14/caba-mas-de-200-escuelas-con-problemas-de-infraestructura/)).
-- Un dato que respalda directamente esta propuesta: las fuentes señalan la
-  **falta de transparencia y la inexistencia de estadísticas oficiales** sobre el
-  estado edilicio ([El Destape](https://www.eldestapeweb.com/opinion/ciudad-de-buenos-aires/infraestructura-escolar-en-caba-subejecucion-falta-de-vacantes-y-abandono-202253114310)).
-  Es decir: **el problema de registro que el sistema resuelve está documentado
-  como problema real del sector**, no solo del edificio propio.
+- Se documentaron más de 200 escuelas de CABA con problemas de
+  infraestructura
+  ([ANCCOM](https://anccom.sociales.uba.ar/2022/09/14/caba-mas-de-200-escuelas-con-problemas-de-infraestructura/)).
+- Las fuentes señalan la falta de transparencia y la inexistencia de
+  estadísticas oficiales sobre el estado edilicio
+  ([El Destape](https://www.eldestapeweb.com/opinion/ciudad-de-buenos-aires/infraestructura-escolar-en-caba-subejecucion-falta-de-vacantes-y-abandono-202253114310)):
+  el problema de registro que el sistema resuelve está documentado como
+  problema real del sector, no solo del edificio propio.
 
-**A relevar**
+A relevar:
 
 - `[RELEVAR]` Cuántos reclamos se reportan por mes y por qué canal.
 - `[RELEVAR]` Cuántos se resuelven, en cuánto tiempo, y cuántos se pierden.
@@ -335,15 +328,15 @@ si se está resolviendo, y no hay información para priorizar las reparaciones.*
 
 ### Sensibilidad a tener en cuenta
 
-Un registro de fallas edilicias con fotos es información políticamente sensible
-para cualquier institución. **Hay que acordar con la dirección desde el
-principio** quién ve qué y si los datos son internos. Presentarlo como
-herramienta de gestión y priorización —no como sistema de denuncia— es lo que
+Un registro de fallas edilicias con fotos es información políticamente
+sensible para cualquier institución. Hay que acordar con la dirección desde
+el principio quién ve qué y si los datos son internos. Presentarlo como
+herramienta de gestión y priorización, no como sistema de denuncia, es lo que
 lo vuelve viable.
 
 ### Viabilidad para el bimestre
 
-**Alta** en lo técnico y en el relevamiento; **media** en lo político, por lo
+Alta en lo técnico y en el relevamiento; media en lo político, por lo
 anterior. Requiere aval de la institución antes de arrancar.
 
 ---
@@ -352,33 +345,32 @@ anterior. Requiere aval de la institución antes de arrancar.
 
 | # | Propuesta | Usuario accesible | Evidencia pública | Competencia | Viabilidad |
 |---|---|---|---|---|---|
-| 1 | Centro de estética | Caso imaginario (Bella Piel) | Buena | Media | **Alta** |
-| 2 | POS / inventario | A conseguir | Buena | Alta | **Alta** |
+| 1 | Centro de estética | Caso imaginario (Bella Piel) | Buena | Media | Alta |
+| 2 | POS / inventario | A conseguir | Buena | Alta | Alta |
 | 5 | Adopción de mascotas | A conseguir | Buena | Baja | Media-alta |
-| 9 | Laboratorios y equipamiento | **Sí, acá mismo** | A relevar | Baja | **Alta** |
-| 10 | Reclamos de mantenimiento | **Sí, acá mismo** | Buena | Baja | Alta |
+| 9 | Laboratorios y equipamiento | Sí, acá mismo | A relevar | Baja | Alta |
+| 10 | Reclamos de mantenimiento | Sí, acá mismo | Buena | Baja | Alta |
 
-**Sobre la 2:** es la única que sobrevive teniendo competencia alta. Se sostiene
-porque la evidencia del sector es contundente y porque el segmento al que apunta
-—el kiosco chico que hoy no paga ningún sistema— está desatendido justamente por
-precio. Ese argumento hay que poder defenderlo en el pitch.
+La 2 es la única que sobrevive teniendo competencia alta: se sostiene porque
+la evidencia del sector es contundente y el segmento al que apunta, el
+kiosco chico que hoy no paga ningún sistema, está desatendido por precio.
+Ese argumento hay que poder defenderlo en el pitch.
 
-**Recomendación:** sostener la **1 (estética)** como principal. Es un ejercicio
-sobre un caso **imaginario** (Bella Piel no existe): no hay relevamiento real
-posible ni entrevista que hacer, así que los datos de partida se inventan a
-propósito por el equipo y se presentan como tales — es la decisión que ya se
-tomó con la cátedra al plantear el proyecto así. La **9** queda igual anotada
-como alternativa que sí tendría relevamiento real disponible, si en algún
-momento se decide cambiar de enfoque.
+Recomendación: sostener la 1 (estética) como principal. Es un ejercicio sobre
+un caso imaginario, Bella Piel no existe, así que no hay relevamiento real
+posible ni entrevista que hacer: los datos de partida se inventan a
+propósito por el equipo y se presentan como tales, que es la decisión que ya
+se tomó con la cátedra al plantear el proyecto así. La 9 queda anotada como
+alternativa que sí tendría relevamiento real disponible, si en algún momento
+se decide cambiar de enfoque.
 
-**Lo que hay que hacer ahora, en este orden:**
+Lo que sigue, en orden:
 
-1. Terminar de definir los datos de partida de la propuesta elegida (ya
-   hecho, ver "Datos del centro" arriba).
-2. Con esos números, escribir el Árbol de Problemas y los indicadores de la
-   MML (ya hecho, ver `docs/01-arbol-de-problemas.md` y
-   `docs/03-matriz-marco-logico.md`).
-3. Definir roles del equipo y avanzar con el resto de la Carpeta de Proyecto.
+1. Datos de partida de la propuesta elegida (hecho, ver "Datos del centro"
+   arriba.
+2. Árbol de Problemas e indicadores de la MML sobre esos números (hecho, ver
+   `docs/01-arbol-de-problemas.md` y `docs/03-matriz-marco-logico.md`).
+3. Roles del equipo y el resto de la Carpeta de Proyecto.
 
 ---
 
@@ -392,10 +384,9 @@ Se mantienen registradas como evidencia del proceso de selección.
 | 4 | Comparador de precios de hardware | Ya existe idéntico y gratuito: HardGamers, con historial de precios y funcionando hoy. Además exige scraping de terceros, que es frágil y de legalidad dudosa |
 | 6 | Gestor de gastos compartidos | Sin ningún dato público citable, y Splitwise resuelve exactamente lo mismo desde hace años. El alcance además es demasiado chico para sostener un bimestre |
 | 7 | Menú digital para comedores | Sin datos públicos aplicables. En su versión básica es una cartelera digital; el único ángulo con sustancia (reducir desperdicio ajustando producción a demanda) exigía reformular el problema entero |
-| 8 | Entradas con código QR | Tiene buena evidencia, pero el mercado está muy cubierto por plataformas comerciales y gratuitas. El nicho defendible —evento chico autogestionado— es demasiado estrecho para justificar el desarrollo frente a las alternativas existentes |
+| 8 | Entradas con código QR | Tiene buena evidencia, pero el mercado está muy cubierto por plataformas comerciales y gratuitas. El nicho defendible, evento chico autogestionado, es demasiado estrecho para justificar el desarrollo frente a las alternativas existentes |
 
-**La más discutible de las cinco es la 8**: la evidencia de fraude es sólida y la
-solución es demostrable. Si el equipo consigue un evento concreto donde relevar
-(una fiesta escolar, un torneo de club), puede reabrirse. Se descarta por
-competencia, no por falta de problema.
-
+La más discutible de las cinco es la 8: la evidencia de fraude es sólida y la
+solución es demostrable. Si el equipo consigue un evento concreto donde
+relevar (una fiesta escolar, un torneo de club), puede reabrirse. Se descarta
+por competencia, no por falta de problema.

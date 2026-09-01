@@ -1,38 +1,40 @@
 # Árbol de Problemas
 
-Diagnóstico de la problemática elegida: **Propuesta 1 — Aplicación web para
-centro de estética integral** (ver `docs/propuestas.md`, comparación de las
+Diagnóstico de la problemática elegida: Propuesta 1, aplicación web para
+centro de estética integral (ver `docs/propuestas.md`, comparación de las
 cinco propuestas en carrera).
 
-> **Bella Piel es un caso imaginario.** No hay relevamiento real ni entrevista
-> posible; los datos de partida los inventa el equipo a propósito. El ejercicio
-> es armar la Carpeta de Proyecto completa igual, con la misma disciplina
-> metodológica que si el caso fuera real.
+Bella Piel es un caso imaginario. No hay relevamiento real ni entrevista
+posible; los datos de partida los inventa el equipo a propósito. El
+ejercicio es armar la Carpeta de Proyecto completa igual, con la misma
+disciplina metodológica que si el caso fuera real.
 
 ## Contexto y actores
 
-- **Problemática:** la gestión de turnos y consultas de **Bella Piel — Centro
-  de Estética Integral**, barrio de Flores, CABA, a 2026.
-- **Grupos a considerar** (según la cátedra, no alcanza con pensar solo desde
-  el equipo — aunque acá se imaginan, no se relevan):
-  - **Beneficiarios directos:** el dueño del centro (menos carga operativa).
-  - **Beneficiarios indirectos:** clientas y clientes actuales y potenciales
-    (respuestas más rápidas, menos superposición de turnos).
-  - **Posibles detractores:** clientas que hoy prefieren el trato directo por
-    WhatsApp y podrían resistirse a un sistema con seña obligatoria (riesgo ya
-    anotado en `propuestas.md`).
-  - **Ejecutores:** el equipo del proyecto.
+La problemática es la gestión de turnos y consultas de Bella Piel — Centro
+de Estética Integral, barrio de Flores, CABA, a 2026.
+
+Grupos a considerar (según la cátedra, no alcanza con pensar solo desde el
+equipo, aunque acá se imaginan en vez de relevarse):
+
+- Beneficiarios directos: el dueño del centro (menos carga operativa).
+- Beneficiarios indirectos: clientas y clientes actuales y potenciales
+  (respuestas más rápidas, menos superposición de turnos).
+- Posibles detractores: clientas que hoy prefieren el trato directo por
+  WhatsApp y podrían resistirse a un sistema con seña obligatoria (riesgo ya
+  anotado en `propuestas.md`).
+- Ejecutores: el equipo del proyecto.
 
 ## Problema central
 
-> **La gestión de turnos y consultas del centro de estética depende de la
-> atención manual del dueño por WhatsApp, lo que consume horas de trabajo,
-> produce superposiciones y turnos perdidos, y demora las respuestas a quienes
-> consultan** (Bella Piel, barrio de Flores, CABA, a 2026).
+La gestión de turnos y consultas del centro de estética depende de la
+atención manual del dueño por WhatsApp, lo que consume horas de trabajo,
+produce superposiciones y turnos perdidos, y demora las respuestas a quienes
+consultan (Bella Piel, barrio de Flores, CABA, a 2026).
 
-No es "no hay una app de turnos" (columna izquierda de la tabla mal/bien
-formulado) — es la carga operativa y la pérdida de turnos que ya existen hoy,
-con o sin sistema.
+No es "no hay una app de turnos" (la columna mal formulada de la tabla del
+skill): es la carga operativa y la pérdida de turnos que ya existen hoy, con
+o sin sistema.
 
 ## Diagrama
 
@@ -97,16 +99,17 @@ flowchart TB
 
 ## Verificación de la lógica causal
 
-Leído de corrido: *"Como WhatsApp no está integrado con ninguna agenda (C1.1),
+Leído de corrido: como WhatsApp no está integrado con ninguna agenda (C1.1),
 no hay disponibilidad visible en tiempo real (C1); eso hace que la gestión de
 turnos dependa de la atención manual del dueño (problema central); y por eso
 el dueño pierde horas respondiendo y se pierden turnos por superposición
-(E1, E2), lo que reduce la rentabilidad del negocio (E4)."* Se sostiene leída
-en voz alta — cumple la regla de la cátedra.
+(E1, E2), lo que reduce la rentabilidad del negocio (E4). Se sostiene leída
+en voz alta, que es la regla de la cátedra.
 
 ## Qué causas se atacan con software y cuáles quedan fuera
 
-**Se atacan con el sistema (justifican la propuesta):**
+Se atacan con el sistema, y justifican la propuesta:
+
 - C1 / C1.1 → módulo de reserva con disponibilidad en vivo + sincronización a
   Google Calendar.
 - C2 / C2.1 → asistente virtual restringido por RAG a precios y protocolos.
@@ -114,9 +117,9 @@ en voz alta — cumple la regla de la cátedra.
 - C4 / C4.1 → recordatorio automático (a definir si por WhatsApp o el propio
   sistema).
 
-**Quedan fuera de alcance de este bimestre** (ya anotado en `propuestas.md`):
-historia clínica de tratamientos, gestión de stock de insumos, liquidación de
-comisiones, app nativa. No se programa nada: se formula y se diseña.
+Quedan fuera de alcance de este bimestre (ya anotado en `propuestas.md`):
+historia clínica de tratamientos, gestión de stock de insumos, liquidación
+de comisiones, app nativa. No se programa nada: se formula y se diseña.
 
 ## Qué falta
 

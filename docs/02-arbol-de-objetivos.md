@@ -4,18 +4,18 @@ Espejo en positivo del Árbol de Problemas (`docs/01-arbol-de-problemas.md`),
 construido con la tabla de conversión de `.claude/skills/arbol-de-objetivos/SKILL.md`:
 efectos → fines, problema central → objetivo central, causas directas →
 objetivos específicos, causas raíz → medios. También está armado en post-its
-en el board de Miro **"Proyecto informático 1"**, al lado del Árbol de
+en el board de Miro "Proyecto informático 1", al lado del Árbol de
 Problemas.
 
 ## Objetivo central
 
-> **Facilitar la gestión de turnos y consultas de Bella Piel — Centro de
-> Estética Integral mediante un sistema que automatice la reserva, el cobro de
-> seña y las respuestas frecuentes, liberando el tiempo del dueño y reduciendo
-> los turnos perdidos** (barrio de Flores, CABA, a 2026).
+Facilitar la gestión de turnos y consultas de Bella Piel — Centro de
+Estética Integral mediante un sistema que automatice la reserva, el cobro de
+seña y las respuestas frecuentes, liberando el tiempo del dueño y reduciendo
+los turnos perdidos (barrio de Flores, CABA, a 2026).
 
 Es el mismo problema central del árbol anterior, reescrito en infinitivo y en
-positivo — no es un objetivo distinto, es su conversión directa.
+positivo: no es un objetivo distinto, es su conversión directa.
 
 ## Diagrama
 
@@ -75,18 +75,18 @@ flowchart TB
 
 ## Adónde va cada nodo en la MML
 
-Según la tabla del skill: los **objetivos específicos (OE1-OE4)** son los
-candidatos a **Componentes**, los **medios (M1-M4)** son las **Actividades**
-que producen cada componente, y los **fines directos (F1-F3)** son el **Fin**
-de la matriz — el objetivo central es el **Propósito**.
+Según la tabla del skill: los objetivos específicos (OE1-OE4) son los
+candidatos a Componentes, los medios (M1-M4) son las Actividades que
+producen cada componente, y los fines directos (F1-F3) son el Fin de la
+matriz. El objetivo central es el Propósito.
 
 ## Verificación de la lógica
 
-Leído de corrido: *"Si se integra WhatsApp con una agenda digital (M1), se
+Leído de corrido: si se integra WhatsApp con una agenda digital (M1), se
 puede contar con disponibilidad de horarios en tiempo real (OE1); eso
 contribuye a facilitar la gestión de turnos y consultas (objetivo central);
 lo que libera tiempo del dueño y elimina la pérdida de turnos (F1, F2), y en
-conjunto aumenta la rentabilidad del negocio (F4)."* Se sostiene leída en voz
+conjunto aumenta la rentabilidad del negocio (F4). Se sostiene leída en voz
 alta.
 
 ## Qué falta

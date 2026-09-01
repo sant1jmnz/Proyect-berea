@@ -17,9 +17,16 @@ elegir una** con criterio, no por simpatía.
     pide relevamiento propio y la rúbrica evalúa el diagnóstico: un dato
     nacional no reemplaza medir el caso concreto.
 
-> **Regla que no se negocia:** ninguna cifra `[RELEVAR]` se completa a ojo. Si no
-> la medimos, no va. Un indicador inventado invalida toda la Matriz de Marco
-> Lógico que se apoye en él.
+> **Regla original del equipo:** ninguna cifra `[RELEVAR]` se completa a ojo. Si
+> no la medimos, no va — un indicador inventado invalida toda la Matriz de
+> Marco Lógico que se apoye en él.
+>
+> **Excepción aplicada en la Propuesta 1:** para no bloquear el avance del
+> Árbol de Objetivos y la MML, el equipo decidió completar sus `[RELEVAR]` con
+> cifras **`[ESTIMADO]`**, inventadas a propósito y marcadas como tales — no
+> son relevamiento propio. Se reemplazan por el dato real apenas se haga la
+> entrevista con el dueño; hasta entonces, cualquier indicador que dependa de
+> ellas es provisorio.
 
 ---
 
@@ -75,16 +82,17 @@ pérdida de turnos que hoy existen.
   Sirve como referencia para fijar la meta del indicador, no como resultado
   propio.
 
-**A relevar con el dueño**
+**A relevar con el dueño — hoy con datos `[ESTIMADO]` inventados por el
+equipo, no medidos, para poder avanzar el árbol y la MML. Se reemplazan por el
+dato real apenas se haga la entrevista.**
 
-- `[RELEVAR]` Cuántas consultas por WhatsApp recibe por día y qué proporción son
+- `[ESTIMADO]` 25 consultas por WhatsApp por día, de las cuales ≈70% (18) son
   repetidas (precios, horarios, "¿qué incluye el tratamiento?").
-- `[RELEVAR]` Cuántos minutos por día dedica a responderlas. **Es la línea de
+- `[ESTIMADO]` 95 minutos por día dedicados a responderlas. **Es la línea de
   base del indicador principal.**
-- `[RELEVAR]` Cuántos turnos por semana se pierden por inasistencia y cuánto
-  representa en dinero.
-- `[RELEVAR]` Cuántas veces por mes se superponen dos turnos.
-- `[RELEVAR]` Cuántas personas consultan y no reservan, y por qué.
+- `[ESTIMADO]` 6 turnos por semana perdidos por inasistencia, ≈ $48.000/semana.
+- `[ESTIMADO]` 5 superposiciones de turno por mes.
+- `[ESTIMADO]` No se releva todavía cuántas personas consultan y no reservan.
 
 ### Qué hace el sistema
 
@@ -106,17 +114,18 @@ diseña.
 
 | Indicador | Meta | Línea de base |
 |---|---|---|
-| Tiempo diario de atención manual de consultas | Reducción del 60% | `[RELEVAR]` min/día actuales |
-| Turnos perdidos por inasistencia | Reducción del 50% | `[RELEVAR]` turnos/semana |
-| Superposiciones de agenda | 0 por mes | `[RELEVAR]` casos/mes |
+| Tiempo diario de atención manual de consultas | Reducción del 60% | `[ESTIMADO]` 95 min/día |
+| Turnos perdidos por inasistencia | Reducción del 50% | `[ESTIMADO]` 6 turnos/semana |
+| Superposiciones de agenda | 0 por mes | `[ESTIMADO]` 5 casos/mes |
 | Consultas resueltas sin intervención humana | ≥ 70% | 0% (hoy todo es manual) |
 
 ### Riesgos
 
 - **Adopción:** que las clientas sigan escribiendo por WhatsApp igual. Mitigación:
   responder desde WhatsApp con el enlace de reserva.
-- **Resistencia a la seña:** puede espantar clientes nuevos. `[RELEVAR]` qué opina
-  el dueño y qué hacen los competidores de la zona.
+- **Resistencia a la seña:** puede espantar clientes nuevos. `[ESTIMADO]` el
+  dueño estima que ≈10% de clientas nuevas podría dudar; falta relevar qué
+  hacen los competidores de la zona.
 - **Dependencia de terceros:** si cambian las condiciones de las APIs de Google o
   de Gemini, se cae una parte del sistema.
 - **Datos personales:** fotos de "antes y después" son dato sensible; requieren

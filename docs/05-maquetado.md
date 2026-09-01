@@ -1,14 +1,14 @@
 # Maquetado
 
 Wireframes de media fidelidad de la Propuesta 1 (Bella Piel), armados en
-Figma: **https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled**.
-Cada pantalla está rotulada con los RF que cubre (`docs/04-requerimientos.md`)
+Figma: https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled. Cada
+pantalla está rotulada con los RF que cubre (`docs/04-requerimientos.md`)
 directamente en el nombre del frame en Figma, y acá abajo con el enlace al
 nodo puntual.
 
-> Nota: no hay capturas en `docs/assets/` — `figma.com` está bloqueado para
-> descarga directa en este entorno de trabajo. El enlace a cada pantalla en
-> Figma reemplaza la captura; cualquiera con acceso al archivo la ve ahí.
+No hay capturas en `docs/assets/`: `figma.com` está bloqueado para descarga
+directa en este entorno de trabajo. El enlace a cada pantalla en Figma
+reemplaza la captura; cualquiera con acceso al archivo la ve ahí.
 
 ## User flow
 
@@ -25,9 +25,9 @@ flowchart LR
 
 La clienta entra por "Elegir servicio" (o por el asistente virtual si tiene
 una duda antes de reservar) y sale con un turno confirmado y visible en "Mis
-Turnos". El asistente es un camino paralelo, no un paso obligatorio del flujo
-principal — puede resolver la consulta o derivar a WhatsApp sin cortar la
-reserva.
+Turnos". El asistente es un camino paralelo, no un paso obligatorio del
+flujo principal: puede resolver la consulta o derivar a WhatsApp sin cortar
+la reserva.
 
 ## Pantalla → RF cubiertos
 
@@ -39,26 +39,26 @@ reserva.
 | 4 — Asistente virtual | RF-04, RF-05 | [nodo 8:30](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=8-30) |
 | 5 — Mis Turnos | RF-09, RF-08 (recordatorio, visible como aviso en la tarjeta) | [nodo 10:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=10-2) |
 
-**RF-02** (sincronización con Google Calendar) y **RF-10** (vitrina) no tienen
-pantalla propia todavía: RF-02 es una integración de backend sin UI dedicada;
-RF-10 es *Could* y queda para una siguiente iteración del maquetado si da el
-tiempo del bimestre.
+RF-02 (sincronización con Google Calendar) y RF-10 (vitrina) no tienen
+pantalla propia todavía: RF-02 es una integración de backend sin UI
+dedicada; RF-10 es Could y queda para una siguiente iteración del maquetado
+si da el tiempo del bimestre.
 
 ## Justificación de las decisiones de diseño
 
-- **3 pasos separados (servicio → horario → confirmación) en vez de un solo
-  formulario largo:** reduce la carga cognitiva y deja avanzar solo cuando el
-  paso anterior está resuelto — ataca directamente C1/C2 del Árbol de
+- 3 pasos separados (servicio → horario → confirmación) en vez de un solo
+  formulario largo: reduce la carga cognitiva y deja avanzar solo cuando el
+  paso anterior está resuelto, atacando directamente C1/C2 del Árbol de
   Problemas (decisiones a medias por WhatsApp, sin estructura).
-- **La seña es su propia tarjeta separada del resumen del turno**, no un
+- La seña tiene su propia tarjeta, separada del resumen del turno, no es un
   campo más: la evidencia de `propuestas.md` dice que puede generar
-  resistencia, así que se explica antes de pedir el pago (monto + qué pasa
+  resistencia, así que se explica antes de pedir el pago (monto y qué pasa
   con ese dinero), en vez de aparecer como un cargo sorpresa.
-- **El asistente virtual muestra de dónde sale cada respuesta** ("Base de
-  precios y protocolos" / derivación a WhatsApp): así la clienta distingue
-  una respuesta automática confiable de una que necesita al dueño — evita que
-  el asistente parezca prometer algo que no puede cumplir.
-- **"Mis Turnos" no pide contraseña**, solo el enlace mágico: es un
+- El asistente virtual muestra de dónde sale cada respuesta ("Base de
+  precios y protocolos" o derivación a WhatsApp), así la clienta distingue
+  una respuesta automática confiable de una que necesita al dueño, y el
+  asistente no parece prometer algo que no puede cumplir.
+- "Mis Turnos" no pide contraseña, solo el enlace mágico: es un
   requerimiento explícito (RF-09) para no agregar fricción a una clienta que
   reserva una vez cada tanto.
 

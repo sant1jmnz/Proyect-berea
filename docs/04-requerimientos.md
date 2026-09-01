@@ -19,11 +19,10 @@ acá que no venga de R1-R4.
 | RF-09 | ...a la clienta ver y cancelar sus turnos reservados mediante un enlace mágico, sin registro ni contraseña. | R1 | Should |
 | RF-10 | ...mostrar una vitrina de fotos antes/después y reseñas de Google Maps, para atraer clientes potenciales. | — (fuera de R1-R4, ver "Vitrina" en `docs/propuestas.md`) | Could |
 
-**Sobre las prioridades:** RF-01 a RF-06 y RF-08 son *Must* porque atacan
-directamente las cuatro causas del Árbol de Problemas (C1-C4). RF-07 y RF-09
-son *Should*: mejoran la experiencia pero el sistema funciona sin ellos. RF-10
-es *Could* — ya estaba marcado como módulo "deseable" en `propuestas.md`, no
-"núcleo".
+RF-01 a RF-06 y RF-08 son Must porque atacan directamente las cuatro causas
+del Árbol de Problemas (C1-C4). RF-07 y RF-09 son Should: mejoran la
+experiencia pero el sistema funciona sin ellos. RF-10 es Could, ya estaba
+marcado como módulo "deseable" en `propuestas.md`, no "núcleo".
 
 ## Requerimientos no funcionales
 
@@ -94,14 +93,14 @@ Criterios de aceptación:
 
 ## Backlog inicial
 
-Se pasa a Trello/GitHub Projects con etiquetas **Must / Should / Could** según
-la tabla de RF de arriba. Orden sugerido para el maquetado (`docs/05-maquetado.md`):
-primero las pantallas de los RF *Must* (reserva, asistente, seña, recordatorio),
+Se pasa a Trello/GitHub Projects con etiquetas Must / Should / Could según la
+tabla de RF de arriba. Orden sugerido para el maquetado (`docs/05-maquetado.md`):
+primero las pantallas de los RF Must (reserva, asistente, seña, recordatorio),
 después "Mis Turnos" y por último la vitrina.
 
 ## Qué falta
 
-- Definir con el dueño el monto exacto de la seña y su política de devolución
-  (RF-07) — hoy es una decisión de diseño pendiente.
+- Definir con el dueño el monto exacto de la seña y su política de
+  devolución (RF-07): hoy es una decisión de diseño pendiente.
 - Con esto cerrado, pasar a `docs/05-maquetado.md`: cada pantalla del wireframe
   se justifica contra uno o más RF de esta tabla.

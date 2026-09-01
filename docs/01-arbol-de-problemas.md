@@ -4,14 +4,17 @@ Diagnóstico de la problemática elegida: **Propuesta 1 — Aplicación web para
 centro de estética integral** (ver `docs/propuestas.md`, comparación de las
 cinco propuestas en carrera).
 
-## Contexto y actores relevados
+> **Bella Piel es un caso imaginario.** No hay relevamiento real ni entrevista
+> posible; los datos de partida los inventa el equipo a propósito. El ejercicio
+> es armar la Carpeta de Proyecto completa igual, con la misma disciplina
+> metodológica que si el caso fuera real.
+
+## Contexto y actores
 
 - **Problemática:** la gestión de turnos y consultas de **Bella Piel — Centro
   de Estética Integral**, barrio de Flores, CABA, a 2026.
-- **Involucrados consultados:** el dueño del centro, entrevistado por el
-  equipo.
-- **Grupos a considerar cuando se releve** (según la cátedra, no alcanza con
-  el equipo solo):
+- **Grupos a considerar** (según la cátedra, no alcanza con pensar solo desde
+  el equipo — aunque acá se imaginan, no se relevan):
   - **Beneficiarios directos:** el dueño del centro (menos carga operativa).
   - **Beneficiarios indirectos:** clientas y clientes actuales y potenciales
     (respuestas más rápidas, menos superposición de turnos).

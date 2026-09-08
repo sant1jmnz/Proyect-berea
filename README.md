@@ -18,6 +18,13 @@ a propósito para poder recorrer toda la metodología (Árbol de Problemas,
 disciplina que exigiría un caso real, sin depender de un relevamiento que
 no era posible hacer en el tiempo del bimestre.
 
+## Stack técnico
+
+Backend en **C** con **SQL Server**, frontend en **HTML**. Sin
+integraciones por API externa: donde una versión real usaría un tercero
+(pasarela de pago, calendario, un modelo de lenguaje), el sistema
+implementa un mock propio — el detalle está en `docs/04-requerimientos.md`.
+
 ## Equipo
 
 | Integrante | Rol |
@@ -49,8 +56,9 @@ cierre del bimestre:
 
 - Revisión cruzada (peer review) del maquetado y de los árboles con otro
   equipo — todavía no se hizo ninguna de las dos.
-- Aplicar en Figma las decisiones de diseño cerradas en `docs/05-maquetado.md`
-  (RF-02, RF-10, enlace de ayuda).
+- Aplicar en Figma los cambios de esta semana: agenda propia y buscador de
+  FAQ en vez de Google Calendar/asistente con IA, seña simulada en vez de
+  Mercado Pago, RF-10 fuera de alcance, enlace de ayuda en el header.
 - Ensayar y cronometrar el pitch con los 4 integrantes.
 
 El detalle semana a semana está en `docs/bitacora.md`.

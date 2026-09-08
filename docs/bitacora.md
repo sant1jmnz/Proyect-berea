@@ -168,3 +168,38 @@ sumó lo suyo, que sí era nuevo:
 Se reflejó también en `docs/05-maquetado.md`: RNF-09 en la Pantalla 4
 (asistente), RNF-10 como parte del mismo aviso de sincronización de la
 Pantalla 3.
+
+---
+
+## Restricción técnica: C + SQL Server, sin APIs
+
+Definición de equipo: el backend se hace en C con SQL Server, el frontend
+en HTML, sin integraciones por API externa. Cambia todo lo que dependía de
+un tercero:
+
+- Cobro de seña: ya no es Mercado Pago, es un mock — el sistema simula el
+  pago y registra el estado, sin procesar dinero real.
+- Disponibilidad: ya no se sincroniza con Google Calendar, el dueño carga
+  su agenda directo en el sistema (SQL Server).
+- Buscador de precios/protocolos: ya no es un asistente con Gemini/RAG, es
+  una búsqueda por palabra clave contra una tabla propia.
+- Recordatorio de turno: ya no se envía por WhatsApp/email, se genera
+  dentro del sistema, visible en "Mis Turnos".
+
+Se actualizó toda la cadena para que siga cerrando: `01-arbol-de-problemas.md`
+(qué ataca cada causa), `03-matriz-marco-logico.md` (Componentes y
+Actividades), `04-requerimientos.md` (RF-02/04/05/06/08, RNF-04/09, se
+sacó RNF-10 porque ya no hay sincronización externa que pueda fallar, se
+sumó un RNF-10 nuevo sobre la restricción de stack), `05-maquetado.md`
+(nombres de pantalla, justificaciones, heurísticas) y `06-pitch.md`
+(bloques Propuesta/Demostración/Viabilidad y una pregunta anticipada
+nueva sobre por qué todo está mockeado). También `propuestas.md`, para no
+dejar el relevamiento original desactualizado.
+
+Qué falta:
+
+- Aplicar todo esto en el archivo de Figma — hoy está cerrado en los
+  documentos, no en el maquetado visual.
+- Diseñar el panel de administración del dueño (RF-02, cargar
+  disponibilidad): no tiene pantalla en este maquetado, que es todo flujo
+  de clienta.

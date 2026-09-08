@@ -110,12 +110,19 @@ en voz alta, que es la regla de la cátedra.
 
 Se atacan con el sistema, y justifican la propuesta:
 
-- C1 / C1.1 → módulo de reserva con disponibilidad en vivo + sincronización a
-  Google Calendar.
-- C2 / C2.1 → asistente virtual restringido por RAG a precios y protocolos.
-- C3 / C3.1 → cobro de seña integrado con Mercado Pago.
-- C4 / C4.1 → recordatorio automático (a definir si por WhatsApp o el propio
-  sistema).
+- C1 / C1.1 → módulo de reserva con agenda propia del dueño, cargada directo
+  en el sistema (sin sincronizar con ningún calendario externo).
+- C2 / C2.1 → buscador de preguntas frecuentes por palabra clave sobre
+  precios y protocolos, contra una base propia.
+- C3 / C3.1 → cobro de seña simulado (mock): el sistema registra el estado
+  de pago, sin procesar dinero real.
+- C4 / C4.1 → recordatorio de turno simulado, visible dentro del sistema.
+
+**Restricción técnica del equipo**: backend en C con SQL Server, frontend en
+HTML, sin ninguna integración por API externa. Todo lo que en una versión
+real sería una integración con un tercero (pasarela de pago, calendario,
+inteligencia artificial) queda simulado (mock) dentro del propio sistema —
+no hay Mercado Pago, Google Calendar ni un modelo de lenguaje conectado.
 
 Quedan fuera de alcance de este bimestre (ya anotado en `propuestas.md`):
 historia clínica de tratamientos, gestión de stock de insumos, liquidación

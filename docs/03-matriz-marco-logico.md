@@ -6,39 +6,58 @@ El Fin y el Propósito vienen directo de `docs/02-arbol-de-objetivos.md`
 específicos OE1-OE4; las Actividades, de los medios M1-M4. Es la misma
 cadena, pasada a formato de matriz.
 
+**Restricción técnica**: backend en C con SQL Server, frontend en HTML, sin
+integraciones por API externa. Cada Componente que antes dependía de un
+tercero (pasarela de pago, calendario, IA) queda mockeado dentro del propio
+sistema — se explica en el detalle de cada uno.
+
 ## La matriz
 
 | Nivel | Resumen narrativo | Indicadores (IOV) | Medios de verificación | Supuestos |
 |---|---|---|---|---|
 | Fin | Contribuir al crecimiento y sostenibilidad del negocio de Bella Piel, mejorando su capacidad de atender y retener clientas frente a la competencia de la zona. | Aumento de la facturación mensual de Bella Piel. Sin meta numérica para este bimestre: es impacto de largo plazo, no se logra apenas el sistema entra en uso. | Comparación de facturación mensual del centro, a evaluar en bimestres posteriores. | El sector de estética de la zona mantiene condiciones de demanda estables. Riesgo medio: el rubro es sensible al consumo. |
-| Propósito | El uso del sistema de reserva, cobro de seña, recordatorios y respuestas automatizadas reduce la carga operativa del dueño y la pérdida de turnos de Bella Piel. Redactado como hipótesis: que esto ocurra depende también de que las clientas adopten el canal, no solo de que el equipo entregue el sistema. | Reducción del 60% en el tiempo diario de atención manual (de 95 a 38 min/día). Reducción del 50% en turnos perdidos por inasistencia (de 6 a 3/semana). 0 superposiciones de agenda por mes (de 5 actuales). ≥ 70% de consultas resueltas sin intervención humana. Todos medidos a las 4 semanas de uso del sistema. | Panel de reportes del sistema (turnos, consultas resueltas por el asistente) y encuesta breve al dueño antes/después. | El dueño adopta el sistema como canal principal de reservas y deja de gestionar turnos por WhatsApp en paralelo. Riesgo alto: es la condición de la que depende todo lo demás. |
-| Componentes | R1. Módulo de reserva con disponibilidad en tiempo real implementado y en uso. | 0 superposiciones de turno por mes, medido las 4 semanas posteriores al lanzamiento (línea de base: 5/mes). | Registro de reservas del sistema (logs de agenda). | El dueño mantiene su disponibilidad real actualizada en el sistema. Riesgo medio. |
-| | R2. Asistente virtual de respuestas frecuentes (RAG sobre precios y protocolos) implementado y en uso. | Reducción del tiempo diario de atención manual de 95 a 38 minutos (-60%) a las 4 semanas de uso. | Encuesta breve al dueño, antes/después, sobre minutos dedicados a WhatsApp. | Las clientas usan el asistente en vez de escribir directo al dueño. Riesgo alto; mitigación: responder desde WhatsApp con el enlace al asistente. |
-| | R3. Cobro de seña integrado con Mercado Pago implementado y en uso. | Reducción de turnos perdidos por inasistencia de 6 a 3 por semana (-50%) a las 4 semanas de uso. | Registro de asistencias/inasistencias del sistema. | Las clientas aceptan pagar la seña al reservar. Riesgo medio: ≈10% de clientas nuevas podría dudar. |
-| | R4. Recordatorio automático de turno implementado y en uso. | ≥ 70% de los turnos con recordatorio enviado y confirmado antes de la fecha, a las 4 semanas de uso. | Logs de envío y confirmación del sistema. | El canal de envío (WhatsApp/email) está disponible de forma estable. Riesgo bajo. |
+| Propósito | El uso del sistema de reserva, cobro de seña, recordatorios y respuestas automatizadas reduce la carga operativa del dueño y la pérdida de turnos de Bella Piel. Redactado como hipótesis: que esto ocurra depende también de que las clientas adopten el canal, no solo de que el equipo entregue el sistema. | Reducción del 60% en el tiempo diario de atención manual (de 95 a 38 min/día). Reducción del 50% en turnos perdidos por inasistencia (de 6 a 3/semana). 0 superposiciones de agenda por mes (de 5 actuales). ≥ 70% de consultas resueltas sin intervención humana. Todos medidos a las 4 semanas de uso del sistema. | Panel de reportes del sistema (turnos, consultas resueltas por el buscador) y encuesta breve al dueño antes/después. | El dueño adopta el sistema como canal principal de reservas y deja de gestionar turnos por WhatsApp en paralelo. Riesgo alto: es la condición de la que depende todo lo demás. |
+| Componentes | R1. Módulo de reserva con agenda propia (SQL Server) implementado y en uso, sin sincronización externa. | 0 superposiciones de turno por mes, medido las 4 semanas posteriores al lanzamiento (línea de base: 5/mes). | Registro de reservas del sistema (logs de agenda). | El dueño mantiene su disponibilidad real actualizada en el sistema. Riesgo medio. |
+| | R2. Buscador de preguntas frecuentes por palabra clave (precios y protocolos, contra una base propia) implementado y en uso. | Reducción del tiempo diario de atención manual de 95 a 38 minutos (-60%) a las 4 semanas de uso. | Encuesta breve al dueño, antes/después, sobre minutos dedicados a WhatsApp. | Las clientas usan el buscador en vez de escribir directo al dueño. Riesgo alto; mitigación: responder desde WhatsApp con el enlace al buscador. |
+| | R3. Cobro de seña simulado (mock, sin pasarela de pago real) implementado y en uso. | Reducción de turnos perdidos por inasistencia de 6 a 3 por semana (-50%) a las 4 semanas de uso. | Registro de asistencias/inasistencias del sistema. | Las clientas aceptan pagar la seña al reservar. Riesgo medio: ≈10% de clientas nuevas podría dudar. |
+| | R4. Recordatorio de turno simulado (visible en el sistema, sin envío real por WhatsApp/email) implementado y en uso. | ≥ 70% de los turnos con recordatorio generado y confirmado antes de la fecha, a las 4 semanas de uso. | Logs de recordatorios del sistema. | La clienta revisa "Mis Turnos" con la frecuencia suficiente para ver el recordatorio. Riesgo medio: al no ser un envío real, depende de que la clienta vuelva a entrar. |
 | Actividades | Ver detalle por componente abajo. No se listan las 40 tareas acá: la MML se queda con las principales. | — | — | — |
 
 ## Detalle de actividades por componente
 
-R1, módulo de reserva con disponibilidad en tiempo real:
-- A.1.1 Diseñar la grilla de disponibilidad en tiempo real.
-- A.1.2 Integrar el calendario del sistema con el Google Calendar del dueño.
+R1, módulo de reserva con agenda propia:
+- A.1.1 Diseñar la grilla de disponibilidad en tiempo real, contra la tabla
+  de agenda del dueño en SQL Server.
+- A.1.2 Implementar en el sistema la carga y edición de disponibilidad del
+  dueño — no hay integración con Google Calendar ni ningún calendario
+  externo, la agenda vive solo en el sistema.
 
-R2, asistente virtual de respuestas frecuentes:
-- A.2.1 Armar la base de precios y protocolos que usa el asistente.
-- A.2.2 Configurar el asistente con Gemini 2.5 Flash restringido por RAG a esa base.
-- A.2.3 Definir el punto de derivación a WhatsApp del dueño cuando el asistente no puede responder.
+R2, buscador de preguntas frecuentes:
+- A.2.1 Armar la base de precios y protocolos que usa el buscador (tabla en
+  SQL Server, cargada y editable por el dueño).
+- A.2.2 Implementar en C el motor de búsqueda por palabra clave contra esa
+  base — no hay modelo de lenguaje ni servicio de IA conectado.
+- A.2.3 Definir el punto de derivación a WhatsApp del dueño (un enlace
+  `wa.me`, no un envío automático) cuando el buscador no encuentra
+  coincidencia.
 
-R3, cobro de seña integrado con Mercado Pago:
-- A.3.1 Integrar Mercado Pago al flujo de reserva.
+R3, cobro de seña simulado (mock):
+- A.3.1 Implementar en el sistema un flujo de pago simulado: la clienta
+  confirma el pago, el sistema registra el estado como pagado, sin
+  procesar dinero real ni conectarse a ninguna pasarela.
 - A.3.2 Seña del 30% del valor del servicio (mínimo $5.000); reembolsable
   100% si se cancela con más de 24 h de anticipación, no reembolsable por
   debajo de ese plazo o por inasistencia. Decisión de equipo, no dato
-  relevado: no hay un dueño real de Bella Piel a quien consultarle.
+  relevado: no hay un dueño real de Bella Piel a quien consultarle. Como
+  todo el cobro es mock, el "reembolso" también es un cambio de estado en
+  el sistema, no una devolución de dinero real.
 
-R4, recordatorio automático de turno:
-- A.4.1 Configurar el envío automático de recordatorio antes del turno.
-- A.4.2 Definir el canal de envío (WhatsApp o el propio sistema) y el tiempo de anticipación.
+R4, recordatorio de turno simulado:
+- A.4.1 Generar el recordatorio dentro del sistema (visible en "Mis
+  Turnos") con la anticipación configurada — no hay envío real por
+  WhatsApp ni email, sería una integración externa.
+- A.4.2 Definir el tiempo de anticipación con el que se genera el
+  recordatorio.
 
 ## Chequeo de cierre
 

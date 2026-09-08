@@ -152,6 +152,55 @@ Qué falta, acotado a cerrar hasta semana 6 en serio:
 
 ---
 
+## Restricción de stack: C + SQL Server, sin APIs
+
+El equipo definió que el desarrollo del bimestre siguiente va a ser todo en
+C con SQL Server (backend) y HTML (frontend), sin ninguna integración por
+API externa. Eso tocaba directo a tres de los cuatro Componentes de la MML,
+que dependían de Mercado Pago, Google Calendar y un modelo de lenguaje
+(Gemini/RAG). Se resolvió mockeando cada uno dentro del propio sistema:
+
+- R1: la sincronización con Google Calendar se reemplaza por una agenda
+  propia del dueño, cargada directo en SQL Server.
+- R2: el asistente con IA se reemplaza por un buscador de preguntas
+  frecuentes por palabra clave, contra una base propia.
+- R3: el cobro por Mercado Pago se reemplaza por un mock — el sistema
+  registra el estado de pago (pagada/no pagada) sin procesar dinero real.
+- R4: el recordatorio deja de depender de un envío real por WhatsApp/email,
+  se genera y se ve dentro del sistema.
+
+Se reescribieron `03-matriz-marco-logico.md`, `04-requerimientos.md`,
+`05-maquetado.md`, `06-pitch.md`, `01-arbol-de-problemas.md` y `README.md`
+para que todos digan lo mismo. También se mergeó un README que había
+armado Bautista por su cuenta (llegó con la cadena lógica de punta a punta,
+los indicadores de la MML y el árbol de estructura del repo, piezas que no
+estaban en el mío) y se le sumaron los RNF-09/RNF-10 e historia de usuario
+que él había agregado sobre una copia vieja del archivo de requerimientos.
+
+## Aplicado en Figma, roles confirmados y backlog como issues
+
+Con acceso de edición al archivo de Figma, se aplicaron ahí los cambios de
+texto que hasta ahora solo estaban en los documentos: "Pagar seña con
+Mercado Pago" pasó a "Confirmar seña (simulada)", el monto de la Pantalla 3
+se corrigió a $5.000 (antes decía $2.000, que no coincidía con la regla de
+30%/mínimo $5.000 de RF-07), la nota RNF-04 ya no menciona Mercado Pago, y
+la Pantalla 4 se renombró de "Asistente virtual" a "Buscador de FAQ". Se
+agregó también el enlace "Ayuda" en el header de las 5 pantallas, en fila
+junto al texto de vuelta. No se pudo tomar captura final de las 5 pantallas
+juntas por límite de llamadas del plan Starter de Figma — revisar
+visualmente en el archivo antes de darlo por cerrado.
+
+Se confirmó el rol propio (issue #1) con un comentario. Los otros tres
+roles (issues #2, #3, #4) ya estaban creados y bien asignados desde el 1 de
+septiembre — falta que Bautista, Nicolás y Clovis los confirmen ellos
+mismos, no es algo que se pueda hacer por ellos.
+
+El backlog de Semana 6 no existía como tablero en ningún lado, solo como
+tabla en el documento. Se creó como 10 issues en GitHub (uno por RF,
+`#6` a `#15`), con la prioridad Must/Should/Could en el título.
+
+---
+
 ## Aporte de Bautista: dos RNF y una historia de usuario nuevas
 
 Bautista mandó por mail su versión de `docs/04-requerimientos.md`, armada

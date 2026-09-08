@@ -102,10 +102,12 @@ fuera de esta Carpeta de Proyecto V1.
 
 ## Qué falta
 
-- Aplicar en Figma los cambios de esta semana: renombrar la pantalla del
-  buscador (ya no "asistente virtual"), sacar cualquier referencia a
-  Mercado Pago o Google Calendar, agregar el enlace "Ayuda" en el header,
-  dejar RF-10 fuera de alcance — hoy están cerrados acá mismo, pero no en
-  el archivo de Figma.
+- Aplicados en Figma los cambios de esta semana: la Pantalla 4 se renombró
+  a "Buscador de FAQ", la Pantalla 3 ya no menciona Mercado Pago (el monto
+  también se corrigió a $5.000, que es lo que corresponde con la regla de
+  RF-07 sobre un servicio de $8.000 — antes decía $2.000, mal calculado), y
+  se agregó el enlace "Ayuda" en el header de las 5 pantallas. No se pudo
+  sacar captura final de conjunto por límite de llamadas del plan Starter
+  de Figma — revisar visualmente antes de la revisión cruzada.
 - Pasar el maquetado por la coevaluación cruzada con otro equipo antes de
   darlo por cerrado.

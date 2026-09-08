@@ -36,6 +36,8 @@ marcado como módulo "deseable" en `propuestas.md`, no "núcleo".
 | RNF-06 | Compatibilidad | El sistema funciona correctamente en un ancho de pantalla de 360 px (celular). |
 | RNF-07 | Mantenibilidad | El dueño puede actualizar la base de precios y protocolos del asistente sin intervención técnica del equipo. |
 | RNF-08 | Disponibilidad | El sistema de reserva está disponible 24/7, sin depender del horario de atención del dueño. |
+| RNF-09 | Seguridad | El asistente virtual (R2) solo responde con datos de la base de precios/protocolos cargada; ante una consulta fuera de esa base, deriva a WhatsApp en vez de inventar una respuesta. |
+| RNF-10 | Disponibilidad | Si falla la sincronización con Google Calendar (RF-02), el sistema lo notifica al dueño y no muestra la grilla como si estuviera actualizada. |
 
 ## Historias de usuario
 
@@ -89,6 +91,17 @@ Criterios de aceptación:
 - El acceso es por enlace mágico enviado al confirmar la reserva.
 - Desde ahí puedo ver y cancelar mi turno.
 - El enlace expira después de un tiempo definido, por seguridad.
+```
+
+```
+Como dueño, quiero que se me avise si se cae la sincronización con mi
+Google Calendar,
+para no confiar en una grilla de disponibilidad desactualizada.
+
+Criterios de aceptación:
+- Si la sincronización falla, recibo una notificación clara.
+- La grilla no se muestra como "actualizada" cuando en realidad no lo está.
+- Puedo ver la última vez que se sincronizó correctamente.
 ```
 
 ## Backlog inicial

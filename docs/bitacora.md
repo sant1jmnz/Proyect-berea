@@ -115,3 +115,37 @@ Qué falta:
 - Correr `carpeta-proyecto` (auditoría contra la rúbrica) antes de dar el
   bimestre por cerrado.
 - Confirmar roles en los issues del repo (pendiente desde el FODA).
+
+---
+
+## Repaso: Semanas 1 a 6 del cronograma oficial (`docs/plan-de-aprendizaje.md`)
+
+Corrida la auditoría con la skill `carpeta-proyecto`: agregó el `README.md`
+que faltaba en la raíz del repo (portada de la Carpeta de Proyecto,
+requerida por `CLAUDE.md` y por la Semana 7 del plan) y sumó "Preguntas
+para la coevaluación cruzada" a los dos árboles, que no las tenían (el
+maquetado sí).
+
+Contenido de las Semanas 1 a 6, uno por uno:
+
+- Semana 1 (equipos, brainstorming, idea inicial): hecho.
+- Semana 2 (Árbol de Problemas): el árbol está hecho; **la revisión
+  cruzada con otro equipo, que es parte de esta semana en el cronograma
+  oficial, todavía no se hizo**. Es el único hueco real de las 6 semanas.
+- Semana 3 (Árbol de Objetivos): hecho.
+- Semana 4 y 5 (MML, vertical y horizontal): hecho.
+- Semana 6 (Requerimientos, RNF, historias de usuario, backlog): hecho el
+  documento; no verificado si el backlog llegó a existir como tablero real
+  en Trello/GitHub Projects, más allá de estar descrito en
+  `docs/04-requerimientos.md`.
+
+Fuera de esas 6 semanas, ya está armado el borrador del maquetado (Semana 7)
+y del pitch (Semana 8) también, adelantados.
+
+Qué falta, acotado a cerrar hasta semana 6 en serio:
+
+- Conseguir un equipo para la revisión cruzada de los árboles — no es algo
+  que se resuelva en el repo, hay que coordinarlo en persona/Miro con otro
+  grupo de la clase.
+- Confirmar si el backlog de Semana 6 existe como tablero, o si solo quedó
+  como descripción en el documento.

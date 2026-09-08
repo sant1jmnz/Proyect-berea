@@ -39,10 +39,16 @@ la reserva.
 | 4 — Asistente virtual | RF-04, RF-05 | [nodo 8:30](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=8-30) |
 | 5 — Mis Turnos | RF-09, RF-08 (recordatorio, visible como aviso en la tarjeta) | [nodo 10:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=10-2) |
 
-RF-02 (sincronización con Google Calendar) y RF-10 (vitrina) no tienen
-pantalla propia todavía: RF-02 es una integración de backend sin UI
-dedicada; RF-10 es Could y queda para una siguiente iteración del maquetado
-si da el tiempo del bimestre.
+RF-02 (sincronización con Google Calendar) no tiene pantalla propia: es una
+integración de backend sin UI dedicada, se resuelve como un aviso
+("Sincronizado con tu Google Calendar ✓") dentro de la Pantalla 3, no como
+pantalla nueva.
+
+RF-10 (vitrina) queda fuera del maquetado de este bimestre: es Could, y en
+la semana 6 de 8 no hay margen para diseñar, revisar y ajustar una sexta
+pantalla sin restarle tiempo al pitch y a la revisión cruzada de las 5
+pantallas Must/Should que sí están. Se retoma en una siguiente iteración,
+fuera de esta Carpeta de Proyecto V1.
 
 ## Justificación de las decisiones de diseño
 
@@ -52,8 +58,9 @@ si da el tiempo del bimestre.
   Problemas (decisiones a medias por WhatsApp, sin estructura).
 - La seña tiene su propia tarjeta, separada del resumen del turno, no es un
   campo más: la evidencia de `propuestas.md` dice que puede generar
-  resistencia, así que se explica antes de pedir el pago (monto y qué pasa
-  con ese dinero), en vez de aparecer como un cargo sorpresa.
+  resistencia, así que se explica antes de pedir el pago (30% del valor del
+  servicio, mínimo $5.000, reembolsable si se cancela con más de 24 h de
+  anticipación — RF-07) en vez de aparecer como un cargo sorpresa.
 - El asistente virtual muestra de dónde sale cada respuesta ("Base de
   precios y protocolos" o derivación a WhatsApp), así la clienta distingue
   una respuesta automática confiable de una que necesita al dueño, y el
@@ -75,7 +82,7 @@ si da el tiempo del bimestre.
 | 7. Flexibilidad y eficiencia | El asistente resuelve consultas frecuentes en un mensaje, sin pasar por los 3 pasos de reserva si solo se quiere saber un precio. |
 | 8. Diseño estético y minimalista | Cada pantalla tiene una sola acción primaria (el botón inferior); nada compite con ella. |
 | 9. Ayudar a reconocer y recuperarse de errores | Cuando el asistente no sabe la respuesta, lo dice explícitamente y ofrece un camino concreto (botón "Hablar por WhatsApp"), no un error genérico. |
-| 10. Ayuda y documentación | Pendiente — no hay pantalla de FAQ/ayuda todavía. Queda anotado como punto débil para la coevaluación. |
+| 10. Ayuda y documentación | Se resuelve sin pantalla nueva: enlace "Ayuda" fijo en el header de las 5 pantallas, que lleva directo al WhatsApp del dueño (mismo camino que ya usa el asistente virtual cuando no sabe responder). Decisión tomada por tiempo — con 2 semanas de bimestre restantes no alcanza para una pantalla de FAQ propia — a validar en la revisión cruzada. |
 
 ## Preguntas para la coevaluación cruzada
 
@@ -88,8 +95,8 @@ si da el tiempo del bimestre.
 
 ## Qué falta
 
-- Pantalla de ayuda/FAQ (heurística 10, sin resolver).
-- Diseñar RF-02 (confirmación de sincronización con Calendar, aunque sea sin
-  pantalla propia) y evaluar si RF-10 entra en el bimestre.
+- Aplicar en Figma las tres decisiones de esta semana (aviso de
+  sincronización en Pantalla 3, enlace "Ayuda" en el header, RF-10 fuera de
+  alcance) — hoy están cerradas acá mismo, pero no en el archivo de Figma.
 - Pasar el maquetado por la coevaluación cruzada con otro equipo antes de
   darlo por cerrado.

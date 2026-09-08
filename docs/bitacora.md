@@ -75,3 +75,43 @@ Qué falta:
 - El pitch, la última pieza de la Carpeta de Proyecto.
 - Pasar el maquetado por la revisión cruzada con otro equipo.
 - Ver los 6 videos de cátedra que quedan.
+
+---
+
+## 8 de septiembre de 2026
+
+Semana 6 de 8: quedan dos semanas y la última no es de producción, así que
+reordenamos por lo que no podía esperar más.
+
+Cerramos la decisión de la seña que estaba abierta en tres documentos a la
+vez (MML A.3.2, RF-07 y la Pantalla 3 del maquetado): 30% del valor del
+servicio, mínimo $5.000, reembolsable si se cancela con más de 24 h de
+anticipación. Era una decisión de equipo, no un dato para relevar — Bella
+Piel no tiene dueño real a quien preguntarle.
+
+Con eso resuelto, cerramos también los tres flecos que quedaban en el
+maquetado (`docs/05-maquetado.md`): RF-02 se resuelve con un aviso dentro
+de la Pantalla 3 en vez de pantalla propia, RF-10 (vitrina) queda fuera de
+este bimestre por tiempo, y la heurística 10 de Nielsen se cubre con un
+enlace "Ayuda" en el header en vez de una pantalla de FAQ nueva. Faltan
+aplicarse en el archivo de Figma, hoy están cerradas en el documento.
+
+Armamos el borrador completo de `docs/06-pitch.md`: guion de 9 minutos por
+bloques, quién habla en cada uno según los roles definidos, y las
+respuestas a las seis preguntas que anticipa la guía del pitch.
+
+Dónde quedó la decisión:
+
+Con esto, las 6 piezas de la Carpeta de Proyecto V1 existen: falta pulirlas
+(aplicar en Figma lo que se cerró hoy, ensayar el pitch), no armarlas de
+cero.
+
+Qué falta:
+
+- Revisión cruzada del maquetado con otro equipo — no puede esperar a la
+  semana 8.
+- Aplicar en Figma las tres decisiones de RF-02/RF-10/ayuda.
+- Ensayar y cronometrar el pitch con los 4 integrantes.
+- Correr `carpeta-proyecto` (auditoría contra la rúbrica) antes de dar el
+  bimestre por cerrado.
+- Confirmar roles en los issues del repo (pendiente desde el FODA).

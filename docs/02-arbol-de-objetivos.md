@@ -89,8 +89,19 @@ lo que libera tiempo del dueño y elimina la pérdida de turnos (F1, F2), y en
 conjunto aumenta la rentabilidad del negocio (F4). Se sostiene leída en voz
 alta.
 
+## Preguntas para la coevaluación cruzada
+
+1. Cada medio (M1-M4) es una acción concreta, no un estado — ¿alguno
+   describe en realidad un resultado en vez de la actividad que lo produce?
+2. El objetivo central es la conversión directa del problema central,
+   reescrito en infinitivo — ¿esa reescritura mantiene el mismo alcance, o
+   se coló una ambición nueva que el problema no planteaba?
+3. ¿Los cuatro objetivos específicos alcanzan para sostener el objetivo
+   central, o falta alguno que el Árbol de Problemas sí tenía como causa
+   directa?
+
 ## Qué falta
 
-- Elegir, con el criterio de FODA (`docs/foda.md`, si se hace), qué medios son
-  la alternativa de intervención de este bimestre y cuáles quedan fuera.
-- Pasar OE1-OE4 y M1-M4 a la Matriz de Marco Lógico (`docs/03-matriz-marco-logico.md`).
+- Pasar por la revisión cruzada con otro equipo, junto con
+  `docs/01-arbol-de-problemas.md` (Semana 2 del cronograma oficial,
+  `docs/plan-de-aprendizaje.md`): todavía no se hizo.

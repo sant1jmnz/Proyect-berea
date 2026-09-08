@@ -121,7 +121,20 @@ Quedan fuera de alcance de este bimestre (ya anotado en `propuestas.md`):
 historia clínica de tratamientos, gestión de stock de insumos, liquidación
 de comisiones, app nativa. No se programa nada: se formula y se diseña.
 
+## Preguntas para la coevaluación cruzada
+
+1. Leído de corrido (causas → problema central → efectos), ¿la secuencia se
+   sostiene, o hay algún salto lógico que no se explica solo?
+2. C1.1 y C2.1 nombran una solución ausente ("WhatsApp no está integrado",
+   "no existe una base de respuestas") en vez de un estado negativo — ¿es
+   un problema real, o para una causa raíz (no un problema central) da
+   igual?
+3. ¿El problema central sigue leyéndose como un problema y no como "falta
+   una app"? Es la trampa más común de la metodología.
+
 ## Qué falta
 
-- Definir los roles del equipo.
-- Avanzar con el Árbol de Objetivos y la MML sobre esta base.
+- Pasar por la revisión cruzada con otro equipo (Semana 2 del cronograma
+  oficial, `docs/plan-de-aprendizaje.md`): todavía no se hizo.
+- Confirmar los roles del equipo en los issues del repo (decididos en la
+  bitácora del 1/9, sin formalizar todavía).

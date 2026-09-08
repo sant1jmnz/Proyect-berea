@@ -149,3 +149,22 @@ Qué falta, acotado a cerrar hasta semana 6 en serio:
   grupo de la clase.
 - Confirmar si el backlog de Semana 6 existe como tablero, o si solo quedó
   como descripción en el documento.
+
+---
+
+## Aporte de Bautista: dos RNF y una historia de usuario nuevas
+
+Bautista mandó por mail su versión de `docs/04-requerimientos.md`, armada
+sobre una copia de antes del cierre de la seña de hoy. Se mergeó: se
+mantuvo el RF-07 ya cerrado (30%, mínimo $5.000, reembolso con +24h) y se
+sumó lo suyo, que sí era nuevo:
+
+- RNF-09: el asistente virtual solo responde con datos de la base cargada,
+  nunca inventa una respuesta fuera de esa base.
+- RNF-10: si falla la sincronización con Google Calendar, el sistema avisa
+  al dueño en vez de mostrar la grilla como actualizada sin estarlo.
+- Historia de usuario nueva del dueño, sobre ese mismo RNF-10.
+
+Se reflejó también en `docs/05-maquetado.md`: RNF-09 en la Pantalla 4
+(asistente), RNF-10 como parte del mismo aviso de sincronización de la
+Pantalla 3.

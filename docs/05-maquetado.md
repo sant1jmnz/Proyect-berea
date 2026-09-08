@@ -36,13 +36,15 @@ la reserva.
 | 1 — Elegir servicio | RF-01, RF-03 | [nodo 3:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=3-2) |
 | 2 — Elegir horario | RF-01, RF-03 | [nodo 4:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=4-2) |
 | 3 — Confirmar y pagar seña | RF-01, RF-06, RF-07, RNF-04 | [nodo 8:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=8-2) |
-| 4 — Asistente virtual | RF-04, RF-05 | [nodo 8:30](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=8-30) |
+| 4 — Asistente virtual | RF-04, RF-05, RNF-09 | [nodo 8:30](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=8-30) |
 | 5 — Mis Turnos | RF-09, RF-08 (recordatorio, visible como aviso en la tarjeta) | [nodo 10:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=10-2) |
 
 RF-02 (sincronización con Google Calendar) no tiene pantalla propia: es una
 integración de backend sin UI dedicada, se resuelve como un aviso
 ("Sincronizado con tu Google Calendar ✓") dentro de la Pantalla 3, no como
-pantalla nueva.
+pantalla nueva. Ese mismo aviso cubre RNF-10: si la sincronización falla,
+cambia a un estado de error visible ahí mismo, en vez de mostrar la grilla
+como actualizada cuando no lo está.
 
 RF-10 (vitrina) queda fuera del maquetado de este bimestre: es Could, y en
 la semana 6 de 8 no hay margen para diseñar, revisar y ajustar una sexta

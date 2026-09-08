@@ -1,0 +1,84 @@
+# Pitch
+
+Guion de presentación oral, 9 minutos, Propuesta 1 (Bella Piel — Centro de
+Estética Integral). Sigue la estructura de `.claude/skills/pitch/SKILL.md`.
+Cada bloque se apoya en un documento ya cerrado de la Carpeta de Proyecto:
+no hay nada acá que no salga de `01` a `05`.
+
+Roles del equipo (`docs/bitacora.md`, jornada del 1 de septiembre): Santiago
+en Marco Lógico y coordinación, Bautista en requerimientos, Nicolás en
+diseño y maquetado, Clovis en el pitch.
+
+## Guion por bloques
+
+| Bloque | Tiempo | Habla | Contenido | Diapositiva / fuente |
+|---|---|---|---|---|
+| Gancho | 1 min | Clovis | "Bella Piel pierde 6 turnos por semana por inasistencia — casi $48.000 semanales — y su dueño gasta 95 minutos por día contestando las mismas 18 preguntas por WhatsApp." Sin "nuestro proyecto se llama…": arranca directo con el dato. | Tabla de causas, `docs/01-arbol-de-problemas.md` |
+| Problema | 1.5 min | Santiago | Aclaración metodológica primero: Bella Piel es un caso imaginario, armado por el equipo para practicar la metodología completa con la misma disciplina que un caso real (no hay relevamiento posible, los datos de partida los inventamos a propósito). Después, el problema central — la gestión de turnos depende de la atención manual del dueño por WhatsApp — y sus tres causas directas: sin disponibilidad visible en tiempo real (C1), consultas repetidas respondidas a mano (C2), sin seña ni recordatorio (C3, C4). | Diagrama del Árbol de Problemas, `docs/01-arbol-de-problemas.md` |
+| Propuesta | 2 min | Bautista | Objetivo general: facilitar la gestión de turnos y consultas automatizando reserva, cobro de seña y respuestas frecuentes. Qué hace el sistema, en criollo: reservar en 3 pasos, un asistente que contesta precios y protocolos, seña por Mercado Pago, recordatorio automático — los RF Must de `docs/04-requerimientos.md`, sin nombrarlos por ID. | Tabla de RF, `docs/04-requerimientos.md` |
+| Demostración | 2.5 min | Nicolás | Recorrer el flujo completo de una clienta en el maquetado: elegir servicio → elegir horario → confirmar y pagar seña (30%, mínimo $5.000, reembolsable con +24h) → Mis Turnos con el recordatorio. Mostrar también el camino paralelo del asistente virtual cuando alguien tiene una duda antes de reservar. Pantalla por pantalla suelta, no: se recorre como una tarea de punta a punta. | User flow y capturas, `docs/05-maquetado.md`, Figma |
+| Viabilidad | 1.5 min | Santiago | Los cuatro indicadores de la MML (-60% tiempo de atención, -50% turnos perdidos, 0 superposiciones, ≥70% consultas resueltas por el asistente, a las 4 semanas de uso) y el riesgo más alto: que el dueño no adopte el sistema como canal principal y siga por WhatsApp en paralelo. Mitigación: no reemplazar WhatsApp de un día para el otro, responder desde ahí con el enlace al sistema. | Matriz completa, `docs/03-matriz-marco-logico.md` |
+| Cierre | 0.5 min | Clovis | Este bimestre se formuló y se diseñó; el próximo arranca el desarrollo técnico sobre esta base ya trazada. Se pide al auditorio feedback sobre la propuesta de valor y la seña, antes de empezar a programar. | — |
+
+## Preguntas anticipadas
+
+**¿Por qué este problema y no otro? ¿Cómo lo verificaron?**
+Se compararon 10 propuestas (`docs/propuestas.md`); se descartaron 5 por
+falta de evidencia o por tener ya una solución gratuita instalada. Bella
+Piel quedó porque, siendo un caso imaginario, permite sostener toda la
+cadena causal con evidencia externa real (estudios de uso de WhatsApp,
+casos de cobro de seña y recordatorios automáticos citados en el Árbol de
+Problemas) en vez de una intuición. No hay "verificación" en el sentido de
+relevamiento real — eso se aclara explícitamente al auditorio, no se
+esconde.
+
+**¿Por qué software resuelve esta causa y no otra intervención?**
+Las cuatro causas raíz (C1.1-C4.1) son fricciones de proceso — un canal no
+integrado a nada, respuestas repetidas sin base centralizada, cobro y
+aviso manuales — no falta de capacitación ni de infraestructura física.
+Automatizarlas ataca la fricción directamente, sin requerir que el negocio
+cambie de rubro ni invierta en algo distinto de lo que ya usa (WhatsApp,
+Google Calendar).
+
+**¿Qué pasa si el supuesto de mayor riesgo no se cumple?**
+El riesgo más alto es que el dueño no adopte el sistema como canal
+principal (supuesto del Propósito en la MML). Si no se cumple, el sistema
+queda subutilizado y ningún indicador de Propósito se mueve, aunque los
+Componentes (R1-R4) estén técnicamente terminados. Mitigación ya definida:
+transición gradual, respondiendo desde WhatsApp con el enlace al sistema
+hasta que el hábito cambie, en vez de cortar el canal de un día para otro.
+
+**¿Cómo van a medir que el sistema funcionó?**
+Con los cuatro indicadores de la MML, medidos a las 4 semanas de uso: -60%
+en tiempo diario de atención manual, -50% en turnos perdidos por
+inasistencia, 0 superposiciones de agenda por mes, ≥70% de consultas
+resueltas sin intervención humana. Medios de verificación: panel de
+reportes del sistema y una encuesta breve al dueño antes/después.
+
+**¿Qué queda afuera del alcance y por qué?**
+Historia clínica de tratamientos, gestión de stock de insumos, liquidación
+de comisiones y app nativa quedaron fuera desde el Árbol de Problemas: no
+atacan ninguna de las cuatro causas raíz identificadas. Dentro de los RF,
+RF-10 (vitrina de fotos y reseñas) es Could y no tiene pantalla en este
+maquetado — se decidió priorizar el pitch y la revisión cruzada de las
+pantallas Must/Should con el tiempo que quedaba del bimestre. Y en general:
+este bimestre no se programa nada, se formula y se diseña: el desarrollo
+técnico es alcance del bimestre siguiente.
+
+**¿Es realizable en el tiempo que tienen, con el equipo que son?**
+Para este bimestre (formulación y diseño), sí: las 6 piezas de la Carpeta
+de Proyecto están cerradas o en cierre en la semana 6 de 8, con roles
+definidos desde la primera semana. Las decisiones de diseño que no
+dependían de datos reales (monto de seña, alcance de RF-02/RF-10) se
+cerraron como decisión de equipo en vez de quedar abiertas esperando un
+relevamiento que nunca iba a llegar, justamente para no perder tiempo del
+bimestre corto.
+
+## Qué falta
+
+- Ensayar y cronometrar el guion completo, con los 4 integrantes.
+- Ajustar los tiempos de cada bloque según el ensayo — la tabla de arriba es
+  el reparto inicial, no una medición real todavía.
+- Confirmar el enlace a las diapositivas/capturas una vez que el maquetado
+  incorpore las decisiones de RF-02, RF-10 y el enlace de ayuda
+  (`docs/05-maquetado.md`, sección "Qué falta").

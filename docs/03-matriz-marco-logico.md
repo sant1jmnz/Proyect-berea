@@ -31,7 +31,10 @@ R2, asistente virtual de respuestas frecuentes:
 
 R3, cobro de seña integrado con Mercado Pago:
 - A.3.1 Integrar Mercado Pago al flujo de reserva.
-- A.3.2 Definir con el dueño el monto de la seña y la política de devolución.
+- A.3.2 Seña del 30% del valor del servicio (mínimo $5.000); reembolsable
+  100% si se cancela con más de 24 h de anticipación, no reembolsable por
+  debajo de ese plazo o por inasistencia. Decisión de equipo, no dato
+  relevado: no hay un dueño real de Bella Piel a quien consultarle.
 
 R4, recordatorio automático de turno:
 - A.4.1 Configurar el envío automático de recordatorio antes del turno.
@@ -52,8 +55,6 @@ sistema hasta que el hábito cambie.
 
 ## Qué falta
 
-- Confirmar con el dueño el monto de la seña y la política de devolución
-  (A.3.2): hoy es una decisión de diseño, no un dato relevado.
 - Con la MML cerrada, pasar a `docs/04-requerimientos.md`: cada Componente
   (R1-R4) se abre en requerimientos funcionales (RF-01...), y cada
   supuesto/riesgo con mitigación técnica en requerimientos no funcionales

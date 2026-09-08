@@ -14,7 +14,7 @@ acá que no venga de R1-R4.
 | RF-04 | ...a la clienta consultar precios, horarios y protocolos a un asistente virtual, para resolver dudas sin esperar respuesta del dueño. | R2 | Must |
 | RF-05 | ...derivar la consulta al WhatsApp del dueño cuando el asistente no pueda responderla, para no perder la consulta. | R2 | Must |
 | RF-06 | ...a la clienta pagar la seña vía Mercado Pago al confirmar la reserva, para reducir inasistencias. | R3 | Must |
-| RF-07 | ...al dueño definir el monto de la seña y su política de devolución. | R3 | Should |
+| RF-07 | ...cobrar una seña del 30% del valor del servicio (mínimo $5.000), reembolsable 100% si la clienta cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
 | RF-08 | ...enviar un recordatorio automático de turno antes de la fecha reservada, para reducir inasistencias. | R4 | Must |
 | RF-09 | ...a la clienta ver y cancelar sus turnos reservados mediante un enlace mágico, sin registro ni contraseña. | R1 | Should |
 | RF-10 | ...mostrar una vitrina de fotos antes/después y reseñas de Google Maps, para atraer clientes potenciales. | — (fuera de R1-R4, ver "Vitrina" en `docs/propuestas.md`) | Could |
@@ -100,7 +100,5 @@ después "Mis Turnos" y por último la vitrina.
 
 ## Qué falta
 
-- Definir con el dueño el monto exacto de la seña y su política de
-  devolución (RF-07): hoy es una decisión de diseño pendiente.
-- Con esto cerrado, pasar a `docs/05-maquetado.md`: cada pantalla del wireframe
-  se justifica contra uno o más RF de esta tabla.
+- Pasar a `docs/05-maquetado.md`: cada pantalla del wireframe se justifica
+  contra uno o más RF de esta tabla.

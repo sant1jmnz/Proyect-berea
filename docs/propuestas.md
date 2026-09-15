@@ -1,4 +1,4 @@
-# Propuestas de proyecto — desarrollo y evidencia
+# Propuestas de proyecto: desarrollo y evidencia
 
 Documento de trabajo de la etapa de detección de necesidades (semana 1). Cada
 propuesta sigue el mismo esquema para poder compararlas y elegir una con
@@ -33,10 +33,10 @@ parte de la justificación de la alternativa elegida.
 
 ---
 
-## Propuesta 1 (PRINCIPAL) — Aplicación web para centro de estética integral
+## Propuesta 1 (PRINCIPAL): Aplicación web para centro de estética integral
 
 Usuario / cliente: dueño de un centro de estética integral (caso imaginario,
-Bella Piel — Centro de Estética Integral) y sus clientas y clientes actuales
+Bella Piel, Centro de Estética Integral) y sus clientas y clientes actuales
 y potenciales.
 
 ### Problema central (borrador)
@@ -89,7 +89,7 @@ Datos del centro:
 **Restricción técnica del equipo** (definida después de este relevamiento
 inicial): backend en C con SQL Server, frontend en HTML, sin integraciones
 por API externa. Por eso el cobro y el buscador quedaron descriptos arriba
-como simulados/locales — no hay Mercado Pago, Google Calendar ni un modelo
+como simulados/locales, no hay Mercado Pago, Google Calendar ni un modelo
 de lenguaje real detrás. El detalle completo, actualizado, está en
 `docs/03-matriz-marco-logico.md` y `docs/04-requerimientos.md`.
 
@@ -119,7 +119,7 @@ diseña.
   consentimiento explícito.
 - Fidelidad del mock: al no haber pasarela de pago ni modelo de lenguaje
   real, el pitch tiene que dejar claro qué es simulado y qué sería la
-  integración real en una versión productiva — sin esconder la diferencia.
+  integración real en una versión productiva, sin esconder la diferencia.
 
 ### Viabilidad para el bimestre
 
@@ -130,7 +130,7 @@ hay cuatro integraciones que gestionar, hay cuatro mocks propios. Conviene
 igual marcar cuáles son núcleo (reserva + seña) y cuáles deseables (quiz,
 reseñas).
 
-## Propuesta 2 — Gestión de inventario y punto de venta (POS simplificado)
+## Propuesta 2: Gestión de inventario y punto de venta (POS simplificado)
 
 Usuario / cliente: dueño y personal de atención de un kiosco o restaurante
 chico.
@@ -201,7 +201,7 @@ catálogo es trabajo real y hay que preverla como actividad.
 Alta. Alcance chico y claro. Es la alternativa más segura si la de estética
 resulta demasiado ambiciosa.
 
-## Propuesta 5 — Buscador de adopción y registro de mascotas
+## Propuesta 5: Buscador de adopción y registro de mascotas
 
 Usuario / cliente: refugios y proteccionistas independientes, y personas que
 quieren adoptar.
@@ -249,7 +249,7 @@ Media-alta. Problemática con impacto social claro y usuarios accesibles si un
 refugio de la zona acepta participar. Sin refugio que acepte, no hay
 relevamiento y la propuesta se cae.
 
-## Propuesta 9 (NUEVA) — Reserva y control de laboratorios y equipamiento
+## Propuesta 9 (NUEVA): Reserva y control de laboratorios y equipamiento
 
 Derivada del cruce de la propuesta 1 (reserva con agenda), la 2 (stock y
 alertas) y la 8 (identificación por QR).
@@ -299,7 +299,7 @@ aulas comunes.
 Alta. Es la propuesta con relevamiento más barato y validación de maquetado
 más fácil: los usuarios están en el edificio.
 
-## Propuesta 10 (NUEVA) — Registro y seguimiento de reclamos de mantenimiento
+## Propuesta 10 (NUEVA): Registro y seguimiento de reclamos de mantenimiento
 
 Derivada del cruce de la propuesta 5 (solicitudes con estados), la 8 (QR) y
 el panel de la 2.
@@ -384,7 +384,7 @@ Lo que sigue, en orden:
 
 ---
 
-# Anexo — Propuestas descartadas y motivo
+# Anexo: Propuestas descartadas y motivo
 
 Se mantienen registradas como evidencia del proceso de selección.
 

@@ -1,15 +1,14 @@
 # Árbol de Objetivos
 
 Espejo en positivo del Árbol de Problemas (`docs/01-arbol-de-problemas.md`),
-construido con la tabla de conversión de `.claude/skills/arbol-de-objetivos/SKILL.md`:
-efectos → fines, problema central → objetivo central, causas directas →
-objetivos específicos, causas raíz → medios. También está armado en post-its
-en el board de Miro "Proyecto informático 1", al lado del Árbol de
-Problemas.
+construido con la tabla de conversión estándar de la metodología: efectos →
+fines, problema central → objetivo central, causas directas → objetivos
+específicos, causas raíz → medios. También está armado en post-its en el
+board de Miro "Proyecto informático 1", al lado del Árbol de Problemas.
 
 ## Objetivo central
 
-Facilitar la gestión de turnos y consultas de Bella Piel — Centro de
+Facilitar la gestión de turnos y consultas de Bella Piel, Centro de
 Estética Integral mediante un sistema que automatice la reserva, el cobro de
 seña y las respuestas frecuentes, liberando el tiempo del dueño y reduciendo
 los turnos perdidos (barrio de Flores, CABA, a 2026).
@@ -60,18 +59,18 @@ flowchart TB
 | Árbol de Problemas | Árbol de Objetivos | Fechado (meta a 2026, Bella Piel) |
 |---|---|---|
 | C1: No hay disponibilidad de horarios visible en tiempo real | OE1: Contar con disponibilidad de horarios visible en tiempo real | De 5 a 0 superposiciones de turno por mes |
-| C1.1: WhatsApp no integrado a agenda digital | M1: Integrar WhatsApp con una agenda digital | — (actividad, no lleva indicador propio) |
+| C1.1: WhatsApp no integrado a agenda digital | M1: Integrar WhatsApp con una agenda digital |, (actividad, no lleva indicador propio) |
 | C2: Consultas repetitivas respondidas una por una, a mano | OE2: Automatizar las respuestas a consultas repetitivas | De 95 a 38 minutos diarios de atención manual (-60%) |
-| C2.1: No existe base de respuestas para precios/protocolos | M2: Contar con una base de respuestas para precios/protocolos | — |
+| C2.1: No existe base de respuestas para precios/protocolos | M2: Contar con una base de respuestas para precios/protocolos |, |
 | C3: No se cobra ni confirma seña al reservar | OE3: Cobrar y confirmar seña al reservar | De 6 a 3 turnos perdidos por semana (-50%) |
-| C3.1: Cobrar seña exige gestión manual de transferencias | M3: Integrar una pasarela de pago para cobrar seña sin gestión manual | — |
+| C3.1: Cobrar seña exige gestión manual de transferencias | M3: Integrar una pasarela de pago para cobrar seña sin gestión manual |, |
 | C4: No hay recordatorio automático de turno | OE4: Enviar recordatorio automático de turno | Contribuye a la misma meta de OE3 (turnos perdidos) |
-| C4.1: El dueño no tiene tiempo de avisar turno a mano | M4: Automatizar el aviso de turno sin depender del dueño | — |
-| E1: El dueño pierde horas respondiendo consultas | F1: Liberar tiempo del dueño para atender clientas | — (fin, no se mide en el bimestre) |
-| E2: Se pierden turnos e ingresos | F2: Eliminar la pérdida de turnos e ingresos | — |
-| E3: Las consultas tardan y se desiste de reservar | F3: Resolver las consultas rápido y concretar la reserva | — |
-| E4: Menor rentabilidad y crecimiento limitado | F4: Aumentar la rentabilidad y el crecimiento del negocio | — |
-| E5: Clientes eligen la competencia | F5: Atraer clientes potenciales con atención más ágil | — |
+| C4.1: El dueño no tiene tiempo de avisar turno a mano | M4: Automatizar el aviso de turno sin depender del dueño |, |
+| E1: El dueño pierde horas respondiendo consultas | F1: Liberar tiempo del dueño para atender clientas |, (fin, no se mide en el bimestre) |
+| E2: Se pierden turnos e ingresos | F2: Eliminar la pérdida de turnos e ingresos |, |
+| E3: Las consultas tardan y se desiste de reservar | F3: Resolver las consultas rápido y concretar la reserva |, |
+| E4: Menor rentabilidad y crecimiento limitado | F4: Aumentar la rentabilidad y el crecimiento del negocio |, |
+| E5: Clientes eligen la competencia | F5: Atraer clientes potenciales con atención más ágil |, |
 
 ## Adónde va cada nodo en la MML
 
@@ -91,10 +90,10 @@ alta.
 
 ## Preguntas para la coevaluación cruzada
 
-1. Cada medio (M1-M4) es una acción concreta, no un estado — ¿alguno
+1. Cada medio (M1-M4) es una acción concreta, no un estado, ¿alguno
    describe en realidad un resultado en vez de la actividad que lo produce?
 2. El objetivo central es la conversión directa del problema central,
-   reescrito en infinitivo — ¿esa reescritura mantiene el mismo alcance, o
+   reescrito en infinitivo, ¿esa reescritura mantiene el mismo alcance, o
    se coló una ambición nueva que el problema no planteaba?
 3. ¿Los cuatro objetivos específicos alcanzan para sostener el objetivo
    central, o falta alguno que el Árbol de Problemas sí tenía como causa

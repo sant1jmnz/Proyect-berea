@@ -11,7 +11,7 @@ disciplina metodológica que si el caso fuera real.
 
 ## Contexto y actores
 
-La problemática es la gestión de turnos y consultas de Bella Piel — Centro
+La problemática es la gestión de turnos y consultas de Bella Piel, Centro
 de Estética Integral, barrio de Flores, CABA, a 2026.
 
 Grupos a considerar (según la cátedra, no alcanza con pensar solo desde el
@@ -79,8 +79,8 @@ flowchart TB
 | # | Causa | Tipo | Evidencia que la respalda |
 |---|---|---|---|
 | C1 | No hay disponibilidad de horarios visible en tiempo real | Directa | 5 superposiciones de turno por mes |
-| C1.1 | WhatsApp no está integrado con ninguna agenda digital | Indirecta (raíz) | El 97% usa WhatsApp a diario y el 58% para consultas comerciales — el canal satura porque no está conectado a nada más ([estudio WhatsApp](https://dialecto.com/blog/whatsapp-marketing/estudio-impacto-de-whatsapp-en-compras/)) |
-| C2 | Las consultas repetitivas se responden una por una, a mano | Directa | 95 minutos diarios dedicados a responder consultas — línea de base del indicador principal |
+| C1.1 | WhatsApp no está integrado con ninguna agenda digital | Indirecta (raíz) | El 97% usa WhatsApp a diario y el 58% para consultas comerciales, el canal satura porque no está conectado a nada más ([estudio WhatsApp](https://dialecto.com/blog/whatsapp-marketing/estudio-impacto-de-whatsapp-en-compras/)) |
+| C2 | Las consultas repetitivas se responden una por una, a mano | Directa | 95 minutos diarios dedicados a responder consultas, línea de base del indicador principal |
 | C2.1 | No existe una base de respuestas para precios/protocolos | Indirecta (raíz) | De 25 consultas por WhatsApp por día, un 70% (≈18) son repetidas (precio, horario, "¿qué incluye?") |
 | C3 | No se cobra ni confirma seña al reservar | Directa | Centros en España redujeron inasistencias cobrando por adelantado ([Cuatro](https://www.cuatro.com/noticias/economia/20250116/reservas-fantasma-centros-estetica-peluquerias_18_014508640.html)); hoy Bella Piel no cobra seña |
 | C3.1 | Cobrar seña hoy exige gestión manual de transferencias | Indirecta (raíz) | El dueño estima que un 10% de clientas nuevas podría dudar frente a una seña obligatoria; las habituales no la resistirían |
@@ -121,7 +121,7 @@ Se atacan con el sistema, y justifican la propuesta:
 **Restricción técnica del equipo**: backend en C con SQL Server, frontend en
 HTML, sin ninguna integración por API externa. Todo lo que en una versión
 real sería una integración con un tercero (pasarela de pago, calendario,
-inteligencia artificial) queda simulado (mock) dentro del propio sistema —
+inteligencia artificial) queda simulado (mock) dentro del propio sistema:
 no hay Mercado Pago, Google Calendar ni un modelo de lenguaje conectado.
 
 Quedan fuera de alcance de este bimestre (ya anotado en `propuestas.md`):
@@ -133,7 +133,7 @@ de comisiones, app nativa. No se programa nada: se formula y se diseña.
 1. Leído de corrido (causas → problema central → efectos), ¿la secuencia se
    sostiene, o hay algún salto lógico que no se explica solo?
 2. C1.1 y C2.1 nombran una solución ausente ("WhatsApp no está integrado",
-   "no existe una base de respuestas") en vez de un estado negativo — ¿es
+   "no existe una base de respuestas") en vez de un estado negativo, ¿es
    un problema real, o para una causa raíz (no un problema central) da
    igual?
 3. ¿El problema central sigue leyéndose como un problema y no como "falta
@@ -143,5 +143,5 @@ de comisiones, app nativa. No se programa nada: se formula y se diseña.
 
 - Pasar por la revisión cruzada con otro equipo (Semana 2 del cronograma
   oficial, `docs/plan-de-aprendizaje.md`): todavía no se hizo.
-- Confirmar los roles del equipo en los issues del repo (decididos en la
-  bitácora del 1/9, sin formalizar todavía).
+- Confirmar los roles del equipo en los issues del repo (decididos por el
+  equipo el 1/9, sin formalizar todavía).

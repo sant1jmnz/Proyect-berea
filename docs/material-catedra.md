@@ -1,13 +1,13 @@
-# Material de cátedra — qué contiene cada video
+# Material de cátedra: qué contiene cada video
 
 Los videos están en el [release `material-catedra`](https://github.com/sant1jmnz/Proyect-berea/releases/tag/material-catedra)
 del repositorio, no en el árbol de archivos, para no engordar el historial de git.
 
 Este documento resume lo que muestran en pantalla, para no tener que volver
 a mirarlos cada vez. Las reglas metodológicas que aportan ya quedaron
-incorporadas a las guías de `.claude/skills/`.
+incorporadas al resto de los documentos del proyecto.
 
-## Árbol de Problemas (14:30) — Ing. Lina Margarita Henao Gómez
+## Árbol de Problemas (14:30): Ing. Lina Margarita Henao Gómez
 
 Estructura, para qué sirve y metodología paso a paso.
 
@@ -33,7 +33,7 @@ Otras reglas que fija:
 - Cierra con un ejemplo completo de una empresa de envasado: bajos volúmenes
   de producción como problema central, con sus causas y efectos.
 
-## Transformar árbol de problemas en árbol de objetivos (6:56) — Luis Dumani
+## Transformar árbol de problemas en árbol de objetivos (6:56): Luis Dumani
 
 El más útil de todos para nosotros. Muestra la tabla de conversión exacta:
 
@@ -60,7 +60,7 @@ en "Aislados accidentes en la intersección de Galería", con todos los nodos
 espejados (exceso de velocidad → velocidad adecuada, no hay semáforos → hay
 semáforos, alta mortalidad → baja mortalidad).
 
-## Paso a paso de la Matriz de Marco Lógico (8:31) — UDLA
+## Paso a paso de la Matriz de Marco Lógico (8:31): UDLA
 
 Recorre la matriz celda por celda, en el orden en que se llena.
 
@@ -83,7 +83,7 @@ Recorre la matriz celda por celda, en el orden en que se llena.
 Quedan sin resumir por ahora: Construcción del Marco Lógico, Metodología del
 Marco Lógico, Introducción al Marco Lógico, Ejemplo Matriz de Marco Lógico,
 Desarrollo de un proyecto con la metodología de Marco Lógico en 10 pasos y
-Cómo hacer un árbol de problemas — Aprende Fácil. Se pueden procesar igual
+Cómo hacer un árbol de problemas, Aprende Fácil. Se pueden procesar igual
 si hace falta.
 
 ---

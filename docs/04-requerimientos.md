@@ -22,12 +22,12 @@ versión mockeada dentro del propio sistema.
 | RF-07 | ...cobrar (simulado) una seña del 30% del valor del servicio (mínimo $5.000), reembolsable 100% si la clienta cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
 | RF-08 | ...generar un recordatorio de turno antes de la fecha reservada, visible en el sistema (sin envío real por WhatsApp o email), para reducir inasistencias. | R4 | Must |
 | RF-09 | ...a la clienta ver y cancelar sus turnos reservados mediante un enlace mágico, sin registro ni contraseña. | R1 | Should |
-| RF-10 | ...mostrar una vitrina de fotos antes/después y reseñas de Google Maps, para atraer clientes potenciales. | — (fuera de R1-R4, ver "Vitrina" en `docs/propuestas.md`) | Could |
+| RF-10 | ...mostrar una vitrina de fotos antes/después y reseñas de Google Maps, para atraer clientes potenciales. |, (fuera de R1-R4, ver "Vitrina" en `docs/propuestas.md`) | Could |
 
 RF-01 a RF-06 y RF-08 son Must porque atacan directamente las cuatro causas
 del Árbol de Problemas (C1-C4). RF-07 y RF-09 son Should: mejoran la
 experiencia pero el sistema funciona sin ellos. RF-10 es Could, ya estaba
-marcado como módulo "deseable" en `propuestas.md`, no "núcleo" — además
+marcado como módulo "deseable" en `propuestas.md`, no "núcleo", además
 depende de la API de Google Maps, así que directamente no entra bajo la
 restricción técnica actual.
 
@@ -38,13 +38,13 @@ restricción técnica actual.
 | RNF-01 | Rendimiento | El buscador de preguntas frecuentes responde en menos de 2 segundos. |
 | RNF-02 | Rendimiento | La grilla de disponibilidad carga en menos de 2 segundos. |
 | RNF-03 | Usabilidad | Una clienta sin instrucción previa completa una reserva en menos de 2 minutos. |
-| RNF-04 | Seguridad | El sistema no maneja pagos reales ni datos de tarjeta — la seña es un mock que solo registra un estado (pagada/no pagada) en SQL Server. |
+| RNF-04 | Seguridad | El sistema no maneja pagos reales ni datos de tarjeta, la seña es un mock que solo registra un estado (pagada/no pagada) en SQL Server. |
 | RNF-05 | Seguridad | Las fotos de "antes y después" requieren consentimiento explícito de la clienta antes de publicarse (dato sensible, ver riesgo en `propuestas.md`). |
 | RNF-06 | Compatibilidad | El sistema funciona correctamente en un ancho de pantalla de 360 px (celular). |
 | RNF-07 | Mantenibilidad | El dueño puede actualizar la base de precios y protocolos del buscador sin intervención técnica del equipo. |
 | RNF-08 | Disponibilidad | El sistema de reserva está disponible 24/7, sin depender del horario de atención del dueño. |
 | RNF-09 | Seguridad | El buscador (R2) solo responde con coincidencias de la base de precios/protocolos cargada; si no hay coincidencia, deriva al enlace de WhatsApp del dueño en vez de dar una respuesta genérica. |
-| RNF-10 | Arquitectura | Todo el backend se implementa en C sobre SQL Server; el frontend, en HTML. Ninguna funcionalidad depende de una API externa — donde una versión real usaría un tercero, el sistema implementa un mock propio. |
+| RNF-10 | Arquitectura | Todo el backend se implementa en C sobre SQL Server; el frontend, en HTML. Ninguna funcionalidad depende de una API externa, donde una versión real usaría un tercero, el sistema implementa un mock propio. |
 
 ## Historias de usuario
 

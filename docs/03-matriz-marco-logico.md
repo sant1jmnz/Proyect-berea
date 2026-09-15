@@ -1,6 +1,6 @@
 # Matriz de Marco Lógico (MML)
 
-Propuesta 1, aplicación web para Bella Piel — Centro de Estética Integral.
+Propuesta 1, aplicación web para Bella Piel, Centro de Estética Integral.
 El Fin y el Propósito vienen directo de `docs/02-arbol-de-objetivos.md`
 (Fines y Objetivo central); los Componentes vienen de los objetivos
 específicos OE1-OE4; las Actividades, de los medios M1-M4. Es la misma
@@ -9,7 +9,7 @@ cadena, pasada a formato de matriz.
 **Restricción técnica**: backend en C con SQL Server, frontend en HTML, sin
 integraciones por API externa. Cada Componente que antes dependía de un
 tercero (pasarela de pago, calendario, IA) queda mockeado dentro del propio
-sistema — se explica en el detalle de cada uno.
+sistema, se explica en el detalle de cada uno.
 
 ## La matriz
 
@@ -21,7 +21,7 @@ sistema — se explica en el detalle de cada uno.
 | | R2. Buscador de preguntas frecuentes por palabra clave (precios y protocolos, contra una base propia) implementado y en uso. | Reducción del tiempo diario de atención manual de 95 a 38 minutos (-60%) a las 4 semanas de uso. | Encuesta breve al dueño, antes/después, sobre minutos dedicados a WhatsApp. | Las clientas usan el buscador en vez de escribir directo al dueño. Riesgo alto; mitigación: responder desde WhatsApp con el enlace al buscador. |
 | | R3. Cobro de seña simulado (mock, sin pasarela de pago real) implementado y en uso. | Reducción de turnos perdidos por inasistencia de 6 a 3 por semana (-50%) a las 4 semanas de uso. | Registro de asistencias/inasistencias del sistema. | Las clientas aceptan pagar la seña al reservar. Riesgo medio: ≈10% de clientas nuevas podría dudar. |
 | | R4. Recordatorio de turno simulado (visible en el sistema, sin envío real por WhatsApp/email) implementado y en uso. | ≥ 70% de los turnos con recordatorio generado y confirmado antes de la fecha, a las 4 semanas de uso. | Logs de recordatorios del sistema. | La clienta revisa "Mis Turnos" con la frecuencia suficiente para ver el recordatorio. Riesgo medio: al no ser un envío real, depende de que la clienta vuelva a entrar. |
-| Actividades | Ver detalle por componente abajo. No se listan las 40 tareas acá: la MML se queda con las principales. | — | — | — |
+| Actividades | Ver detalle por componente abajo. No se listan las 40 tareas acá: la MML se queda con las principales. |, |, |, |
 
 ## Detalle de actividades por componente
 
@@ -29,14 +29,14 @@ R1, módulo de reserva con agenda propia:
 - A.1.1 Diseñar la grilla de disponibilidad en tiempo real, contra la tabla
   de agenda del dueño en SQL Server.
 - A.1.2 Implementar en el sistema la carga y edición de disponibilidad del
-  dueño — no hay integración con Google Calendar ni ningún calendario
+  dueño, no hay integración con Google Calendar ni ningún calendario
   externo, la agenda vive solo en el sistema.
 
 R2, buscador de preguntas frecuentes:
 - A.2.1 Armar la base de precios y protocolos que usa el buscador (tabla en
   SQL Server, cargada y editable por el dueño).
 - A.2.2 Implementar en C el motor de búsqueda por palabra clave contra esa
-  base — no hay modelo de lenguaje ni servicio de IA conectado.
+  base, no hay modelo de lenguaje ni servicio de IA conectado.
 - A.2.3 Definir el punto de derivación a WhatsApp del dueño (un enlace
   `wa.me`, no un envío automático) cuando el buscador no encuentra
   coincidencia.
@@ -54,7 +54,7 @@ R3, cobro de seña simulado (mock):
 
 R4, recordatorio de turno simulado:
 - A.4.1 Generar el recordatorio dentro del sistema (visible en "Mis
-  Turnos") con la anticipación configurada — no hay envío real por
+  Turnos") con la anticipación configurada, no hay envío real por
   WhatsApp ni email, sería una integración externa.
 - A.4.2 Definir el tiempo de anticipación con el que se genera el
   recordatorio.

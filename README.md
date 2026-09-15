@@ -14,6 +14,22 @@ Aprende**. Bimestre de 8 semanas.
 Este bimestre **no se programa el sistema**: se lo formula y se lo diseña.
 El desarrollo técnico arranca el bimestre siguiente.
 
+## Glosario rápido
+
+Para quien no cursó la materia y quiere entender los documentos sin buscar
+cada sigla por su cuenta:
+
+| Sigla | Qué significa |
+|---|---|
+| MML | Matriz de Marco Lógico: la tabla que resume todo el proyecto en Fin, Propósito, Componentes y Actividades. |
+| RF / RNF | Requerimiento Funcional (qué debe *hacer* el sistema) / Requerimiento No Funcional (qué tan bien debe hacerlo: velocidad, seguridad, etc.). |
+| IOV | Indicador Objetivamente Verificable: cómo se mide si algo se cumplió (un número, un porcentaje). |
+| MoV | Medio de Verificación: de dónde sale el dato que confirma el indicador (una encuesta, un registro del sistema). |
+| Supuesto | Una condición externa de la que depende el proyecto, pero que el equipo no controla (ej: que la clienta acepte pagar una seña). |
+| FODA | Fortalezas, Oportunidades, Debilidades y Amenazas: análisis de la situación del equipo, no del negocio imaginario. |
+| Mock | Una parte del sistema que simula una función real (por ejemplo, un pago) sin conectarse a un servicio externo de verdad. |
+| `[RELEVAR]` | Un dato que falta conseguir con trabajo de campo propio (entrevista, encuesta), no algo que se pueda inventar o buscar en internet. |
+
 ## Propuesta elegida
 
 **Aplicación web para Bella Piel, Centro de Estética Integral** (barrio de

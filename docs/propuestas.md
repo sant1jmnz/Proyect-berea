@@ -228,6 +228,11 @@ Datos públicos:
 - Las fuentes coinciden en que los refugios no dan abasto y sostienen la
   situación sin política pública detrás
   ([Ámbito](https://www.ambito.com/maltrato-animal/sos-refugios-tres-historias-lucha-contra-el-abandono-y-el-n5623609)).
+- Activistas de rescate describen un ritmo de reproducción que la castración
+  no alcanza a compensar (una entrevistada estima 3.000 cachorros nacidos en
+  un solo día), lo que sostiene el volumen de solicitudes que un refugio
+  recibe sin infraestructura para procesarlas
+  ([Infobae](https://www.infobae.com/perros-y-gatos/2025/09/06/rescate-animal-y-abandono-en-argentina-el-rol-del-activismo-y-el-trabajo-de-las-ong/)).
 
 Las cifras de animales en calle son estimaciones de ONG con metodologías
 distintas: hay que citarlas como estimación, no como dato oficial.

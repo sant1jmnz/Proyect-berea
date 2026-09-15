@@ -17,8 +17,8 @@ El desarrollo técnico arranca el bimestre siguiente.
 ## Propuesta elegida
 
 **Aplicación web para Bella Piel, Centro de Estética Integral** (barrio de
-Flores, CABA, a 2026), caso imaginario armado por el equipo para ejercitar
-la metodología completa sin depender de un relevamiento real.
+Flores, CABA, a 2026). Es un caso imaginario que el equipo armó para
+practicar toda la metodología, sin necesitar un relevamiento real.
 
 La gestión de turnos y consultas del centro depende hoy de la atención
 manual del dueño por WhatsApp: 95 minutos diarios respondiendo consultas
@@ -34,21 +34,20 @@ de agenda por mes. El sistema propuesto ataca esas cuatro causas con:
 | Mis Turnos | Acceso por enlace mágico, sin registro ni contraseña |
 
 **Stack técnico**: backend en **C** con **SQL Server**, frontend en
-**HTML**. Sin integraciones por API externa, donde una versión real usaría
-un tercero (pasarela de pago, calendario, un modelo de lenguaje), el
-sistema implementa un mock propio. Detalle completo en
+**HTML**. No usa ninguna API externa. Donde una versión real usaría un
+servicio de terceros (pasarela de pago, calendario, un modelo de lenguaje),
+este sistema lo simula por dentro. Detalle completo en
 [`docs/04-requerimientos.md`](docs/04-requerimientos.md).
 
-De diez propuestas relevadas en `docs/propuestas.md`, esta quedó como
-principal frente a otras cuatro en carrera (POS de kiosco, adopción de
-mascotas, reserva de laboratorios, reclamos de mantenimiento) por evidencia
-disponible y viabilidad para el bimestre.
+El equipo relevó diez propuestas en `docs/propuestas.md`. Esta quedó como
+principal frente a otras cuatro (POS de kiosco, adopción de mascotas,
+reserva de laboratorios, reclamos de mantenimiento) porque tenía más
+evidencia disponible y era viable de terminar en el bimestre.
 
-**Aclaración metodológica**: Bella Piel es un caso imaginario, no un
-comercio real relevado. Los datos de partida se inventaron a propósito
-para recorrer toda la metodología con la misma disciplina que exigiría un
-caso real, sin depender de un relevamiento que no era posible hacer en el
-tiempo del bimestre.
+**Aclaración**: Bella Piel es un caso imaginario, no un comercio real. El
+equipo inventó los datos de partida a propósito, para recorrer toda la
+metodología con la misma disciplina que exigiría un caso real, ya que un
+relevamiento real no era posible en el tiempo del bimestre.
 
 ## Cadena lógica: la regla que ordena todo
 
@@ -61,7 +60,7 @@ Causas del Árbol de Problemas  →  Medios del Árbol de Objetivos
                                →  Pantallas del maquetado
 ```
 
-Ejemplo de un camino completo, de punta a punta: *C1.1 (WhatsApp no
+Ejemplo de un camino completo, de principio a fin: *C1.1 (WhatsApp no
 integrado a agenda digital) → M1 (integrar WhatsApp con agenda digital) →
 R1 (módulo de reserva con agenda propia) → RF-01/RF-02/RF-03 → Pantallas 1
 y 2 del maquetado ("Elegir servicio", "Elegir horario")*.
@@ -92,10 +91,10 @@ Todos medidos a las 4 semanas de uso del sistema:
 - 0 superposiciones de agenda por mes (de 5 actuales).
 - ≥ 70% de consultas resueltas sin intervención humana.
 
-Riesgo más alto: que el dueño no adopte el sistema como canal principal y
-siga gestionando turnos por WhatsApp en paralelo. Mitigación: no reemplazar
-WhatsApp de un día para el otro, sino responder desde ahí con el enlace al
-sistema hasta que el hábito cambie.
+El riesgo más alto: que el dueño no use el sistema como canal principal y
+siga manejando los turnos por WhatsApp al mismo tiempo. Para evitarlo, no
+se reemplaza WhatsApp de un día para el otro: se responde desde ahí con el
+enlace al sistema, hasta que el hábito cambie.
 
 ## Estructura del repositorio
 

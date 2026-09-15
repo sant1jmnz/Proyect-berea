@@ -74,19 +74,18 @@ flowchart TB
 
 ## Adónde va cada nodo en la MML
 
-Según la tabla del skill: los objetivos específicos (OE1-OE4) son los
-candidatos a Componentes, los medios (M1-M4) son las Actividades que
-producen cada componente, y los fines directos (F1-F3) son el Fin de la
-matriz. El objetivo central es el Propósito.
+Según la tabla de conversión estándar: los objetivos específicos (OE1-OE4)
+son los candidatos a Componentes, los medios (M1-M4) son las Actividades
+que producen cada componente, y los fines directos (F1-F3) son el Fin de
+la matriz. El objetivo central es el Propósito.
 
 ## Verificación de la lógica
 
-Leído de corrido: si se integra WhatsApp con una agenda digital (M1), se
-puede contar con disponibilidad de horarios en tiempo real (OE1); eso
-contribuye a facilitar la gestión de turnos y consultas (objetivo central);
-lo que libera tiempo del dueño y elimina la pérdida de turnos (F1, F2), y en
-conjunto aumenta la rentabilidad del negocio (F4). Se sostiene leída en voz
-alta.
+Leído de corrido: si se integra WhatsApp con una agenda digital (M1), hay
+disponibilidad de horarios en tiempo real (OE1). Eso facilita la gestión de
+turnos y consultas (objetivo central), libera tiempo del dueño y elimina la
+pérdida de turnos (F1, F2), y en conjunto aumenta la rentabilidad del
+negocio (F4). La cadena se sostiene leída en voz alta.
 
 ## Preguntas para la coevaluación cruzada
 

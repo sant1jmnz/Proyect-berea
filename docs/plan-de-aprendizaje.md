@@ -10,9 +10,9 @@ llama `Plan_de_aprendizaje__Proyecto_Informatico_I_3er_bimestre.pdf`, pero
 el campo interno dice `Temporalización: 1° Bimestre (8 semanas...)`. Es una
 contradicción del documento original de la cátedra, no un error de
 transcripción acá. Si el número de bimestre importa para la nota, conviene
-confirmarlo con la profesora, el contenido del plan (desafío integrador,
-las 6 piezas, el cronograma) es exactamente el mismo que ya se venía
-siguiendo, así que no cambia nada de lo que hay que entregar.
+confirmarlo con la profesora. El contenido del plan (desafío integrador,
+las 6 piezas, el cronograma) es el mismo que ya se venía siguiendo, así
+que no cambia nada de lo que hay que entregar.
 
 - Jurisdicción: CABA · Marco pedagógico: Buenos Aires Aprende
 - Establecimiento: Escuela Técnica de la CABA · Especialidad: Computación
@@ -55,12 +55,12 @@ de la solución.
 
 ## Cómo venimos respecto a este cronograma
 
-Contando desde la primera jornada de trabajo (18 de agosto) como
-Semana 1, hoy (8 de septiembre) cae en Semana 4 del cronograma oficial. En
-contenido, sin embargo, ya se cubrió hasta Semana 8 (MML, requerimientos,
-maquetado y ahora el borrador del pitch quedaron cerrados en las jornadas
-del 1 y el 8 de septiembre), vamos adelantados en producción, no atrasados,
-independientemente de qué número de semana calendario se use.
+Contando desde la primera jornada de trabajo (18 de agosto) como Semana 1,
+hoy (8 de septiembre) cae en Semana 4 del cronograma oficial. Pero en
+contenido ya se cubrió hasta Semana 8: MML, requerimientos, maquetado y el
+borrador del pitch quedaron cerrados en las jornadas del 1 y el 8 de
+septiembre. Vamos adelantados en producción, no atrasados, sin importar
+qué número de semana calendario se use.
 
 Lo que el cronograma marca como evaluación formativa y todavía no se hizo:
 - **Retroalimentación entre pares** de los árboles (Semana 2) y del

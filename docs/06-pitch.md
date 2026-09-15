@@ -32,11 +32,12 @@ relevamiento real, eso se aclara explícitamente al auditorio, no se
 esconde.
 
 **¿Por qué software resuelve esta causa y no otra intervención?**
-Las cuatro causas raíz (C1.1-C4.1) son fricciones de proceso, un canal no
+Las cuatro causas raíz (C1.1-C4.1) son fricciones de proceso: un canal no
 integrado a nada, respuestas repetidas sin base centralizada, cobro y
-aviso manuales, no falta de capacitación ni de infraestructura física.
-Automatizarlas ataca la fricción directamente, sin requerir que el negocio
-cambie de rubro ni invierta en algo distinto de lo que ya usa (WhatsApp).
+aviso manuales. No es falta de capacitación ni de infraestructura física.
+Automatizarlas ataca la fricción directamente, sin que el negocio tenga
+que cambiar de rubro ni invertir en algo distinto de lo que ya usa
+(WhatsApp).
 
 **¿Qué pasa si el supuesto de mayor riesgo no se cumple?**
 El riesgo más alto es que el dueño no adopte el sistema como canal

@@ -39,17 +39,17 @@ derivar a un enlace de WhatsApp sin cortar la reserva.
 | 4, Buscador de preguntas frecuentes | RF-04, RF-05, RNF-09 | [nodo 8:30](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=8-30) |
 | 5, Mis Turnos | RF-09, RF-08 (recordatorio, visible como aviso en la tarjeta) | [nodo 10:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=10-2) |
 
-RF-02 (agenda propia del dueño) no tiene pantalla en este maquetado: las 5
-pantallas de arriba son el flujo de la clienta, y RF-02 es una herramienta
-del lado del dueño (cargar/editar su disponibilidad), que queda como panel
-de administración pendiente de diseñar, no es la misma UI que ve la
-clienta.
+RF-02 (agenda propia del dueño) no tiene pantalla en este maquetado. Las 5
+pantallas de arriba son el flujo de la clienta. RF-02 es una herramienta
+del lado del dueño (cargar y editar su disponibilidad): queda como panel
+de administración pendiente de diseñar, con una interfaz distinta de la
+que ve la clienta.
 
-RF-10 (vitrina) queda fuera del maquetado de este bimestre: es Could, y en
-la semana 6 de 8 no hay margen para diseñar, revisar y ajustar una sexta
-pantalla sin restarle tiempo al pitch y a la revisión cruzada de las 5
-pantallas Must/Should que sí están. Se retoma en una siguiente iteración,
-fuera de esta Carpeta de Proyecto V1.
+RF-10 (vitrina) queda fuera del maquetado de este bimestre. Es Could, y en
+la semana 6 de 8 no queda margen para diseñar y revisar una sexta pantalla
+sin quitarle tiempo al pitch y a la revisión cruzada de las 5 pantallas
+Must/Should que sí están. Se retoma en una siguiente iteración, fuera de
+esta Carpeta de Proyecto V1.
 
 ## Justificación de las decisiones de diseño
 

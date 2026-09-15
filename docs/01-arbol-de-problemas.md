@@ -32,9 +32,9 @@ atención manual del dueño por WhatsApp, lo que consume horas de trabajo,
 produce superposiciones y turnos perdidos, y demora las respuestas a quienes
 consultan (Bella Piel, barrio de Flores, CABA, a 2026).
 
-No es "no hay una app de turnos" (la columna mal formulada de la tabla del
-skill): es la carga operativa y la pérdida de turnos que ya existen hoy, con
-o sin sistema.
+No es "no hay una app de turnos" (el error más común al formular esta
+etapa): es la carga de trabajo y la pérdida de turnos que ya existen hoy,
+con o sin sistema.
 
 ## Diagrama
 
@@ -99,12 +99,12 @@ flowchart TB
 
 ## Verificación de la lógica causal
 
-Leído de corrido: como WhatsApp no está integrado con ninguna agenda (C1.1),
-no hay disponibilidad visible en tiempo real (C1); eso hace que la gestión de
-turnos dependa de la atención manual del dueño (problema central); y por eso
-el dueño pierde horas respondiendo y se pierden turnos por superposición
-(E1, E2), lo que reduce la rentabilidad del negocio (E4). Se sostiene leída
-en voz alta, que es la regla de la cátedra.
+Leído de corrido: WhatsApp no está integrado con ninguna agenda (C1.1), así
+que no hay disponibilidad visible en tiempo real (C1). Eso hace que la
+gestión de turnos dependa de la atención manual del dueño (problema
+central). Por eso el dueño pierde horas respondiendo, se pierden turnos por
+superposición (E1, E2), y baja la rentabilidad del negocio (E4). La cadena
+se sostiene leída en voz alta, que es la regla de la cátedra.
 
 ## Qué causas se atacan con software y cuáles quedan fuera
 
@@ -119,10 +119,10 @@ Se atacan con el sistema, y justifican la propuesta:
 - C4 / C4.1 → recordatorio de turno simulado, visible dentro del sistema.
 
 **Restricción técnica del equipo**: backend en C con SQL Server, frontend en
-HTML, sin ninguna integración por API externa. Todo lo que en una versión
-real sería una integración con un tercero (pasarela de pago, calendario,
-inteligencia artificial) queda simulado (mock) dentro del propio sistema:
-no hay Mercado Pago, Google Calendar ni un modelo de lenguaje conectado.
+HTML, sin usar ninguna API externa. Todo lo que en una versión real sería
+una conexión con un tercero (pasarela de pago, calendario, inteligencia
+artificial) queda simulado dentro del propio sistema: no hay Mercado Pago,
+Google Calendar ni un modelo de lenguaje conectado.
 
 Quedan fuera de alcance de este bimestre (ya anotado en `propuestas.md`):
 historia clínica de tratamientos, gestión de stock de insumos, liquidación

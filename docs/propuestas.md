@@ -80,11 +80,18 @@ Datos del centro:
 
 | Módulo | Función |
 |---|---|
-| Reserva en 3 pasos | Servicio → horario disponible → confirmación, con sincronización automática al Google Calendar del dueño |
-| Cobro de seña | Mercado Pago; el backend no almacena datos de tarjeta |
-| Asistente virtual | Gemini 2.5 Flash restringido por RAG a una base local con precios, protocolos y políticas; si no puede responder, deriva a WhatsApp del dueño |
+| Reserva en 3 pasos | Servicio → horario disponible → confirmación, con agenda propia del dueño en el sistema |
+| Cobro de seña | Simulado (mock): el sistema registra el estado de pago, sin pasarela real ni datos de tarjeta |
+| Buscador de preguntas frecuentes | Búsqueda por palabra clave contra una base local con precios, protocolos y políticas; si no encuentra coincidencia, deriva a WhatsApp del dueño |
 | Mis Turnos | Acceso por cookies y enlace mágico, sin registro ni contraseña |
 | Vitrina | Antes y después, quiz de diagnóstico de piel, reseñas vía Google Maps API |
+
+**Restricción técnica del equipo** (definida después de este relevamiento
+inicial): backend en C con SQL Server, frontend en HTML, sin integraciones
+por API externa. Por eso el cobro y el buscador quedaron descriptos arriba
+como simulados/locales — no hay Mercado Pago, Google Calendar ni un modelo
+de lenguaje real detrás. El detalle completo, actualizado, está en
+`docs/03-matriz-marco-logico.md` y `docs/04-requerimientos.md`.
 
 ### Fuera de alcance
 
@@ -108,17 +115,20 @@ diseña.
 - Resistencia a la seña: puede espantar clientes nuevos. Se estima que ≈10%
   de clientas nuevas podría dudar; falta relevar qué hacen los competidores
   de la zona.
-- Dependencia de terceros: si cambian las condiciones de las APIs de Google o
-  de Gemini, se cae una parte del sistema.
 - Datos personales: fotos de "antes y después" son dato sensible y requieren
   consentimiento explícito.
+- Fidelidad del mock: al no haber pasarela de pago ni modelo de lenguaje
+  real, el pitch tiene que dejar claro qué es simulado y qué sería la
+  integración real en una versión productiva — sin esconder la diferencia.
 
 ### Viabilidad para el bimestre
 
 Alta. Alcance delimitado, decisiones técnicas defendibles en el pitch. El
-riesgo es de sobredimensionamiento: son cuatro integraciones externas y
-conviene marcar cuáles son núcleo (reserva + calendario) y cuáles deseables
-(quiz, reseñas).
+riesgo de sobredimensionamiento de integraciones externas quedó resuelto de
+raíz por la restricción técnica del equipo (C + SQL Server, sin APIs): no
+hay cuatro integraciones que gestionar, hay cuatro mocks propios. Conviene
+igual marcar cuáles son núcleo (reserva + seña) y cuáles deseables (quiz,
+reseñas).
 
 ## Propuesta 2 — Gestión de inventario y punto de venta (POS simplificado)
 

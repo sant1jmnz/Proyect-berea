@@ -110,18 +110,38 @@ en voz alta, que es la regla de la cátedra.
 
 Se atacan con el sistema, y justifican la propuesta:
 
-- C1 / C1.1 → módulo de reserva con disponibilidad en vivo + sincronización a
-  Google Calendar.
-- C2 / C2.1 → asistente virtual restringido por RAG a precios y protocolos.
-- C3 / C3.1 → cobro de seña integrado con Mercado Pago.
-- C4 / C4.1 → recordatorio automático (a definir si por WhatsApp o el propio
-  sistema).
+- C1 / C1.1 → módulo de reserva con agenda propia del dueño, cargada directo
+  en el sistema (sin sincronizar con ningún calendario externo).
+- C2 / C2.1 → buscador de preguntas frecuentes por palabra clave sobre
+  precios y protocolos, contra una base propia.
+- C3 / C3.1 → cobro de seña simulado (mock): el sistema registra el estado
+  de pago, sin procesar dinero real.
+- C4 / C4.1 → recordatorio de turno simulado, visible dentro del sistema.
+
+**Restricción técnica del equipo**: backend en C con SQL Server, frontend en
+HTML, sin ninguna integración por API externa. Todo lo que en una versión
+real sería una integración con un tercero (pasarela de pago, calendario,
+inteligencia artificial) queda simulado (mock) dentro del propio sistema —
+no hay Mercado Pago, Google Calendar ni un modelo de lenguaje conectado.
 
 Quedan fuera de alcance de este bimestre (ya anotado en `propuestas.md`):
 historia clínica de tratamientos, gestión de stock de insumos, liquidación
 de comisiones, app nativa. No se programa nada: se formula y se diseña.
 
+## Preguntas para la coevaluación cruzada
+
+1. Leído de corrido (causas → problema central → efectos), ¿la secuencia se
+   sostiene, o hay algún salto lógico que no se explica solo?
+2. C1.1 y C2.1 nombran una solución ausente ("WhatsApp no está integrado",
+   "no existe una base de respuestas") en vez de un estado negativo — ¿es
+   un problema real, o para una causa raíz (no un problema central) da
+   igual?
+3. ¿El problema central sigue leyéndose como un problema y no como "falta
+   una app"? Es la trampa más común de la metodología.
+
 ## Qué falta
 
-- Definir los roles del equipo.
-- Avanzar con el Árbol de Objetivos y la MML sobre esta base.
+- Pasar por la revisión cruzada con otro equipo (Semana 2 del cronograma
+  oficial, `docs/plan-de-aprendizaje.md`): todavía no se hizo.
+- Confirmar los roles del equipo en los issues del repo (decididos en la
+  bitácora del 1/9, sin formalizar todavía).

@@ -9,11 +9,11 @@ presente, describiendo la necesidad y nunca la solución faltante. Es el
 candidato a tronco del Árbol de Problemas.
 
 La evidencia distingue dos cosas. Los datos públicos, con fuente citada,
-sirven para contextualizar la problemática. Lo marcado `[RELEVAR]` es lo que
-solo puede salir del relevamiento propio del equipo (entrevistas, encuestas,
-observación): un dato nacional no reemplaza medir el caso concreto, y ninguna
-cifra `[RELEVAR]` se completa a ojo, porque un indicador inventado invalida
-toda la Matriz de Marco Lógico que se apoye en él.
+sirven para dar contexto al problema. Lo marcado `[RELEVAR]` solo puede
+salir del relevamiento propio del equipo: entrevistas, encuestas,
+observación. Un dato nacional no reemplaza medir el caso concreto, y
+ninguna cifra `[RELEVAR]` se completa a ojo, porque un indicador inventado
+invalida toda la Matriz de Marco Lógico que se apoye en él.
 
 ---
 
@@ -117,16 +117,16 @@ diseña.
   de la zona.
 - Datos personales: fotos de "antes y después" son dato sensible y requieren
   consentimiento explícito.
-- Fidelidad del mock: al no haber pasarela de pago ni modelo de lenguaje
-  real, el pitch tiene que dejar claro qué es simulado y qué sería la
+- Fidelidad del mock: no hay pasarela de pago ni modelo de lenguaje real,
+  así que el pitch tiene que dejar claro qué es simulado y qué sería una
   integración real en una versión productiva, sin esconder la diferencia.
 
 ### Viabilidad para el bimestre
 
 Alta. Alcance delimitado, decisiones técnicas defendibles en el pitch. El
-riesgo de sobredimensionamiento de integraciones externas quedó resuelto de
-raíz por la restricción técnica del equipo (C + SQL Server, sin APIs): no
-hay cuatro integraciones que gestionar, hay cuatro mocks propios. Conviene
+riesgo de armar demasiadas integraciones externas quedó resuelto de raíz
+por la restricción técnica del equipo (C + SQL Server, sin APIs): no hay
+cuatro integraciones que gestionar, hay cuatro mocks propios. Conviene
 igual marcar cuáles son núcleo (reserva + seña) y cuáles deseables (quiz,
 reseñas).
 
@@ -156,13 +156,14 @@ Datos públicos:
   con más de 72.000 puestos de trabajo perdidos en dos años
   ([BAE Negocios](https://www.baenegocios.com/negocios/cerraron-mas-de-36-000-kioscos-y-se-perdieron-72-000-puestos-de-trabajo-en-los-ultimos-dos-anos/)).
 
-Estos números prueban que el sector está bajo presión, no que la causa sea la
-falta de un sistema de gestión: las fuentes atribuyen los cierres a la caída
-del consumo, los alquileres y los servicios. Presentarlo como "cierran
-kioscos porque no tienen software" sería el error metodológico que la
-cátedra penaliza. El encuadre correcto: en un margen tan ajustado, el
-descontrol de stock y la falta de visibilidad de la caja dejan de ser
-molestias y pasan a ser pérdidas que el comercio ya no puede absorber.
+Estos números prueban que el sector está bajo presión, no que la causa sea
+la falta de un sistema de gestión. Las fuentes atribuyen los cierres a la
+caída del consumo, los alquileres y los servicios. Presentarlo como
+"cierran kioscos porque no tienen software" sería el error metodológico
+que la cátedra penaliza. El encuadre correcto es otro: con un margen tan
+ajustado, el descontrol de stock y la falta de visibilidad de la caja
+dejan de ser molestias y pasan a ser pérdidas que el comercio ya no puede
+absorber.
 
 A relevar en el comercio elegido:
 
@@ -361,23 +362,23 @@ anterior. Requiere aval de la institución antes de arrancar.
 | 9 | Laboratorios y equipamiento | Sí, acá mismo | A relevar | Baja | Alta |
 | 10 | Reclamos de mantenimiento | Sí, acá mismo | Buena | Baja | Alta |
 
-La 2 es la única que sobrevive teniendo competencia alta: se sostiene porque
-la evidencia del sector es contundente y el segmento al que apunta, el
-kiosco chico que hoy no paga ningún sistema, está desatendido por precio.
-Ese argumento hay que poder defenderlo en el pitch.
+La 2 es la única que sobrevive con competencia alta. Se sostiene porque la
+evidencia del sector es contundente, y el segmento al que apunta (el kiosco
+chico que hoy no paga ningún sistema) está desatendido por precio. Ese
+argumento hay que poder defenderlo en el pitch.
 
-Recomendación: sostener la 1 (estética) como principal. Es un ejercicio sobre
-un caso imaginario, Bella Piel no existe, así que no hay relevamiento real
-posible ni entrevista que hacer: los datos de partida se inventan a
-propósito por el equipo y se presentan como tales, que es la decisión que ya
-se tomó con la cátedra al plantear el proyecto así. La 9 queda anotada como
-alternativa que sí tendría relevamiento real disponible, si en algún momento
-se decide cambiar de enfoque.
+Recomendación: sostener la 1 (estética) como principal. Es un ejercicio
+sobre un caso imaginario: Bella Piel no existe, así que no hay relevamiento
+real posible ni entrevista que hacer. El equipo inventa a propósito los
+datos de partida y los presenta como tales; esa fue la decisión que se
+tomó con la cátedra al plantear el proyecto así. La 9 queda anotada como
+alternativa con relevamiento real disponible, por si en algún momento se
+decide cambiar de enfoque.
 
 Lo que sigue, en orden:
 
 1. Datos de partida de la propuesta elegida (hecho, ver "Datos del centro"
-   arriba.
+   arriba).
 2. Árbol de Problemas e indicadores de la MML sobre esos números (hecho, ver
    `docs/01-arbol-de-problemas.md` y `docs/03-matriz-marco-logico.md`).
 3. Roles del equipo y el resto de la Carpeta de Proyecto.

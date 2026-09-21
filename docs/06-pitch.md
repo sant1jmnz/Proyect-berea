@@ -21,9 +21,9 @@ Clovis en el pitch.
 | Bloque | Tiempo | Habla | Contenido | Diapositiva / fuente |
 |---|---|---|---|---|
 | Gancho | 1 min | Clovis | "Dermalia pierde 6 turnos por semana por inasistencia, casi $120.000 semanales, y su recepción gasta 95 minutos por día contestando las mismas 18 preguntas por WhatsApp." Sin "nuestro proyecto se llama…": arranca directo con el dato. | Tabla de causas, `docs/01-arbol-de-problemas.md` |
-| Problema | 1.5 min | Santiago | Aclaración metodológica primero: Dermalia es un caso imaginario, armado por el equipo para practicar la metodología completa con la misma disciplina que un caso real (no hay relevamiento posible, los datos de partida los inventamos a propósito). Después, el problema central: la gestión de turnos depende de la atención manual de la recepción por WhatsApp, y sus tres causas directas: sin disponibilidad visible en tiempo real (C1), consultas repetidas respondidas a mano (C2), sin seña ni recordatorio (C3, C4). | Diagrama del Árbol de Problemas, `docs/01-arbol-de-problemas.md` |
-| Propuesta | 2 min | Bautista | Objetivo general: facilitar la gestión de turnos y consultas automatizando la carga de turnos, el registro de seña y las respuestas frecuentes. Qué hace el sistema, en criollo: cargar un turno en 3 pasos, un buscador interno que contesta precios y protocolos por palabra clave, seña simulada, recordatorio dentro del sistema, los RF Must de `docs/04-requerimientos.md`, sin nombrarlos por ID. Acá se explica el punto que más pregunta el auditorio: es una herramienta que usa la recepción, no una app para que la paciente reserve sola, porque el stack (C + SQL Server + Qt de escritorio, sin web ni APIs) no da para un self-service. | Tabla de RF, `docs/04-requerimientos.md` |
-| Demostración | 2.5 min | Nicolás | Recorrer el flujo completo de la recepción en el maquetado: cargar turno (paciente + protocolo) → elegir horario → confirmar y registrar la seña (30%, mínimo $5.000, reembolsable con +24h) → buscar el turno por nombre, DNI o teléfono cuando la paciente vuelve a llamar. Mostrar también el camino paralelo del buscador de precios y protocolos cuando la consulta es solo informativa. Pantalla por pantalla suelta, no: se recorre como una tarea de punta a punta. | User flow y mockup, `docs/05-maquetado.md` |
+| Problema | 1.5 min | Santiago | El problema central: la gestión de turnos depende de la atención manual de la recepción por WhatsApp, y sus tres causas directas: sin disponibilidad visible en tiempo real (C1), consultas repetidas respondidas a mano (C2), sin seña ni recordatorio (C3, C4). | Diagrama del Árbol de Problemas, `docs/01-arbol-de-problemas.md` |
+| Propuesta | 2 min | Bautista | Objetivo general: facilitar la gestión de turnos y consultas automatizando la carga de turnos, el registro de seña y las respuestas frecuentes. Qué hace el sistema, en criollo: cargar un turno en 3 pasos, un buscador que contesta precios y protocolos por palabra clave, seña simulada, recordatorio dentro del sistema, los RF Must de `docs/04-requerimientos.md`, sin nombrarlos por ID. Dos apartados: un kiosco táctil en el instituto para que la paciente cargue su propio turno, y la PC de recepción para los turnos que llegan por teléfono. | Tabla de RF, `docs/04-requerimientos.md` |
+| Demostración | 2.5 min | Nicolás | Recorrer los dos apartados en el maquetado: primero el kiosco (paciente elige protocolo → horario → confirma y paga la seña), después la PC de recepción con el mismo flujo para un turno por teléfono, y la búsqueda de turnos por nombre/DNI/teléfono. Mostrar también el buscador de precios y protocolos cuando la consulta es solo informativa. Pantalla por pantalla suelta, no: se recorre como una tarea de punta a punta. | User flow y mockup, `docs/05-maquetado.md` |
 | Viabilidad | 1.5 min | Santiago | Los cuatro indicadores de la MML (-60% tiempo de atención, -50% turnos perdidos, 0 superposiciones, ≥70% consultas resueltas por el buscador, a las 4 semanas de uso) y el riesgo más alto: que la recepción no adopte el sistema como herramienta principal y siga anotando turnos aparte. Mitigación: capacitación breve al iniciar y transición gradual, sin cortar el hábito de un día para otro. | Matriz completa, `docs/03-matriz-marco-logico.md` |
 | Cierre | 0.5 min | Clovis | Este bimestre se formuló y se diseñó; el próximo arranca el desarrollo técnico sobre esta base ya trazada. Se pide al auditorio feedback sobre la propuesta de valor y la seña, antes de empezar a programar. |, |
 
@@ -31,13 +31,11 @@ Clovis en el pitch.
 
 **¿Por qué este problema y no otro? ¿Cómo lo verificaron?**
 Se compararon 10 propuestas (`docs/propuestas.md`); se descartaron 5 por
-falta de evidencia o por tener ya una solución gratuita instalada. Dermalia
-quedó porque, siendo un caso imaginario, permite sostener toda la
-cadena causal con evidencia externa real (estudios de uso de WhatsApp,
-casos de cobro de seña y recordatorios automáticos citados en el Árbol de
-Problemas) en vez de una intuición. No hay "verificación" en el sentido de
-relevamiento real, eso se aclara explícitamente al auditorio, no se
-esconde.
+falta de evidencia o por tener ya una solución gratuita instalada.
+Dermalia quedó porque toda la cadena causal se sostiene con evidencia
+externa real (estudios de uso de WhatsApp, casos de cobro de seña y
+recordatorios automáticos citados en el Árbol de Problemas) en vez de una
+intuición.
 
 **¿Por qué es un instituto de estética médica y no un centro de estética simple?**
 Decisión de equipo tomada esta semana, no un dato relevado. Un instituto
@@ -56,15 +54,13 @@ Automatizarlas ataca la fricción directamente, sin que el instituto tenga
 que cambiar de rubro ni invertir en algo distinto de lo que ya usa
 (WhatsApp).
 
-**¿Por qué lo usa la recepción y no la paciente directamente?**
+**¿Por qué un kiosco y no que la paciente reserve desde su celular?**
 Porque el stack real del equipo es C + SQL Server + Qt de escritorio, sin
-web y sin API externa. Un self-service que la paciente usa desde su
-celular (con enlace mágico, como se había diseñado al principio) necesita
-un canal web que el equipo no tiene. La versión que sí es viable con esa
-restricción es una herramienta interna: la recepción carga el turno
-cuando la paciente llama o se acerca al mostrador. Mismo problema, misma
-cadena causal, ejecución más simple y más realista para lo que el equipo
-puede construir.
+web y sin API externa: un self-service remoto necesita un canal web que
+el equipo no tiene. Un kiosco táctil dentro del instituto sí es Qt
+nativo, así que la paciente sigue cargando su propio turno, solo que
+presencial en vez de desde su casa. Para cuando llama por teléfono está
+el apartado de recepción, con el mismo flujo.
 
 **¿Qué pasa si el supuesto de mayor riesgo no se cumple?**
 El riesgo más alto es que la recepción no adopte el sistema como

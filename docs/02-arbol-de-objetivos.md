@@ -54,6 +54,58 @@ flowchart TB
     M4 --> OE4
 ```
 
+Misma nota que en `docs/01-arbol-de-problemas.md`: el diagrama de arriba
+es la versión formalizada. El árbol también existe como post-its en el
+mismo board de Miro, de la etapa de brainstorm, con el lenguaje de esa
+etapa (Bella Piel, "el dueño"), en el mismo formato Mermaid que el resto
+del repo:
+
+```mermaid
+flowchart TB
+    RO["Mejorar la atención al cliente, aliviar la carga<br/>para el dueño y generar más alcance para el negocio<br/>(objetivo, versión brainstorm)"]
+
+    RF1[Aumentar la rentabilidad y<br/>el crecimiento del negocio]
+    RF2[Liberar tiempo del dueño<br/>para atender clientas]
+    RF3[Permitir que el dueño<br/>se enfoque en el servicio]
+    RF4[Atraer clientes potenciales<br/>con atención ágil]
+    RF5[Eficiencia al<br/>contestar mensajes]
+    RF6[Respuestas dentro del horario<br/>de trabajo, instantáneas]
+    RF7[Ayuda al cliente sin<br/>necesidad del dueño]
+    RF8[Tiempo de trabajo<br/>perdido nulo o casi nulo]
+    RF9[Menos confusiones<br/>para el dueño]
+    RF10[Mejor asignación de turnos,<br/>evitando que se pierdan en el día]
+
+    RM1[Contar con un sistema de<br/>reservas con horarios visibles]
+    RM2[Mejor experiencia<br/>para el usuario]
+    RM3[Crear una página web que ayude<br/>a los clientes a reservar turnos]
+    RM4[Hacer un chatbot de WhatsApp que<br/>conteste en horario de trabajo]
+    RM5[Cobrar y confirmar<br/>seña al reservar]
+    RM6[Enviar recordatorio<br/>automático de turno]
+    RM7[Contar con respuestas automáticas<br/>para precios y protocolos]
+    RM8[Integrar WhatsApp con<br/>una agenda digital]
+
+    RO --> RF1
+    RO --> RF2
+    RO --> RF3
+    RO --> RF4
+    RO --> RF5
+    RO --> RF6
+    RO --> RF7
+    RO --> RF8
+    RO --> RF9
+    RO --> RF10
+    RM1 --> RO
+    RM2 --> RO
+    RM3 --> RO
+    RM4 --> RO
+    RM5 --> RO
+    RM6 --> RO
+    RM7 --> RO
+    RM8 --> RO
+```
+
+Board completo: https://miro.com/app/board/uXjVHwuDCKs=/
+
 ## Tabla de conversión aplicada
 
 | Árbol de Problemas | Árbol de Objetivos | Fechado (meta a 2026, Dermalia) |

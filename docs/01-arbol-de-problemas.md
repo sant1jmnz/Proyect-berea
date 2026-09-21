@@ -75,6 +75,62 @@ flowchart TB
     C4_1 --> C4
 ```
 
+El diagrama de arriba es la versión formalizada (C1-C4, Dermalia). El
+árbol también se armó antes, como post-its en el board de Miro "Proyecto
+informático 1", en la etapa de brainstorm inicial, con el negocio y el
+lenguaje de esa etapa (Bella Piel, "el dueño", "clientas"), sin la
+distinción causa directa / causa raíz todavía. Se deja acá, en el mismo
+formato Mermaid que el resto del repo, para no depender solo del link
+externo:
+
+```mermaid
+flowchart TB
+    RP["Mejorar la atención al cliente, aliviar la carga<br/>para el dueño y generar más alcance para el negocio<br/>(problema, versión brainstorm)"]
+
+    RE1[Menor rentabilidad y<br/>crecimiento limitado del negocio]
+    RE2[Pérdida de tiempo que podría<br/>dedicarse a atender clientas]
+    RE3[El dueño no puede<br/>enfocarse en el servicio]
+    RE4[Clientes potenciales eligen<br/>negocios con atención más ágil]
+    RE5[Algunas respuestas tardías y<br/>fuera del horario de trabajo]
+    RE6[Mucho tiempo de trabajo perdido por<br/>contestar mensajes o asignar reservas]
+    RE7[Genera confusión para el dueño]
+    RE8[Menor satisfacción de<br/>las clientas actuales]
+    RE9[Produce turnos perdidos]
+    RE10[Produce superposiciones]
+    RE11[Ineficiencia al contestar<br/>mensajes y al asignar turnos]
+
+    RC1[No hay un sistema de<br/>reservas con horarios visibles]
+    RC2[Atención manual por<br/>el dueño mediante WhatsApp]
+    RC3[Cantidad de tiempo que<br/>toma contestar mensajes]
+    RC4[Sin disponibilidad 24/7]
+    RC5[No se cobra ni confirma<br/>seña al reservar]
+    RC6[No hay recordatorio<br/>automático de turno]
+    RC7[No existe una base de respuestas<br/>para precios y protocolos]
+    RC8[WhatsApp no está integrado<br/>a ninguna agenda digital]
+
+    RP --> RE1
+    RP --> RE2
+    RP --> RE3
+    RP --> RE4
+    RP --> RE5
+    RP --> RE6
+    RP --> RE7
+    RP --> RE8
+    RP --> RE9
+    RP --> RE10
+    RP --> RE11
+    RC1 --> RP
+    RC2 --> RP
+    RC3 --> RP
+    RC4 --> RP
+    RC5 --> RP
+    RC6 --> RP
+    RC7 --> RP
+    RC8 --> RP
+```
+
+Board completo: https://miro.com/app/board/uXjVHwuDCKs=/
+
 ## Tabla de causas
 
 | # | Causa | Tipo | Evidencia que la respalda |

@@ -98,18 +98,14 @@ decisión de equipo en vez de quedar abiertas esperando un relevamiento
 que nunca iba a llegar, justamente para no perder tiempo del bimestre
 corto.
 
-**¿Por qué está todo mockeado, sin Mercado Pago, sin Google Calendar, sin IA real?**
+**¿Por qué está todo simulado en vez de conectado a un servicio real?**
 Restricción del equipo: el backend se hace en C con SQL Server, el
-frontend en Qt de escritorio, sin integraciones por API externa. En vez de
-dejar esas piezas sin resolver, cada una se diseñó igual pero simulada
-dentro del propio sistema: el buscador de precios/protocolos funciona por
-palabra clave contra una tabla propia en vez de un modelo de lenguaje, la
-agenda vive en el sistema en vez de sincronizarse con Google Calendar, y
-la seña se registra como un estado (pagada/no pagada) que marca la
-recepción en vez de procesarse por una pasarela real. La lógica de negocio
+frontend en Qt de escritorio, sin integraciones por API externa. El
+buscador de precios y protocolos funciona por palabra clave contra una
+tabla propia, la agenda vive en el sistema, y la seña se registra como un
+estado (pagada/no pagada) que marca la recepción. La lógica de negocio
 (30% de seña, derivación a WhatsApp sin coincidencia, recordatorio antes
-del turno) es la misma que si hubiera integraciones reales, cambia la
-implementación, no el diseño.
+del turno) queda igual, solo cambia la implementación.
 
 ## Qué falta
 

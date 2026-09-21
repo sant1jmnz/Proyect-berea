@@ -92,17 +92,16 @@ recepción para los turnos que llegan por teléfono.
 **Restricción técnica del equipo** (definida después de este relevamiento
 inicial): backend en C con SQL Server, frontend en Qt de escritorio, sin
 integraciones por API externa ni canal web. Por eso el registro de seña y
-el buscador quedaron descriptos arriba como simulados/locales, sin
-Mercado Pago, Google Calendar ni un modelo de lenguaje real detrás. El
-detalle completo, actualizado, está en `docs/03-matriz-marco-logico.md` y
+el buscador quedaron descriptos arriba como simulados/locales. El detalle
+completo, actualizado, está en `docs/03-matriz-marco-logico.md` y
 `docs/04-requerimientos.md`.
 
 ### Fuera de alcance
 
 Historia clínica de tratamientos, gestión de stock de insumos, liquidación
 de comisiones, app nativa, y una vitrina de fotos y reseñas (dependía de
-la API de Google Maps). Este bimestre no se programa nada: se formula y
-se diseña.
+una API externa). Este bimestre no se programa nada: se formula y se
+diseña.
 
 ### Indicadores preliminares
 
@@ -123,9 +122,9 @@ se diseña.
   de la zona.
 - Datos personales: los datos de contacto y protocolo de la paciente son
   sensibles y se guardan solo en la base local del instituto.
-- Fidelidad del mock: no hay pasarela de pago ni modelo de lenguaje real,
-  así que el pitch tiene que dejar claro qué es simulado y qué sería una
-  integración real en una versión productiva, sin esconder la diferencia.
+- Fidelidad del mock: el pago y las respuestas del buscador son
+  simulados, así que el pitch tiene que dejar claro qué está simulado y
+  qué no, sin esconder la diferencia.
 
 ### Viabilidad para el bimestre
 

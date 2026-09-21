@@ -7,10 +7,10 @@ Componentes vienen de los objetivos específicos OE1-OE4; las Actividades,
 de los medios M1-M4. Es la misma cadena, pasada a formato de matriz.
 
 **Restricción técnica**: backend en C con SQL Server, frontend en Qt, sin
-integraciones por API externa ni canal web. Cada Componente que antes
-dependía de un tercero (pasarela de pago, calendario, IA) queda mockeado
-dentro del propio sistema, se explica en el detalle de cada uno. El
-sistema tiene dos apartados, los dos nativos en Qt: una terminal táctil en
+integraciones por API externa ni canal web. Cada Componente que depende
+de pago, agenda o respuestas automáticas funciona dentro del propio
+sistema, se explica en el detalle de cada uno. El sistema tiene dos
+apartados, los dos nativos en Qt: una terminal táctil en
 el instituto que opera la paciente (self-service presencial, no remoto) y
 la PC de recepción que opera el instituto (`docs/04-requerimientos.md`
 tiene el detalle por apartado). Los cuatro Componentes son los mismos
@@ -34,14 +34,13 @@ R1, módulo de reserva con agenda propia:
 - A.1.1 Diseñar la grilla de disponibilidad en tiempo real, contra la tabla
   de agenda de los profesionales en SQL Server.
 - A.1.2 Implementar en el sistema la carga y edición de disponibilidad, que
-  hace la recepción; no hay integración con Google Calendar ni ningún
-  calendario externo, la agenda vive solo en el sistema.
+  hace la recepción; la agenda vive solo en el sistema.
 
 R2, buscador interno de preguntas frecuentes:
 - A.2.1 Armar la base de precios y protocolos que usa el buscador (tabla en
   SQL Server, cargada y editable por la recepción).
 - A.2.2 Implementar en C el motor de búsqueda por palabra clave contra esa
-  base, no hay modelo de lenguaje ni servicio de IA conectado.
+  base.
 - A.2.3 Definir el punto de derivación a WhatsApp del instituto (un enlace
   `wa.me`, no un envío automático) cuando el buscador no encuentra
   coincidencia, para que la recepción escale la consulta.

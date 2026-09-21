@@ -1,9 +1,10 @@
-# Proyecto Berea: Bella Piel, Centro de Estética Integral
+# EstéticaFlow
 
-Repositorio oficial de la **Carpeta de Proyecto V1** para la materia
-*Proyecto Informático I* (Prof. Cynthia Berea), 4to año, especialidad
-Computación, Escuela Técnica de CABA. Marco pedagógico: **Buenos Aires
-Aprende**. Bimestre de 8 semanas.
+Sistema de gestión de turnos para **Bella Piel, Centro de Estética
+Integral**. Repositorio oficial de la **Carpeta de Proyecto V1** para la
+materia *Proyecto Informático I* (Prof. Cynthia Berea), 4to año,
+especialidad Computación, Escuela Técnica de CABA. Marco pedagógico:
+**Buenos Aires Aprende**. Bimestre de 8 semanas.
 
 ## Desafío integrador
 

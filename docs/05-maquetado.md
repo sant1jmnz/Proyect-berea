@@ -102,12 +102,15 @@ esta Carpeta de Proyecto V1.
 
 ## Qué falta
 
-- Aplicados en Figma los cambios de esta semana: la Pantalla 4 se renombró
-  a "Buscador de FAQ", la Pantalla 3 ya no menciona Mercado Pago (el monto
-  también se corrigió a $5.000, que es lo que corresponde con la regla de
-  RF-07 sobre un servicio de $8.000, antes decía $2.000, mal calculado), y
-  se agregó el enlace "Ayuda" en el header de las 5 pantallas. No se pudo
-  sacar captura final de conjunto por límite de llamadas del plan Starter
-  de Figma, revisar visualmente antes de la revisión cruzada.
+- Revisado en Figma, pantalla por pantalla, el estado de los cambios: la
+  Pantalla 4 está renombrada a "Buscador de FAQ", la Pantalla 3 no
+  menciona Mercado Pago y ya mostraba el monto correcto de seña ($5.000
+  sobre un servicio de $8.000, según RF-07), y las 5 pantallas tienen el
+  enlace "Ayuda" en el header. Se encontró y corrigió un resabio del monto
+  viejo: la Pantalla 5 (Mis Turnos) todavía decía "Seña pagada: $2.000 de
+  $8.000", ya está en $5.000. También se corrigió un desborde de texto en
+  la tarjeta de seña de la Pantalla 3 (la aclaración se cortaba en "se
+  descuenta..."), ahora hace wrap y la tarjeta creció de alto en
+  consecuencia, sin superponerse con el resto de la pantalla.
 - Pasar el maquetado por la coevaluación cruzada con otro equipo antes de
   darlo por cerrado.

@@ -57,52 +57,25 @@ flowchart TB
 Misma nota que en `docs/01-arbol-de-problemas.md`: el diagrama de arriba
 es la versión formalizada. El árbol también existe como post-its en el
 mismo board de Miro, de la etapa de brainstorm, con el lenguaje de esa
-etapa (Bella Piel, "el dueño"), en el mismo formato Mermaid que el resto
-del repo:
+etapa (Bella Piel, "el dueño"). Con tantos post-its alrededor de un solo
+nodo central, Mermaid lo dibuja como una estrella radial ilegible, así
+que se deja como tabla:
 
-```mermaid
-flowchart TB
-    RO["Mejorar la atención al cliente, aliviar la carga<br/>para el dueño y generar más alcance para el negocio<br/>(objetivo, versión brainstorm)"]
+**Objetivo (brainstorm)**: "Mejorar la atención al cliente, aliviar la
+carga para el dueño y generar más alcance para el negocio."
 
-    RF1[Aumentar la rentabilidad y<br/>el crecimiento del negocio]
-    RF2[Liberar tiempo del dueño<br/>para atender clientas]
-    RF3[Permitir que el dueño<br/>se enfoque en el servicio]
-    RF4[Atraer clientes potenciales<br/>con atención ágil]
-    RF5[Eficiencia al<br/>contestar mensajes]
-    RF6[Respuestas dentro del horario<br/>de trabajo, instantáneas]
-    RF7[Ayuda al cliente sin<br/>necesidad del dueño]
-    RF8[Tiempo de trabajo<br/>perdido nulo o casi nulo]
-    RF9[Menos confusiones<br/>para el dueño]
-    RF10[Mejor asignación de turnos,<br/>evitando que se pierdan en el día]
-
-    RM1[Contar con un sistema de<br/>reservas con horarios visibles]
-    RM2[Mejor experiencia<br/>para el usuario]
-    RM3[Crear una página web que ayude<br/>a los clientes a reservar turnos]
-    RM4[Hacer un chatbot de WhatsApp que<br/>conteste en horario de trabajo]
-    RM5[Cobrar y confirmar<br/>seña al reservar]
-    RM6[Enviar recordatorio<br/>automático de turno]
-    RM7[Contar con respuestas automáticas<br/>para precios y protocolos]
-    RM8[Integrar WhatsApp con<br/>una agenda digital]
-
-    RO --> RF1
-    RO --> RF2
-    RO --> RF3
-    RO --> RF4
-    RO --> RF5
-    RO --> RF6
-    RO --> RF7
-    RO --> RF8
-    RO --> RF9
-    RO --> RF10
-    RM1 --> RO
-    RM2 --> RO
-    RM3 --> RO
-    RM4 --> RO
-    RM5 --> RO
-    RM6 --> RO
-    RM7 --> RO
-    RM8 --> RO
-```
+| Medios (post-its) | Fines (post-its) |
+|---|---|
+| Contar con un sistema de reservas con horarios visibles | Aumentar la rentabilidad y el crecimiento del negocio |
+| Mejor experiencia para el usuario | Liberar tiempo del dueño para atender clientas |
+| Crear una página web que ayude a los clientes a reservar turnos | Permitir que el dueño se enfoque en el servicio |
+| Hacer un chatbot de WhatsApp que conteste en horario de trabajo | Atraer clientes potenciales con atención ágil |
+| Cobrar y confirmar seña al reservar | Eficiencia al contestar mensajes |
+| Enviar recordatorio automático de turno | Respuestas dentro del horario de trabajo, instantáneas |
+| Contar con respuestas automáticas para precios y protocolos | Ayuda al cliente sin necesidad del dueño |
+| Integrar WhatsApp con una agenda digital | Tiempo de trabajo perdido nulo o casi nulo |
+| | Menos confusiones para el dueño |
+| | Mejor asignación de turnos, evitando que se pierdan en el día |
 
 Board completo: https://miro.com/app/board/uXjVHwuDCKs=/
 

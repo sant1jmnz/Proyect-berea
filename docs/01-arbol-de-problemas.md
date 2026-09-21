@@ -135,17 +135,17 @@ cadena se sostiene leída en voz alta, que es la regla de la cátedra.
 Se atacan con el sistema, y justifican la propuesta:
 
 - C1 / C1.1 → módulo de reserva con agenda propia, disponible en el
-  kiosco de la paciente y en la PC de recepción (sin sincronizar con
+  terminal de la paciente y en la PC de recepción (sin sincronizar con
   ningún calendario externo).
 - C2 / C2.1 → buscador de precios y protocolos por palabra clave, contra
-  una base propia, en el kiosco y en la PC de recepción.
+  una base propia, en la terminal y en la PC de recepción.
 - C3 / C3.1 → registro de seña simulado (mock): se marca el estado de
   pago al confirmar el turno, sin procesar dinero real.
 - C4 / C4.1 → recordatorio de turno simulado, visible al buscar el turno.
 
 **Restricción técnica del equipo**: backend en C con SQL Server, frontend
 en Qt de escritorio, sin web y sin API externa. El sistema tiene dos
-apartados, los dos nativos en Qt: un kiosco táctil en el instituto para
+apartados, los dos nativos en Qt: una terminal táctil en el instituto para
 que la paciente cargue su propio turno, y la PC de recepción para los
 turnos que llegan por teléfono. Todo lo que en una versión con más
 libertad técnica sería una conexión con un tercero (pasarela de pago,

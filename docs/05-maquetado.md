@@ -6,13 +6,13 @@ reservaba desde su celular con un enlace mágico). La segunda (Semana 7
 real, cierre) la reemplaza: la restricción técnica real del equipo es
 sobre la **tecnología** (Qt, no HTML/web), no sobre quién puede usar el
 sistema. Un self-service remoto desde el celular de la paciente sí
-necesitaría web y se descarta, pero un self-service presencial en un
-kiosco Qt dentro del instituto no. Esta versión, con los dos apartados,
+necesitaría web y se descarta, pero un self-service presencial en una
+terminal Qt dentro del instituto no. Esta versión, con los dos apartados,
 es la vigente.
 
 ## Los dos apartados
 
-- **Apartado Cliente**: pantalla táctil (kiosco) instalada en Dermalia,
+- **Apartado Cliente**: pantalla táctil (terminal) instalada en Dermalia,
   para que la paciente cargue su propio turno, consulte precios y busque
   su turno mientras está en el local.
 - **Apartado Gestión**: lo usa la recepción desde la PC del mostrador,
@@ -39,7 +39,7 @@ diseño final pixel a pixel.
 
 ```mermaid
 flowchart LR
-    subgraph Cliente["Apartado Cliente (kiosco)"]
+    subgraph Cliente["Apartado Cliente (terminal)"]
         A1[Elegir protocolo<br/>RF-01] --> A2[Elegir horario<br/>RF-01, RF-04]
         A2 --> A3[Confirmar y pagar seña<br/>RF-01, RF-08, RF-10]
         A3 --> A4[Buscar mi turno<br/>RF-12]
@@ -55,7 +55,7 @@ flowchart LR
     B5 -.sin coincidencia.-> WA
 ```
 
-La paciente entra por el kiosco cuando está en el instituto; la recepción
+La paciente entra por la terminal cuando está en el instituto; la recepción
 entra por su PC cuando la paciente llama. Ambos caminos terminan en el
 mismo dato: un turno con seña registrada y recordatorio, buscable después
 desde cualquiera de los dos apartados según quién lo necesite ver.
@@ -91,7 +91,7 @@ del apartado Gestión.
 - Mismo flujo de 3 pasos en los dos apartados (protocolo → horario →
   confirmación): la paciente y la recepción entienden la misma secuencia,
   y el equipo solo mantiene una lógica de negocio, no dos.
-- El kiosco (Cliente) usa controles más grandes y espaciados, pensados
+- La terminal (Cliente) usa controles más grandes y espaciados, pensados
   para pantalla táctil; la PC de recepción (Gestión) usa una densidad
   mayor, pensada para mouse y teclado y para repetir la carga muchas
   veces por día.
@@ -107,7 +107,7 @@ del apartado Gestión.
   puede resolver.
 - "Buscar mi turno" (Cliente) y "Buscar turnos" (Gestión) no dependen de
   ningún enlace ni contraseña: alcanza con DNI o teléfono, porque en los
-  dos casos hay alguien físicamente presente (la paciente en el kiosco,
+  dos casos hay alguien físicamente presente (la paciente en la terminal,
   la recepción en el mostrador) verificando la identidad.
 
 ## Evaluación heurística (Nielsen)
@@ -117,7 +117,7 @@ del apartado Gestión.
 | 1. Visibilidad del estado del sistema | "Paso 1/2/3 de 3" en la carga de turno de los dos apartados; badge "Confirmado" al buscar un turno; el buscador de precios marca la fuente de cada resultado. |
 | 2. Lenguaje del usuario | Sin jerga técnica: "Elegir horario", "Pagar seña" (Cliente) / "Registrar seña" (Gestión), nunca "slot" ni "booking". |
 | 3. Control y libertad | Botón "Volver" en cada paso de la carga; "Cancelar turno" siempre visible en las búsquedas. |
-| 4. Consistencia y estándares | Mismo color primario y tipografía en los dos apartados; el kiosco usa controles más grandes, pero la misma paleta y jerarquía visual. |
+| 4. Consistencia y estándares | Mismo color primario y tipografía en los dos apartados; la terminal usa controles más grandes, pero la misma paleta y jerarquía visual. |
 | 5. Prevención de errores | Solo se muestran horarios realmente disponibles (RF-04), no se puede cargar un turno sobre uno ya ocupado, en ningún apartado. |
 | 6. Reconocer antes que recordar | El resumen antes de confirmar repite protocolo, fecha, hora y precio en los dos apartados. |
 | 7. Flexibilidad y eficiencia | El buscador resuelve una consulta de precio en un resultado, sin pasar por los 3 pasos de carga de turno. |
@@ -128,15 +128,15 @@ del apartado Gestión.
 ## Preguntas para la coevaluación cruzada
 
 1. ¿El mismo flujo de 3 pasos funciona igual de bien para una paciente
-   tocando una pantalla en el kiosco que para la recepción usando mouse y
+   tocando una pantalla en la terminal que para la recepción usando mouse y
    teclado todo el día, o alguno de los dos necesita un diseño distinto?
 2. El buscador deriva a WhatsApp cuando no encuentra coincidencia en los
-   dos apartados, ¿alcanza con marcarlo en pantalla, o el kiosco (sin
+   dos apartados, ¿alcanza con marcarlo en pantalla, o la terminal (sin
    nadie de recepción cerca en ese momento) necesita un paso adicional?
 3. Con la restricción de C + SQL Server + Qt sin APIs, la seña y el
    recordatorio quedaron mockeados en los dos apartados, ¿esa simulación
    se entiende con solo texto en pantalla, o hace falta una aclaración
-   visual más explícita, sobre todo en el kiosco donde nadie de recepción
+   visual más explícita, sobre todo en la terminal donde nadie de recepción
    está ahí para aclararlo en el momento?
 
 ## Qué falta
@@ -151,7 +151,7 @@ Las 5 pantallas originales, pensadas como app móvil self-service remota
 para la paciente (reserva desde el celular, con enlace mágico), quedan en
 Figma como registro del primer intento:
 https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled. Ya no
-reflejan el modelo de uso actual (kiosco presencial + recepción, los dos
+reflejan el modelo de uso actual (terminal presencial + recepción, los dos
 en Qt), así que no son la referencia vigente. Se dejan sin borrar porque
 muestran el proceso de descarte, igual que las propuestas rechazadas en
 `docs/propuestas.md`.

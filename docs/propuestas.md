@@ -78,13 +78,13 @@ Datos del instituto:
 
 ### Qué hace el sistema
 
-Dos apartados, los dos en Qt de escritorio: un kiosco táctil en el
+Dos apartados, los dos en Qt de escritorio: una terminal táctil en el
 instituto para que la paciente cargue su propio turno, y la PC de
 recepción para los turnos que llegan por teléfono.
 
 | Módulo | Función |
 |---|---|
-| Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema; lo hace la paciente en el kiosco o la recepción cuando llama por teléfono |
+| Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema; lo hace la paciente en la terminal o la recepción cuando llama por teléfono |
 | Registro de seña | Simulado (mock): se marca el estado de pago, sin pasarela real ni datos de tarjeta |
 | Buscador de precios y protocolos | Búsqueda por palabra clave contra una base local con precios, protocolos y políticas; si no encuentra coincidencia, marca la derivación a WhatsApp del instituto |
 | Buscar turnos | Por nombre, DNI o teléfono de la paciente, sin enlace ni cuenta |

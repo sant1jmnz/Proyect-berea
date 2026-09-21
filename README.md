@@ -32,9 +32,9 @@ ataca esas cuatro causas con:
 | Recordatorio de turno | Generado dentro del sistema, visible al buscar el turno |
 | Buscar turnos | Por nombre, DNI o teléfono de la paciente, sin enlace ni cuenta |
 
-Dos apartados: un **kiosco táctil** en el instituto, que usa la paciente
-para cargar su propio turno, y la **PC de recepción**, para los turnos
-que llegan por teléfono. Detalle completo en
+Dos apartados: una **terminal táctil** en el instituto, que usa la
+paciente para cargar su propio turno, y la **PC de recepción**, para los
+turnos que llegan por teléfono. Detalle completo en
 [`docs/04-requerimientos.md`](docs/04-requerimientos.md).
 
 **Stack técnico**: backend en **C** con **SQL Server**, frontend en

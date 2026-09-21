@@ -90,7 +90,7 @@ y 2 del maquetado ("Elegir servicio", "Elegir horario")*.
 | 2 | Propuesta estratégica, Árbol de Objetivos | [`docs/02-arbol-de-objetivos.md`](docs/02-arbol-de-objetivos.md) | Hecho, falta la revisión cruzada con otro equipo |
 | 3 | Matriz de Marco Lógico (MML) | [`docs/03-matriz-marco-logico.md`](docs/03-matriz-marco-logico.md) | Hecho |
 | 4 | Requerimientos funcionales y no funcionales | [`docs/04-requerimientos.md`](docs/04-requerimientos.md) | Hecho (RF-01 a RF-10, RNF-01 a RNF-10) |
-| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | 5 pantallas armadas en Figma; falta aplicar ahí los cambios de esta semana (stack sin APIs, enlace de ayuda) y la revisión cruzada |
+| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | 5 pantallas en Figma (formato móvil, flujo validado) + referencia de escritorio en Qt; falta la revisión cruzada |
 | 6 | Pitch (7 a 10 min) | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion armado, falta ensayar y cronometrar con los 4 integrantes |
 
 Documentos de apoyo: [`docs/propuestas.md`](docs/propuestas.md) (las diez

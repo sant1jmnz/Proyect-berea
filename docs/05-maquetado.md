@@ -10,6 +10,26 @@ No hay capturas en `docs/assets/`: `figma.com` está bloqueado para descarga
 directa en este entorno de trabajo. El enlace a cada pantalla en Figma
 reemplaza la captura; cualquiera con acceso al archivo la ve ahí.
 
+**Aclaración sobre el formato**: estas 5 pantallas de Figma tienen formato
+de app móvil (375px de ancho), pero la restricción técnica real del equipo
+es backend en C + SQL Server con **frontend en Qt** (ventana de
+escritorio, no web ni móvil). Sirven para validar el flujo y qué
+información va en cada pantalla, no el formato visual final.
+
+## Referencia de escritorio (Qt)
+
+Versión adaptada a ventana de escritorio de las mismas 5 pantallas (barra
+de título, navegación lateral, contenido a la derecha), pensada como
+referencia visual para construir la interfaz real en Qt Designer / Qt
+Widgets: https://claude.ai/artifact/LAL3dVf5JWdd3SD7VYuRFX
+
+Se armó fuera de Figma porque el asiento de Figma del equipo (plan
+Starter, rol View) tiene un tope de 20 llamadas por mes al servidor MCP
+de diseño, que se agotó con las revisiones de esta semana. Mientras no se
+mejore el asiento/plan, este mockup de escritorio es la referencia
+vigente; las 5 pantallas de Figma quedan como registro del flujo original
+en formato móvil.
+
 ## User flow
 
 ```mermaid

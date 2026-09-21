@@ -35,20 +35,8 @@ parte de la justificación de la alternativa elegida.
 
 ## Propuesta 1 (PRINCIPAL): Sistema de turnos para instituto de estética médica
 
-Usuario / cliente: recepción de un instituto de estética médica (caso
-imaginario, Dermalia, Instituto de Estética Médica) y sus pacientes
-actuales y potenciales.
-
-**Nota sobre el pivot (Semana 7 real)**: al principio se pensó como
-aplicación web self-service para un centro de estética simple ("Bella
-Piel"), con la clienta reservando desde su celular. Dos cambios cerrados
-esta semana: (1) el negocio pasa a ser un instituto de estética médica,
-con protocolos de mayor ticket y un posicionamiento más prestigioso; (2)
-el sistema pasa a ser una herramienta interna que opera la recepción, no
-un self-service, porque el stack real del equipo (C + SQL Server + Qt de
-escritorio, sin web ni API externa) no permite que la paciente reserve
-desde su celular con un enlace. El problema central y la cadena causal no
-cambian, cambia el catálogo y quién usa el sistema.
+Usuario / cliente: recepción de Dermalia, Instituto de Estética Médica, y
+sus pacientes actuales y potenciales.
 
 ### Problema central (borrador)
 
@@ -90,33 +78,30 @@ Datos del instituto:
 
 ### Qué hace el sistema
 
-Herramienta interna que opera la recepción desde la PC del instituto, no
-un self-service para la paciente (ver nota sobre el pivot, arriba).
+Dos apartados, los dos en Qt de escritorio: un kiosco táctil en el
+instituto para que la paciente cargue su propio turno, y la PC de
+recepción para los turnos que llegan por teléfono.
 
 | Módulo | Función |
 |---|---|
-| Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema, cargada por la recepción cuando la paciente llama o va en persona |
-| Registro de seña | Simulado (mock): la recepción marca el estado de pago, sin pasarela real ni datos de tarjeta |
-| Buscador de precios y protocolos | Búsqueda por palabra clave contra una base local con precios, protocolos y políticas; si no encuentra coincidencia, marca la derivación a WhatsApp del instituto; lo usa la recepción para responder consultas por teléfono |
-| Buscar turnos | Por nombre, DNI o teléfono de la paciente, sin enlace ni cuenta: lo usa la recepción |
+| Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema; lo hace la paciente en el kiosco o la recepción cuando llama por teléfono |
+| Registro de seña | Simulado (mock): se marca el estado de pago, sin pasarela real ni datos de tarjeta |
+| Buscador de precios y protocolos | Búsqueda por palabra clave contra una base local con precios, protocolos y políticas; si no encuentra coincidencia, marca la derivación a WhatsApp del instituto |
+| Buscar turnos | Por nombre, DNI o teléfono de la paciente, sin enlace ni cuenta |
 
 **Restricción técnica del equipo** (definida después de este relevamiento
 inicial): backend en C con SQL Server, frontend en Qt de escritorio, sin
-integraciones por API externa. Por eso el registro de seña y el buscador
-quedaron descriptos arriba como simulados/locales, no hay Mercado Pago,
-Google Calendar ni un modelo de lenguaje real detrás, y por eso el sistema
-es una herramienta de recepción y no un self-service web (la "vitrina" con
-fotos y reseñas de Google Maps, que sí dependía de un canal propio para la
-paciente, se sacó del alcance por la misma razón). El detalle completo,
-actualizado, está en `docs/03-matriz-marco-logico.md` y
+integraciones por API externa ni canal web. Por eso el registro de seña y
+el buscador quedaron descriptos arriba como simulados/locales, sin
+Mercado Pago, Google Calendar ni un modelo de lenguaje real detrás. El
+detalle completo, actualizado, está en `docs/03-matriz-marco-logico.md` y
 `docs/04-requerimientos.md`.
 
 ### Fuera de alcance
 
-Historia clínica de tratamientos, gestión de stock de insumos, liquidación de
-comisiones, app nativa, y cualquier portal self-service para que la paciente
-reserve por su cuenta (la "vitrina" con fotos y reseñas, descartada por la
-misma restricción técnica). Este bimestre no se programa nada: se formula y
+Historia clínica de tratamientos, gestión de stock de insumos, liquidación
+de comisiones, app nativa, y una vitrina de fotos y reseñas (dependía de
+la API de Google Maps). Este bimestre no se programa nada: se formula y
 se diseña.
 
 ### Indicadores preliminares
@@ -382,7 +367,7 @@ anterior. Requiere aval de la institución antes de arrancar.
 
 | # | Propuesta | Usuario accesible | Evidencia pública | Competencia | Viabilidad |
 |---|---|---|---|---|---|
-| 1 | Instituto de estética médica | Caso imaginario (Dermalia) | Buena | Media | Alta |
+| 1 | Instituto de estética médica | Dermalia | Buena | Media | Alta |
 | 2 | POS / inventario | A conseguir | Buena | Alta | Alta |
 | 5 | Adopción de mascotas | A conseguir | Buena | Baja | Media-alta |
 | 9 | Laboratorios y equipamiento | Sí, acá mismo | A relevar | Baja | Alta |
@@ -393,11 +378,8 @@ evidencia del sector es contundente, y el segmento al que apunta (el kiosco
 chico que hoy no paga ningún sistema) está desatendido por precio. Ese
 argumento hay que poder defenderlo en el pitch.
 
-Recomendación: sostener la 1 (estética médica) como principal. Es un
-ejercicio sobre un caso imaginario: Dermalia no existe, así que no hay
-relevamiento real posible ni entrevista que hacer. El equipo inventa a propósito los
-datos de partida y los presenta como tales; esa fue la decisión que se
-tomó con la cátedra al plantear el proyecto así. La 9 queda anotada como
+Recomendación: sostener la 1 (estética médica) como principal, por la
+evidencia y la viabilidad ya expuestas arriba. La 9 queda anotada como
 alternativa con relevamiento real disponible, por si en algún momento se
 decide cambiar de enfoque.
 

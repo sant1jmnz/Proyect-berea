@@ -4,11 +4,6 @@ Diagnóstico de la problemática elegida: Propuesta 1, sistema de escritorio
 para un instituto de estética médica (ver `docs/propuestas.md`,
 comparación de las cinco propuestas en carrera).
 
-Dermalia es un caso imaginario. No hay relevamiento real ni entrevista
-posible; los datos de partida los inventa el equipo a propósito. El
-ejercicio es armar la Carpeta de Proyecto completa igual, con la misma
-disciplina metodológica que si el caso fuera real.
-
 ## Contexto y actores
 
 La problemática es la gestión de turnos y consultas de Dermalia, Instituto
@@ -139,34 +134,29 @@ cadena se sostiene leída en voz alta, que es la regla de la cátedra.
 
 Se atacan con el sistema, y justifican la propuesta:
 
-- C1 / C1.1 → módulo de reserva con agenda propia, cargada por la
-  recepción directo en el sistema (sin sincronizar con ningún calendario
-  externo).
-- C2 / C2.1 → buscador interno de precios y protocolos por palabra clave,
-  que la recepción usa para responder consultas rápido, contra una base
-  propia, en vez de buscarlas de memoria o en papel.
-- C3 / C3.1 → registro de seña simulado (mock): la recepción marca el
-  estado de pago al confirmar el turno, sin procesar dinero real.
-- C4 / C4.1 → recordatorio de turno simulado, visible para la recepción
-  dentro del sistema.
+- C1 / C1.1 → módulo de reserva con agenda propia, disponible en el
+  kiosco de la paciente y en la PC de recepción (sin sincronizar con
+  ningún calendario externo).
+- C2 / C2.1 → buscador de precios y protocolos por palabra clave, contra
+  una base propia, en el kiosco y en la PC de recepción.
+- C3 / C3.1 → registro de seña simulado (mock): se marca el estado de
+  pago al confirmar el turno, sin procesar dinero real.
+- C4 / C4.1 → recordatorio de turno simulado, visible al buscar el turno.
 
 **Restricción técnica del equipo**: backend en C con SQL Server, frontend
-en Qt (aplicación de escritorio, sin web y sin API externa). Por eso el
-sistema no es un self-service que la paciente usa desde su celular: lo
-opera la recepción en la PC del instituto, que carga los turnos que la
-paciente pide por teléfono o en persona. Todo lo que en una versión con
-más libertad técnica sería una conexión con un tercero (pasarela de pago,
+en Qt de escritorio, sin web y sin API externa. El sistema tiene dos
+apartados, los dos nativos en Qt: un kiosco táctil en el instituto para
+que la paciente cargue su propio turno, y la PC de recepción para los
+turnos que llegan por teléfono. Todo lo que en una versión con más
+libertad técnica sería una conexión con un tercero (pasarela de pago,
 calendario, inteligencia artificial) queda simulado dentro del propio
 sistema: no hay Mercado Pago, Google Calendar ni un modelo de lenguaje
 conectado.
 
-Quedan fuera de alcance de este bimestre (ya anotado en `propuestas.md`):
-historia clínica de tratamientos, gestión de stock de insumos, liquidación
-de comisiones, app nativa, y un portal o app para que la paciente reserve
-por su cuenta (self-service) — no es viable con la restricción técnica
-actual (Qt de escritorio, sin web ni API), queda anotado como posible
-iteración futura si el equipo suma un componente web. No se programa
-nada: se formula y se diseña.
+Quedan fuera de alcance de este bimestre: historia clínica de
+tratamientos, gestión de stock de insumos, liquidación de comisiones, app
+nativa, y una vitrina de fotos y reseñas (dependía de la API de Google
+Maps). No se programa nada: se formula y se diseña.
 
 ## Preguntas para la coevaluación cruzada
 

@@ -19,9 +19,9 @@ de ningún navegador ni servidor web:
   disponibilidad y resolver consultas.
 
 Los dos apartados comparten los mismos Componentes (R1-R4) y la misma base
-en SQL Server, solo cambia quién entra por cada pantalla. Donde antes
-había un tercero (Mercado Pago, Google Calendar, un modelo de lenguaje),
-el requerimiento describe una versión mockeada dentro del propio sistema.
+en SQL Server, solo cambia quién entra por cada pantalla. El pago, el
+buscador y el aviso de turno funcionan dentro del propio sistema, sin
+conectarse a ningún servicio externo.
 
 ## Requerimientos funcionales
 
@@ -116,7 +116,6 @@ para no faltar ni olvidarme la fecha.
 Criterios de aceptación:
 - El recordatorio se genera con anticipación configurable.
 - Lo veo al buscar mi turno en la terminal con mi DNI o teléfono.
-- No es un envío real por WhatsApp ni email.
 ```
 
 ```
@@ -146,8 +145,6 @@ para no depender de ningún calendario externo.
 Criterios de aceptación:
 - Puedo marcar y desmarcar horarios disponibles desde el sistema.
 - Los cambios se reflejan de inmediato en la grilla de reserva, en los dos apartados.
-- No hay ningún paso de sincronización con Google Calendar ni otro
-  calendario externo.
 ```
 
 ## Backlog inicial

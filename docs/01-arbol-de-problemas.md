@@ -147,11 +147,9 @@ Se atacan con el sistema, y justifican la propuesta:
 en Qt de escritorio, sin web y sin API externa. El sistema tiene dos
 apartados, los dos nativos en Qt: una terminal táctil en el instituto para
 que la paciente cargue su propio turno, y la PC de recepción para los
-turnos que llegan por teléfono. Todo lo que en una versión con más
-libertad técnica sería una conexión con un tercero (pasarela de pago,
-calendario, inteligencia artificial) queda simulado dentro del propio
-sistema: no hay Mercado Pago, Google Calendar ni un modelo de lenguaje
-conectado.
+turnos que llegan por teléfono. El pago, la agenda y las respuestas del
+buscador funcionan dentro del propio sistema, sin conectarse a ningún
+servicio externo.
 
 Quedan fuera de alcance de este bimestre: historia clínica de
 tratamientos, gestión de stock de insumos, liquidación de comisiones, app

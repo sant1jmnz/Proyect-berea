@@ -75,17 +75,6 @@ flowchart TB
     C4_1 --> C4
 ```
 
-El diagrama de arriba es la versión formalizada (C1-C4, Dermalia). El
-árbol también se armó como post-its en el board de Miro "Proyecto
-informático 1", en la etapa de brainstorm inicial, con el negocio y el
-lenguaje de esa etapa (Bella Piel, "el dueño", "clientas"), previo a la
-formalización C1-C4 y al pivot de la Semana 7. Se trae una versión
-estática a este repo para no depender solo del link externo a Miro:
-
-![Árbol de Problemas, brainstorm original en Miro](assets/arbol-de-problemas-miro.svg)
-
-Board completo: https://miro.com/app/board/uXjVHwuDCKs=/
-
 ## Tabla de causas
 
 | # | Causa | Tipo | Evidencia que la respalda |

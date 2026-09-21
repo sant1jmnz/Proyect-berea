@@ -54,15 +54,6 @@ flowchart TB
     M4 --> OE4
 ```
 
-Misma nota que en `docs/01-arbol-de-problemas.md`: el diagrama de arriba
-es la versión formalizada. El árbol también existe como post-its en el
-mismo board de Miro, de la etapa de brainstorm, previo a la
-formalización y al pivot a Dermalia:
-
-![Árbol de Objetivos, brainstorm original en Miro](assets/arbol-de-objetivos-miro.svg)
-
-Board completo: https://miro.com/app/board/uXjVHwuDCKs=/
-
 ## Tabla de conversión aplicada
 
 | Árbol de Problemas | Árbol de Objetivos | Fechado (meta a 2026, Dermalia) |

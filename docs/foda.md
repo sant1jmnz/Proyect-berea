@@ -18,7 +18,7 @@ seguir avanzando.
 | | O1. La cátedra da una rúbrica clara y material de referencia (videos, teoría de Marco Lógico) que reduce la ambigüedad sobre qué se evalúa. | A1. Bimestre de solo 7 semanas reales de trabajo, poco margen si algo se traba. Permanente: no depende de una debilidad propia. |
 | | | A2. Dependencia de herramientas externas (Miro, Figma, GitHub) para tener el proyecto al día; si cambia el acceso, se frena el trabajo. Permanente. |
 | | | A3. Si no se deja explícito que Dermalia es un caso imaginario, la devolución del docente puede cuestionar la validez del diagnóstico. Circunstancial: asociada a D1. |
-| | | A4. La revisión cruzada entre equipos, prevista en el marco pedagógico como feedback externo antes de la entrega final, no se concretó: no hubo otro equipo disponible para intercambiarla en el tiempo del bimestre. El diagnóstico y el maquetado llegan a la entrega sin ese chequeo externo. |
+| | | A4. La revisión cruzada entre equipos, prevista en el marco pedagógico como feedback externo antes de la entrega final, todavía no se concretó: no fue fácil coordinarla con otro equipo. Sigue pendiente, no descartada. |
 
 ## Estrategias
 
@@ -26,10 +26,10 @@ seguir avanzando.
   responder punto por punto a la rúbrica de Buenos Aires Aprende, mostrando
   trazabilidad explícita (causa → objetivo → componente → requerimiento →
   pantalla) en cada entrega.
-- E2 (F1 + A4), defensiva: sin revisión cruzada, el propio equipo asume ese
-  chequeo: cada rol (issues #1-#4) revisa el trabajo de otro rol antes de
-  cerrar la Carpeta de Proyecto, en vez de esperar un feedback externo que
-  no va a llegar.
+- E2 (F1 + A4), defensiva: mientras la revisión cruzada no se concreta, el
+  propio equipo cubre ese chequeo: cada rol (issues #1-#4) revisa el
+  trabajo de otro rol antes de cerrar la Carpeta de Proyecto, sin esperar
+  a que aparezca un equipo con quien coordinarla.
 - E3 (F1 + A1), defensiva: con la metodología y las guías ya listas, el
   equipo absorbe mejor un imprevisto dentro del bimestre corto, sin
   reconstruir el criterio de trabajo si alguien falta una semana.
@@ -44,9 +44,6 @@ seguir avanzando.
 
 ## Qué falta
 
-- Actualizar los issues #6 a #15 (los RF viejos) para que reflejen la
-  nueva numeración y los dos apartados de `docs/04-requerimientos.md`, o
-  cerrarlos y crear los nuevos: hoy están desactualizados (hablan de
-  "clienta" y "dueño", numeración RF-01 a RF-10 vieja).
-- Nada más pendiente sobre O2/A4: se aceptó que la revisión cruzada no se
-  va a hacer, ver E2.
+- Nada propio de este documento. El seguimiento operativo de la revisión
+  cruzada (A4) se hace en el "Qué falta" de README.md, no acá, para no
+  repetir el mismo pendiente en cada documento.

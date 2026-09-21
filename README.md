@@ -100,12 +100,16 @@ y 2 del maquetado ("Elegir protocolo", "Elegir horario")*.
 
 | # | Pieza | Documento | Estado |
 |---|---|---|---|
-| 1 | Diagnóstico, Árbol de Problemas | [`docs/01-arbol-de-problemas.md`](docs/01-arbol-de-problemas.md) | Hecho. Sin revisión cruzada: el equipo decidió no perseguirla, no hay otro equipo disponible |
-| 2 | Propuesta estratégica, Árbol de Objetivos | [`docs/02-arbol-de-objetivos.md`](docs/02-arbol-de-objetivos.md) | Hecho. Misma nota sobre la revisión cruzada |
+| 1 | Diagnóstico, Árbol de Problemas | [`docs/01-arbol-de-problemas.md`](docs/01-arbol-de-problemas.md) | Hecho |
+| 2 | Propuesta estratégica, Árbol de Objetivos | [`docs/02-arbol-de-objetivos.md`](docs/02-arbol-de-objetivos.md) | Hecho |
 | 3 | Matriz de Marco Lógico (MML) | [`docs/03-matriz-marco-logico.md`](docs/03-matriz-marco-logico.md) | Hecho |
 | 4 | Requerimientos funcionales y no funcionales | [`docs/04-requerimientos.md`](docs/04-requerimientos.md) | Hecho (RF-01 a RF-13, dos apartados; RNF-01 a RNF-11) |
-| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | 5+5 pantallas de escritorio en Qt, apartado Cliente y Gestión (vigente); el maquetado móvil original en Figma queda como historial, reemplazado. Sin revisión cruzada, misma nota |
+| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | 5+5 pantallas de escritorio en Qt, apartado Cliente y Gestión (vigente); el maquetado móvil original en Figma queda como historial, reemplazado |
 | 6 | Pitch (7 a 10 min) | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion armado, falta ensayar y cronometrar con los 4 integrantes |
+
+Pendiente transversal, no atado a una sola pieza: la **revisión cruzada**
+con otro equipo (árboles y maquetado) sigue sin hacerse, ver "Qué falta"
+más abajo — es el único lugar del repo donde se le hace seguimiento.
 
 Documentos de apoyo: [`docs/propuestas.md`](docs/propuestas.md) (las diez
 propuestas relevadas y por qué se eligió esta), [`docs/foda.md`](docs/foda.md)
@@ -175,6 +179,10 @@ Google Workspace / Classroom · Canva (presentación final).
 
 ## Qué falta
 
+- Revisión cruzada (peer review) del maquetado y de los árboles con otro
+  equipo: sigue pendiente, no se hizo ninguna de las dos. Sin fecha
+  concreta por ahora; se retoma si aparece otro equipo con quien
+  coordinarla.
 - Armar la presentación de Canva ("Proyecto Informático 1"): recorrido
   semana a semana de lo que se fue haciendo, más los problemas que se
   encontraron (incluido el pivot de esta semana). Es lo último que se

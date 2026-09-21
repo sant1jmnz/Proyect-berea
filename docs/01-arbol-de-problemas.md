@@ -153,9 +153,5 @@ nada: se formula y se diseña.
 
 ## Qué falta
 
-- Nada pendiente propio de esta pieza. La revisión cruzada con otro equipo
-  (Semana 2 del cronograma oficial) no se hizo y el equipo decidió no
-  perseguirla: no hay otro equipo con quien intercambiarla en el tiempo
-  que queda. Queda como limitación documentada, no como pendiente abierto.
-  Los roles del equipo ya están formalizados como issues del repo
-  (#1-#4), asignados el 1/9.
+- Nada pendiente propio de esta pieza (estado general de la revisión
+  cruzada y los roles: ver README.md).

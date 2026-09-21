@@ -124,6 +124,4 @@ implementación, no el diseño.
   último que se arma en la Semana 7 real (ver
   `docs/plan-de-aprendizaje.md`): recorrido semana a semana de lo que se
   fue haciendo y los problemas que se encontraron, para usar como apoyo
-  visual durante este guion. La revisión cruzada de árboles y maquetado no
-  se hizo y el equipo decidió no perseguirla: no bloquea cerrar esta
-  pieza.
+  visual durante este guion.

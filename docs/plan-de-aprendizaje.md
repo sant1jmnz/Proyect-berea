@@ -81,13 +81,12 @@ Semana 7 concentra lo que el cronograma oficial reparte entre las
 Semanas 7 y 8 (maquetado final + cierre y pitch): hay que cerrar todo eso
 en esta última semana, la presentación de Canva incluida.
 
-Lo que el cronograma marca como evaluación formativa y no se hizo:
+Lo que el cronograma marca como evaluación formativa y todavía no se hizo:
 - **Retroalimentación entre pares** de los árboles (Semana 2 oficial) y del
-  maquetado (Semana 7 oficial): nunca se hizo ninguna de las dos, y el
-  equipo decidió no perseguirla en la Semana 7 real porque no hay otro
-  equipo disponible con quien intercambiarla en el tiempo que queda. Se
-  documenta como limitación aceptada, no como pendiente abierto (ver
-  "Qué falta" en `docs/01-arbol-de-problemas.md` y `docs/05-maquetado.md`).
+  maquetado (Semana 7 oficial): sigue pendiente, difícil de concretar en
+  lo que queda de la Semana 7 real sin coordinar con otro equipo (ver
+  "Qué falta" en README.md, es el único lugar donde se hace seguimiento
+  de este pendiente).
 - El repositorio con README.md ya existe desde la Semana 1 real (no la
   Semana 7 oficial), adelantado, sin pendientes ahí.
 - Los roles del equipo sí están formalizados, desde la Semana 4 real

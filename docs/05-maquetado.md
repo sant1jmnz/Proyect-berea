@@ -141,12 +141,9 @@ del apartado Gestión.
 
 ## Qué falta
 
-- La coevaluación cruzada con otro equipo no se hizo y el equipo decidió
-  no perseguirla en la Semana 7 (última): no hay otro equipo disponible
-  en el tiempo que queda. Las preguntas de arriba quedan documentadas
-  igual, por si se retoman en una instancia futura.
 - Diseñar la pantalla de administración de disponibilidad (RF-03), que
   todavía no tiene wireframe propio.
+- Coevaluación cruzada con otro equipo (estado general: ver README.md).
 
 ## Historial: maquetado móvil remoto en Figma (reemplazado)
 

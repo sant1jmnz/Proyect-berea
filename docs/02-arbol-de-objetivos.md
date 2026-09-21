@@ -100,7 +100,5 @@ del instituto (F4). La cadena se sostiene leída en voz alta.
 
 ## Qué falta
 
-- Nada pendiente. La revisión cruzada con otro equipo, prevista junto con
-  `docs/01-arbol-de-problemas.md`, no se hizo y el equipo decidió no
-  perseguirla por falta de otro equipo disponible: queda como limitación
-  documentada, no como pendiente abierto.
+- Nada pendiente propio de esta pieza (estado general de la revisión
+  cruzada: ver README.md).

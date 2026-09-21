@@ -100,11 +100,11 @@ y 2 del maquetado ("Elegir protocolo", "Elegir horario")*.
 
 | # | Pieza | Documento | Estado |
 |---|---|---|---|
-| 1 | Diagnóstico, Árbol de Problemas | [`docs/01-arbol-de-problemas.md`](docs/01-arbol-de-problemas.md) | Hecho, falta la revisión cruzada con otro equipo |
-| 2 | Propuesta estratégica, Árbol de Objetivos | [`docs/02-arbol-de-objetivos.md`](docs/02-arbol-de-objetivos.md) | Hecho, falta la revisión cruzada con otro equipo |
+| 1 | Diagnóstico, Árbol de Problemas | [`docs/01-arbol-de-problemas.md`](docs/01-arbol-de-problemas.md) | Hecho. Sin revisión cruzada: el equipo decidió no perseguirla, no hay otro equipo disponible |
+| 2 | Propuesta estratégica, Árbol de Objetivos | [`docs/02-arbol-de-objetivos.md`](docs/02-arbol-de-objetivos.md) | Hecho. Misma nota sobre la revisión cruzada |
 | 3 | Matriz de Marco Lógico (MML) | [`docs/03-matriz-marco-logico.md`](docs/03-matriz-marco-logico.md) | Hecho |
-| 4 | Requerimientos funcionales y no funcionales | [`docs/04-requerimientos.md`](docs/04-requerimientos.md) | Hecho (RF-01 a RF-09, RNF-01 a RNF-10) |
-| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | 5 pantallas de escritorio en Qt (vigente); el maquetado móvil original en Figma queda como historial, reemplazado; falta la revisión cruzada |
+| 4 | Requerimientos funcionales y no funcionales | [`docs/04-requerimientos.md`](docs/04-requerimientos.md) | Hecho (RF-01 a RF-13, dos apartados; RNF-01 a RNF-11) |
+| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | 5+5 pantallas de escritorio en Qt, apartado Cliente y Gestión (vigente); el maquetado móvil original en Figma queda como historial, reemplazado. Sin revisión cruzada, misma nota |
 | 6 | Pitch (7 a 10 min) | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion armado, falta ensayar y cronometrar con los 4 integrantes |
 
 Documentos de apoyo: [`docs/propuestas.md`](docs/propuestas.md) (las diez
@@ -154,12 +154,18 @@ como historial.
 
 ## Equipo y roles
 
-| Integrante | Rol |
-|---|---|
-| Santiago Jiménez | Marco Lógico y coordinación |
-| Bautista | Requerimientos |
-| Nicolás | Diseño y maquetado |
-| Clovis | Pitch |
+No son roles de Scrum (Product Owner, Scrum Master, etc.): este bimestre
+no se programa nada, se formula y se diseña, así que los roles siguen las
+piezas de la metodología de Marco Lógico, no un sprint de desarrollo.
+Formalizados como issues del repo (#1 a #4), asignados el 1° de
+septiembre:
+
+| Integrante | Rol | Issue |
+|---|---|---|
+| Santiago Jiménez | Marco Lógico y coordinación (árboles, MML, trazabilidad) | [#1](../../issues/1) |
+| Bautista | Requerimientos y viabilidad (RF/RNF, FODA) | [#2](../../issues/2) |
+| Nicolás | Diseño y maquetado (Figma histórico, mockup Qt vigente) | [#3](../../issues/3) |
+| Clovis | Pitch y comunicación (guion, defensa oral) | [#4](../../issues/4) |
 
 ## Herramientas
 
@@ -169,8 +175,6 @@ Google Workspace / Classroom · Canva (presentación final).
 
 ## Qué falta
 
-- Revisión cruzada (peer review) del maquetado y de los árboles con otro
-  equipo, todavía no se hizo ninguna de las dos.
 - Armar la presentación de Canva ("Proyecto Informático 1"): recorrido
   semana a semana de lo que se fue haciendo, más los problemas que se
   encontraron (incluido el pivot de esta semana). Es lo último que se

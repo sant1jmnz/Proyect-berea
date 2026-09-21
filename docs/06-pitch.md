@@ -1,5 +1,13 @@
 # Pitch
 
+**Qué es "el pitch"**: la exposición oral de 7 a 10 minutos frente a la
+clase, defendiendo la propuesta (por qué este problema, por qué esta
+solución, por qué es viable). Este documento es el **guion**, lo que se
+dice; el Canva ("Proyecto Informático 1") es el **apoyo visual** que se
+proyecta mientras se habla, con lo que se fue haciendo semana a semana.
+Son dos piezas distintas: el guion ya está, el Canva es lo último que
+falta armar.
+
 Guion de presentación oral, 9 minutos, Propuesta 1 (Dermalia, Instituto de
 Estética Médica). Cada bloque se apoya en un documento ya cerrado de la
 Carpeta de Proyecto: no hay nada acá que no salga de `01` a `05`.
@@ -112,6 +120,10 @@ implementación, no el diseño.
 - Ensayar y cronometrar el guion completo, con los 4 integrantes.
 - Ajustar los tiempos de cada bloque según el ensayo, la tabla de arriba es
   el reparto inicial, no una medición real todavía.
-- Cerrar la revisión cruzada de árboles y maquetado antes de la
-  presentación de Canva, que es lo último que se arma en la Semana 7 real
-  (ver `docs/plan-de-aprendizaje.md`).
+- Armar la presentación de Canva ("Proyecto Informático 1"), que es lo
+  último que se arma en la Semana 7 real (ver
+  `docs/plan-de-aprendizaje.md`): recorrido semana a semana de lo que se
+  fue haciendo y los problemas que se encontraron, para usar como apoyo
+  visual durante este guion. La revisión cruzada de árboles y maquetado no
+  se hizo y el equipo decidió no perseguirla: no bloquea cerrar esta
+  pieza.

@@ -78,15 +78,19 @@ en las jornadas del 1 y el 8 de septiembre (Semanas 5 y 6 reales). Vamos
 adelantados en producción, no atrasados, sin importar qué número de
 semana calendario se use — pero con 7 semanas reales en vez de 8, la
 Semana 7 concentra lo que el cronograma oficial reparte entre las
-Semanas 7 y 8 (maquetado final + cierre, revisión cruzada y pitch): hay
-que cerrar todo eso en esta última semana, la presentación de Canva
-incluida.
+Semanas 7 y 8 (maquetado final + cierre y pitch): hay que cerrar todo eso
+en esta última semana, la presentación de Canva incluida.
 
-Lo que el cronograma marca como evaluación formativa y todavía no se hizo:
+Lo que el cronograma marca como evaluación formativa y no se hizo:
 - **Retroalimentación entre pares** de los árboles (Semana 2 oficial) y del
-  maquetado (Semana 7 oficial), la del maquetado ya está anotada como
-  pendiente en `docs/05-maquetado.md`; la de los árboles nunca se hizo y
-  convendría sumarla a la misma instancia de revisión cruzada, antes de
-  cerrar la Semana 7 real.
+  maquetado (Semana 7 oficial): nunca se hizo ninguna de las dos, y el
+  equipo decidió no perseguirla en la Semana 7 real porque no hay otro
+  equipo disponible con quien intercambiarla en el tiempo que queda. Se
+  documenta como limitación aceptada, no como pendiente abierto (ver
+  "Qué falta" en `docs/01-arbol-de-problemas.md` y `docs/05-maquetado.md`).
 - El repositorio con README.md ya existe desde la Semana 1 real (no la
   Semana 7 oficial), adelantado, sin pendientes ahí.
+- Los roles del equipo sí están formalizados, desde la Semana 4 real
+  (issues #1 a #4 del repo, asignados el 1/9): no son roles de Scrum
+  (Product Owner, Scrum Master), son los de esta metodología de Marco
+  Lógico, uno por pieza de la Carpeta de Proyecto.

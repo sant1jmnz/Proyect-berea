@@ -100,6 +100,7 @@ del instituto (F4). La cadena se sostiene leída en voz alta.
 
 ## Qué falta
 
-- Pasar por la revisión cruzada con otro equipo, junto con
-  `docs/01-arbol-de-problemas.md` (Semana 2 del cronograma oficial,
-  Semana 7 real — `docs/plan-de-aprendizaje.md`): todavía no se hizo.
+- Nada pendiente. La revisión cruzada con otro equipo, prevista junto con
+  `docs/01-arbol-de-problemas.md`, no se hizo y el equipo decidió no
+  perseguirla por falta de otro equipo disponible: queda como limitación
+  documentada, no como pendiente abierto.

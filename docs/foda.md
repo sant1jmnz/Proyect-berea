@@ -16,8 +16,9 @@ seguir avanzando.
 | | F3. El equipo avanzó más rápido de lo previsto: árboles, MML, requerimientos y maquetado ya tienen borrador en la semana 3, antes de lo que marca el cronograma. | |
 | Externo (solo influible indirectamente) | Oportunidades | Amenazas |
 | | O1. La cátedra da una rúbrica clara y material de referencia (videos, teoría de Marco Lógico) que reduce la ambigüedad sobre qué se evalúa. | A1. Bimestre de solo 7 semanas reales de trabajo, poco margen si algo se traba. Permanente: no depende de una debilidad propia. |
-| | O2. Revisión cruzada entre equipos prevista en el marco pedagógico: feedback externo antes de la entrega final. | A2. Dependencia de herramientas externas (Miro, Figma, GitHub) para tener el proyecto al día; si cambia el acceso, se frena el trabajo. Permanente. |
+| | | A2. Dependencia de herramientas externas (Miro, Figma, GitHub) para tener el proyecto al día; si cambia el acceso, se frena el trabajo. Permanente. |
 | | | A3. Si no se deja explícito que Dermalia es un caso imaginario, la devolución del docente puede cuestionar la validez del diagnóstico. Circunstancial: asociada a D1. |
+| | | A4. La revisión cruzada entre equipos, prevista en el marco pedagógico como feedback externo antes de la entrega final, no se concretó: no hubo otro equipo disponible para intercambiarla en el tiempo del bimestre. El diagnóstico y el maquetado llegan a la entrega sin ese chequeo externo. |
 
 ## Estrategias
 
@@ -25,15 +26,17 @@ seguir avanzando.
   responder punto por punto a la rúbrica de Buenos Aires Aprende, mostrando
   trazabilidad explícita (causa → objetivo → componente → requerimiento →
   pantalla) en cada entrega.
-- E2 (F2 + O2), ofensiva: aprovechar Miro y Figma para iterar rápido durante
-  la revisión cruzada, llevando versiones actualizadas a cada instancia de
-  coevaluación en vez de capturas viejas.
+- E2 (F1 + A4), defensiva: sin revisión cruzada, el propio equipo asume ese
+  chequeo: cada rol (issues #1-#4) revisa el trabajo de otro rol antes de
+  cerrar la Carpeta de Proyecto, en vez de esperar un feedback externo que
+  no va a llegar.
 - E3 (F1 + A1), defensiva: con la metodología y las guías ya listas, el
   equipo absorbe mejor un imprevisto dentro del bimestre corto, sin
   reconstruir el criterio de trabajo si alguien falta una semana.
-- E4 (D2 + O2), reordenamiento: ya se definieron los roles (ver issues del
-  repo); falta que cada uno los asuma antes de la próxima revisión cruzada,
-  para llegar con papeles claros a esa instancia.
+- E4 (D2 + F1), reordenamiento: los roles ya están formalizados como
+  issues del repo (#1 a #4) desde el 1/9; el pendiente real es que se
+  reflejen ahí los cambios del pivot de la Semana 7 (nuevo negocio,
+  apartados Cliente/Gestión), no la asignación en sí.
 - E5 (D1 + A3), supervivencia: dejar explícito en cada documento (ya hecho en
   `docs/propuestas.md` y `docs/01-arbol-de-problemas.md`) y repetirlo en el
   pitch que Dermalia es un caso imaginario, para que la cátedra evalúe el
@@ -41,6 +44,9 @@ seguir avanzando.
 
 ## Qué falta
 
-- Que cada integrante confirme su rol asignado (ver issues del repo).
-- Revisar este FODA después de la primera revisión cruzada con otro equipo,
-  para ver si O2 se cumplió como se esperaba.
+- Actualizar los issues #6 a #15 (los RF viejos) para que reflejen la
+  nueva numeración y los dos apartados de `docs/04-requerimientos.md`, o
+  cerrarlos y crear los nuevos: hoy están desactualizados (hablan de
+  "clienta" y "dueño", numeración RF-01 a RF-10 vieja).
+- Nada más pendiente sobre O2/A4: se aceptó que la revisión cruzada no se
+  va a hacer, ver E2.

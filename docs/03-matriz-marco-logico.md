@@ -7,10 +7,14 @@ Componentes vienen de los objetivos específicos OE1-OE4; las Actividades,
 de los medios M1-M4. Es la misma cadena, pasada a formato de matriz.
 
 **Restricción técnica**: backend en C con SQL Server, frontend en Qt, sin
-integraciones por API externa. Cada Componente que antes dependía de un
-tercero (pasarela de pago, calendario, IA) queda mockeado dentro del propio
-sistema, se explica en el detalle de cada uno. El sistema lo opera la
-recepción desde la PC del instituto, no es self-service para la paciente.
+integraciones por API externa ni canal web. Cada Componente que antes
+dependía de un tercero (pasarela de pago, calendario, IA) queda mockeado
+dentro del propio sistema, se explica en el detalle de cada uno. El
+sistema tiene dos apartados, los dos nativos en Qt: un kiosco táctil en
+el instituto que opera la paciente (self-service presencial, no remoto) y
+la PC de recepción que opera el instituto (`docs/04-requerimientos.md`
+tiene el detalle por apartado). Los cuatro Componentes son los mismos
+para los dos, solo cambia quién entra por cada pantalla.
 
 ## La matriz
 
@@ -18,10 +22,10 @@ recepción desde la PC del instituto, no es self-service para la paciente.
 |---|---|---|---|---|
 | Fin | Contribuir al crecimiento y sostenibilidad de Dermalia, mejorando su capacidad de atender y retener pacientes frente a la competencia de la zona. | Aumento de la facturación mensual del instituto. Sin meta numérica para este bimestre: es impacto de largo plazo, no se logra apenas el sistema entra en uso. | Comparación de facturación mensual del instituto, a evaluar en bimestres posteriores. | El sector de estética médica de la zona mantiene condiciones de demanda estables. Riesgo medio: el rubro es sensible al consumo. |
 | Propósito | El uso del sistema de reserva, registro de seña, recordatorios y respuestas ágiles reduce la carga operativa de la recepción y la pérdida de turnos de Dermalia. Redactado como hipótesis: que esto ocurra depende también de que la recepción adopte el sistema como herramienta principal, no solo de que el equipo lo entregue. | Reducción del 60% en el tiempo diario de atención manual (de 95 a 38 min/día). Reducción del 50% en turnos perdidos por inasistencia (de 6 a 3/semana). 0 superposiciones de agenda por mes (de 5 actuales). ≥ 70% de consultas resueltas con el buscador interno, sin buscar a mano o de memoria. Todos medidos a las 4 semanas de uso del sistema. | Panel de reportes del sistema (turnos, consultas resueltas por el buscador) y encuesta breve a la recepción antes/después. | La recepción adopta el sistema como herramienta principal de gestión y deja de anotar turnos a mano en paralelo. Riesgo alto: es la condición de la que depende todo lo demás. |
-| Componentes | R1. Módulo de reserva con agenda propia (SQL Server), operado por la recepción, sin sincronización externa. | 0 superposiciones de turno por mes, medido las 4 semanas posteriores al lanzamiento (línea de base: 5/mes). | Registro de reservas del sistema (logs de agenda). | La recepción mantiene la disponibilidad real actualizada en el sistema. Riesgo medio. |
-| | R2. Buscador interno de preguntas frecuentes por palabra clave (precios y protocolos, contra una base propia), para que la recepción responda consultas sin buscar a mano. | Reducción del tiempo diario de atención manual de 95 a 38 minutos (-60%) a las 4 semanas de uso. | Encuesta breve a la recepción, antes/después, sobre minutos dedicados a WhatsApp. | La recepción usa el buscador en vez de responder de memoria o revisar una planilla aparte. Riesgo medio; mitigación: capacitación breve al iniciar y base de precios cargada desde el primer día. |
-| | R3. Registro de seña simulado (mock, sin pasarela de pago real), que la recepción marca al confirmar el turno. | Reducción de turnos perdidos por inasistencia de 6 a 3 por semana (-50%) a las 4 semanas de uso. | Registro de asistencias/inasistencias del sistema. | Las pacientes aceptan pagar la seña al reservar. Riesgo medio: ≈10% de pacientes nuevas podría dudar. |
-| | R4. Recordatorio de turno simulado (visible en el sistema, sin envío real por WhatsApp/email), que la recepción usa para avisar a la paciente. | ≥ 70% de los turnos con recordatorio generado y confirmado antes de la fecha, a las 4 semanas de uso. | Logs de recordatorios del sistema. | La recepción revisa los recordatorios pendientes con la frecuencia suficiente para avisar a tiempo. Riesgo medio. |
+| Componentes | R1. Módulo de reserva con agenda propia (SQL Server), sin sincronización externa: la paciente lo usa desde el kiosco y la recepción desde su PC. | 0 superposiciones de turno por mes, medido las 4 semanas posteriores al lanzamiento (línea de base: 5/mes). | Registro de reservas del sistema (logs de agenda). | La recepción mantiene la disponibilidad real actualizada en el sistema. Riesgo medio. |
+| | R2. Buscador de preguntas frecuentes por palabra clave (precios y protocolos, contra una base propia), disponible en el kiosco para la paciente y en la PC para que la recepción responda por teléfono. | Reducción del tiempo diario de atención manual de 95 a 38 minutos (-60%) a las 4 semanas de uso. | Encuesta breve a la recepción, antes/después, sobre minutos dedicados a WhatsApp. | La paciente usa el buscador del kiosco y la recepción el propio, en vez de responder todo de memoria. Riesgo medio; mitigación: capacitación breve al iniciar y base de precios cargada desde el primer día. |
+| | R3. Registro de seña simulado (mock, sin pasarela de pago real): lo marca la paciente en el kiosco o la recepción al confirmar el turno por teléfono. | Reducción de turnos perdidos por inasistencia de 6 a 3 por semana (-50%) a las 4 semanas de uso. | Registro de asistencias/inasistencias del sistema. | Las pacientes aceptan pagar la seña al reservar. Riesgo medio: ≈10% de pacientes nuevas podría dudar. |
+| | R4. Recordatorio de turno simulado (visible en el sistema, sin envío real por WhatsApp/email): la paciente lo ve al buscar su turno en el kiosco, la recepción lo usa para avisar por teléfono si hace falta. | ≥ 70% de los turnos con recordatorio generado y confirmado antes de la fecha, a las 4 semanas de uso. | Logs de recordatorios del sistema. | La paciente revisa el kiosco o la recepción avisa a tiempo. Riesgo medio. |
 | Actividades | Ver detalle por componente abajo. No se listan las 40 tareas acá: la MML se queda con las principales. |, |, |, |
 
 ## Detalle de actividades por componente
@@ -43,10 +47,11 @@ R2, buscador interno de preguntas frecuentes:
   coincidencia, para que la recepción escale la consulta.
 
 R3, registro de seña simulado (mock):
-- A.3.1 Implementar en el sistema un flujo de seña simulada: la recepción
-  marca el pago como recibido (efectivo o transferencia ya confirmada por
-  fuera del sistema), el sistema registra el estado como pagado, sin
-  procesar dinero real ni conectarse a ninguna pasarela.
+- A.3.1 Implementar en el sistema un flujo de seña simulada, disponible
+  en los dos apartados: la paciente lo confirma en el kiosco o la
+  recepción marca el pago como recibido (efectivo o transferencia ya
+  confirmada por fuera del sistema), el sistema registra el estado como
+  pagado, sin procesar dinero real ni conectarse a ninguna pasarela.
 - A.3.2 Seña del 30% del valor del protocolo (mínimo $5.000); reembolsable
   100% si se cancela con más de 24 h de anticipación, no reembolsable por
   debajo de ese plazo o por inasistencia. Decisión de equipo, no dato

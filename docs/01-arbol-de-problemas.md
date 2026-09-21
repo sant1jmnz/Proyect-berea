@@ -153,7 +153,9 @@ nada: se formula y se diseña.
 
 ## Qué falta
 
-- Pasar por la revisión cruzada con otro equipo (Semana 2 del cronograma
-  oficial, `docs/plan-de-aprendizaje.md`): todavía no se hizo.
-- Confirmar los roles del equipo en los issues del repo (decididos por el
-  equipo el 1/9, sin formalizar todavía).
+- Nada pendiente propio de esta pieza. La revisión cruzada con otro equipo
+  (Semana 2 del cronograma oficial) no se hizo y el equipo decidió no
+  perseguirla: no hay otro equipo con quien intercambiarla en el tiempo
+  que queda. Queda como limitación documentada, no como pendiente abierto.
+  Los roles del equipo ya están formalizados como issues del repo
+  (#1-#4), asignados el 1/9.

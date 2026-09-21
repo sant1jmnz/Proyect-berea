@@ -119,7 +119,7 @@ Se atacan con el sistema, y justifican la propuesta:
 - C4 / C4.1 → recordatorio de turno simulado, visible dentro del sistema.
 
 **Restricción técnica del equipo**: backend en C con SQL Server, frontend en
-HTML, sin usar ninguna API externa. Todo lo que en una versión real sería
+Qt, sin usar ninguna API externa. Todo lo que en una versión real sería
 una conexión con un tercero (pasarela de pago, calendario, inteligencia
 artificial) queda simulado dentro del propio sistema: no hay Mercado Pago,
 Google Calendar ni un modelo de lenguaje conectado.

@@ -87,7 +87,7 @@ Datos del centro:
 | Vitrina | Antes y después, quiz de diagnóstico de piel, reseñas vía Google Maps API |
 
 **Restricción técnica del equipo** (definida después de este relevamiento
-inicial): backend en C con SQL Server, frontend en HTML, sin integraciones
+inicial): backend en C con SQL Server, frontend en Qt, sin integraciones
 por API externa. Por eso el cobro y el buscador quedaron descriptos arriba
 como simulados/locales, no hay Mercado Pago, Google Calendar ni un modelo
 de lenguaje real detrás. El detalle completo, actualizado, está en

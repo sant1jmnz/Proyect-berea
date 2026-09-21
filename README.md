@@ -51,7 +51,7 @@ de agenda por mes. El sistema propuesto ataca esas cuatro causas con:
 | Mis Turnos | Acceso por enlace mágico, sin registro ni contraseña |
 
 **Stack técnico**: backend en **C** con **SQL Server**, frontend en
-**HTML**. No usa ninguna API externa. Donde una versión real usaría un
+**Qt**. No usa ninguna API externa. Donde una versión real usaría un
 servicio de terceros (pasarela de pago, calendario, un modelo de lenguaje),
 este sistema lo simula por dentro. Detalle completo en
 [`docs/04-requerimientos.md`](docs/04-requerimientos.md).

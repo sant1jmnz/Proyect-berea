@@ -75,7 +75,7 @@ bimestre corto.
 
 **¿Por qué está todo mockeado, sin Mercado Pago, sin Google Calendar, sin IA real?**
 Restricción del equipo: el backend se hace en C con SQL Server, el
-frontend en HTML, sin integraciones por API externa. En vez de dejar esas
+frontend en Qt, sin integraciones por API externa. En vez de dejar esas
 piezas sin resolver, cada una se diseñó igual pero simulada dentro del
 propio sistema, el buscador de precios/protocolos funciona por palabra
 clave contra una tabla propia en vez de un modelo de lenguaje, la agenda

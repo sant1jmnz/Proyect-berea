@@ -6,7 +6,7 @@ El Fin y el Propósito vienen directo de `docs/02-arbol-de-objetivos.md`
 específicos OE1-OE4; las Actividades, de los medios M1-M4. Es la misma
 cadena, pasada a formato de matriz.
 
-**Restricción técnica**: backend en C con SQL Server, frontend en HTML, sin
+**Restricción técnica**: backend en C con SQL Server, frontend en Qt, sin
 integraciones por API externa. Cada Componente que antes dependía de un
 tercero (pasarela de pago, calendario, IA) queda mockeado dentro del propio
 sistema, se explica en el detalle de cada uno.

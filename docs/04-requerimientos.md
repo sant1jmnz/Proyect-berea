@@ -4,7 +4,7 @@ Se derivan de los Componentes de la MML (`docs/03-matriz-marco-logico.md`).
 Cada RF referencia el componente del que sale; no hay ningún requerimiento
 acá que no venga de R1-R4.
 
-**Restricción técnica**: backend en C con SQL Server, frontend en HTML, sin
+**Restricción técnica**: backend en C con SQL Server, frontend en Qt, sin
 integraciones por API externa. Donde antes había un tercero (Mercado Pago,
 Google Calendar, un modelo de lenguaje), el requerimiento describe una
 versión mockeada dentro del propio sistema.
@@ -44,7 +44,7 @@ restricción técnica actual.
 | RNF-07 | Mantenibilidad | El dueño puede actualizar la base de precios y protocolos del buscador sin intervención técnica del equipo. |
 | RNF-08 | Disponibilidad | El sistema de reserva está disponible 24/7, sin depender del horario de atención del dueño. |
 | RNF-09 | Seguridad | El buscador (R2) solo responde con coincidencias de la base de precios/protocolos cargada; si no hay coincidencia, deriva al enlace de WhatsApp del dueño en vez de dar una respuesta genérica. |
-| RNF-10 | Arquitectura | Todo el backend se implementa en C sobre SQL Server; el frontend, en HTML. Ninguna funcionalidad depende de una API externa, donde una versión real usaría un tercero, el sistema implementa un mock propio. |
+| RNF-10 | Arquitectura | Todo el backend se implementa en C sobre SQL Server; el frontend, en Qt. Ninguna funcionalidad depende de una API externa, donde una versión real usaría un tercero, el sistema implementa un mock propio. |
 
 ## Historias de usuario
 

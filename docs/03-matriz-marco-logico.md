@@ -1,61 +1,63 @@
 # Matriz de Marco Lógico (MML)
 
-Propuesta 1, aplicación web para Bella Piel, Centro de Estética Integral.
-El Fin y el Propósito vienen directo de `docs/02-arbol-de-objetivos.md`
-(Fines y Objetivo central); los Componentes vienen de los objetivos
-específicos OE1-OE4; las Actividades, de los medios M1-M4. Es la misma
-cadena, pasada a formato de matriz.
+Propuesta 1, sistema de escritorio para Dermalia, Instituto de Estética
+Médica. El Fin y el Propósito vienen directo de
+`docs/02-arbol-de-objetivos.md` (Fines y Objetivo central); los
+Componentes vienen de los objetivos específicos OE1-OE4; las Actividades,
+de los medios M1-M4. Es la misma cadena, pasada a formato de matriz.
 
 **Restricción técnica**: backend en C con SQL Server, frontend en Qt, sin
 integraciones por API externa. Cada Componente que antes dependía de un
 tercero (pasarela de pago, calendario, IA) queda mockeado dentro del propio
-sistema, se explica en el detalle de cada uno.
+sistema, se explica en el detalle de cada uno. El sistema lo opera la
+recepción desde la PC del instituto, no es self-service para la paciente.
 
 ## La matriz
 
 | Nivel | Resumen narrativo | Indicadores (IOV) | Medios de verificación | Supuestos |
 |---|---|---|---|---|
-| Fin | Contribuir al crecimiento y sostenibilidad del negocio de Bella Piel, mejorando su capacidad de atender y retener clientas frente a la competencia de la zona. | Aumento de la facturación mensual de Bella Piel. Sin meta numérica para este bimestre: es impacto de largo plazo, no se logra apenas el sistema entra en uso. | Comparación de facturación mensual del centro, a evaluar en bimestres posteriores. | El sector de estética de la zona mantiene condiciones de demanda estables. Riesgo medio: el rubro es sensible al consumo. |
-| Propósito | El uso del sistema de reserva, cobro de seña, recordatorios y respuestas automatizadas reduce la carga operativa del dueño y la pérdida de turnos de Bella Piel. Redactado como hipótesis: que esto ocurra depende también de que las clientas adopten el canal, no solo de que el equipo entregue el sistema. | Reducción del 60% en el tiempo diario de atención manual (de 95 a 38 min/día). Reducción del 50% en turnos perdidos por inasistencia (de 6 a 3/semana). 0 superposiciones de agenda por mes (de 5 actuales). ≥ 70% de consultas resueltas sin intervención humana. Todos medidos a las 4 semanas de uso del sistema. | Panel de reportes del sistema (turnos, consultas resueltas por el buscador) y encuesta breve al dueño antes/después. | El dueño adopta el sistema como canal principal de reservas y deja de gestionar turnos por WhatsApp en paralelo. Riesgo alto: es la condición de la que depende todo lo demás. |
-| Componentes | R1. Módulo de reserva con agenda propia (SQL Server) implementado y en uso, sin sincronización externa. | 0 superposiciones de turno por mes, medido las 4 semanas posteriores al lanzamiento (línea de base: 5/mes). | Registro de reservas del sistema (logs de agenda). | El dueño mantiene su disponibilidad real actualizada en el sistema. Riesgo medio. |
-| | R2. Buscador de preguntas frecuentes por palabra clave (precios y protocolos, contra una base propia) implementado y en uso. | Reducción del tiempo diario de atención manual de 95 a 38 minutos (-60%) a las 4 semanas de uso. | Encuesta breve al dueño, antes/después, sobre minutos dedicados a WhatsApp. | Las clientas usan el buscador en vez de escribir directo al dueño. Riesgo alto; mitigación: responder desde WhatsApp con el enlace al buscador. |
-| | R3. Cobro de seña simulado (mock, sin pasarela de pago real) implementado y en uso. | Reducción de turnos perdidos por inasistencia de 6 a 3 por semana (-50%) a las 4 semanas de uso. | Registro de asistencias/inasistencias del sistema. | Las clientas aceptan pagar la seña al reservar. Riesgo medio: ≈10% de clientas nuevas podría dudar. |
-| | R4. Recordatorio de turno simulado (visible en el sistema, sin envío real por WhatsApp/email) implementado y en uso. | ≥ 70% de los turnos con recordatorio generado y confirmado antes de la fecha, a las 4 semanas de uso. | Logs de recordatorios del sistema. | La clienta revisa "Mis Turnos" con la frecuencia suficiente para ver el recordatorio. Riesgo medio: al no ser un envío real, depende de que la clienta vuelva a entrar. |
+| Fin | Contribuir al crecimiento y sostenibilidad de Dermalia, mejorando su capacidad de atender y retener pacientes frente a la competencia de la zona. | Aumento de la facturación mensual del instituto. Sin meta numérica para este bimestre: es impacto de largo plazo, no se logra apenas el sistema entra en uso. | Comparación de facturación mensual del instituto, a evaluar en bimestres posteriores. | El sector de estética médica de la zona mantiene condiciones de demanda estables. Riesgo medio: el rubro es sensible al consumo. |
+| Propósito | El uso del sistema de reserva, registro de seña, recordatorios y respuestas ágiles reduce la carga operativa de la recepción y la pérdida de turnos de Dermalia. Redactado como hipótesis: que esto ocurra depende también de que la recepción adopte el sistema como herramienta principal, no solo de que el equipo lo entregue. | Reducción del 60% en el tiempo diario de atención manual (de 95 a 38 min/día). Reducción del 50% en turnos perdidos por inasistencia (de 6 a 3/semana). 0 superposiciones de agenda por mes (de 5 actuales). ≥ 70% de consultas resueltas con el buscador interno, sin buscar a mano o de memoria. Todos medidos a las 4 semanas de uso del sistema. | Panel de reportes del sistema (turnos, consultas resueltas por el buscador) y encuesta breve a la recepción antes/después. | La recepción adopta el sistema como herramienta principal de gestión y deja de anotar turnos a mano en paralelo. Riesgo alto: es la condición de la que depende todo lo demás. |
+| Componentes | R1. Módulo de reserva con agenda propia (SQL Server), operado por la recepción, sin sincronización externa. | 0 superposiciones de turno por mes, medido las 4 semanas posteriores al lanzamiento (línea de base: 5/mes). | Registro de reservas del sistema (logs de agenda). | La recepción mantiene la disponibilidad real actualizada en el sistema. Riesgo medio. |
+| | R2. Buscador interno de preguntas frecuentes por palabra clave (precios y protocolos, contra una base propia), para que la recepción responda consultas sin buscar a mano. | Reducción del tiempo diario de atención manual de 95 a 38 minutos (-60%) a las 4 semanas de uso. | Encuesta breve a la recepción, antes/después, sobre minutos dedicados a WhatsApp. | La recepción usa el buscador en vez de responder de memoria o revisar una planilla aparte. Riesgo medio; mitigación: capacitación breve al iniciar y base de precios cargada desde el primer día. |
+| | R3. Registro de seña simulado (mock, sin pasarela de pago real), que la recepción marca al confirmar el turno. | Reducción de turnos perdidos por inasistencia de 6 a 3 por semana (-50%) a las 4 semanas de uso. | Registro de asistencias/inasistencias del sistema. | Las pacientes aceptan pagar la seña al reservar. Riesgo medio: ≈10% de pacientes nuevas podría dudar. |
+| | R4. Recordatorio de turno simulado (visible en el sistema, sin envío real por WhatsApp/email), que la recepción usa para avisar a la paciente. | ≥ 70% de los turnos con recordatorio generado y confirmado antes de la fecha, a las 4 semanas de uso. | Logs de recordatorios del sistema. | La recepción revisa los recordatorios pendientes con la frecuencia suficiente para avisar a tiempo. Riesgo medio. |
 | Actividades | Ver detalle por componente abajo. No se listan las 40 tareas acá: la MML se queda con las principales. |, |, |, |
 
 ## Detalle de actividades por componente
 
 R1, módulo de reserva con agenda propia:
 - A.1.1 Diseñar la grilla de disponibilidad en tiempo real, contra la tabla
-  de agenda del dueño en SQL Server.
-- A.1.2 Implementar en el sistema la carga y edición de disponibilidad del
-  dueño, no hay integración con Google Calendar ni ningún calendario
-  externo, la agenda vive solo en el sistema.
+  de agenda de los profesionales en SQL Server.
+- A.1.2 Implementar en el sistema la carga y edición de disponibilidad, que
+  hace la recepción; no hay integración con Google Calendar ni ningún
+  calendario externo, la agenda vive solo en el sistema.
 
-R2, buscador de preguntas frecuentes:
+R2, buscador interno de preguntas frecuentes:
 - A.2.1 Armar la base de precios y protocolos que usa el buscador (tabla en
-  SQL Server, cargada y editable por el dueño).
+  SQL Server, cargada y editable por la recepción).
 - A.2.2 Implementar en C el motor de búsqueda por palabra clave contra esa
   base, no hay modelo de lenguaje ni servicio de IA conectado.
-- A.2.3 Definir el punto de derivación a WhatsApp del dueño (un enlace
+- A.2.3 Definir el punto de derivación a WhatsApp del instituto (un enlace
   `wa.me`, no un envío automático) cuando el buscador no encuentra
-  coincidencia.
+  coincidencia, para que la recepción escale la consulta.
 
-R3, cobro de seña simulado (mock):
-- A.3.1 Implementar en el sistema un flujo de pago simulado: la clienta
-  confirma el pago, el sistema registra el estado como pagado, sin
+R3, registro de seña simulado (mock):
+- A.3.1 Implementar en el sistema un flujo de seña simulada: la recepción
+  marca el pago como recibido (efectivo o transferencia ya confirmada por
+  fuera del sistema), el sistema registra el estado como pagado, sin
   procesar dinero real ni conectarse a ninguna pasarela.
-- A.3.2 Seña del 30% del valor del servicio (mínimo $5.000); reembolsable
+- A.3.2 Seña del 30% del valor del protocolo (mínimo $5.000); reembolsable
   100% si se cancela con más de 24 h de anticipación, no reembolsable por
   debajo de ese plazo o por inasistencia. Decisión de equipo, no dato
-  relevado: no hay un dueño real de Bella Piel a quien consultarle. Como
-  todo el cobro es mock, el "reembolso" también es un cambio de estado en
-  el sistema, no una devolución de dinero real.
+  relevado: no hay una recepción real de Dermalia a quien consultarle. Como
+  todo el registro es mock, el "reembolso" también es un cambio de estado
+  en el sistema, no una devolución de dinero real.
 
 R4, recordatorio de turno simulado:
-- A.4.1 Generar el recordatorio dentro del sistema (visible en "Mis
-  Turnos") con la anticipación configurada, no hay envío real por
-  WhatsApp ni email, sería una integración externa.
+- A.4.1 Generar el recordatorio dentro del sistema (visible para la
+  recepción en la búsqueda de turnos) con la anticipación configurada, no
+  hay envío real por WhatsApp ni email, sería una integración externa.
 - A.4.2 Definir el tiempo de anticipación con el que se genera el
   recordatorio.
 
@@ -67,10 +69,10 @@ Cada Componente se desprende de un medio del Árbol de Objetivos: sí, R1←M1,
 R2←M2, R3←M3, R4←M4 (ver tabla de conversión en `docs/02-arbol-de-objetivos.md`).
 
 Riesgo alto sin mitigación: el supuesto del Propósito (adopción del sistema
-como canal principal) es alto y es el que más pesa; es el mismo riesgo de
-"Adopción" ya anotado en `docs/propuestas.md`. Mitigación: no reemplazar
-WhatsApp de un día para el otro, sino responder desde ahí con el enlace al
-sistema hasta que el hábito cambie.
+como herramienta principal de la recepción) es alto y es el que más pesa; es
+el mismo riesgo de "Adopción" ya anotado en `docs/propuestas.md`. Mitigación:
+no reemplazar el cuaderno/WhatsApp de un día para el otro, sino acompañar la
+transición con capacitación breve hasta que el hábito cambie.
 
 ## Qué falta
 

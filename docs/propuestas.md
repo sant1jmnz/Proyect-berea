@@ -33,18 +33,29 @@ parte de la justificación de la alternativa elegida.
 
 ---
 
-## Propuesta 1 (PRINCIPAL): Aplicación web para centro de estética integral
+## Propuesta 1 (PRINCIPAL): Sistema de turnos para instituto de estética médica
 
-Usuario / cliente: dueño de un centro de estética integral (caso imaginario,
-Bella Piel, Centro de Estética Integral) y sus clientas y clientes actuales
-y potenciales.
+Usuario / cliente: recepción de un instituto de estética médica (caso
+imaginario, Dermalia, Instituto de Estética Médica) y sus pacientes
+actuales y potenciales.
+
+**Nota sobre el pivot (Semana 7 real)**: al principio se pensó como
+aplicación web self-service para un centro de estética simple ("Bella
+Piel"), con la clienta reservando desde su celular. Dos cambios cerrados
+esta semana: (1) el negocio pasa a ser un instituto de estética médica,
+con protocolos de mayor ticket y un posicionamiento más prestigioso; (2)
+el sistema pasa a ser una herramienta interna que opera la recepción, no
+un self-service, porque el stack real del equipo (C + SQL Server + Qt de
+escritorio, sin web ni API externa) no permite que la paciente reserve
+desde su celular con un enlace. El problema central y la cadena causal no
+cambian, cambia el catálogo y quién usa el sistema.
 
 ### Problema central (borrador)
 
-*La gestión de turnos y consultas del centro de estética depende de la
-atención manual del dueño por WhatsApp, lo que consume horas de trabajo,
-produce superposiciones y turnos perdidos, y demora las respuestas a quienes
-consultan.*
+*La gestión de turnos y consultas del instituto de estética depende de la
+atención manual de la recepción por WhatsApp, lo que consume horas de
+trabajo, produce superposiciones y turnos perdidos, y demora las
+respuestas a quienes consultan.*
 
 El problema no es "no hay una app": es la carga operativa y la pérdida de
 turnos que hoy existen.
@@ -67,37 +78,46 @@ Datos públicos:
   ([WhatsApp Business API](https://developargentina.com/blog/whatsapp-business-api-argentina-automatizacion-ventas-2025)),
   y sirve de referencia para fijar la meta del indicador.
 
-Datos del centro:
+Datos del instituto:
 
 - 25 consultas por WhatsApp por día, de las cuales ≈70% (18) son repetidas
-  (precios, horarios, "¿qué incluye el tratamiento?").
+  (precios, horarios, "¿qué incluye el protocolo?").
 - 95 minutos por día dedicados a responderlas. Es la línea de base del
   indicador principal.
-- 6 turnos por semana perdidos por inasistencia, ≈ $48.000/semana.
+- 6 turnos por semana perdidos por inasistencia, ≈ $120.000/semana (precio
+  promedio de protocolo, $20.000).
 - 5 superposiciones de turno por mes.
 
 ### Qué hace el sistema
 
+Herramienta interna que opera la recepción desde la PC del instituto, no
+un self-service para la paciente (ver nota sobre el pivot, arriba).
+
 | Módulo | Función |
 |---|---|
-| Reserva en 3 pasos | Servicio → horario disponible → confirmación, con agenda propia del dueño en el sistema |
-| Cobro de seña | Simulado (mock): el sistema registra el estado de pago, sin pasarela real ni datos de tarjeta |
-| Buscador de preguntas frecuentes | Búsqueda por palabra clave contra una base local con precios, protocolos y políticas; si no encuentra coincidencia, deriva a WhatsApp del dueño |
-| Mis Turnos | Acceso por cookies y enlace mágico, sin registro ni contraseña |
-| Vitrina | Antes y después, quiz de diagnóstico de piel, reseñas vía Google Maps API |
+| Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema, cargada por la recepción cuando la paciente llama o va en persona |
+| Registro de seña | Simulado (mock): la recepción marca el estado de pago, sin pasarela real ni datos de tarjeta |
+| Buscador de precios y protocolos | Búsqueda por palabra clave contra una base local con precios, protocolos y políticas; si no encuentra coincidencia, marca la derivación a WhatsApp del instituto; lo usa la recepción para responder consultas por teléfono |
+| Buscar turnos | Por nombre, DNI o teléfono de la paciente, sin enlace ni cuenta: lo usa la recepción |
 
 **Restricción técnica del equipo** (definida después de este relevamiento
-inicial): backend en C con SQL Server, frontend en Qt, sin integraciones
-por API externa. Por eso el cobro y el buscador quedaron descriptos arriba
-como simulados/locales, no hay Mercado Pago, Google Calendar ni un modelo
-de lenguaje real detrás. El detalle completo, actualizado, está en
-`docs/03-matriz-marco-logico.md` y `docs/04-requerimientos.md`.
+inicial): backend en C con SQL Server, frontend en Qt de escritorio, sin
+integraciones por API externa. Por eso el registro de seña y el buscador
+quedaron descriptos arriba como simulados/locales, no hay Mercado Pago,
+Google Calendar ni un modelo de lenguaje real detrás, y por eso el sistema
+es una herramienta de recepción y no un self-service web (la "vitrina" con
+fotos y reseñas de Google Maps, que sí dependía de un canal propio para la
+paciente, se sacó del alcance por la misma razón). El detalle completo,
+actualizado, está en `docs/03-matriz-marco-logico.md` y
+`docs/04-requerimientos.md`.
 
 ### Fuera de alcance
 
 Historia clínica de tratamientos, gestión de stock de insumos, liquidación de
-comisiones, app nativa. Este bimestre no se programa nada: se formula y se
-diseña.
+comisiones, app nativa, y cualquier portal self-service para que la paciente
+reserve por su cuenta (la "vitrina" con fotos y reseñas, descartada por la
+misma restricción técnica). Este bimestre no se programa nada: se formula y
+se diseña.
 
 ### Indicadores preliminares
 
@@ -106,17 +126,18 @@ diseña.
 | Tiempo diario de atención manual de consultas | Reducción del 60% | 95 min/día |
 | Turnos perdidos por inasistencia | Reducción del 50% | 6 turnos/semana |
 | Superposiciones de agenda | 0 por mes | 5 casos/mes |
-| Consultas resueltas sin intervención humana | ≥ 70% | 0% (hoy todo es manual) |
+| Consultas resueltas con el buscador interno, sin buscar a mano o de memoria | ≥ 70% | 0% (hoy todo es manual) |
 
 ### Riesgos
 
-- Adopción: que las clientas sigan escribiendo por WhatsApp igual. Mitigación:
-  responder desde WhatsApp con el enlace de reserva.
-- Resistencia a la seña: puede espantar clientes nuevos. Se estima que ≈10%
-  de clientas nuevas podría dudar; falta relevar qué hacen los competidores
+- Adopción: que la recepción siga anotando turnos a mano o respondiendo de
+  memoria en vez de usar el sistema. Mitigación: capacitación breve al
+  iniciar y transición gradual.
+- Resistencia a la seña: puede espantar pacientes nuevas. Se estima que ≈10%
+  de pacientes nuevas podría dudar; falta relevar qué hacen los competidores
   de la zona.
-- Datos personales: fotos de "antes y después" son dato sensible y requieren
-  consentimiento explícito.
+- Datos personales: los datos de contacto y protocolo de la paciente son
+  sensibles y se guardan solo en la base local del instituto.
 - Fidelidad del mock: no hay pasarela de pago ni modelo de lenguaje real,
   así que el pitch tiene que dejar claro qué es simulado y qué sería una
   integración real en una versión productiva, sin esconder la diferencia.
@@ -361,7 +382,7 @@ anterior. Requiere aval de la institución antes de arrancar.
 
 | # | Propuesta | Usuario accesible | Evidencia pública | Competencia | Viabilidad |
 |---|---|---|---|---|---|
-| 1 | Centro de estética | Caso imaginario (Bella Piel) | Buena | Media | Alta |
+| 1 | Instituto de estética médica | Caso imaginario (Dermalia) | Buena | Media | Alta |
 | 2 | POS / inventario | A conseguir | Buena | Alta | Alta |
 | 5 | Adopción de mascotas | A conseguir | Buena | Baja | Media-alta |
 | 9 | Laboratorios y equipamiento | Sí, acá mismo | A relevar | Baja | Alta |
@@ -372,9 +393,9 @@ evidencia del sector es contundente, y el segmento al que apunta (el kiosco
 chico que hoy no paga ningún sistema) está desatendido por precio. Ese
 argumento hay que poder defenderlo en el pitch.
 
-Recomendación: sostener la 1 (estética) como principal. Es un ejercicio
-sobre un caso imaginario: Bella Piel no existe, así que no hay relevamiento
-real posible ni entrevista que hacer. El equipo inventa a propósito los
+Recomendación: sostener la 1 (estética médica) como principal. Es un
+ejercicio sobre un caso imaginario: Dermalia no existe, así que no hay
+relevamiento real posible ni entrevista que hacer. El equipo inventa a propósito los
 datos de partida y los presenta como tales; esa fue la decisión que se
 tomó con la cátedra al plantear el proyecto así. La 9 queda anotada como
 alternativa con relevamiento real disponible, por si en algún momento se

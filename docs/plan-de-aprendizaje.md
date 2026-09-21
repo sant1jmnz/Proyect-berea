@@ -47,11 +47,15 @@ de la solución.
 
 - **Formativa continua**: bitácora de equipo (autoseguimiento semanal) +
   retroalimentación entre pares (peer review) sobre árboles y maquetados
-  entre distintos grupos.
+  entre distintos grupos. El autoseguimiento semanal lo lleva el equipo
+  en papel, fuera del repo, a propósito: no hay bitácora digital acá (una
+  individual que hubo se sacó del tracking de git el 15/9, ver historial).
 - **Sumativa**: rúbrica de la Carpeta de Proyecto V1 (logro destacado =
   integración sinérgica entre diagnóstico, MML, requerimientos y
   maquetado, no cada pieza aislada) + rúbrica de exposición oral (claridad
-  técnica, síntesis, trabajo en equipo, defensa de decisiones).
+  técnica, síntesis, trabajo en equipo, defensa de decisiones). El
+  feedback docente (Semana 6 oficial, historias de usuario) todavía no
+  llegó: depende de la profesora, no es un pendiente del equipo.
 
 ## Cómo venimos respecto a este cronograma
 

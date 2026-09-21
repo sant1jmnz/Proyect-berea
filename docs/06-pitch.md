@@ -93,7 +93,7 @@ Para este bimestre (formulación y diseño), sí: el equipo cuenta 7 semanas
 reales de trabajo (desde el 4 de agosto), y las 6 piezas de la Carpeta de
 Proyecto están cerradas o en cierre en la Semana 7, la última. Las
 decisiones de diseño que no dependían de datos reales (monto de seña,
-catálogo de protocolos, el pivot a herramienta interna) se cerraron como
+catálogo de protocolos, el modelo de los dos apartados) se cerraron como
 decisión de equipo en vez de quedar abiertas esperando un relevamiento
 que nunca iba a llegar, justamente para no perder tiempo del bimestre
 corto.

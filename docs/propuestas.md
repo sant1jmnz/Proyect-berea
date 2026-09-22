@@ -33,18 +33,17 @@ parte de la justificación de la alternativa elegida.
 
 ---
 
-## Propuesta 1 (PRINCIPAL): Aplicación web para centro de estética integral
+## Propuesta 1 (PRINCIPAL): Sistema de turnos para instituto de estética médica
 
-Usuario / cliente: dueño de un centro de estética integral (caso imaginario,
-Bella Piel, Centro de Estética Integral) y sus clientas y clientes actuales
-y potenciales.
+Usuario / cliente: recepción de Dermalia, Instituto de Estética Médica, y
+sus pacientes actuales y potenciales.
 
 ### Problema central (borrador)
 
-*La gestión de turnos y consultas del centro de estética depende de la
-atención manual del dueño por WhatsApp, lo que consume horas de trabajo,
-produce superposiciones y turnos perdidos, y demora las respuestas a quienes
-consultan.*
+*La gestión de turnos y consultas del instituto de estética depende de la
+atención manual de la recepción por WhatsApp, lo que consume horas de
+trabajo, produce superposiciones y turnos perdidos, y demora las
+respuestas a quienes consultan.*
 
 El problema no es "no hay una app": es la carga operativa y la pérdida de
 turnos que hoy existen.
@@ -67,36 +66,41 @@ Datos públicos:
   ([WhatsApp Business API](https://developargentina.com/blog/whatsapp-business-api-argentina-automatizacion-ventas-2025)),
   y sirve de referencia para fijar la meta del indicador.
 
-Datos del centro:
+Datos del instituto:
 
 - 25 consultas por WhatsApp por día, de las cuales ≈70% (18) son repetidas
-  (precios, horarios, "¿qué incluye el tratamiento?").
+  (precios, horarios, "¿qué incluye el protocolo?").
 - 95 minutos por día dedicados a responderlas. Es la línea de base del
   indicador principal.
-- 6 turnos por semana perdidos por inasistencia, ≈ $48.000/semana.
+- 6 turnos por semana perdidos por inasistencia, ≈ $120.000/semana (precio
+  promedio de protocolo, $20.000).
 - 5 superposiciones de turno por mes.
 
 ### Qué hace el sistema
 
+Dos apartados, los dos en Qt de escritorio: una terminal táctil en el
+instituto para que la paciente cargue su propio turno, y la PC de
+recepción para los turnos que llegan por teléfono.
+
 | Módulo | Función |
 |---|---|
-| Reserva en 3 pasos | Servicio → horario disponible → confirmación, con agenda propia del dueño en el sistema |
-| Cobro de seña | Simulado (mock): el sistema registra el estado de pago, sin pasarela real ni datos de tarjeta |
-| Buscador de preguntas frecuentes | Búsqueda por palabra clave contra una base local con precios, protocolos y políticas; si no encuentra coincidencia, deriva a WhatsApp del dueño |
-| Mis Turnos | Acceso por cookies y enlace mágico, sin registro ni contraseña |
-| Vitrina | Antes y después, quiz de diagnóstico de piel, reseñas vía Google Maps API |
+| Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema; lo hace la paciente en la terminal o la recepción cuando llama por teléfono |
+| Registro de seña | Simulado (mock): se marca el estado de pago, sin pasarela real ni datos de tarjeta |
+| Buscador de precios y protocolos | Búsqueda por palabra clave contra una base local con precios, protocolos y políticas; si no encuentra coincidencia, marca la derivación a WhatsApp del instituto |
+| Buscar turnos | Por nombre, DNI o teléfono de la paciente, sin enlace ni cuenta |
 
 **Restricción técnica del equipo** (definida después de este relevamiento
-inicial): backend en C con SQL Server, frontend en HTML, sin integraciones
-por API externa. Por eso el cobro y el buscador quedaron descriptos arriba
-como simulados/locales, no hay Mercado Pago, Google Calendar ni un modelo
-de lenguaje real detrás. El detalle completo, actualizado, está en
-`docs/03-matriz-marco-logico.md` y `docs/04-requerimientos.md`.
+inicial): backend en C con SQL Server, frontend en Qt de escritorio, sin
+integraciones por API externa ni canal web. Por eso el registro de seña y
+el buscador quedaron descriptos arriba como simulados/locales. El detalle
+completo, actualizado, está en `docs/03-matriz-marco-logico.md` y
+`docs/04-requerimientos.md`.
 
 ### Fuera de alcance
 
-Historia clínica de tratamientos, gestión de stock de insumos, liquidación de
-comisiones, app nativa. Este bimestre no se programa nada: se formula y se
+Historia clínica de tratamientos, gestión de stock de insumos, liquidación
+de comisiones, app nativa, y una vitrina de fotos y reseñas (dependía de
+una API externa). Este bimestre no se programa nada: se formula y se
 diseña.
 
 ### Indicadores preliminares
@@ -106,20 +110,21 @@ diseña.
 | Tiempo diario de atención manual de consultas | Reducción del 60% | 95 min/día |
 | Turnos perdidos por inasistencia | Reducción del 50% | 6 turnos/semana |
 | Superposiciones de agenda | 0 por mes | 5 casos/mes |
-| Consultas resueltas sin intervención humana | ≥ 70% | 0% (hoy todo es manual) |
+| Consultas resueltas con el buscador interno, sin buscar a mano o de memoria | ≥ 70% | 0% (hoy todo es manual) |
 
 ### Riesgos
 
-- Adopción: que las clientas sigan escribiendo por WhatsApp igual. Mitigación:
-  responder desde WhatsApp con el enlace de reserva.
-- Resistencia a la seña: puede espantar clientes nuevos. Se estima que ≈10%
-  de clientas nuevas podría dudar; falta relevar qué hacen los competidores
+- Adopción: que la recepción siga anotando turnos a mano o respondiendo de
+  memoria en vez de usar el sistema. Mitigación: capacitación breve al
+  iniciar y transición gradual.
+- Resistencia a la seña: puede espantar pacientes nuevas. Se estima que ≈10%
+  de pacientes nuevas podría dudar; falta relevar qué hacen los competidores
   de la zona.
-- Datos personales: fotos de "antes y después" son dato sensible y requieren
-  consentimiento explícito.
-- Fidelidad del mock: no hay pasarela de pago ni modelo de lenguaje real,
-  así que el pitch tiene que dejar claro qué es simulado y qué sería una
-  integración real en una versión productiva, sin esconder la diferencia.
+- Datos personales: los datos de contacto y protocolo de la paciente son
+  sensibles y se guardan solo en la base local del instituto.
+- Fidelidad del mock: el pago y las respuestas del buscador son
+  simulados, así que el pitch tiene que dejar claro qué está simulado y
+  qué no, sin esconder la diferencia.
 
 ### Viabilidad para el bimestre
 
@@ -361,7 +366,7 @@ anterior. Requiere aval de la institución antes de arrancar.
 
 | # | Propuesta | Usuario accesible | Evidencia pública | Competencia | Viabilidad |
 |---|---|---|---|---|---|
-| 1 | Centro de estética | Caso imaginario (Bella Piel) | Buena | Media | Alta |
+| 1 | Instituto de estética médica | Dermalia | Buena | Media | Alta |
 | 2 | POS / inventario | A conseguir | Buena | Alta | Alta |
 | 5 | Adopción de mascotas | A conseguir | Buena | Baja | Media-alta |
 | 9 | Laboratorios y equipamiento | Sí, acá mismo | A relevar | Baja | Alta |
@@ -372,11 +377,8 @@ evidencia del sector es contundente, y el segmento al que apunta (el kiosco
 chico que hoy no paga ningún sistema) está desatendido por precio. Ese
 argumento hay que poder defenderlo en el pitch.
 
-Recomendación: sostener la 1 (estética) como principal. Es un ejercicio
-sobre un caso imaginario: Bella Piel no existe, así que no hay relevamiento
-real posible ni entrevista que hacer. El equipo inventa a propósito los
-datos de partida y los presenta como tales; esa fue la decisión que se
-tomó con la cátedra al plantear el proyecto así. La 9 queda anotada como
+Recomendación: sostener la 1 (estética médica) como principal, por la
+evidencia y la viabilidad ya expuestas arriba. La 9 queda anotada como
 alternativa con relevamiento real disponible, por si en algún momento se
 decide cambiar de enfoque.
 

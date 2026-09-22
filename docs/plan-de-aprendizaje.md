@@ -47,25 +47,53 @@ de la solución.
 
 - **Formativa continua**: bitácora de equipo (autoseguimiento semanal) +
   retroalimentación entre pares (peer review) sobre árboles y maquetados
-  entre distintos grupos.
+  entre distintos grupos. El autoseguimiento semanal lo lleva el equipo
+  en papel, fuera del repo, a propósito: no hay bitácora digital acá (una
+  individual que hubo se sacó del tracking de git el 15/9, ver historial).
 - **Sumativa**: rúbrica de la Carpeta de Proyecto V1 (logro destacado =
   integración sinérgica entre diagnóstico, MML, requerimientos y
   maquetado, no cada pieza aislada) + rúbrica de exposición oral (claridad
-  técnica, síntesis, trabajo en equipo, defensa de decisiones).
+  técnica, síntesis, trabajo en equipo, defensa de decisiones). El
+  feedback docente (Semana 6 oficial, historias de usuario) todavía no
+  llegó: depende de la profesora, no es un pendiente del equipo.
 
 ## Cómo venimos respecto a este cronograma
 
-Contando desde la primera jornada de trabajo (18 de agosto) como Semana 1,
-hoy (8 de septiembre) cae en Semana 4 del cronograma oficial. Pero en
-contenido ya se cubrió hasta Semana 8: MML, requerimientos, maquetado y el
-borrador del pitch quedaron cerrados en las jornadas del 1 y el 8 de
-septiembre. Vamos adelantados en producción, no atrasados, sin importar
-qué número de semana calendario se use.
+Contando desde la primera jornada de trabajo (4 de agosto) como Semana 1,
+el equipo cuenta **7 semanas reales de trabajo, no 8**: el cronograma
+oficial de la cátedra tiene 8 semanas en el papel, pero el bimestre real
+del equipo corre de martes a martes, del 4 de agosto al 15 de septiembre.
+Con ese conteo:
+
+| Semana real | Rango |
+|---|---|
+| 1 | 4 al 10 de agosto |
+| 2 | 11 al 17 de agosto |
+| 3 | 18 al 24 de agosto |
+| 4 | 25 al 31 de agosto |
+| 5 | 1 al 7 de septiembre |
+| 6 | 8 al 14 de septiembre |
+| 7 | 15 al 21 de septiembre (última semana) |
+
+El martes 15 de septiembre es el primer día de la Semana 7, la última.
+En contenido ya se cubrió bastante más rápido que el cronograma oficial:
+MML, requerimientos, maquetado y el borrador del pitch quedaron cerrados
+en las jornadas del 1 y el 8 de septiembre (Semanas 5 y 6 reales). Vamos
+adelantados en producción, no atrasados, sin importar qué número de
+semana calendario se use — pero con 7 semanas reales en vez de 8, la
+Semana 7 concentra lo que el cronograma oficial reparte entre las
+Semanas 7 y 8 (maquetado final + cierre y pitch): hay que cerrar todo eso
+en esta última semana, la presentación de Canva incluida.
 
 Lo que el cronograma marca como evaluación formativa y todavía no se hizo:
-- **Retroalimentación entre pares** de los árboles (Semana 2) y del
-  maquetado (Semana 7), la del maquetado ya está anotada como pendiente en
-  `docs/05-maquetado.md`; la de los árboles nunca se hizo y convendría
-  sumarla a la misma instancia de revisión cruzada.
+- **Retroalimentación entre pares** de los árboles (Semana 2 oficial) y del
+  maquetado (Semana 7 oficial): sigue pendiente, difícil de concretar en
+  lo que queda de la Semana 7 real sin coordinar con otro equipo (ver
+  "Qué falta" en README.md, es el único lugar donde se hace seguimiento
+  de este pendiente).
 - El repositorio con README.md ya existe desde la Semana 1 real (no la
   Semana 7 oficial), adelantado, sin pendientes ahí.
+- Los roles del equipo sí están formalizados, desde la Semana 4 real
+  (issues #1 a #4 del repo, asignados el 1/9): no son roles de Scrum
+  (Product Owner, Scrum Master), son los de esta metodología de Marco
+  Lógico, uno por pieza de la Carpeta de Proyecto.

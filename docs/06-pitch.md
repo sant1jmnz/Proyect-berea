@@ -18,17 +18,31 @@ Clovis en el pitch.
 
 ## Guion por bloques
 
+Reparto de tiempo por integrante (sobre los 9 min): Santiago 4 min, Bautista
+2 min, Nicolás 2 min, Clovis 1 min. Santiago habla más porque cierra la
+mayoría de los bloques (Problema, la transición, Viabilidad y Cierre);
+Bautista y Nicolás quedan nivelados entre sí.
+
+Cada línea del "Contenido" está escrita para calzar con lo que se ve en
+pantalla en ese momento (columna "Diapositiva"): si algo no está en el
+Canva, no se dice en este bloque, se deja para las Preguntas anticipadas.
+
 | Bloque | Tiempo | Habla | Contenido | Diapositiva / fuente |
 |---|---|---|---|---|
-| Gancho | 1 min | Clovis | "Dermalia pierde 6 turnos por semana por inasistencia, casi $120.000 semanales, y su recepción gasta 95 minutos por día contestando las mismas 18 preguntas por WhatsApp." Sin "nuestro proyecto se llama…": arranca directo con el dato. | Tabla de causas, `docs/01-arbol-de-problemas.md` |
-| Problema | 1.5 min | Santiago | El problema central: la gestión de turnos depende de la atención manual de la recepción por WhatsApp, y sus tres causas directas: sin disponibilidad visible en tiempo real (C1), consultas repetidas respondidas a mano (C2), sin seña ni recordatorio (C3, C4). | Diagrama del Árbol de Problemas, `docs/01-arbol-de-problemas.md` |
-| Propuesta | 2 min | Bautista | Objetivo general: facilitar la gestión de turnos y consultas automatizando la carga de turnos, el registro de seña y las respuestas frecuentes. Qué hace el sistema, en criollo: cargar un turno en 3 pasos, un buscador que contesta precios y protocolos por palabra clave, seña simulada, recordatorio dentro del sistema, los RF Must de `docs/04-requerimientos.md`, sin nombrarlos por ID. Dos apartados: una terminal táctil en el instituto para que la paciente cargue su propio turno, y la PC de recepción para los turnos que llegan por teléfono. | Tabla de RF, `docs/04-requerimientos.md` |
-| Demostración | 2.5 min | Nicolás | Recorrer los dos apartados en el maquetado: primero la terminal (paciente elige protocolo → horario → confirma y paga la seña), después la PC de recepción con el mismo flujo para un turno por teléfono, y la búsqueda de turnos por nombre/DNI/teléfono. Mostrar también el buscador de precios y protocolos cuando la consulta es solo informativa. Pantalla por pantalla suelta, no: se recorre como una tarea de punta a punta. | User flow y mockup, `docs/05-maquetado.md` |
-| Viabilidad (indicadores) | 0.75 min | Santiago | Los cuatro indicadores de la MML: -60% en tiempo de atención, -50% en turnos perdidos, 0 superposiciones de agenda, ≥70% de consultas resueltas por el buscador, todos medidos a las 4 semanas de uso. | Matriz completa, `docs/03-matriz-marco-logico.md` |
-| Viabilidad (riesgo) | 0.75 min | Clovis | El riesgo más alto: que la recepción no adopte el sistema como herramienta principal y siga anotando turnos aparte. Mitigación: capacitación breve al iniciar y transición gradual, sin cortar el hábito de un día para otro. | Matriz completa, `docs/03-matriz-marco-logico.md` |
-| Cierre | 0.5 min | Clovis | Este bimestre se formuló y se diseñó; el próximo arranca el desarrollo técnico sobre esta base ya trazada. Se pide al auditorio feedback sobre la propuesta de valor y la seña, antes de empezar a programar. |, |
+| Gancho | 1 min | Clovis | "Dermalia pierde 312 turnos al año por inasistencia, $6.240.000 anuales, y su recepción dedica casi 500 horas al año, más de 60 jornadas laborales completas, a responder las mismas consultas repetidas por WhatsApp." Sin "nuestro proyecto se llama…": arranca directo con el dato, con los mismos números que van a estar en pantalla. | Página "El problema", Canva; tabla de causas, `docs/01-arbol-de-problemas.md` |
+| Problema | 1.5 min | Santiago | El problema central: la gestión de turnos depende de la atención manual de la recepción por WhatsApp, y sus tres causas directas: sin disponibilidad visible en tiempo real (C1), consultas repetidas respondidas a mano (C2), sin seña ni recordatorio (C3, C4). | Páginas "El problema" y "Causas de ineficiencia", Canva; diagrama del Árbol de Problemas, `docs/01-arbol-de-problemas.md` |
+| Propuesta | 2 min | Bautista | Objetivo general: facilitar la gestión de turnos y consultas automatizando la carga de turnos, el registro de seña y las respuestas frecuentes. Qué hace el sistema, en criollo: cargar un turno en 3 pasos, un buscador que contesta precios y protocolos por palabra clave, seña simulada, recordatorio dentro del sistema, los RF Must de `docs/04-requerimientos.md`, sin nombrarlos por ID. Dos apartados: una terminal táctil en el instituto para que la paciente cargue su propio turno, y la PC de recepción para los turnos que llegan por teléfono. | Página "La propuesta: Dermalia", Canva; tabla de RF, `docs/04-requerimientos.md` |
+| Demostración | 2 min | Nicolás | Recorrer los dos apartados en el maquetado: la terminal (paciente elige protocolo → horario → confirma y paga la seña) y la PC de recepción con el mismo flujo para un turno por teléfono, más la búsqueda de turnos por nombre, DNI o teléfono. Se recorre como una tarea de punta a punta, no pantalla por pantalla suelta. | Página "Cómo funciona", Canva; user flow y mockup, `docs/05-maquetado.md` |
+| Transición | 0.5 min | Santiago | "Recorrimos los dos apartados, terminal y recepción, compartiendo la misma base. Ahora, los números: cómo sabemos que esto funciona." | Puente hablado entre "Cómo funciona" y "Éxito", sin diapositiva propia |
+| Viabilidad | 1.5 min | Santiago | Los cuatro indicadores de éxito, medidos a las 4 semanas de uso: 296 horas liberadas por año en la recepción, 156 turnos recuperados por año, 18 de las 25 consultas diarias resueltas por el buscador sin intervención humana, y 60 superposiciones de agenda evitadas por año. | Página "Éxito", Canva; matriz completa, `docs/03-matriz-marco-logico.md` |
+| Cierre | 0.5 min | Santiago | Este bimestre se formuló y se diseñó; el próximo arranca el desarrollo técnico sobre esta base ya trazada. Se pide al auditorio feedback sobre la propuesta de valor y la seña, antes de empezar a programar. | Página "Gracias", Canva |
 
 ## Preguntas anticipadas
+
+Responde Santiago en la ronda de preguntas (coordina el Marco Lógico, es
+quien mejor conoce cómo se conecta todo). Igual, **los 4 tienen que
+conocer estas respuestas de memoria**: si a la cátedra le da por preguntarle
+a otro integrante, no puede quedar en blanco.
 
 **¿Por qué este problema y no otro? ¿Cómo lo verificaron?**
 Se compararon 10 propuestas (`docs/propuestas.md`); se descartaron 5 por
@@ -107,6 +121,53 @@ tabla propia, la agenda vive en el sistema, y la seña se registra como un
 estado (pagada/no pagada) que marca la recepción. La lógica de negocio
 (30% de seña, derivación a WhatsApp sin coincidencia, recordatorio antes
 del turno) queda igual, solo cambia la implementación.
+
+### Preguntas técnicas y de proceso
+
+**¿Qué pasa si dos personas reservan el mismo horario al mismo tiempo?**
+El sistema solo muestra horarios que siguen disponibles al momento de
+cargar el turno (RF-04); si dos pantallas leen la grilla en el mismo
+instante, gana quien confirma primero y a la otra se le actualiza la
+disponibilidad al instante. No es un escenario de alta concurrencia
+distribuida: los dos apartados corren contra una sola base local del
+instituto (RNF-09), no hay servidores en paralelo.
+
+**¿Por qué SQL Server específicamente, y no otra base de datos?**
+Es la tecnología que exige la restricción técnica del proyecto (RNF-11):
+backend en C sobre SQL Server, sin excepción. No fue una comparación
+contra otras bases (MySQL, PostgreSQL); es un dato de la consigna, no una
+elección de diseño libre del equipo.
+
+**¿Cómo protegen los datos de las pacientes?**
+Nombre, DNI, teléfono y protocolo se guardan solo en la base local del
+instituto, sin sincronizarse con ningún servicio externo (RNF-06). El
+sistema tampoco maneja pagos reales ni datos de tarjeta: la seña es un
+mock que solo cambia un estado (pagada/no pagada) en la base (RNF-05).
+
+**¿Qué pasa si se corta internet o falla el sistema a mitad de un turno?**
+Los dos apartados corren en local contra la base del instituto, sin
+depender de internet (RNF-09), así que un corte de internet no los tira
+abajo. Una caída del propio SQL Server sí frena el sistema: no hay un plan
+de contingencia (backup, segundo servidor) definido todavía, queda fuera
+del alcance de este bimestre.
+
+**¿El sistema se podría usar en otro instituto, o está armado solo para Dermalia?**
+La lógica (turnos, buscador, seña, recordatorio) es genérica; lo que está
+a medida de Dermalia es el catálogo de protocolos, los precios y el monto
+de seña. Adaptarlo a otro instituto implicaría recargar esos datos, no
+reescribir el sistema.
+
+**¿Qué pasa si un profesional cancela su disponibilidad después de que ya hay turnos cargados en ese horario?**
+No está resuelto todavía: la disponibilidad (RF-03) se carga y edita en
+el sistema, pero no hay una regla definida de qué pasa con los turnos ya
+confirmados si el profesional bloquea ese horario después. Es un caso
+borde que queda para la etapa de desarrollo del bimestre siguiente.
+
+**¿Cómo se organizó el equipo para tener todo listo (documentos y Canva) a tiempo?**
+Con roles fijos desde el 1 de septiembre (ver arriba) y las 6 piezas de la
+Carpeta cerrándose en el orden que exige el Marco Lógico: no se puede
+definir un requerimiento sin tener antes cerrada la MML, por ejemplo, así
+que el orden de trabajo fue el mismo orden de los documentos.
 
 ## Qué falta
 

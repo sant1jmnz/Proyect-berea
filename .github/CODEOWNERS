@@ -1,10 +1,6 @@
 # Propietarios de archivos del repositorio.
 # Los cambios sobre estas rutas requieren la aprobación del propietario.
 
-# Bitácora personal de Santiago: es un documento individual y de autoría propia.
-/docs/bitacora.md   @sant1jmnz
-
-# Configuración del repositorio y del entorno de trabajo.
 /CLAUDE.md          @sant1jmnz
 /.claude/           @sant1jmnz
 /.github/           @sant1jmnz

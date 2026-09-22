@@ -1,113 +1,157 @@
 # Maquetado
 
-Wireframes de media fidelidad de la Propuesta 1 (Bella Piel), armados en
-Figma: https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled. Cada
-pantalla está rotulada con los RF que cubre (`docs/04-requerimientos.md`)
-directamente en el nombre del frame en Figma, y acá abajo con el enlace al
-nodo puntual.
+El maquetado tuvo dos etapas. La primera (Semanas 5-6 reales) se hizo en
+Figma como wireframes de una app móvil self-service remota (la paciente
+reservaba desde su celular con un enlace mágico). La segunda (Semana 7
+real, cierre) la reemplaza: la restricción técnica real del equipo es
+sobre la **tecnología** (Qt, no HTML/web), no sobre quién puede usar el
+sistema. Un self-service remoto desde el celular de la paciente sí
+necesitaría web y se descarta, pero un self-service presencial en una
+terminal Qt dentro del instituto no. Esta versión, con los dos apartados,
+es la vigente.
 
-No hay capturas en `docs/assets/`: `figma.com` está bloqueado para descarga
-directa en este entorno de trabajo. El enlace a cada pantalla en Figma
-reemplaza la captura; cualquiera con acceso al archivo la ve ahí.
+## Los dos apartados
+
+- **Apartado Cliente**: pantalla táctil (terminal) instalada en Dermalia,
+  para que la paciente cargue su propio turno, consulte precios y busque
+  su turno mientras está en el local.
+- **Apartado Gestión**: lo usa la recepción desde la PC del mostrador,
+  para cargar turnos que llegan por teléfono, administrar la
+  disponibilidad y resolver consultas telefónicas con el mismo buscador.
+
+Los dos comparten los Componentes R1-R4 de la MML y la misma base en SQL
+Server (`docs/03-matriz-marco-logico.md`); el detalle de RF por apartado
+está en `docs/04-requerimientos.md`.
+
+## Mockup de escritorio (Qt)
+
+Mockup interactivo con las pantallas de los dos apartados, navegables
+desde un selector superior (Cliente / Gestión) y un panel lateral con las
+pantallas de cada uno:
+https://claude.ai/artifact/LAL3dVf5JWdd3SD7VYuRFX
+
+Pensado como referencia visual para construir la interfaz real en Qt
+Designer / Qt Widgets (el apartado Cliente en una ventana táctil vertical,
+el apartado Gestión en una ventana de escritorio horizontal), no como el
+diseño final pixel a pixel.
 
 ## User flow
 
 ```mermaid
 flowchart LR
-    A[Elegir servicio<br/>RF-01] --> B[Elegir horario<br/>RF-01, RF-03]
-    B --> C[Confirmar y simular seña<br/>RF-01, RF-06, RF-07]
-    C --> D[Mis Turnos<br/>RF-09]
-    A -.consulta.-> E[Buscador de FAQ<br/>RF-04, RF-05]
-    E -.sin coincidencia.-> F[WhatsApp del dueño]
-    C -.recordatorio en el sistema.-> G[RF-08]
-    G --> D
+    subgraph Cliente["Apartado Cliente (terminal)"]
+        A1[Elegir protocolo<br/>RF-01] --> A2[Elegir horario<br/>RF-01, RF-04]
+        A2 --> A3[Confirmar y pagar seña<br/>RF-01, RF-08, RF-10]
+        A3 --> A4[Buscar mi turno<br/>RF-12]
+        A1 -.consulta.-> A5[Buscador de precios<br/>RF-05, RF-07]
+    end
+    subgraph Gestion["Apartado Gestión (recepción)"]
+        B1[Cargar turno<br/>RF-02] --> B2[Elegir horario<br/>RF-02, RF-04]
+        B2 --> B3[Confirmar y registrar seña<br/>RF-02, RF-09, RF-10]
+        B3 --> B4[Buscar turnos<br/>RF-13]
+        B1 -.consulta telefónica.-> B5[Buscador de precios<br/>RF-06, RF-07]
+    end
+    A5 -.sin coincidencia.-> WA[WhatsApp del instituto]
+    B5 -.sin coincidencia.-> WA
 ```
 
-La clienta entra por "Elegir servicio" (o por el buscador de preguntas
-frecuentes si tiene una duda antes de reservar) y sale con un turno
-confirmado y visible en "Mis Turnos". El buscador es un camino paralelo, no
-un paso obligatorio del flujo principal: puede resolver la consulta o
-derivar a un enlace de WhatsApp sin cortar la reserva.
+La paciente entra por la terminal cuando está en el instituto; la recepción
+entra por su PC cuando la paciente llama. Ambos caminos terminan en el
+mismo dato: un turno con seña registrada y recordatorio, buscable después
+desde cualquiera de los dos apartados según quién lo necesite ver.
 
 ## Pantalla → RF cubiertos
 
-| Pantalla | RF / RNF cubiertos | Enlace |
-|---|---|---|
-| 1, Elegir servicio | RF-01, RF-03 | [nodo 3:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=3-2) |
-| 2, Elegir horario | RF-01, RF-03 | [nodo 4:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=4-2) |
-| 3, Confirmar y simular seña | RF-01, RF-06, RF-07, RNF-04 | [nodo 8:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=8-2) |
-| 4, Buscador de preguntas frecuentes | RF-04, RF-05, RNF-09 | [nodo 8:30](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=8-30) |
-| 5, Mis Turnos | RF-09, RF-08 (recordatorio, visible como aviso en la tarjeta) | [nodo 10:2](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled?node-id=10-2) |
+**Apartado Cliente**
 
-RF-02 (agenda propia del dueño) no tiene pantalla en este maquetado. Las 5
-pantallas de arriba son el flujo de la clienta. RF-02 es una herramienta
-del lado del dueño (cargar y editar su disponibilidad): queda como panel
-de administración pendiente de diseñar, con una interfaz distinta de la
-que ve la clienta.
+| Pantalla | RF cubiertos |
+|---|---|
+| 1, Elegir protocolo | RF-01, RF-04 |
+| 2, Elegir horario | RF-01, RF-04 |
+| 3, Confirmar turno y pagar seña | RF-01, RF-08, RF-10 |
+| 4, Buscador de precios y protocolos | RF-05, RF-07 |
+| 5, Buscar mi turno (DNI/teléfono) | RF-12, RF-11 (recordatorio) |
 
-RF-10 (vitrina) queda fuera del maquetado de este bimestre. Es Could, y en
-la semana 6 de 8 no queda margen para diseñar y revisar una sexta pantalla
-sin quitarle tiempo al pitch y a la revisión cruzada de las 5 pantallas
-Must/Should que sí están. Se retoma en una siguiente iteración, fuera de
-esta Carpeta de Proyecto V1.
+**Apartado Gestión**
+
+| Pantalla | RF cubiertos |
+|---|---|
+| 1, Cargar turno | RF-02, RF-04 |
+| 2, Elegir horario | RF-02, RF-04 |
+| 3, Confirmar turno y registrar seña | RF-02, RF-09, RF-10 |
+| 4, Buscador de precios y protocolos | RF-06, RF-07 |
+| 5, Buscar turnos (nombre/DNI/teléfono) | RF-13, RF-11 (recordatorio) |
+
+RF-03 (disponibilidad de los profesionales) no tiene pantalla propia
+todavía: queda como panel de administración pendiente de diseñar, dentro
+del apartado Gestión.
 
 ## Justificación de las decisiones de diseño
 
-- 3 pasos separados (servicio → horario → confirmación) en vez de un solo
-  formulario largo: reduce la carga cognitiva y deja avanzar solo cuando el
-  paso anterior está resuelto, atacando directamente C1/C2 del Árbol de
-  Problemas (decisiones a medias por WhatsApp, sin estructura).
-- La seña tiene su propia tarjeta, separada del resumen del turno, no es un
-  campo más: la evidencia de `propuestas.md` dice que puede generar
-  resistencia, así que se explica antes de confirmar el pago simulado (30%
-  del valor del servicio, mínimo $5.000, reembolsable si se cancela con más
-  de 24 h de anticipación, RF-07) en vez de aparecer como un cargo
-  sorpresa. La pantalla no pide ningún dato de tarjeta, es un mock, no una
-  pasarela real.
-- El buscador de preguntas frecuentes muestra de dónde sale cada respuesta
-  ("Base de precios y protocolos" o derivación a WhatsApp), así la clienta
-  distingue una respuesta confiable de una que necesita al dueño, y el
-  buscador no parece prometer algo que no puede cumplir.
-- "Mis Turnos" no pide contraseña, solo el enlace mágico: es un
-  requerimiento explícito (RF-09) para no agregar fricción a una clienta que
-  reserva una vez cada tanto.
+- Mismo flujo de 3 pasos en los dos apartados (protocolo → horario →
+  confirmación): la paciente y la recepción entienden la misma secuencia,
+  y el equipo solo mantiene una lógica de negocio, no dos.
+- La terminal (Cliente) usa controles más grandes y espaciados, pensados
+  para pantalla táctil; la PC de recepción (Gestión) usa una densidad
+  mayor, pensada para mouse y teclado y para repetir la carga muchas
+  veces por día.
+- La seña tiene su propia tarjeta en los dos apartados, separada del
+  resumen del turno: la evidencia de `propuestas.md` dice que puede
+  generar resistencia en la paciente, así que el monto y la regla (30%
+  del valor del protocolo, mínimo $5.000, reembolsable con +24h, RF-10)
+  quedan visibles antes de confirmar el pago simulado, en vez de aparecer
+  como un cargo sorpresa.
+- El buscador de precios y protocolos muestra de dónde sale cada
+  resultado ("Base de precios y protocolos" o derivación a WhatsApp), en
+  los dos apartados, para no prometer una respuesta que el sistema no
+  puede resolver.
+- "Buscar mi turno" (Cliente) y "Buscar turnos" (Gestión) no dependen de
+  ningún enlace ni contraseña: alcanza con DNI o teléfono, porque en los
+  dos casos hay alguien físicamente presente (la paciente en la terminal,
+  la recepción en el mostrador) verificando la identidad.
 
 ## Evaluación heurística (Nielsen)
 
 | Heurística | Cómo se resuelve |
 |---|---|
-| 1. Visibilidad del estado del sistema | "Paso 1/2/3 de 3" en el header de reserva; badge "Confirmado" en Mis Turnos; el buscador marca la fuente de cada respuesta. |
-| 2. Lenguaje del usuario | Sin jerga técnica: "Elegir horario", "Pagar seña", nunca "slot" ni "booking". |
-| 3. Control y libertad | Flecha "←" para volver en cada paso de la reserva; botón "Cancelar turno" siempre visible en Mis Turnos. |
-| 4. Consistencia y estándares | Un solo color primario (rosa) para toda acción principal, en las 5 pantallas; misma tipografía y radios de borde. |
-| 5. Prevención de errores | Solo se muestran horarios realmente disponibles (RF-03), no se puede ni intentar reservar un turno ya ocupado. |
-| 6. Reconocer antes que recordar | El resumen de la Pantalla 3 repite servicio, fecha, hora y precio, la clienta no tiene que recordar lo que eligió antes. |
-| 7. Flexibilidad y eficiencia | El buscador resuelve consultas frecuentes en un mensaje, sin pasar por los 3 pasos de reserva si solo se quiere saber un precio. |
-| 8. Diseño estético y minimalista | Cada pantalla tiene una sola acción primaria (el botón inferior); nada compite con ella. |
-| 9. Ayudar a reconocer y recuperarse de errores | Cuando el buscador no encuentra coincidencia, lo dice explícitamente y ofrece un camino concreto (botón "Hablar por WhatsApp"), no un error genérico. |
-| 10. Ayuda y documentación | Se resuelve sin pantalla nueva: enlace "Ayuda" fijo en el header de las 5 pantallas, que lleva directo al WhatsApp del dueño (mismo camino que ya usa el asistente virtual cuando no sabe responder). Decisión tomada por tiempo, con 2 semanas de bimestre restantes no alcanza para una pantalla de FAQ propia, a validar en la revisión cruzada. |
+| 1. Visibilidad del estado del sistema | "Paso 1/2/3 de 3" en la carga de turno de los dos apartados; badge "Confirmado" al buscar un turno; el buscador de precios marca la fuente de cada resultado. |
+| 2. Lenguaje del usuario | Sin jerga técnica: "Elegir horario", "Pagar seña" (Cliente) / "Registrar seña" (Gestión), nunca "slot" ni "booking". |
+| 3. Control y libertad | Botón "Volver" en cada paso de la carga; "Cancelar turno" siempre visible en las búsquedas. |
+| 4. Consistencia y estándares | Mismo color primario y tipografía en los dos apartados; la terminal usa controles más grandes, pero la misma paleta y jerarquía visual. |
+| 5. Prevención de errores | Solo se muestran horarios realmente disponibles (RF-04), no se puede cargar un turno sobre uno ya ocupado, en ningún apartado. |
+| 6. Reconocer antes que recordar | El resumen antes de confirmar repite protocolo, fecha, hora y precio en los dos apartados. |
+| 7. Flexibilidad y eficiencia | El buscador resuelve una consulta de precio en un resultado, sin pasar por los 3 pasos de carga de turno. |
+| 8. Diseño estético y minimalista | Cada pantalla tiene una sola acción primaria; nada compite con ella. |
+| 9. Ayudar a reconocer y recuperarse de errores | Cuando el buscador no encuentra coincidencia, lo dice explícitamente y ofrece derivar a WhatsApp, no un error genérico. |
+| 10. Ayuda y documentación | Enlace "Ayuda" fijo en la barra superior de los dos apartados. |
 
 ## Preguntas para la coevaluación cruzada
 
-1. La seña se pide recién en el paso 3, después de que la clienta ya eligió
-   servicio y horario, ¿ese orden reduce el abandono, o conviene mostrar el
-   monto de la seña desde el paso 1 para que no sea sorpresa al final?
-2. El buscador deriva a WhatsApp cuando no encuentra coincidencia, ¿alcanza
-   con un botón, o hace falta que le pase el historial de la conversación al
-   dueño para que no tenga que preguntar todo de nuevo?
-3. Con la restricción de C + SQL Server sin APIs, la seña y el recordatorio
-   quedaron mockeados (no hay pago ni envío reales), ¿esa simulación se
-   entiende con solo texto en la pantalla, o hace falta una aclaración
-   visual más explícita para que no parezca una promesa real?
+1. ¿El mismo flujo de 3 pasos funciona igual de bien para una paciente
+   tocando una pantalla en la terminal que para la recepción usando mouse y
+   teclado todo el día, o alguno de los dos necesita un diseño distinto?
+2. El buscador deriva a WhatsApp cuando no encuentra coincidencia en los
+   dos apartados, ¿alcanza con marcarlo en pantalla, o la terminal (sin
+   nadie de recepción cerca en ese momento) necesita un paso adicional?
+3. Con la restricción de C + SQL Server + Qt sin APIs, la seña y el
+   recordatorio quedaron mockeados en los dos apartados, ¿esa simulación
+   se entiende con solo texto en pantalla, o hace falta una aclaración
+   visual más explícita, sobre todo en la terminal donde nadie de recepción
+   está ahí para aclararlo en el momento?
 
 ## Qué falta
 
-- Aplicados en Figma los cambios de esta semana: la Pantalla 4 se renombró
-  a "Buscador de FAQ", la Pantalla 3 ya no menciona Mercado Pago (el monto
-  también se corrigió a $5.000, que es lo que corresponde con la regla de
-  RF-07 sobre un servicio de $8.000, antes decía $2.000, mal calculado), y
-  se agregó el enlace "Ayuda" en el header de las 5 pantallas. No se pudo
-  sacar captura final de conjunto por límite de llamadas del plan Starter
-  de Figma, revisar visualmente antes de la revisión cruzada.
-- Pasar el maquetado por la coevaluación cruzada con otro equipo antes de
-  darlo por cerrado.
+- Diseñar la pantalla de administración de disponibilidad (RF-03), que
+  todavía no tiene wireframe propio.
+- Coevaluación cruzada con otro equipo (estado general: ver README.md).
+
+## Historial: maquetado móvil remoto en Figma (reemplazado)
+
+Las 5 pantallas originales, pensadas como app móvil self-service remota
+para la paciente (reserva desde el celular, con enlace mágico), quedan en
+Figma como registro del primer intento:
+https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled. Ya no
+reflejan el modelo de uso actual (terminal presencial + recepción, los dos
+en Qt), así que no son la referencia vigente. Se dejan sin borrar porque
+muestran el proceso de descarte, igual que las propuestas rechazadas en
+`docs/propuestas.md`.

@@ -18,10 +18,11 @@ Clovis en el pitch.
 
 ## Guion por bloques
 
-Reparto de tiempo por integrante (sobre los 9.5 min): Santiago 4.5 min,
-Bautista 2 min, Nicolás 2 min, Clovis 1 min. Santiago habla más porque
-cierra la mayoría de los bloques (Problema, la transición, Recorrido,
-Viabilidad y Cierre); Bautista y Nicolás quedan nivelados entre sí.
+Reparto de tiempo por integrante (sobre los 9.5 min): Bautista 3.5 min,
+Santiago 3 min, Nicolás 2 min, Clovis 1 min. Bautista suma la Viabilidad a
+la Propuesta para cerrar el círculo: primero presenta los requerimientos,
+después confirma que se cumplen. Santiago cierra el resto de los bloques
+(Problema, la transición, Recorrido y Cierre).
 
 Cada línea del "Contenido" está escrita para calzar con lo que se ve en
 pantalla en ese momento (columna "Diapositiva"): si algo no está en el
@@ -34,7 +35,7 @@ Canva, no se dice en este bloque, se deja para las Preguntas anticipadas.
 | Propuesta | 2 min | Bautista | Objetivo general: facilitar la gestión de turnos y consultas automatizando la carga de turnos, el registro de seña y las respuestas frecuentes. Qué hace el sistema, en criollo: cargar un turno en 3 pasos, un buscador que contesta precios y protocolos por palabra clave, seña simulada, recordatorio dentro del sistema, los RF Must de `docs/04-requerimientos.md`, sin nombrarlos por ID. Dos apartados: una terminal táctil en el instituto para que la paciente cargue su propio turno, y la PC de recepción para los turnos que llegan por teléfono. | Página "La propuesta: Dermalia", Canva; tabla de RF, `docs/04-requerimientos.md` |
 | Demostración | 2 min | Nicolás | Recorrer los dos apartados en el maquetado: la terminal (paciente elige protocolo → horario → confirma y paga la seña) y la PC de recepción con el mismo flujo para un turno por teléfono, más la búsqueda de turnos por nombre, DNI o teléfono. Se recorre como una tarea de punta a punta, no pantalla por pantalla suelta. | Página "Cómo funciona", Canva; user flow y mockup, `docs/05-maquetado.md` |
 | Transición | 0.5 min | Santiago | "Recorrimos los dos apartados, terminal y recepción, compartiendo la misma base: atrás C con SQL Server, adelante Qt de escritorio, sin depender de ninguna API externa. Ahora, los números: cómo sabemos que esto funciona." | Página "Stack técnico", Canva |
-| Viabilidad | 1.5 min | Santiago | Los cuatro indicadores de éxito, medidos a las 4 semanas de uso: 296 horas liberadas por año en la recepción, 156 turnos recuperados por año, 18 de las 25 consultas diarias resueltas por el buscador sin intervención humana, y 60 superposiciones de agenda evitadas por año. | Página "Éxito", Canva; matriz completa, `docs/03-matriz-marco-logico.md` |
+| Viabilidad | 1.5 min | Bautista | Los cuatro indicadores de éxito, medidos a las 4 semanas de uso: 296 horas liberadas por año en la recepción, 156 turnos recuperados por año, 18 de las 25 consultas diarias resueltas por el buscador sin intervención humana, y 60 superposiciones de agenda evitadas por año. | Página "Éxito", Canva; matriz completa, `docs/03-matriz-marco-logico.md` |
 | Recorrido | 0.5 min | Santiago | "Esto es lo que se hizo semana a semana: el problema y las propuestas al principio, la matriz de marco lógico a mitad de camino, los requerimientos y el maquetado después, y esta semana el cierre de la carpeta. En el camino hubo que rediseñar el sistema por las limitaciones del stack, corregir errores de cálculo del maquetado original, y ajustar el cronograma real a 7 semanas." | Páginas "Hitos del proyecto" y "Desafíos superados", Canva; `docs/plan-de-aprendizaje.md` |
 | Cierre | 0.5 min | Santiago | Este bimestre se formuló y se diseñó; el próximo arranca el desarrollo técnico sobre esta base ya trazada. Todavía falta la revisión cruzada con otro equipo. Se pide al auditorio feedback sobre la propuesta de valor y la seña, antes de empezar a programar. | Páginas "Próximos pasos" y "Gracias", Canva |
 

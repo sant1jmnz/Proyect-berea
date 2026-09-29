@@ -103,6 +103,8 @@ docs/
   plan-de-aprendizaje.md
   material-catedra.md
   propuestas.md
+backend/                 # núcleo en C (reglas de negocio) + tests, CMake
+db/                      # esquema y datos de ejemplo para SQL Server
 README.md                # este archivo, portada de la Carpeta de Proyecto V1
 ```
 
@@ -129,6 +131,19 @@ septiembre:
 Miro / FigJam (árboles y MML) · Figma (maquetado original, reemplazado) ·
 Trello o GitHub Projects (backlog) · GitHub con documentación Markdown ·
 Google Workspace / Classroom · Canva (presentación final).
+
+## Desarrollo técnico (bimestre siguiente)
+
+Arrancó con la base, sin UI ni acceso a base todavía:
+
+- `db/schema.sql` y `db/seed.sql`: tablas de SQL Server (protocolos,
+  profesionales, disponibilidad, pacientes, turnos, consultas sin respuesta).
+- `backend/`: reglas de negocio en C puro, sin base ni Qt, con tests:
+  seña (RF-10), reembolso, recordatorio (RF-11), superposición de horarios
+  (RF-04) y enlace `wa.me` (RF-07). Se prueba con
+  `cmake -S backend -B backend/build && cmake --build backend/build && ctest --test-dir backend/build`.
+- Siguiente: capa de acceso a SQL Server (ODBC) en C, luego el apartado
+  Gestión en Qt (carga de turno, RF-02) y después el apartado Cliente.
 
 ## Qué falta
 

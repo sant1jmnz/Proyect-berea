@@ -73,7 +73,8 @@ y 2 del maquetado ("Elegir protocolo", "Elegir horario")*.
 Documentos de apoyo: [`docs/propuestas.md`](docs/propuestas.md) (las diez
 propuestas relevadas y por qué se eligió esta), [`docs/foda.md`](docs/foda.md)
 (FODA del equipo), [`docs/plan-de-aprendizaje.md`](docs/plan-de-aprendizaje.md)
-(cronograma) y [`docs/material-catedra.md`](docs/material-catedra.md)
+(cronograma del 3er bimestre), [`docs/plan-4to-bimestre.md`](docs/plan-4to-bimestre.md)
+(cronograma del 4° bimestre con las tareas de Santiago y Bautista semana a semana) y [`docs/material-catedra.md`](docs/material-catedra.md)
 (resumen de los videos de cátedra, alojados como [release `material-catedra`](https://github.com/sant1jmnz/Proyect-berea/releases/tag/material-catedra)).
 
 ## Indicadores principales (MML: Propósito)
@@ -101,6 +102,7 @@ docs/
   06-pitch.md
   foda.md
   plan-de-aprendizaje.md
+  plan-4to-bimestre.md
   material-catedra.md
   propuestas.md
 backend/                 # núcleo en C (reglas de negocio) + tests, CMake

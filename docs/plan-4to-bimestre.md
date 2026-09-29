@@ -1,209 +1,147 @@
-# Plan de aprendizaje, 4° bimestre: Proyecto Informático I
+# Plan de Aprendizaje – 4° Bimestre: Proyecto Informático I
 
-Transcripción del PDF de cátedra `Plan de Aprendizaje – 4° Bimestre: Proyecto
-Informático I`, más el reparto de tareas semana a semana entre **Santiago** y
-**Bautista**. Continúa a `docs/plan-de-aprendizaje.md` (3er bimestre, ya
-terminado).
+Transcripción del PDF de cátedra. El reparto de tareas entre el equipo está en
+[`reparto-4to-bimestre.md`](reparto-4to-bimestre.md).
 
-- Enfoque: Buenos Aires Aprende · Escuela Técnica CABA · Especialidad Computación
-- Metodología: desarrollo ágil (sprints semanales), aprendizaje basado en
-  proyectos (ABP), trabajo colaborativo en repositorio y presentación final.
-- **Producto final**: software de gestión de escritorio en C con Qt, vinculado a
-  una base de datos relacional, presentado como Pitch de ventas / Demo Day ante
-  inversores, respaldado por un análisis de competencia.
-- **Objetivo del bimestre**: pasar los requerimientos y la planificación del 3er
-  bimestre a un producto funcional con persistencia de datos, y validar su
-  viabilidad comercial frente al mercado.
+**Enfoque**: Buenos Aires Aprende / Escuela Técnica CABA
 
-## Cómo se reparte
+**Especialidad**: Computación
 
-| Persona | Foco general | Rama |
-|---|---|---|
-| **Santiago** | Apartado **Gestión** (recepción), ABM de turnos y pacientes, reglas de negocio, presupuesto | `santiago` |
-| **Bautista** | Apartado **Cliente** (terminal táctil), protocolos, profesionales y disponibilidad, buscador, competencia y manuales | `bautista` |
+**Producto Final**: Software de Gestión/Escritorio desarrollado en C con
+framework Qt, vinculado a una Base de Datos relacional, presentado en formato
+Pitch de Ventas / Demo Day ante inversores, respaldado por un Análisis de
+Competencia.
 
-Cada uno trabaja en su rama y se junta a `main` con un PR al cerrar cada semana
-(guía de Git: la del equipo). El reparto es un punto de partida: si una semana
-uno se traba, el otro lo ayuda y se anota acá.
+## Contexto Curricular y Pedagógico
 
-Nicolás y Clovis (diseño y pitch en el 3er bimestre) no figuran en este reparto
-porque este reparto es de a dos; si se suman, se agregan como una tercera columna.
+- **Trayecto previo (3er Bimestre)**: Los estudiantes fundamentaron la
+  problemática abordada a través de las herramientas de planificación
+  estratégica: Árbol de Problemas, Árbol de Objetivos y la Matriz de Marco
+  Lógico (MML).
+- **Objetivo del 4° Bimestre**: Traducir los requerimientos y la planificación
+  construida en el 3er bimestre en un producto de software funcional en C / Qt
+  con persistencia de datos relacional, validando su viabilidad comercial
+  mediante una propuesta de valor frente al mercado y la competencia.
+- **Metodología de Trabajo**: Desarrollo ágil (sprints semanales), aprendizaje
+  basado en proyectos integradores (ABP), trabajo colaborativo en repositorio y
+  presentación ejecutiva final.
 
-Lo que ya existe en `main` y no hay que rehacer: `db/schema.sql` y `db/seed.sql`
-(SQL Server), reglas de negocio en C con tests (`backend/src/dermalia.c`) y la
-capa ODBC (`backend/src/db.c`: conexión, buscar protocolos, crear turno).
+## Semana 1: Arquitectura del Sistema y Prototipado de GUI en Qt Designer
 
-**Diferencia con el PDF**: la cátedra habla de "C / Qt" y menciona `QSqlDatabase`
-y `QSqlTableModel` (que son C++). Nuestra decisión de arquitectura sigue
-siendo backend en C con ODBC contra SQL Server, y Qt para la interfaz. Conviene
-confirmar con la profesora que esto cumple lo pedido.
+- **Propósito de Aprendizaje**: Maquetar la interfaz gráfica de usuario en Qt
+  Creator basándose en la Matriz de Marco Lógico y los requerimientos
+  funcionales definidos en el bimestre anterior.
+- **Actividades**:
+  1. Configuración de entorno de trabajo C/ Qt (Qt Creator) y vinculación con
+     el repositorio Git institucional.
+  2. Diseño de pantallas e interfaz de usuario (ventanas principales,
+     formularios, menús y cuadros de diálogo) utilizando Qt Designer y widgets
+     estándar (QLineEdit, QPushButton, QTableView, etc.).
+  3. Implementación de eventos básicos mediante la arquitectura de Señales y
+     Slots de Qt.
+- **Entregable**: Prototipo navegable de la interfaz gráfica (GUI) en C/ Qt sin
+  persistencia activa, sincronizado en el repositorio.
 
-## Semana 1: Arquitectura del sistema y prototipado de GUI en Qt Designer
+## Semana 2: Persistencia e Integración C++ / Qt con Base de Datos
 
-**Propósito**: maquetar la interfaz en Qt Creator a partir de la MML y los
-requerimientos del bimestre anterior.
+- **Propósito de Aprendizaje**: Vincular la aplicación desarrollada en C con la
+  base de datos relacional para garantizar las operaciones de ABM (Altas, Bajas
+  y Modificaciones).
+- **Actividades**:
+  1. Configuración del módulo de base de datos en Qt (QSqlDatabase, QSqlQuery,
+     QSqlQueryModel / QSqlTableModel).
+  2. Implementación de controladores C para la apertura de conexión, ejecución
+     de sentencias SQL y manejo de excepciones de conexión.
+  3. Mapeo e integración de formularios GUI con operaciones CRUD sobre las
+     tablas de la base de datos relacional.
+- **Entregable**: Módulo ABM funcional integrado a la base de datos a través de
+  la interfaz de Qt.
 
-**Actividades de la cátedra**
-1. Configurar el entorno de trabajo C / Qt (Qt Creator) y vincularlo con el
-   repositorio Git institucional.
-2. Diseñar pantallas (ventanas principales, formularios, menús, diálogos) con
-   Qt Designer y widgets estándar (`QLineEdit`, `QPushButton`, `QTableView`...).
-3. Implementar eventos básicos con señales y slots.
+## Semana 3: Lógica de Negocio, Validaciones y Calidad de Software (QA)
 
-**Entregable**: prototipo navegable de la GUI en Qt, sin persistencia,
-sincronizado en el repositorio.
+- **Propósito de Aprendizaje**: Asegurar el correcto funcionamiento de la
+  aplicación, implementando validaciones de entrada de datos y ejecutando
+  pruebas funcionales.
+- **Actividades**:
+  1. Implementación de validaciones en campos de la interfaz (máscaras de
+     entrada, expresiones regulares para correos, CUIT, etc.) y tratamiento de
+     mensajes de error al usuario.
+  2. Implementación de la lógica interna de negocio en C (cálculos, filtrados,
+     reportes o reglas específicas del dominio abordado).
+  3. Diseño de casos de prueba funcional (Testing de aplicación) y reporte de
+     fallos/bugs para la refactorización de código.
+- **Entregable**: Release candidato (Beta) de la aplicación C/Qt estable,
+  testeada y sin fallos críticos.
 
-| Santiago | Bautista |
-|---|---|
-| [ ] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [ ] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
-| [ ] Ventana principal de **Gestión** (960×600 mín.) con menú lateral | [ ] Ventana principal de **Cliente** (terminal vertical, 768×1024 mín.) |
-| [ ] Pantallas Gestión 1-3: cargar turno, elegir horario, confirmar y registrar seña (RF-02, RF-04, RF-09, RF-10) | [ ] Pantallas Cliente 1-3: elegir protocolo, elegir horario, confirmar y pagar seña (RF-01, RF-04, RF-08, RF-10) |
-| [ ] Pantalla Gestión 5: buscar turnos por nombre, DNI o teléfono (RF-13) | [ ] Pantalla Cliente 5: buscar mi turno por DNI o teléfono (RF-12) |
-| [ ] Señales y slots: navegación entre pasos 1-2-3 en Gestión | [ ] Señales y slots: navegación entre pasos 1-2-3 en Cliente, con botones grandes |
+## Semana 4: Análisis de Mercado, Competencia y Ventaja Competitiva
 
-Compartido: las pantallas de buscador (Gestión 4 y Cliente 4) las hace **Bautista**
-para las dos y Santiago las reutiliza como widget.
+- **Propósito de Aprendizaje**: Evaluar el panorama competitivo de la solución
+  de software desarrollada para identificar la propuesta única de valor (PUV).
+- **Actividades**:
+  1. Relevamiento y benchmarking de software existente en el mercado
+     (competidores directos e indirectos, alternativas de código abierto o
+     comerciales).
+  2. Confección de una Matriz Comparativa de Funcionalidades y Costos frente a
+     la competencia.
+  3. Identificación de la propuesta de valor diferencial de la solución propia
+     (¿Por qué un cliente/inversor elegiría nuestro desarrollo sobre lo
+     existente?).
+- **Entregable**: Informe analítico de competencia e identificación de la
+  Ventaja Competitiva del proyecto.
 
-## Semana 2: Persistencia e integración Qt con base de datos
+## Semana 5: Presupuesto, Modelo de Negocio y Preparación del Pitch Deck
 
-**Propósito**: vincular la aplicación con la base relacional para las
-operaciones de ABM (altas, bajas y modificaciones).
+- **Propósito de Aprendizaje**: Estructurar el modelo económico-financiero del
+  proyecto y diseñar una presentación ejecutiva orientada a la
+  comercialización/inversión.
+- **Actividades**:
+  1. Cálculo de costos de desarrollo: estimación de horas hombre de
+     programación, licencias, infraestructura y mantenimiento.
+  2. Definición del modelo de monetización (venta de licencias, modelo SaaS,
+     llave en mano, abono de soporte técnico).
+  3. Estructuración del Pitch Deck (Presentación de ventas) siguiendo la
+     estructura:
+     - Problema detectado (referenciando el Árbol de Problemas del 3er
+       bimestre).
+     - Solución / Demo en vivo del software C/Qt + BD.
+     - Análisis de Competencia y Diferencial.
+     - Modelo de Costos, Precio de Venta y Retorno de Inversión.
+- **Entregable**: Presentación ejecutiva (Pitch Deck) y documento de
+  presupuesto final.
 
-**Actividades de la cátedra**
-1. Configurar el módulo de base de datos.
-2. Controladores para abrir la conexión, ejecutar SQL y manejar errores de conexión.
-3. Integrar los formularios de la GUI con operaciones CRUD sobre las tablas.
+## Semana 6: "Demo Day" – Presentación del Proyecto en Formato de Venta
 
-**Entregable**: módulo ABM funcional integrado a la base a través de la interfaz.
+- **Propósito de Aprendizaje**: Defender el proyecto informático mediante una
+  exposición oral y demostración técnica en vivo ante un jurado simulado de
+  inversores y evaluadores.
+- **Actividades**:
+  1. Ensayo de la exposición (Pitch) con límite de tiempo (5 a 7 minutos por
+     grupo).
+  2. Ejecución del Demo Day / Ronda de Inversión:
+     - Exposición oral del Pitch Deck.
+     - Demostración funcional en vivo (Live Demo) de la aplicación C/Qt
+       conectada a la base de datos.
+     - Argumentación frente a objeciones, preguntas del panel sobre viabilidad,
+       competencia y arquitectura técnica.
+  3. Coevaluación y retroalimentación final entre pares e instructores bajo el
+     marco de BA Aprende.
+- **Entregable**: Demostración del software final + Defensa pública en formato
+  Pitch + Manual técnico y de usuario del producto.
 
-| Santiago | Bautista |
-|---|---|
-| [ ] Levantar SQL Server local, correr `schema.sql` y `seed.sql`, probar la capa ODBC de punta a punta | [ ] Manejo de errores de conexión (base caída, cadena mal armada) con mensaje claro en pantalla |
-| [ ] ABM de **pacientes** (alta, búsqueda por nombre/DNI/teléfono, modificación) en C + pantalla | [ ] ABM de **protocolos** (RF-05/06; la recepción lo edita sin ayuda técnica, RNF-08) |
-| [ ] Alta de **turno** desde Gestión con `db_crear_turno` (RF-02) | [ ] ABM de **profesionales y disponibilidad** (RF-03): pantalla de administración |
-| [ ] Cancelar turno (RF-13) | [ ] Consulta de **horarios libres** en tiempo real (RF-04) para las dos pantallas de horario |
-| [ ] Conectar Gestión 1-3 y 5 con la base | [ ] Conectar Cliente 1-3, 5 y el buscador con la base |
+## Rúbrica de Evaluación de Formato BA Aprende
 
-## Semana 3: Lógica de negocio, validaciones y calidad (QA)
+**RÚBRICA DE EVALUACIÓN SOCIOFORMATIVA Y TÉCNICA**
 
-**Propósito**: asegurar el funcionamiento con validaciones de entrada y pruebas
-funcionales.
+Unidad Curricular Proyecto informático 1
 
-**Actividades de la cátedra**
-1. Validaciones en la interfaz (máscaras de entrada, expresiones regulares para
-   correos, CUIT, etc.) y mensajes de error al usuario.
-2. Lógica interna de negocio en C (cálculos, filtrados, reportes, reglas del dominio).
-3. Casos de prueba funcional y reporte de fallos para refactorizar.
+Ciclo: Segundo Ciclo - Modalidad Técnico Profesional (Especialidad Computación
+/ Técnica)
 
-**Entregable**: release candidato (Beta) estable, testeada y sin fallos críticos.
+Estudiante: _______________________ Fecha: _______________
 
-| Santiago | Bautista |
-|---|---|
-| [ ] Validaciones de DNI y teléfono (formato, largo, solo dígitos) en los formularios de Gestión | [ ] Validaciones en Cliente (DNI/teléfono) y en el ABM de protocolos (precio ≥ 0, duración > 0) |
-| [ ] Integrar seña y reembolso (RF-10) al flujo de confirmar y cancelar; extender `backend/tests` | [ ] Recordatorio de turno (RF-11) visible al buscar el turno, en los dos apartados |
-| [ ] Registro de seña como mock (RF-08/09, RNF-05): solo guarda pagada / no pagada | [ ] Buscador sin coincidencia: derivar a WhatsApp (RF-07) y guardar en `ConsultaSinRespuesta` |
-| [ ] Reporte simple para recepción: turnos del día (opcional, si alcanza el tiempo) | [ ] **Casos de prueba funcional**: planilla con un caso por RF (Must primero) y resultado de cada uno |
-| [ ] Corregir los bugs que salgan de la planilla en Gestión | [ ] Registrar los bugs encontrados y corregir los de Cliente |
-
-Criterio de "Beta": los 10 RF Must (RF-01 a RF-09 y RF-11) funcionando de punta a punta y sin errores
-críticos al hacer el flujo completo en los dos apartados.
-
-## Semana 4: Análisis de mercado, competencia y ventaja competitiva
-
-**Propósito**: evaluar el panorama competitivo para identificar la propuesta
-única de valor (PUV).
-
-**Actividades de la cátedra**
-1. Relevamiento y benchmarking de software existente (competidores directos e
-   indirectos, alternativas de código abierto o comerciales).
-2. Matriz comparativa de funcionalidades y costos.
-3. Identificar la propuesta de valor diferencial.
-
-**Entregable**: informe de competencia y ventaja competitiva.
-
-| Santiago | Bautista |
-|---|---|
-| [ ] Relevar **competidores indirectos**: lo que hoy usa el instituto (WhatsApp, agenda en papel, planillas) y por qué no alcanza, con datos de `docs/01-arbol-de-problemas.md` | [ ] Relevar **competidores directos**: al menos 3 sistemas de turnos para centros de estética o salud (comerciales y gratuitos), con precio y funciones |
-| [ ] Definir la **PUV** (¿por qué elegir Dermalia?): terminal presencial + recepción, sin depender de internet ni de terceros (RNF-09, RNF-11) | [ ] Armar la **matriz comparativa** de funcionalidades y costos contra la competencia |
-| [ ] Redactar el informe `docs/07-competencia.md` (estructura y conclusiones) | [ ] Aportar al informe los datos y la matriz; revisar que cada afirmación tenga fuente |
-| [ ] Corregir los bugs de la Beta que queden abiertos | [ ] Pulido de la GUI: revisión con la heurística de Nielsen de `docs/05-maquetado.md` |
-
-Cuidar en el informe: no comparar contra productos con datos inventados; cada
-precio o función de un competidor va con su fuente.
-
-## Semana 5: Presupuesto, modelo de negocio y preparación del Pitch Deck
-
-**Propósito**: estructurar el modelo económico del proyecto y diseñar una
-presentación orientada a la comercialización o inversión.
-
-**Actividades de la cátedra**
-1. Cálculo de costos de desarrollo: horas hombre, licencias, infraestructura,
-   mantenimiento.
-2. Modelo de monetización (licencias, SaaS, llave en mano, abono de soporte).
-3. Pitch Deck con esta estructura: problema detectado (Árbol de Problemas),
-   solución y demo en vivo, análisis de competencia y diferencial, costos, precio
-   de venta y retorno de inversión.
-
-**Entregable**: Pitch Deck y documento de presupuesto final.
-
-| Santiago | Bautista |
-|---|---|
-| [ ] **Presupuesto**: horas hombre por módulo (del backlog real), licencias (SQL Server, Qt), infraestructura de la terminal y mantenimiento | [ ] **Modelo de monetización**: comparar licencia, abono de soporte y llave en mano; elegir uno y justificarlo |
-| [ ] Calcular **precio de venta y retorno de inversión** con los datos del instituto (95 min/día, ≈ $120.000 de turnos perdidos por semana) | [ ] Diapositivas: problema (Árbol de Problemas), competencia y diferencial |
-| [ ] Diapositivas: solución, costos, precio y retorno | [ ] Armar el guion de la **demo en vivo** paso a paso (qué se muestra y en qué orden) |
-| [ ] Documento `docs/08-presupuesto.md` | [ ] Actualizar `docs/06-pitch.md` al formato nuevo (5-7 min) |
-
-**Cambio de formato**: el pitch de este bimestre dura **5 a 7 minutos** (el del
-bimestre anterior era de 7 a 10) y es de **venta a inversores**, con demo en
-vivo. El guion de `docs/06-pitch.md` hay que recortarlo.
-
-## Semana 6: Demo Day, presentación del proyecto en formato de venta
-
-**Propósito**: defender el proyecto con una exposición oral y una demostración
-técnica en vivo ante un jurado simulado.
-
-**Actividades de la cátedra**
-1. Ensayo del pitch con límite de tiempo (5 a 7 min por grupo).
-2. Demo Day: exposición oral, demo en vivo de la aplicación conectada a la base,
-   y respuesta a objeciones sobre viabilidad, competencia y arquitectura.
-3. Coevaluación y retroalimentación final entre pares e instructores.
-
-**Entregable**: software final funcionando + defensa pública en formato Pitch +
-**manual técnico y de usuario**.
-
-| Santiago | Bautista |
-|---|---|
-| [ ] **Manual técnico**: arquitectura (C + ODBC + SQL Server + Qt), cómo instalar, compilar y crear la base | [ ] **Manual de usuario**: uso de la terminal (paciente) y de Gestión (recepción), con capturas |
-| [ ] Preparar la **demo en vivo**: base con datos de ejemplo, orden de pasos y plan B si falla la conexión | [ ] Preparar respuestas a **objeciones** (competencia, seña simulada, seguridad de datos, costo) |
-| [ ] Ensayar y cronometrar el pitch completo con el equipo (≤ 7 min) | [ ] Ensayar y cronometrar; ajustar el reparto de tiempo |
-| [ ] Congelar `main`: tag de la versión final | [ ] Congelar la documentación y revisar que el README esté actualizado |
-| [ ] Coevaluación al resto de los equipos | [ ] Coevaluación al resto de los equipos |
-
-## Rúbrica de evaluación (BA Aprende)
-
-Es una rúbrica socioformativa y técnica de cuatro niveles (1 En inicio, 2 En
-proceso, 3 Satisfactorio, 4 Avanzado / Destacado), individual por estudiante.
-Criterios:
-
-1. **Trabajo en equipo y colaboración**: asumir el rol asignado, coordinar
-   avances con los compañeros, ayudar a resolver bloqueos. Por eso conviene que
-   cada semana quede registrado en el repo quién hizo qué (ramas y PRs).
-2. **Asistencia y compromiso con el entorno de aprendizaje**: asistencia y
-   puntualidad, aprovechar el tiempo de taller.
-3. **Desempeño técnico y aplicación de contenidos** (referencial): resolver las
-   tareas técnicas con autonomía y según las especificaciones.
-4. **Responsabilidad y entrega en tiempo y forma**: entregar tareas, informes y
-   producciones en los plazos y con el formato acordado.
-
-Nota: la copia del PDF que se subió trae la rúbrica cortada en el criterio 4
-(el texto extraído trae solo los niveles 1 a 3 de ese criterio; falta el nivel 4).
-Si hace falta el detalle completo, hay que consultarlo en el original.
-
-## Seguimiento
-
-- Al cerrar cada semana: tildar las tareas hechas en este archivo, en la rama
-  de cada uno, y abrir un PR a `main`.
-- Si una tarea no se termina, pasa a la semana siguiente y se anota acá con una
-  línea de motivo.
-- Los entregables de la cátedra (prototipo, ABM, Beta, informe, presupuesto,
-  manuales) se enlazan desde el README a medida que existan.
+| Criterio de Evaluación | Nivel 1: En Inicio | Nivel 2: En Proceso | Nivel 3: Satisfactorio | Nivel 4: Avanzado / Destacado |
+|---|---|---|---|---|
+| 1. Trabajo en Equipo y Colaboración | Muestra dificultad para integrarse en el equipo. Trabaja de manera aislada o genera conflictos que impiden el avance técnico del proyecto. No asume los roles asignados. | Participa de manera esporádica en el equipo. Cumple con sus tareas individuales pero le cuesta coordinar con sus compañeros o comunicar avances y bloques de código/diagramas. | Trabaja de forma colaborativa, asume el rol asignado (Scrum/roles de taller), respeta la diversidad de opiniones y contribuye activamente al logro de los objetivos grupales. | Lidera de forma constructiva, fomenta la cohesión del equipo, ayuda a resolver bloqueos técnicos o de convivencia y optimiza la dinámica de trabajo colaborativo. |
+| 2. Asistencia y Compromiso con el Entorno de Aprendizaje | Registra inasistencias reiteradas no justificadas o faltas de puntualidad que interfieren significativamente con el desarrollo de los laboratorios/talleres y el trabajo grupal. | Asiste con discontinuidad o llega con impuntualidad de manera recurrente, afectando parcialmente el ritmo de las actividades y entregas planificadas. | Cumple de manera regular con la asistencia y puntualidad establecidas para las clases/laboratorios. Justifica con responsabilidad las eventuales faltas. | Muestra un nivel de asistencia y puntualidad ejemplar. Aprovecha al máximo el tiempo de taller/laboratorio y demuestra un compromiso constante con el espacio. |
+| 3. Desempeño Técnico y Aplicación de Contenidos (Referencial) | Muestra dificultades para aplicar los conceptos teóricos y prácticos de la especialidad. Requiere guía constante para resolver tareas de baja complejidad. | Aplica conceptos técnicos básicos con asistencia del docente. Realiza pruebas o procedimientos técnicos de forma parcial o con errores frecuentes. | Resuelve situaciones problemáticas y tareas técnicas según las especificaciones requeridas, demostrando autonomía en la ejecución de los procedimientos. | Aplica los saberes de manera autónoma, creativa y rigurosa. Propone soluciones eficientes y optimizadas ante problemáticas del área técnica. |
+| 4. Responsabilidad y Entrega en Tiempo y Forma | Rara vez entrega los avances, informes o proyectos en las fechas acordadas. Muestra falta de seguimiento de las pautas institucionales. | Entrega con demoras frecuentes o de manera incompleta los trabajos requeridos, necesitando recordatorios del docente. | Entrega las tareas, informes y producciones en los plazos estipulados y cumpliendo con las pautas y formatos acordados. | |

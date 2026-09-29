@@ -136,6 +136,86 @@ Miro / FigJam (árboles y MML) · Figma (maquetado original, reemplazado) ·
 Trello o GitHub Projects (backlog) · GitHub con documentación Markdown ·
 Google Workspace / Classroom · Canva (presentación final).
 
+## Cómo trabajar (leer antes de empezar)
+
+Cada integrante trabaja en **su propia rama** (`santiago`, `bautista`), nunca
+directo en `main`. `main` es la versión de todos y se actualiza con Pull
+Requests.
+
+### 1. Primera vez: bajar el repo
+
+```
+git clone https://github.com/sant1jmnz/Proyect-berea.git
+cd Proyect-berea
+git checkout <tu-rama>          # santiago o bautista
+```
+
+### 2. Cada vez que te sentás a trabajar
+
+```
+git checkout <tu-rama>
+git branch                      # el * tiene que estar en tu rama
+git pull                        # trae lo último de tu rama
+```
+
+`git pull` es lo que actualiza tu PC: GitHub se actualiza solo, tu copia
+local no. Si en `main` hubo cambios que tu rama todavía no tiene:
+
+```
+git pull origin main
+```
+
+### 3. Mientras trabajás
+
+Editá los archivos y guardá cambios seguido, con commits chicos:
+
+```
+git status                      # ver qué cambiaste
+git add .
+git commit -m "Una frase de qué cambiaste"
+git push
+```
+
+### 4. Al cerrar la semana
+
+Tildá las tareas hechas en `docs/reparto-4to-bimestre.md` y abrí un Pull
+Request de tu rama hacia `main` en GitHub (botón "Compare & pull request").
+Antes de mergear, avisá al equipo.
+
+### Reglas
+
+- Trabajá solo en tu rama; confirmá con `git branch` antes de editar.
+- Nunca uses `git push --force`. Si `git push` da error, avisá.
+- No subas contraseñas, tokens ni archivos con datos reales de pacientes.
+- Para probar el código en C:
+  `cmake -S backend -B backend/build && cmake --build backend/build && ctest --test-dir backend/build`
+
+### Si estás en una PC de laboratorio sin Git ni permisos
+
+Instalá Git solo en tu carpeta de usuario:
+
+```
+mkdir -p ~/git-local
+cd /tmp
+apt download git git-man liberror-perl
+dpkg -x git_*.deb ~/git-local/
+dpkg -x git-man_*.deb ~/git-local/
+dpkg -x liberror-perl_*.deb ~/git-local/
+echo 'export PATH="$HOME/git-local/usr/bin:$PATH"' >> ~/.bashrc
+echo 'export GIT_EXEC_PATH="$HOME/git-local/usr/lib/git-core"' >> ~/.bashrc
+source ~/.bashrc
+git --version
+```
+
+- Si al día siguiente `git` no anda, repetí solo los dos `echo` y el `source`
+  (algunas PCs borran el `~/.bashrc`).
+- Para `git push`, GitHub pide un **token de acceso personal** en lugar de la
+  contraseña (Settings → Developer settings → Personal access tokens). No lo
+  guardes en la PC compartida ni en un archivo del proyecto.
+- **Sin instalar nada**: en GitHub elegí tu rama en el selector, abrí el
+  archivo, tocá el lápiz, y al final "Commit changes" sobre tu rama. Alcanza
+  para editar los `.md` de `docs/`.
+
 ## Desarrollo técnico (bimestre siguiente)
 
 Arrancó con la base, sin UI ni acceso a base todavía:

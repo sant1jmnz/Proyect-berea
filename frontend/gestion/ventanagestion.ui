@@ -368,7 +368,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
             <item>
              <widget class="QLabel" name="lblFechaHoy">
               <property name="text">
-               <string>Hoy</string>
+               <string>martes 6 de octubre de 2026</string>
               </property>
               <property name="rol" stdset="0">
                <string notr="true">subtitulo</string>
@@ -444,7 +444,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
              <item>
               <widget class="QLabel" name="lblNumHoy">
                <property name="text">
-                <string>0</string>
+                <string>3</string>
                </property>
                <property name="rol" stdset="0">
                 <string notr="true">numero</string>
@@ -488,7 +488,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
              <item>
               <widget class="QLabel" name="lblNumLibres">
                <property name="text">
-                <string>0</string>
+                <string>2</string>
                </property>
                <property name="rol" stdset="0">
                 <string notr="true">numero</string>
@@ -532,7 +532,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
              <item>
               <widget class="QLabel" name="lblNumProximos">
                <property name="text">
-                <string>0</string>
+                <string>5</string>
                </property>
                <property name="rol" stdset="0">
                 <string notr="true">numero</string>
@@ -576,7 +576,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
              <item>
               <widget class="QLabel" name="lblNumSinSena">
                <property name="text">
-                <string>0</string>
+                <string>1</string>
                </property>
                <property name="rol" stdset="0">
                 <string notr="true">numero</string>
@@ -672,6 +672,156 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                  <string>Seña</string>
                 </property>
                </column>
+               <row/>
+               <row/>
+               <row/>
+               <row/>
+               <row/>
+               <item row="0" column="0">
+                <property name="text">
+                 <string>09:00   </string>
+                </property>
+                <property name="font">
+                 <font>
+                  <bold>true</bold>
+                 </font>
+                </property>
+               </item>
+               <item row="0" column="1">
+                <property name="text">
+                 <string>María Sosa  ·  Limpieza facial profunda</string>
+                </property>
+               </item>
+               <item row="0" column="2">
+                <property name="text">
+                 <string>Seña pagada</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>95</red>
+                   <green>127</green>
+                   <blue>99</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="1" column="0">
+                <property name="text">
+                 <string>10:30   </string>
+                </property>
+                <property name="font">
+                 <font>
+                  <bold>true</bold>
+                 </font>
+                </property>
+               </item>
+               <item row="1" column="1">
+                <property name="text">
+                 <string>Libre</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>122</red>
+                   <green>106</green>
+                   <blue>100</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="1" column="2">
+                <property name="text">
+                 <string/>
+                </property>
+               </item>
+               <item row="2" column="0">
+                <property name="text">
+                 <string>13:00   </string>
+                </property>
+                <property name="font">
+                 <font>
+                  <bold>true</bold>
+                 </font>
+                </property>
+               </item>
+               <item row="2" column="1">
+                <property name="text">
+                 <string>Carla Gómez  ·  Mesoterapia facial</string>
+                </property>
+               </item>
+               <item row="2" column="2">
+                <property name="text">
+                 <string>Seña pendiente</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>138</red>
+                   <green>106</green>
+                   <blue>59</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="3" column="0">
+                <property name="text">
+                 <string>15:30   </string>
+                </property>
+                <property name="font">
+                 <font>
+                  <bold>true</bold>
+                 </font>
+                </property>
+               </item>
+               <item row="3" column="1">
+                <property name="text">
+                 <string>Libre</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>122</red>
+                   <green>106</green>
+                   <blue>100</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
+               <item row="3" column="2">
+                <property name="text">
+                 <string/>
+                </property>
+               </item>
+               <item row="4" column="0">
+                <property name="text">
+                 <string>17:00   </string>
+                </property>
+                <property name="font">
+                 <font>
+                  <bold>true</bold>
+                 </font>
+                </property>
+               </item>
+               <item row="4" column="1">
+                <property name="text">
+                 <string>Lucía Fernández  ·  Peeling químico</string>
+                </property>
+               </item>
+               <item row="4" column="2">
+                <property name="text">
+                 <string>Seña pagada</string>
+                </property>
+                <property name="foreground">
+                 <brush brushstyle="SolidPattern">
+                  <color alpha="255">
+                   <red>95</red>
+                   <green>127</green>
+                   <blue>99</blue>
+                  </color>
+                 </brush>
+                </property>
+               </item>
               </widget>
              </item>
             </layout>
@@ -719,6 +869,18 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                <property name="wordWrap">
                 <bool>true</bool>
                </property>
+               <item>
+                <property name="text">
+                 <string>miércoles 7 de octubre, 13:00
+Julieta Díaz  ·  Depilación láser (zona chica)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>viernes 9 de octubre, 09:00
+Ana Ruiz  ·  Peeling químico</string>
+                </property>
+               </item>
               </widget>
              </item>
             </layout>
@@ -1034,7 +1196,32 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="listaProtocolos"/>
+              <widget class="QListWidget" name="listaProtocolos">
+               <item>
+                <property name="text">
+                 <string>Limpieza facial profunda
+60 min · $25.000</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Peeling químico
+45 min · $40.000</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Mesoterapia facial
+45 min · $55.000</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Depilación láser (zona chica)
+30 min · $18.000</string>
+                </property>
+               </item>
+              </widget>
              </item>
             </layout>
            </widget>
@@ -1108,7 +1295,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
           <item>
            <widget class="QLabel" name="lblPasoHorario">
             <property name="text">
-             <string>Paciente · protocolo</string>
+             <string>María Sosa · Depilación láser (zona chica) (30 min)</string>
             </property>
             <property name="rol" stdset="0">
              <string notr="true">subtitulo</string>
@@ -1273,6 +1460,31 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                <property name="resizeMode">
                 <enum>QListView::Adjust</enum>
                </property>
+               <item>
+                <property name="text">
+                 <string>09:00</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>10:30</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>13:00</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>15:30</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>17:00</string>
+                </property>
+               </item>
               </widget>
              </item>
              <item>
@@ -1488,6 +1700,9 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                </item>
                <item row="0" column="1">
                 <widget class="QLabel" name="lblResPaciente">
+                 <property name="text">
+                  <string>María Sosa</string>
+                 </property>
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
@@ -1508,6 +1723,9 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                </item>
                <item row="1" column="1">
                 <widget class="QLabel" name="lblResDni">
+                 <property name="text">
+                  <string>30111222</string>
+                 </property>
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
@@ -1528,6 +1746,9 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                </item>
                <item row="2" column="1">
                 <widget class="QLabel" name="lblResTelefono">
+                 <property name="text">
+                  <string>11 5555-0102</string>
+                 </property>
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
@@ -1548,6 +1769,9 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                </item>
                <item row="3" column="1">
                 <widget class="QLabel" name="lblResProtocolo">
+                 <property name="text">
+                  <string>Depilación láser (zona chica)</string>
+                 </property>
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
@@ -1568,6 +1792,9 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                </item>
                <item row="4" column="1">
                 <widget class="QLabel" name="lblResPrecio">
+                 <property name="text">
+                  <string>$18.000</string>
+                 </property>
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
@@ -1588,6 +1815,9 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                </item>
                <item row="5" column="1">
                 <widget class="QLabel" name="lblResFecha">
+                 <property name="text">
+                  <string>jueves 8 de octubre</string>
+                 </property>
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
@@ -1608,6 +1838,9 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                </item>
                <item row="6" column="1">
                 <widget class="QLabel" name="lblResHora">
+                 <property name="text">
+                  <string>09:00 (30 min)</string>
+                 </property>
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
@@ -1628,6 +1861,9 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                </item>
                <item row="7" column="1">
                 <widget class="QLabel" name="lblResRecordatorio">
+                 <property name="text">
+                  <string>miércoles 7 de octubre · 09:00 (RF-11)</string>
+                 </property>
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
@@ -1688,7 +1924,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
              <item>
               <widget class="QLabel" name="lblSena">
                <property name="text">
-                <string>$0</string>
+                <string>$5.400</string>
                </property>
               </widget>
              </item>
@@ -2056,12 +2292,192 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                <string>Seña</string>
               </property>
              </column>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <item row="0" column="0">
+              <property name="text">
+               <string>María Sosa</string>
+              </property>
+             </item>
+             <item row="0" column="1">
+              <property name="text">
+               <string>30111222</string>
+              </property>
+             </item>
+             <item row="0" column="2">
+              <property name="text">
+               <string>1155550102</string>
+              </property>
+             </item>
+             <item row="0" column="3">
+              <property name="text">
+               <string>Limpieza facial profunda</string>
+              </property>
+             </item>
+             <item row="0" column="4">
+              <property name="text">
+               <string>16/09/26 16:00</string>
+              </property>
+             </item>
+             <item row="0" column="5">
+              <property name="text">
+               <string>Realizado</string>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>122</red>
+                 <green>106</green>
+                 <blue>100</blue>
+                </color>
+               </brush>
+              </property>
+             </item>
+             <item row="0" column="6">
+              <property name="text">
+               <string>$7.500 (pagada)</string>
+              </property>
+             </item>
+             <item row="1" column="0">
+              <property name="text">
+               <string>María Sosa</string>
+              </property>
+             </item>
+             <item row="1" column="1">
+              <property name="text">
+               <string>30111222</string>
+              </property>
+             </item>
+             <item row="1" column="2">
+              <property name="text">
+               <string>1155550102</string>
+              </property>
+             </item>
+             <item row="1" column="3">
+              <property name="text">
+               <string>Depilación láser (zona chica)</string>
+              </property>
+             </item>
+             <item row="1" column="4">
+              <property name="text">
+               <string>08/10/26 09:00</string>
+              </property>
+             </item>
+             <item row="1" column="5">
+              <property name="text">
+               <string>Confirmado</string>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>95</red>
+                 <green>127</green>
+                 <blue>99</blue>
+                </color>
+               </brush>
+              </property>
+             </item>
+             <item row="1" column="6">
+              <property name="text">
+               <string>$5.400 (pagada)</string>
+              </property>
+             </item>
+             <item row="2" column="0">
+              <property name="text">
+               <string>Carla Gómez</string>
+              </property>
+             </item>
+             <item row="2" column="1">
+              <property name="text">
+               <string>33222111</string>
+              </property>
+             </item>
+             <item row="2" column="2">
+              <property name="text">
+               <string>1155550177</string>
+              </property>
+             </item>
+             <item row="2" column="3">
+              <property name="text">
+               <string>Mesoterapia facial</string>
+              </property>
+             </item>
+             <item row="2" column="4">
+              <property name="text">
+               <string>06/10/26 13:00</string>
+              </property>
+             </item>
+             <item row="2" column="5">
+              <property name="text">
+               <string>Confirmado</string>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>95</red>
+                 <green>127</green>
+                 <blue>99</blue>
+                </color>
+               </brush>
+              </property>
+             </item>
+             <item row="2" column="6">
+              <property name="text">
+               <string>$16.500 (sin pagar)</string>
+              </property>
+             </item>
+             <item row="3" column="0">
+              <property name="text">
+               <string>Lucía Fernández</string>
+              </property>
+             </item>
+             <item row="3" column="1">
+              <property name="text">
+               <string>28444555</string>
+              </property>
+             </item>
+             <item row="3" column="2">
+              <property name="text">
+               <string>1155550144</string>
+              </property>
+             </item>
+             <item row="3" column="3">
+              <property name="text">
+               <string>Peeling químico</string>
+              </property>
+             </item>
+             <item row="3" column="4">
+              <property name="text">
+               <string>06/10/26 17:00</string>
+              </property>
+             </item>
+             <item row="3" column="5">
+              <property name="text">
+               <string>Confirmado</string>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>95</red>
+                 <green>127</green>
+                 <blue>99</blue>
+                </color>
+               </brush>
+              </property>
+             </item>
+             <item row="3" column="6">
+              <property name="text">
+               <string>$12.000 (pagada)</string>
+              </property>
+             </item>
             </widget>
            </item>
            <item>
             <widget class="QLabel" name="lblCuenta">
              <property name="text">
-              <string/>
+              <string>4 turnos</string>
              </property>
              <property name="rol" stdset="0">
               <string notr="true">nota</string>
@@ -2079,7 +2495,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
           <item>
            <widget class="QLabel" name="lblRecordatorio">
             <property name="text">
-             <string/>
+             <string>Recordatorio programado para el miércoles 7 de octubre · 09:00 (RF-11).</string>
             </property>
             <property name="wordWrap">
              <bool>true</bool>

@@ -228,8 +228,9 @@ Arrancó con la base, sin UI ni acceso a base todavía:
   (RF-04) y enlace `wa.me` (RF-07). Se prueba con
   `cmake -S backend -B backend/build && cmake --build backend/build && ctest --test-dir backend/build`.
 - `frontend/`: interfaz en Qt 6 (Widgets, pantallas en `.ui` de Qt Designer).
-  Está el prototipo navegable del apartado Gestión, todavía sin base: los
-  turnos quedan en memoria. Se abre `frontend/CMakeLists.txt` con Qt Creator,
+  Está el prototipo navegable del apartado Gestión: solo pantallas y
+  navegación, sin base ni lógica (los datos que se ven son texto de ejemplo
+  escrito en el `.ui`). Se abre `frontend/CMakeLists.txt` con Qt Creator,
   o por consola:
   `cmake -S frontend -B frontend/build -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build frontend/build && frontend/build/dermalia_gestion`.
 - Siguiente: apartado Cliente en Qt y conectar las pantallas con la capa ODBC.

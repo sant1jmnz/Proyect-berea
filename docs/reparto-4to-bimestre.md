@@ -17,10 +17,9 @@ semana. El reparto es un punto de partida: si una semana uno se traba, el otro
 lo ayuda y se anota acá. Nicolás y Clovis no figuran porque este reparto es de
 a dos; si se suman, se agrega una tercera columna.
 
-Lo que ya existe en `main` y no hay que rehacer: `db/schema.sql` y
-`db/seed.sql` (SQL Server), reglas de negocio en C con tests
-(`backend/src/dermalia.c`) y la capa ODBC (`backend/src/db.c`: conexión,
-buscar protocolos, crear turno).
+Lo que ya existe en `main` y no hay que rehacer: reglas de negocio en C
+con tests (`backend/src/dermalia.c`). El esquema de la base y la capa de
+acceso todavía no están.
 
 ## Semana 1 (martes 6 al lunes 12 de octubre): GUI en Qt
 

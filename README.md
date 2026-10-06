@@ -108,7 +108,7 @@ docs/
   material-catedra.md
   propuestas.md
 backend/                 # núcleo en C (reglas de negocio) + tests, CMake
-frontend/                # interfaz en Qt Widgets (por ahora, apartado Gestión)
+frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
 README.md                # este archivo, portada de la Carpeta de Proyecto V1
 ```
 
@@ -225,12 +225,15 @@ Arrancó con la base, sin UI ni acceso a base todavía:
   (RF-04) y enlace `wa.me` (RF-07). Se prueba con
   `cmake -S backend -B backend/build && cmake --build backend/build && ctest --test-dir backend/build`.
 - `frontend/`: interfaz en Qt 6 (Widgets, pantallas en `.ui` de Qt Designer).
-  Está el prototipo navegable del apartado Gestión: solo pantallas y
-  navegación, sin base ni lógica (los datos que se ven son texto de ejemplo
-  escrito en el `.ui`). Se abre `frontend/CMakeLists.txt` con Qt Creator,
-  o por consola:
-  `cmake -S frontend -B frontend/build -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build frontend/build && frontend/build/dermalia_gestion`.
-- Siguiente: apartado Cliente en Qt y conectar las pantallas con la base.
+  Están los prototipos navegables de los dos apartados, Gestión
+  (`dermalia_gestion`, PC de recepción) y Cliente (`dermalia_cliente`,
+  terminal táctil vertical): solo pantallas y navegación, sin base ni lógica
+  (los datos que se ven son texto de ejemplo escrito en el `.ui`). El
+  buscador de precios es un widget compartido (`frontend/comun/`). Se abre
+  `frontend/CMakeLists.txt` con Qt Creator, o por consola:
+  `cmake -S frontend -B <carpeta> -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build <carpeta> && <carpeta>/dermalia_cliente`.
+  La estética de las pantallas está explicada en `diseno-dermalia/SKILL.md`.
+- Siguiente: conectar las pantallas con la base.
 
 ## Qué falta
 

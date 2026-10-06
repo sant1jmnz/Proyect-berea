@@ -5,13 +5,14 @@ description: Estética y convenciones de la interfaz Qt de Dermalia (estilo spa 
 
 # Estética Dermalia (Qt Widgets)
 
-El apartado **Gestión** (`frontend/gestion/`) ya está hecho y es la referencia.
-El apartado **Cliente** (`frontend/cliente/`) tiene que verse de la misma
-familia: misma paleta, mismas tipografías, mismas piezas. Lo único que cambia
-es que Cliente es una **terminal táctil vertical**: todo más grande.
+Los dos apartados ya están hechos y son la referencia: **Gestión**
+(`frontend/gestion/`, PC de recepción) y **Cliente** (`frontend/cliente/`,
+terminal táctil vertical). Son de la misma familia: misma paleta, mismas
+tipografías, mismas piezas. Lo único que cambia es que en Cliente todo es
+más grande.
 
-Antes de escribir nada, abrir `frontend/gestion/ventanagestion.ui` en Qt
-Designer y correr `dermalia_gestion` para ver el resultado.
+Antes de tocar nada, abrir los dos `.ui` en Qt Designer y correr
+`dermalia_gestion` y `dermalia_cliente` para ver el resultado.
 
 ## Reglas de la Semana 1
 
@@ -99,10 +100,11 @@ El estilo funciona con **propiedades dinámicas**: en Designer se agregan con el
 | `primario` | `true` | `QPushButton` | Botón rosa relleno (uno solo por pantalla) |
 | `peligro` | `true` | `QPushButton` | Botón de cancelar, en rojo |
 | `paso` | `activo`, `hecho`, `pendiente` | `QLabel` | Indicador "1 · Protocolo" |
-| `avatar` | `rosa`, `dorado`, `salvia`, `libre` | `QLabel` 36×36 | Círculo con iniciales |
+| `avatar` | `rosa`, `dorado`, `salvia`, `libre` | `QLabel` 36×36 (44×44 en Cliente) | Círculo con iniciales o número de paso |
 | `etiqueta` | `ok`, `pendiente` | `QLabel` | Pastilla "Pagada" / "Pendiente" |
 | `fila` | `true` | `QFrame` | Renglón con línea fina abajo |
 | `icono` | `true` | `QLabel` 40×40 | Círculo rosa con un ícono adentro |
+| `opcion` | `true` | `QPushButton` (solo Cliente) | Botón-tarjeta grande de la pantalla de inicio |
 
 Los íconos SVG están en `frontend/gestion/iconos/` y se usan desde el `.ui`
 como `:/iconos/inicio.svg`, `turno.svg`, `precios.svg`, `buscar.svg`. Si hace
@@ -132,9 +134,13 @@ falta uno nuevo: SVG de 24×24, solo línea (sin relleno), grosor 2, color
 
 - **Sin barra lateral.** Arriba, una franja con el círculo "D", "Dermalia" y
   un botón "Inicio". La navegación es por botones grandes.
-- **Pantalla de inicio propia**: saludo y tres botones enormes, uno debajo del
-  otro: *Sacar un turno*, *Consultar precios*, *Buscar mi turno*.
-- **Una sola columna.** En vertical no entran dos tarjetas lado a lado.
+- **Pantalla de inicio propia**: un destacado rosa con el botón *Sacar un
+  turno*, la tarjeta «Cómo funciona» con los 3 pasos y dos botones-tarjeta:
+  *Consultar precios* y *Buscar o cancelar mi turno*.
+- **Casi todo en una columna.** Solo van de a dos las cosas cortas: DNI y
+  teléfono, o el resumen del turno junto a la seña.
+- **El calendario es lo más justo**: ocupa todo el ancho, pero cada día mide
+  unos 39 px de alto porque no entra más en 1024 px.
 - **Poco texto para escribir**: nombre y teléfono recién en el paso 3.
 - **Le habla a la paciente, de vos**: "Elegí tu protocolo", "Elegí tu
   horario", "Confirmá tu turno", "Pagar seña (simulado)", "Tocá una opción
@@ -152,35 +158,25 @@ Pantallas de Cliente (de `docs/05-maquetado.md`):
 | 4 | Buscador de precios | RF-05, RF-07 |
 | 5 | Buscar mi turno | RF-12, RF-11 |
 
-El **buscador** (pantalla 4) va como widget aparte (`BuscadorPrecios`, con su
-propio `.ui`), porque Gestión lo reutiliza en su página `pagBuscador`.
+El **buscador** (pantalla 4) es un widget aparte, `BuscadorPrecios`, en
+`frontend/comun/` con su propio `.ui`. Los dos apartados lo ponen en su
+página `pagBuscador` como *widget promovido* (en Designer: un `QWidget` →
+clic derecho → *Promote to…*). No tiene estilo propio: usa las propiedades
+de la tabla de arriba y toma los tamaños de la ventana que lo contiene, por
+eso se ve grande en Cliente y compacto en Gestión.
 
 ## Estructura y código
 
 ```
-frontend/cliente/
-  main.cpp
-  ventanacliente.h
-  ventanacliente.cpp
-  ventanacliente.ui
+frontend/
+  CMakeLists.txt          # dos ejecutables: dermalia_gestion y dermalia_cliente
+  comun/                  # buscadorprecios.h / .cpp / .ui (lo usan los dos)
+  gestion/                # ventanagestion.* + recursos.qrc, iconos/, fuentes/
+  cliente/                # main.cpp, ventanacliente.h / .cpp / .ui
 ```
 
-Agregar al final de `frontend/CMakeLists.txt` (los íconos y las fuentes se
-comparten con Gestión, no se copian):
-
-```cmake
-# Apartado Cliente (terminal táctil).
-add_executable(dermalia_cliente
-    cliente/main.cpp
-    cliente/ventanacliente.cpp
-    cliente/ventanacliente.h
-    cliente/ventanacliente.ui
-    gestion/recursos.qrc)
-target_link_libraries(dermalia_cliente PRIVATE Qt6::Widgets)
-```
-
-Como el `.ui` de Cliente está en otra carpeta, en su última parte va
-`<include location="../gestion/recursos.qrc"/>`.
+Los íconos y las fuentes se comparten, no se copian: el `.ui` de Cliente
+termina con `<include location="../gestion/recursos.qrc"/>`.
 
 Convenciones, las mismas que en Gestión:
 
@@ -212,5 +208,4 @@ al lado de la flecha verde.
 - [ ] Un solo botón rosa relleno por pantalla.
 - [ ] Mismos colores y tipografías que Gestión, puestas una al lado de la otra.
 - [ ] Sin base, sin backend y sin datos en el código.
-- [ ] No se tocó nada de `frontend/gestion/` salvo lo indicado acá.
-- [ ] Tareas tildadas en `docs/reparto-4to-bimestre.md`, trabajando en la rama `bautista`.
+- [ ] Tareas tildadas en `docs/reparto-4to-bimestre.md`, trabajando en tu rama.

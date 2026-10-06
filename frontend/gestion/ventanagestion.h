@@ -32,6 +32,7 @@ public:
 
 private slots:
     void cambiarSeccion(int fila);   /* menú lateral */
+    void actualizarInicio();         /* números y próximos turnos del inicio */
     void actualizarBotones();        /* habilita "Continuar" cuando se puede */
     void cargarHorarios();           /* paso 2: horarios libres (RF-04) */
     void mostrarResumen();           /* paso 3: resumen y seña (RF-10) */

@@ -1,0 +1,891 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>VentanaGestion</class>
+ <widget class="QMainWindow" name="VentanaGestion">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>960</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>960</width>
+    <height>600</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Dermalia — Sistema de Turnos (Gestión)</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget { font-size: 13px; color: #1f2937; }
+QMainWindow, QStackedWidget, QWidget#central { background: #ffffff; }
+
+QListWidget#menu { background: #fdf2f6; border: none; border-right: 1px solid #e3e6eb; padding: 10px 8px; outline: 0; }
+QListWidget#menu::item { padding: 9px 10px; border-radius: 7px; color: #4b5563; }
+QListWidget#menu::item:selected { background: #d6136c; color: #ffffff; }
+
+QLabel[rol="titulo"] { font-size: 19px; font-weight: 700; }
+QLabel[rol="paso"] { color: #6b7280; font-weight: 600; }
+QLabel[rol="nota"] { color: #6b7280; font-size: 12px; }
+QLabel[rol="campo"] { color: #6b7280; font-size: 11px; font-weight: 600; }
+QLabel[rol="valor"] { font-weight: 600; }
+
+QLineEdit { border: 1px solid #e3e6eb; border-radius: 7px; padding: 7px 10px; background: #f4f5f7; }
+QLineEdit:focus { border-color: #d6136c; }
+
+QPushButton { border: 1px solid #d6136c; border-radius: 6px; padding: 8px 16px; font-weight: 600; color: #b80f5c; background: #ffffff; }
+QPushButton[primario="true"] { background: #d6136c; color: #ffffff; }
+QPushButton:disabled { background: #eceef2; border-color: #e3e6eb; color: #6b7280; }
+
+QListWidget#listaProtocolos, QListWidget#listaHorarios { border: none; outline: 0; background: #ffffff; }
+QListWidget#listaProtocolos::item { border: 1px solid #e3e6eb; border-radius: 9px; padding: 10px 14px; margin-bottom: 8px; }
+QListWidget#listaProtocolos::item:selected { border-color: #d6136c; background: #fdf2f6; color: #1f2937; }
+QListWidget#listaHorarios::item { border: 1px solid #e3e6eb; border-radius: 7px; padding: 10px 22px; margin-right: 8px; margin-bottom: 8px; }
+QListWidget#listaHorarios::item:selected { border-color: #2563eb; background: #eef3ff; color: #2563eb; }
+
+QFrame#tarjetaSena { border: 1px solid #2563eb; border-radius: 9px; background: #eef3ff; }
+QFrame#tarjetaSena QLabel, QFrame#tarjetaSena QCheckBox { background: transparent; }
+QLabel#lblSena { font-size: 18px; font-weight: 700; color: #2563eb; }
+QLabel#lblRecordatorio { color: #8f0c48; background: #fdf2f6; border-radius: 6px; padding: 7px 10px; }</string>
+  </property>
+  <widget class="QWidget" name="central">
+   <layout class="QHBoxLayout" name="layoutCentral">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QListWidget" name="menu">
+      <property name="minimumSize">
+       <size>
+        <width>190</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>190</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="currentRow">
+       <number>0</number>
+      </property>
+      <item>
+       <property name="text">
+        <string>Inicio</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Cargar turno</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Buscador de precios</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Buscar turnos</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="paginas">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="pagInicio">
+       <layout class="QVBoxLayout" name="layoutInicio">
+        <property name="leftMargin">
+         <number>24</number>
+        </property>
+        <property name="topMargin">
+         <number>22</number>
+        </property>
+        <property name="rightMargin">
+         <number>24</number>
+        </property>
+        <property name="bottomMargin">
+         <number>22</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblTituloInicio">
+          <property name="text">
+           <string>Dermalia — Gestión de turnos</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">titulo</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblInicio">
+          <property name="text">
+           <string>PC de recepción. Elegí en el menú de la izquierda: cargar el turno de una paciente que llama por teléfono, consultar precios y protocolos, o buscar un turno ya cargado.</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="espacioInicio">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagProtocolo">
+       <layout class="QVBoxLayout" name="layoutProtocolo">
+        <property name="leftMargin">
+         <number>24</number>
+        </property>
+        <property name="topMargin">
+         <number>22</number>
+        </property>
+        <property name="rightMargin">
+         <number>24</number>
+        </property>
+        <property name="bottomMargin">
+         <number>22</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblTituloProtocolo">
+          <property name="text">
+           <string>Cargar turno — Elegir protocolo</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">titulo</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblPasoProtocolo">
+          <property name="text">
+           <string>Paso 1 de 3</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">paso</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="layoutPaciente">
+          <item row="0" column="0">
+           <widget class="QLabel" name="lblPaciente">
+            <property name="text">
+             <string>PACIENTE</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">campo</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="lblDni">
+            <property name="text">
+             <string>DNI</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">campo</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="lblTelefono">
+            <property name="text">
+             <string>TELÉFONO</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">campo</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLineEdit" name="editPaciente">
+            <property name="placeholderText">
+             <string>Nombre y apellido</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="editDni">
+            <property name="placeholderText">
+             <string>Solo números</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLineEdit" name="editTelefono">
+            <property name="placeholderText">
+             <string>11 5555-0102</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QListWidget" name="listaProtocolos"/>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="botonesProtocolo">
+          <item>
+           <spacer name="espacioProtocolo">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnContinuar1">
+            <property name="text">
+             <string>Continuar →</string>
+            </property>
+            <property name="primario" stdset="0">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagHorario">
+       <layout class="QVBoxLayout" name="layoutHorario">
+        <property name="leftMargin">
+         <number>24</number>
+        </property>
+        <property name="topMargin">
+         <number>22</number>
+        </property>
+        <property name="rightMargin">
+         <number>24</number>
+        </property>
+        <property name="bottomMargin">
+         <number>22</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblTituloHorario">
+          <property name="text">
+           <string>Elegir horario</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">titulo</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblPasoHorario">
+          <property name="text">
+           <string>Paso 2 de 3</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">paso</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="layoutFecha">
+          <item>
+           <widget class="QLabel" name="lblFecha">
+            <property name="text">
+             <string>DÍA</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">campo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDateEdit" name="editFecha">
+            <property name="minimumSize">
+             <size>
+              <width>220</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="displayFormat">
+             <string>dddd d 'de' MMMM 'de' yyyy</string>
+            </property>
+            <property name="calendarPopup">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="espacioFecha">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblHorarios">
+          <property name="text">
+           <string>Horarios disponibles</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">valor</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QListWidget" name="listaHorarios">
+          <property name="movement">
+           <enum>QListView::Static</enum>
+          </property>
+          <property name="flow">
+           <enum>QListView::LeftToRight</enum>
+          </property>
+          <property name="isWrapping" stdset="0">
+           <bool>true</bool>
+          </property>
+          <property name="resizeMode">
+           <enum>QListView::Adjust</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblNotaHorario">
+          <property name="text">
+           <string>No se muestran los horarios ya ocupados: así no se pisan dos turnos (RF-04).</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">nota</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="botonesHorario">
+          <item>
+           <spacer name="espacioHorario">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnVolver2">
+            <property name="text">
+             <string>← Volver</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnContinuar2">
+            <property name="text">
+             <string>Continuar →</string>
+            </property>
+            <property name="primario" stdset="0">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagConfirmar">
+       <layout class="QVBoxLayout" name="layoutConfirmar">
+        <property name="leftMargin">
+         <number>24</number>
+        </property>
+        <property name="topMargin">
+         <number>22</number>
+        </property>
+        <property name="rightMargin">
+         <number>24</number>
+        </property>
+        <property name="bottomMargin">
+         <number>22</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblTituloConfirmar">
+          <property name="text">
+           <string>Confirmar turno y registrar seña</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">titulo</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblPasoConfirmar">
+          <property name="text">
+           <string>Paso 3 de 3</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">paso</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QFormLayout" name="layoutResumen">
+          <property name="horizontalSpacing">
+           <number>24</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="lblKPaciente">
+            <property name="text">
+             <string>Paciente</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="lblResPaciente">
+            <property name="rol" stdset="0">
+             <string notr="true">valor</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="lblKDni">
+            <property name="text">
+             <string>DNI</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="lblResDni">
+            <property name="rol" stdset="0">
+             <string notr="true">valor</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="lblKTelefono">
+            <property name="text">
+             <string>Teléfono</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="lblResTelefono">
+            <property name="rol" stdset="0">
+             <string notr="true">valor</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="lblKProtocolo">
+            <property name="text">
+             <string>Protocolo</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="lblResProtocolo">
+            <property name="rol" stdset="0">
+             <string notr="true">valor</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="lblKPrecio">
+            <property name="text">
+             <string>Precio total</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLabel" name="lblResPrecio">
+            <property name="rol" stdset="0">
+             <string notr="true">valor</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="lblKFecha">
+            <property name="text">
+             <string>Fecha</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLabel" name="lblResFecha">
+            <property name="rol" stdset="0">
+             <string notr="true">valor</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="lblKHora">
+            <property name="text">
+             <string>Hora</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QLabel" name="lblResHora">
+            <property name="rol" stdset="0">
+             <string notr="true">valor</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QFrame" name="tarjetaSena">
+          <layout class="QVBoxLayout" name="layoutSena">
+           <item>
+            <widget class="QLabel" name="lblSena">
+             <property name="text">
+              <string>Seña a registrar</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblReglaSena">
+             <property name="text">
+              <string>30% del protocolo, mínimo $5.000; se descuenta del total al pagar. Se reembolsa si se cancela con más de 24 h de anticipación (RF-10).</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="chkSenaPagada">
+             <property name="text">
+              <string>Seña pagada</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblNotaSena">
+          <property name="text">
+           <string>Registro simulado: el sistema no procesa dinero real ni pide datos de tarjeta, solo guarda el estado. El cobro (efectivo o transferencia) lo hace la recepción por fuera del sistema.</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">nota</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="espacioConfirmar">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="botonesConfirmar">
+          <item>
+           <spacer name="espacioBotonesConfirmar">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnVolver3">
+            <property name="text">
+             <string>← Volver</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnConfirmar">
+            <property name="text">
+             <string>Confirmar turno</string>
+            </property>
+            <property name="primario" stdset="0">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagBuscador">
+       <layout class="QVBoxLayout" name="layoutBuscador">
+        <property name="leftMargin">
+         <number>24</number>
+        </property>
+        <property name="topMargin">
+         <number>22</number>
+        </property>
+        <property name="rightMargin">
+         <number>24</number>
+        </property>
+        <property name="bottomMargin">
+         <number>22</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblTituloBuscador">
+          <property name="text">
+           <string>Buscador de precios y protocolos</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">titulo</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblBuscadorPendiente">
+          <property name="text">
+           <string>Pantalla compartida con el apartado Cliente: se inserta acá el widget del buscador (RF-06, RF-07).</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">nota</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="espacioBuscador">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagBuscarTurnos">
+       <layout class="QVBoxLayout" name="layoutBuscarTurnos">
+        <property name="leftMargin">
+         <number>24</number>
+        </property>
+        <property name="topMargin">
+         <number>22</number>
+        </property>
+        <property name="rightMargin">
+         <number>24</number>
+        </property>
+        <property name="bottomMargin">
+         <number>22</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblTituloBuscarTurnos">
+          <property name="text">
+           <string>Buscar turnos</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">titulo</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblPasoBuscarTurnos">
+          <property name="text">
+           <string>Por nombre, DNI o teléfono de la paciente</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">paso</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="layoutBusqueda">
+          <item>
+           <widget class="QLineEdit" name="editBuscar">
+            <property name="placeholderText">
+             <string>Vacío = todos los turnos</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnBuscar">
+            <property name="text">
+             <string>Buscar</string>
+            </property>
+            <property name="primario" stdset="0">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="tablaTurnos">
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::SingleSelection</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <attribute name="verticalHeaderVisible">
+           <bool>false</bool>
+          </attribute>
+          <column>
+           <property name="text">
+            <string>Paciente</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>DNI</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Teléfono</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Protocolo</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Fecha y hora</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Estado</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Seña</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblRecordatorio">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="botonesBuscarTurnos">
+          <item>
+           <spacer name="espacioBuscarTurnos">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnCancelarTurno">
+            <property name="text">
+             <string>Cancelar turno</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="barraMenu">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>960</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuAyuda">
+    <property name="title">
+     <string>Ayuda</string>
+    </property>
+    <addaction name="actionAyuda"/>
+   </widget>
+   <addaction name="menuAyuda"/>
+  </widget>
+  <action name="actionAyuda">
+   <property name="text">
+    <string>Cómo usar Gestión</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

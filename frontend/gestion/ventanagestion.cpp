@@ -53,12 +53,12 @@ static QString textoEstado(EstadoTurno e)
 static QColor colorEstado(EstadoTurno e)
 {
     switch (e) {
-    case TURNO_CONFIRMADO: return QColor("#16a34a");   /* verde */
-    case TURNO_CANCELADO:  return QColor("#b91c1c");   /* rojo */
-    case TURNO_AUSENTE:    return QColor("#b45309");   /* naranja */
+    case TURNO_CONFIRMADO: return QColor("#5F7F63");   /* verde salvia */
+    case TURNO_CANCELADO:  return QColor("#A33A3A");   /* rojo */
+    case TURNO_AUSENTE:    return QColor("#8A6A3B");   /* dorado */
     case TURNO_REALIZADO:  break;
     }
-    return QColor("#6b7280");                          /* gris */
+    return QColor("#7A6A64");                          /* gris cálido */
 }
 
 /* Arma un turno completo: el fin sale de la duración del protocolo y la
@@ -91,6 +91,9 @@ VentanaGestion::VentanaGestion(QWidget *parent)
     /* Cada columna del ancho de su texto; "Protocolo" ocupa lo que sobra. */
     ui->tablaTurnos->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tablaTurnos->horizontalHeader()->setSectionResizeMode(ColProtocolo, QHeaderView::Stretch);
+
+    ui->tablaAgenda->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->tablaAgenda->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 
     /* Turnos de ejemplo, para que el prototipo no arranque vacío. */
     turnos.append(armarTurno("María Sosa", "30111222", "1155550102", protocolos[0],
@@ -161,12 +164,41 @@ void VentanaGestion::cambiarSeccion(int fila)
         buscarTurnos();
 }
 
-/* Pantalla de inicio: los tres números y la lista de próximos turnos. */
+/* Pantalla de inicio: los números, la agenda de hoy y los próximos días. */
 void VentanaGestion::actualizarInicio()
 {
     QDateTime ahora = QDateTime::currentDateTime();
-    int deHoy = 0, sinSena = 0;
+    int deHoy = 0, sinSena = 0, libres = 0;
     QVector<Turno> proximos;
+
+    /* Agenda de hoy: una fila por horario, con el turno que lo ocupa o "Libre". */
+    ui->tablaAgenda->setRowCount(0);
+    for (const char *h : horarios) {
+        QDateTime ini(ahora.date(), QTime::fromString(h, "HH:mm"));
+        QString detalle = ini > ahora ? "Libre" : "Sin turno", sena;
+        QColor color("#7A6A64");
+        bool ocupado = false;
+        for (const Turno &t : turnos)
+            if (t.inicio == ini && t.estado != TURNO_CANCELADO) {
+                ocupado = true;
+                detalle = t.paciente + "  ·  " + t.protocolo;
+                sena = t.senaPagada ? "Seña pagada" : "Seña pendiente";
+                color = QColor(t.senaPagada ? "#5F7F63" : "#8A6A3B");
+            }
+        if (!ocupado && ini > ahora)
+            libres++;
+        int fila = ui->tablaAgenda->rowCount();
+        ui->tablaAgenda->insertRow(fila);
+        ui->tablaAgenda->setItem(fila, 0, new QTableWidgetItem(QString(h) + "   "));
+        ui->tablaAgenda->setItem(fila, 1, new QTableWidgetItem(detalle));
+        ui->tablaAgenda->setItem(fila, 2, new QTableWidgetItem(sena));
+        QFont negrita = ui->tablaAgenda->font();
+        negrita.setBold(true);
+        ui->tablaAgenda->item(fila, 0)->setFont(negrita);
+        ui->tablaAgenda->item(fila, 2)->setForeground(color);
+        if (!ocupado)
+            ui->tablaAgenda->item(fila, 1)->setForeground(color);
+    }
 
     for (const Turno &t : turnos) {
         if (t.estado != TURNO_CANCELADO && t.inicio.date() == ahora.date())
@@ -180,17 +212,19 @@ void VentanaGestion::actualizarInicio()
     std::sort(proximos.begin(), proximos.end(),
               [](const Turno &a, const Turno &b) { return a.inicio < b.inicio; });
 
-    ui->lblFechaHoy->setText("Hoy es " + QLocale().toString(ahora.date(), "dddd d 'de' MMMM"));
+    ui->lblFechaHoy->setText(QLocale().toString(ahora.date(), "dddd d 'de' MMMM 'de' yyyy"));
     ui->lblNumHoy->setText(QString::number(deHoy));
     ui->lblNumProximos->setText(QString::number(proximos.size()));
     ui->lblNumSinSena->setText(QString::number(sinSena));
+    ui->lblNumLibres->setText(QString::number(libres));
 
     ui->listaProximos->clear();
     for (const Turno &t : proximos)
-        ui->listaProximos->addItem(QString("%1      %2  —  %3")
-            .arg(QLocale().toString(t.inicio, "ddd d/M · HH:mm"), t.paciente, t.protocolo));
-    if (proximos.isEmpty())
-        ui->listaProximos->addItem("No hay turnos próximos.");
+        if (t.inicio.date() > ahora.date())
+            ui->listaProximos->addItem(QString("%1\n%2  ·  %3")
+                .arg(QLocale().toString(t.inicio, "dddd d 'de' MMMM, HH:mm"), t.paciente, t.protocolo));
+    if (ui->listaProximos->count() == 0)
+        ui->listaProximos->addItem("No hay turnos cargados para los próximos días.");
 }
 
 void VentanaGestion::actualizarBotones()
@@ -250,6 +284,7 @@ void VentanaGestion::mostrarResumen()
     ui->lblResPrecio->setText(pesos(p.precio));
     ui->lblResFecha->setText(QLocale().toString(ini.date(), "dddd d 'de' MMMM"));
     ui->lblResHora->setText(QString("%1 (%2 min)").arg(ini.toString("HH:mm")).arg(p.duracion_min));
+    ui->lblResRecordatorio->setText(fechaLarga(ini.addSecs(-RECORDATORIO_HORAS * 3600)) + " (RF-11)");
     ui->lblSena->setText(pesos(dermalia_calcular_sena(p.precio)));
     ui->btnSena->setChecked(false);
     irA(PagConfirmar);
@@ -284,7 +319,7 @@ void VentanaGestion::buscarTurnos()
             && !t.dni.contains(texto) && !t.telefono.contains(texto))
             continue;
         const QStringList celdas = {
-            t.paciente, t.dni, t.telefono, t.protocolo, t.inicio.toString("dd/MM/yyyy HH:mm"),
+            t.paciente, t.dni, t.telefono, t.protocolo, t.inicio.toString("dd/MM/yy HH:mm"),
             textoEstado(t.estado),
             QString("%1 (%2)").arg(pesos(t.sena), t.senaPagada ? "pagada" : "sin pagar"),
         };
@@ -296,7 +331,9 @@ void VentanaGestion::buscarTurnos()
         /* Guardamos qué turno es cada fila, para cancelar el correcto. */
         ui->tablaTurnos->item(fila, 0)->setData(Qt::UserRole, i);
     }
-    ui->lblSinTurnos->setVisible(ui->tablaTurnos->rowCount() == 0);
+    int cantidad = ui->tablaTurnos->rowCount();
+    ui->lblCuenta->setText(cantidad == 0 ? "No hay turnos con ese dato."
+                                         : QString("%1 turno(s)").arg(cantidad));
     mostrarSeleccion();
 }
 

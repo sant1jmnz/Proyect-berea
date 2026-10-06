@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1080</width>
-    <height>680</height>
+    <width>1120</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -20,76 +20,86 @@
    <string>Dermalia — Sistema de Turnos (Gestión)</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget { font-family: &quot;Ubuntu&quot;, &quot;Noto Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif; font-size: 13px; color: #111827; }
-QWidget#central { background: #f6f7f9; }
+   <string notr="true">QWidget { font-family: &quot;Lato&quot;; font-size: 14px; color: #3A2B2B; }
+QWidget#central { background: #FAF5EE; }
 
 /* ---- barra lateral ---- */
-QFrame#barraLateral { background: #2a0f1f; }
-QLabel#lblMarca { color: #ffffff; font-size: 20px; font-weight: 700; }
-QLabel#lblSubmarca { color: #c9a9b8; font-size: 11px; }
+QFrame#barraLateral { background: #F3EAE0; border: none; border-right: 1px solid #E8DCCF; }
+QLabel#lblLogo { font-family: &quot;Playfair Display&quot;; font-size: 22px; color: #8A6A3B; border: 1px solid #B8935A; border-radius: 22px; }
+QLabel#lblMarca { font-family: &quot;Playfair Display&quot;; font-size: 24px; font-weight: 600; }
+QLabel#lblSubmarca { color: #8A6A3B; font-size: 10px; font-weight: 700; }
+QFrame#lineaMarca { background: #D9C3A0; border: none; }
 QListWidget#menu { background: transparent; border: none; outline: 0; }
-QListWidget#menu::item { padding: 10px 12px; border-radius: 8px; color: #e7d3dc; margin-bottom: 3px; }
-QListWidget#menu::item:hover { background: #3d1a2d; }
-QListWidget#menu::item:selected { background: #d6136c; color: #ffffff; }
-QPushButton#btnAyuda { background: transparent; border: 1px solid #5a2c42; color: #e7d3dc; }
-QPushButton#btnAyuda:hover { background: #3d1a2d; }
+QListWidget#menu::item { padding: 11px 12px; border: 1px solid transparent; border-radius: 10px; color: #6B5B57; margin-bottom: 3px; }
+QListWidget#menu::item:hover { background: #EBDFD3; }
+QListWidget#menu::item:selected { background: #FFFDFA; border: 1px solid #E8DCCF; color: #A8475F; }
+QLabel#lblPie { color: #7A6A64; font-size: 12px; }
+QPushButton#btnAyuda { background: transparent; }
 
 /* ---- textos ---- */
-QLabel[rol=&quot;titulo&quot;] { font-size: 22px; font-weight: 700; }
-QLabel[rol=&quot;subtitulo&quot;] { color: #6b7280; }
-QLabel[rol=&quot;seccion&quot;] { font-size: 14px; font-weight: 700; }
-QLabel[rol=&quot;campo&quot;] { color: #6b7280; font-size: 11px; font-weight: 700; }
-QLabel[rol=&quot;valor&quot;] { font-weight: 600; }
-QLabel[rol=&quot;nota&quot;] { color: #6b7280; font-size: 12px; }
-QLabel[rol=&quot;numero&quot;] { font-size: 30px; font-weight: 700; color: #d6136c; }
+QLabel[rol=&quot;titulo&quot;] { font-family: &quot;Playfair Display&quot;; font-size: 30px; font-weight: 600; }
+QLabel[rol=&quot;subtitulo&quot;] { color: #7A6A64; }
+QLabel[rol=&quot;seccion&quot;] { font-family: &quot;Playfair Display&quot;; font-size: 18px; font-weight: 600; }
+QLabel[rol=&quot;campo&quot;] { color: #8A6A3B; font-size: 11px; font-weight: 700; }
+QLabel[rol=&quot;valor&quot;] { font-weight: 700; }
+QLabel[rol=&quot;nota&quot;] { color: #7A6A64; font-size: 12px; }
+QLabel[rol=&quot;numero&quot;] { font-size: 32px; font-weight: 700; color: #A8475F; }
 
 /* ---- indicador de pasos ---- */
-QLabel[paso=&quot;activo&quot;] { background: #d6136c; color: #ffffff; border-radius: 11px; padding: 4px 14px; font-size: 12px; font-weight: 700; }
-QLabel[paso=&quot;hecho&quot;] { background: #fbe4ee; color: #b80f5c; border-radius: 11px; padding: 4px 14px; font-size: 12px; font-weight: 700; }
-QLabel[paso=&quot;pendiente&quot;] { background: #eceef2; color: #6b7280; border-radius: 11px; padding: 4px 14px; font-size: 12px; font-weight: 700; }
+QLabel[paso=&quot;activo&quot;] { font-weight: 700; border: none; border-bottom: 2px solid #B8935A; padding: 4px 2px 6px 2px; }
+QLabel[paso=&quot;hecho&quot;] { color: #A8475F; border: none; border-bottom: 2px solid #E8C9D0; padding: 4px 2px 6px 2px; }
+QLabel[paso=&quot;pendiente&quot;] { color: #7A6A64; border: none; border-bottom: 2px solid #E8DCCF; padding: 4px 2px 6px 2px; }
 
 /* ---- tarjetas ---- */
-QFrame[tarjeta=&quot;true&quot;] { background: #ffffff; border: 1px solid #e6e8ee; border-radius: 12px; }
-QFrame#tarjetaSena { background: #eef3ff; border: 1px solid #c7d7fb; }
-QLabel#lblSena { font-size: 28px; font-weight: 700; color: #2563eb; }
-QLabel#lblRecordatorio { color: #8f0c48; background: #fdf2f6; border-radius: 8px; padding: 8px 12px; }
+QFrame[tarjeta=&quot;true&quot;] { background: #FFFDFA; border: 1px solid #E8DCCF; border-radius: 14px; }
+QFrame#tarjetaSena { background: #FBF3E6; border: 1px solid #E5D2B0; }
+QLabel#lblSena { font-size: 36px; font-weight: 700; color: #8A6A3B; }
+QLabel#lblRecordatorio { color: #8E3A50; background: #F7E8EB; border-radius: 10px; padding: 8px 14px; }
 
 /* ---- campos y botones ---- */
-QLineEdit { border: 1px solid #e6e8ee; border-radius: 8px; padding: 8px 11px; background: #f9fafb; }
-QLineEdit:focus { border-color: #d6136c; background: #ffffff; }
-QPushButton { border: 1px solid #d9dce3; border-radius: 8px; padding: 9px 16px; font-weight: 600; background: #ffffff; }
-QPushButton:hover { background: #f6f7f9; }
-QPushButton[primario=&quot;true&quot;] { background: #d6136c; border-color: #d6136c; color: #ffffff; }
-QPushButton[primario=&quot;true&quot;]:hover { background: #b80f5c; border-color: #b80f5c; }
-QPushButton[peligro=&quot;true&quot;] { color: #b91c1c; border-color: #f3c2c2; }
-QPushButton[peligro=&quot;true&quot;]:hover { background: #fef2f2; }
-QPushButton[grande=&quot;true&quot;] { padding: 15px 16px; font-size: 14px; text-align: left; }
-QPushButton#btnSena { background: #2563eb; border-color: #2563eb; color: #ffffff; }
-QPushButton#btnSena:checked { background: #16a34a; border-color: #16a34a; }
-QPushButton:disabled { background: #eceef2; border-color: #e6e8ee; color: #9ca3af; }
+QLineEdit { border: 1px solid #E8DCCF; border-radius: 10px; padding: 9px 12px; background: #FFFFFF; selection-background-color: #A8475F; }
+QLineEdit:focus { border-color: #A8475F; }
+QPushButton { border: 1px solid #D9C3A0; border-radius: 18px; padding: 9px 22px; font-weight: 700; background: #FFFDFA; }
+QPushButton:hover { background: #F3EAE0; }
+QPushButton:focus { border-color: #A8475F; }
+QPushButton[primario=&quot;true&quot;] { background: #A8475F; border-color: #A8475F; color: #FFFFFF; }
+QPushButton[primario=&quot;true&quot;]:hover { background: #8E3A50; border-color: #8E3A50; }
+QPushButton[peligro=&quot;true&quot;] { color: #A33A3A; border-color: #E3BFBF; }
+QPushButton[peligro=&quot;true&quot;]:hover { background: #FBEFEF; }
+QPushButton#btnSena { background: #8A6A3B; border-color: #8A6A3B; color: #FFFFFF; }
+QPushButton#btnSena:checked { background: #5F7F63; border-color: #5F7F63; }
+QPushButton:disabled { background: #EFE8E0; border-color: #E8DCCF; color: #A89C95; }
 
 /* ---- listas ---- */
-QListWidget#listaProtocolos, QListWidget#listaHorarios, QListWidget#listaProximos { border: none; outline: 0; background: #ffffff; }
-QListWidget#listaProtocolos::item { border: 1px solid #e6e8ee; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
-QListWidget#listaProtocolos::item:hover { border-color: #f0a9c8; }
-QListWidget#listaProtocolos::item:selected { border-color: #d6136c; background: #fdf2f6; color: #111827; }
-QListWidget#listaHorarios::item { border: 1px solid #e6e8ee; border-radius: 8px; padding: 11px 24px; margin-right: 8px; margin-bottom: 8px; font-weight: 600; }
-QListWidget#listaHorarios::item:hover { border-color: #a9c0f5; }
-QListWidget#listaHorarios::item:selected { border-color: #2563eb; background: #eef3ff; color: #2563eb; }
-QListWidget#listaProximos::item { padding: 9px 2px; border-bottom: 1px solid #f0f1f4; }
+QListWidget#listaProtocolos, QListWidget#listaHorarios, QListWidget#listaProximos { border: none; outline: 0; background: transparent; }
+QListWidget#listaProtocolos::item { border: 1px solid #E8DCCF; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; background: #FFFFFF; }
+QListWidget#listaProtocolos::item:hover { border-color: #D9A9B4; }
+QListWidget#listaProtocolos::item:selected { border-color: #A8475F; background: #F7E8EB; color: #3A2B2B; }
+QListWidget#listaHorarios::item { border: 1px solid #E8DCCF; border-radius: 18px; padding: 9px 24px; margin-right: 8px; margin-bottom: 8px; background: #FFFFFF; }
+QListWidget#listaHorarios::item:hover { border-color: #D9A9B4; }
+QListWidget#listaHorarios::item:selected { border-color: #A8475F; background: #A8475F; color: #FFFFFF; }
+QListWidget#listaProximos::item { padding: 11px 2px; border-bottom: 1px solid #F0E7DC; }
 
 /* ---- calendario ---- */
-QCalendarWidget QWidget#qt_calendar_navigationbar { background: #ffffff; }
-QCalendarWidget QToolButton { color: #111827; font-weight: 700; background: transparent; border: none; border-radius: 6px; padding: 4px 8px; }
-QCalendarWidget QToolButton:hover { background: #fdf2f6; }
-QCalendarWidget QAbstractItemView { background: #ffffff; alternate-background-color: #ffffff; selection-background-color: #d6136c; selection-color: #ffffff; outline: 0; border: none; }
+QCalendarWidget QWidget#qt_calendar_navigationbar { background: #FFFDFA; }
+QCalendarWidget QToolButton { color: #3A2B2B; font-weight: 700; background: transparent; border: none; border-radius: 6px; padding: 4px 8px; }
+QCalendarWidget QToolButton:hover { background: #F7E8EB; }
 QCalendarWidget QToolButton#qt_calendar_prevmonth { qproperty-icon: none; qproperty-text: &quot;‹&quot;; font-size: 20px; }
 QCalendarWidget QToolButton#qt_calendar_nextmonth { qproperty-icon: none; qproperty-text: &quot;›&quot;; font-size: 20px; }
-QCalendarWidget QAbstractItemView:disabled { color: #c5c9d2; }
+QCalendarWidget QAbstractItemView { background: #FFFDFA; alternate-background-color: #FFFDFA; selection-background-color: #A8475F; selection-color: #FFFFFF; outline: 0; border: none; }
+QCalendarWidget QAbstractItemView:disabled { color: #CFC4BA; }
 
-/* ---- tabla ---- */
-QTableWidget { border: none; background: #ffffff; alternate-background-color: #fafbfc; selection-background-color: #fdf2f6; selection-color: #111827; outline: 0; }
-QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px solid #e6e8ee; padding: 8px; font-size: 11px; font-weight: 700; color: #6b7280; }</string>
+/* ---- tablas ---- */
+QTableWidget#tablaTurnos { font-size: 13px; }
+QTableWidget { border: none; background: #FFFDFA; alternate-background-color: #FBF6EF; selection-background-color: #F7E8EB; selection-color: #3A2B2B; outline: 0; }
+QHeaderView::section { background: #FFFDFA; border: none; border-bottom: 1px solid #D9C3A0; padding: 8px; font-size: 11px; font-weight: 700; color: #8A6A3B; }
+
+/* ---- barras de desplazamiento ---- */
+QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+QScrollBar::handle:vertical { background: #DCCFC0; border-radius: 3px; min-height: 30px; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
+QScrollBar::handle:horizontal { background: #DCCFC0; border-radius: 3px; min-width: 30px; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
   </property>
   <widget class="QWidget" name="central">
    <layout class="QHBoxLayout" name="layoutCentral">
@@ -112,45 +122,81 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
      <widget class="QFrame" name="barraLateral">
       <property name="minimumSize">
        <size>
-        <width>214</width>
+        <width>228</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>214</width>
+        <width>228</width>
         <height>16777215</height>
        </size>
       </property>
       <layout class="QVBoxLayout" name="layoutLateral">
        <property name="spacing">
-        <number>4</number>
+        <number>6</number>
        </property>
        <property name="leftMargin">
-        <number>14</number>
+        <number>18</number>
        </property>
        <property name="topMargin">
-        <number>20</number>
+        <number>24</number>
        </property>
        <property name="rightMargin">
-        <number>14</number>
+        <number>18</number>
        </property>
        <property name="bottomMargin">
-        <number>16</number>
+        <number>18</number>
        </property>
        <item>
-        <widget class="QLabel" name="lblMarca">
-         <property name="text">
-          <string>Dermalia</string>
+        <layout class="QHBoxLayout" name="layoutMarca">
+         <property name="spacing">
+          <number>12</number>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="lblSubmarca">
-         <property name="text">
-          <string>GESTIÓN DE TURNOS · RECEPCIÓN</string>
-         </property>
-        </widget>
+         <item>
+          <widget class="QLabel" name="lblLogo">
+           <property name="text">
+            <string>D</string>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>44</width>
+             <height>44</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>44</width>
+             <height>44</height>
+            </size>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="layoutMarcaTexto">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="lblMarca">
+             <property name="text">
+              <string>Dermalia</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblSubmarca">
+             <property name="text">
+              <string>ESTÉTICA MÉDICA</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </item>
        <item>
         <spacer name="espacioMarca">
@@ -160,7 +206,39 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>14</height>
+           <height>10</height>
+          </size>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QFrame" name="lineaMarca">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>1</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>1</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="espacioMarca2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>10</height>
           </size>
          </property>
          <property name="sizeType">
@@ -170,9 +248,6 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
        </item>
        <item>
         <widget class="QListWidget" name="menu">
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
          <property name="iconSize">
           <size>
            <width>18</width>
@@ -229,6 +304,13 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
         </widget>
        </item>
        <item>
+        <widget class="QLabel" name="lblPie">
+         <property name="text">
+          <string>Recepción · Flores, CABA</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="btnAyuda">
          <property name="text">
           <string>Ayuda</string>
@@ -249,39 +331,89 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
       <widget class="QWidget" name="pagInicio">
        <layout class="QVBoxLayout" name="layoutInicio">
         <property name="spacing">
-         <number>12</number>
+         <number>14</number>
         </property>
         <property name="leftMargin">
          <number>26</number>
         </property>
         <property name="topMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <property name="rightMargin">
          <number>26</number>
         </property>
         <property name="bottomMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <item>
-         <widget class="QLabel" name="lblTituloInicio">
-          <property name="text">
-           <string>Hola, recepción</string>
+         <layout class="QHBoxLayout" name="layoutInicioArriba">
+          <property name="spacing">
+           <number>10</number>
           </property>
-          <property name="rol" stdset="0">
-           <string notr="true">titulo</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="lblFechaHoy">
-          <property name="text">
-           <string>Hoy</string>
-          </property>
-          <property name="rol" stdset="0">
-           <string notr="true">subtitulo</string>
-          </property>
-         </widget>
+          <item>
+           <layout class="QVBoxLayout" name="layoutCabeceraInicio">
+            <property name="spacing">
+             <number>2</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lblTituloInicio">
+              <property name="text">
+               <string>Agenda del día</string>
+              </property>
+              <property name="rol" stdset="0">
+               <string notr="true">titulo</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="lblFechaHoy">
+              <property name="text">
+               <string>Hoy</string>
+              </property>
+              <property name="rol" stdset="0">
+               <string notr="true">subtitulo</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="espacioInicioArriba">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnIrBuscar">
+            <property name="text">
+             <string>Buscar un turno</string>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnIrCargar">
+            <property name="text">
+             <string>Nuevo turno</string>
+            </property>
+            <property name="primario" stdset="0">
+             <bool>true</bool>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <layout class="QHBoxLayout" name="layoutStats">
@@ -295,19 +427,19 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
             </property>
             <layout class="QVBoxLayout" name="layoutHoy">
              <property name="spacing">
-              <number>2</number>
+              <number>0</number>
              </property>
              <property name="leftMargin">
-              <number>18</number>
+              <number>20</number>
              </property>
              <property name="topMargin">
-              <number>16</number>
+              <number>12</number>
              </property>
              <property name="rightMargin">
-              <number>18</number>
+              <number>20</number>
              </property>
              <property name="bottomMargin">
-              <number>16</number>
+              <number>14</number>
              </property>
              <item>
               <widget class="QLabel" name="lblNumHoy">
@@ -333,25 +465,69 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
            </widget>
           </item>
           <item>
+           <widget class="QFrame" name="tarjetaLibres">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutLibres">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>20</number>
+             </property>
+             <property name="topMargin">
+              <number>12</number>
+             </property>
+             <property name="rightMargin">
+              <number>20</number>
+             </property>
+             <property name="bottomMargin">
+              <number>14</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lblNumLibres">
+               <property name="text">
+                <string>0</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">numero</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblTxtLibres">
+               <property name="text">
+                <string>Horarios libres hoy</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">subtitulo</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
            <widget class="QFrame" name="tarjetaProximos">
             <property name="tarjeta" stdset="0">
              <bool>true</bool>
             </property>
             <layout class="QVBoxLayout" name="layoutProximos">
              <property name="spacing">
-              <number>2</number>
+              <number>0</number>
              </property>
              <property name="leftMargin">
-              <number>18</number>
+              <number>20</number>
              </property>
              <property name="topMargin">
-              <number>16</number>
+              <number>12</number>
              </property>
              <property name="rightMargin">
-              <number>18</number>
+              <number>20</number>
              </property>
              <property name="bottomMargin">
-              <number>16</number>
+              <number>14</number>
              </property>
              <item>
               <widget class="QLabel" name="lblNumProximos">
@@ -383,19 +559,19 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
             </property>
             <layout class="QVBoxLayout" name="layoutSinSena">
              <property name="spacing">
-              <number>2</number>
+              <number>0</number>
              </property>
              <property name="leftMargin">
-              <number>18</number>
+              <number>20</number>
              </property>
              <property name="topMargin">
-              <number>16</number>
+              <number>12</number>
              </property>
              <property name="rightMargin">
-              <number>18</number>
+              <number>20</number>
              </property>
              <property name="bottomMargin">
-              <number>16</number>
+              <number>14</number>
              </property>
              <item>
               <widget class="QLabel" name="lblNumSinSena">
@@ -428,6 +604,80 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
            <number>12</number>
           </property>
           <item>
+           <widget class="QFrame" name="tarjetaAgenda">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutAgenda">
+             <property name="spacing">
+              <number>8</number>
+             </property>
+             <property name="leftMargin">
+              <number>18</number>
+             </property>
+             <property name="topMargin">
+              <number>18</number>
+             </property>
+             <property name="rightMargin">
+              <number>18</number>
+             </property>
+             <property name="bottomMargin">
+              <number>18</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lblAgenda">
+               <property name="text">
+                <string>Hoy en el instituto</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">seccion</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTableWidget" name="tablaAgenda">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="editTriggers">
+                <set>QAbstractItemView::NoEditTriggers</set>
+               </property>
+               <property name="selectionMode">
+                <enum>QAbstractItemView::NoSelection</enum>
+               </property>
+               <property name="showGrid">
+                <bool>false</bool>
+               </property>
+               <attribute name="horizontalHeaderVisible">
+                <bool>false</bool>
+               </attribute>
+               <attribute name="verticalHeaderVisible">
+                <bool>false</bool>
+               </attribute>
+               <attribute name="verticalHeaderDefaultSectionSize">
+                <number>46</number>
+               </attribute>
+               <column>
+                <property name="text">
+                 <string>Hora</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Turno</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Seña</string>
+                </property>
+               </column>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
            <widget class="QFrame" name="tarjetaProximos">
             <property name="tarjeta" stdset="0">
              <bool>true</bool>
@@ -440,18 +690,18 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
               <number>18</number>
              </property>
              <property name="topMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <property name="rightMargin">
               <number>18</number>
              </property>
              <property name="bottomMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <item>
               <widget class="QLabel" name="lblProximos">
                <property name="text">
-                <string>Próximos turnos</string>
+                <string>Próximos días</string>
                </property>
                <property name="rol" stdset="0">
                 <string notr="true">seccion</string>
@@ -466,94 +716,8 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
                <property name="selectionMode">
                 <enum>QAbstractItemView::NoSelection</enum>
                </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QFrame" name="tarjetaAccesos">
-            <property name="tarjeta" stdset="0">
-             <bool>true</bool>
-            </property>
-            <layout class="QVBoxLayout" name="layoutAccesos">
-             <property name="spacing">
-              <number>10</number>
-             </property>
-             <property name="leftMargin">
-              <number>18</number>
-             </property>
-             <property name="topMargin">
-              <number>16</number>
-             </property>
-             <property name="rightMargin">
-              <number>18</number>
-             </property>
-             <property name="bottomMargin">
-              <number>16</number>
-             </property>
-             <item>
-              <widget class="QLabel" name="lblAccesos">
-               <property name="text">
-                <string>Accesos rápidos</string>
-               </property>
-               <property name="rol" stdset="0">
-                <string notr="true">seccion</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="btnIrCargar">
-               <property name="text">
-                <string>＋   Cargar un turno</string>
-               </property>
-               <property name="primario" stdset="0">
-                <bool>true</bool>
-               </property>
-               <property name="grande" stdset="0">
-                <bool>true</bool>
-               </property>
-               <property name="cursor">
-                <cursorShape>PointingHandCursor</cursorShape>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="btnIrBuscar">
-               <property name="text">
-                <string>Buscar o cancelar un turno</string>
-               </property>
-               <property name="grande" stdset="0">
-                <bool>true</bool>
-               </property>
-               <property name="cursor">
-                <cursorShape>PointingHandCursor</cursorShape>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="espacioAccesos">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="lblAccesosNota">
-               <property name="text">
-                <string>La paciente llama por teléfono: cargá el turno en 3 pasos, sin anotarlo a mano.</string>
-               </property>
                <property name="wordWrap">
                 <bool>true</bool>
-               </property>
-               <property name="rol" stdset="0">
-                <string notr="true">nota</string>
                </property>
               </widget>
              </item>
@@ -567,49 +731,56 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
       <widget class="QWidget" name="pagProtocolo">
        <layout class="QVBoxLayout" name="layoutProtocolo">
         <property name="spacing">
-         <number>12</number>
+         <number>14</number>
         </property>
         <property name="leftMargin">
          <number>26</number>
         </property>
         <property name="topMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <property name="rightMargin">
          <number>26</number>
         </property>
         <property name="bottomMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <item>
-         <widget class="QLabel" name="lblTituloProtocolo">
-          <property name="text">
-           <string>Cargar turno</string>
+         <layout class="QVBoxLayout" name="layoutCabeceraProtocolo">
+          <property name="spacing">
+           <number>2</number>
           </property>
-          <property name="rol" stdset="0">
-           <string notr="true">titulo</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="lblSubProtocolo">
-          <property name="text">
-           <string>Datos de la paciente y protocolo que pide</string>
-          </property>
-          <property name="rol" stdset="0">
-           <string notr="true">subtitulo</string>
-          </property>
-         </widget>
+          <item>
+           <widget class="QLabel" name="lblTituloProtocolo">
+            <property name="text">
+             <string>Cargar turno</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSubProtocolo">
+            <property name="text">
+             <string>Datos de la paciente y protocolo que pide</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <layout class="QHBoxLayout" name="p1Pasos">
           <property name="spacing">
-           <number>8</number>
+           <number>22</number>
           </property>
           <item>
            <widget class="QLabel" name="p1Paso1">
             <property name="text">
-             <string>1  Protocolo</string>
+             <string>1 · Protocolo</string>
             </property>
             <property name="paso" stdset="0">
              <string notr="true">activo</string>
@@ -619,7 +790,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
           <item>
            <widget class="QLabel" name="p1Paso2">
             <property name="text">
-             <string>2  Horario</string>
+             <string>2 · Horario</string>
             </property>
             <property name="paso" stdset="0">
              <string notr="true">pendiente</string>
@@ -629,7 +800,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
           <item>
            <widget class="QLabel" name="p1Paso3">
             <property name="text">
-             <string>3  Confirmar</string>
+             <string>3 · Confirmar</string>
             </property>
             <property name="paso" stdset="0">
              <string notr="true">pendiente</string>
@@ -652,119 +823,223 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
          </layout>
         </item>
         <item>
-         <widget class="QFrame" name="tarjetaPaciente">
-          <property name="tarjeta" stdset="0">
-           <bool>true</bool>
+         <layout class="QHBoxLayout" name="layoutProtocoloCuerpo" stretch="2,3">
+          <property name="spacing">
+           <number>12</number>
           </property>
-          <layout class="QGridLayout" name="layoutPaciente">
-           <property name="leftMargin">
-            <number>18</number>
-           </property>
-           <property name="topMargin">
-            <number>16</number>
-           </property>
-           <property name="rightMargin">
-            <number>18</number>
-           </property>
-           <property name="bottomMargin">
-            <number>16</number>
-           </property>
-           <property name="horizontalSpacing">
-            <number>12</number>
-           </property>
-           <property name="verticalSpacing">
-            <number>5</number>
-           </property>
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblPaciente">
-             <property name="text">
-              <string>PACIENTE</string>
+          <item>
+           <widget class="QFrame" name="tarjetaPaciente">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutPaciente">
+             <property name="spacing">
+              <number>5</number>
              </property>
-             <property name="rol" stdset="0">
-              <string notr="true">campo</string>
+             <property name="leftMargin">
+              <number>18</number>
              </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLineEdit" name="editPaciente">
-             <property name="placeholderText">
-              <string>Nombre y apellido</string>
+             <property name="topMargin">
+              <number>18</number>
              </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="lblDni">
-             <property name="text">
-              <string>DNI</string>
+             <property name="rightMargin">
+              <number>18</number>
              </property>
-             <property name="rol" stdset="0">
-              <string notr="true">campo</string>
+             <property name="bottomMargin">
+              <number>18</number>
              </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLineEdit" name="editDni">
-             <property name="placeholderText">
-              <string>Solo números</string>
+             <item>
+              <widget class="QLabel" name="lblSeccionPaciente">
+               <property name="text">
+                <string>Paciente</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">seccion</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioSeccionPaciente">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>2</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblPaciente">
+               <property name="text">
+                <string>NOMBRE Y APELLIDO</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">campo</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="editPaciente">
+               <property name="placeholderText">
+                <string>María Sosa</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioPaciente">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>4</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblDni">
+               <property name="text">
+                <string>DNI</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">campo</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="editDni">
+               <property name="placeholderText">
+                <string>Solo números</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioDni">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>4</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblTelefono">
+               <property name="text">
+                <string>TELÉFONO</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">campo</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="editTelefono">
+               <property name="placeholderText">
+                <string>11 5555-0102</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioTelefono">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>4</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <spacer name="espacioPaciente">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblNotaPaciente">
+               <property name="text">
+                <string>Con el DNI o el teléfono después se encuentra el turno en «Buscar turnos».</string>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">nota</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="tarjetaProtocolos">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutProtocolos">
+             <property name="spacing">
+              <number>10</number>
              </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QLabel" name="lblTelefono">
-             <property name="text">
-              <string>TELÉFONO</string>
+             <property name="leftMargin">
+              <number>18</number>
              </property>
-             <property name="rol" stdset="0">
-              <string notr="true">campo</string>
+             <property name="topMargin">
+              <number>18</number>
              </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QLineEdit" name="editTelefono">
-             <property name="placeholderText">
-              <string>11 5555-0102</string>
+             <property name="rightMargin">
+              <number>18</number>
              </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <widget class="QFrame" name="tarjetaProtocolos">
-          <property name="tarjeta" stdset="0">
-           <bool>true</bool>
-          </property>
-          <layout class="QVBoxLayout" name="layoutProtocolos">
-           <property name="spacing">
-            <number>8</number>
-           </property>
-           <property name="leftMargin">
-            <number>18</number>
-           </property>
-           <property name="topMargin">
-            <number>16</number>
-           </property>
-           <property name="rightMargin">
-            <number>18</number>
-           </property>
-           <property name="bottomMargin">
-            <number>16</number>
-           </property>
-           <item>
-            <widget class="QLabel" name="lblProtocolos">
-             <property name="text">
-              <string>Protocolo</string>
+             <property name="bottomMargin">
+              <number>18</number>
              </property>
-             <property name="rol" stdset="0">
-              <string notr="true">seccion</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QListWidget" name="listaProtocolos"/>
-           </item>
-          </layout>
-         </widget>
+             <item>
+              <widget class="QLabel" name="lblProtocolos">
+               <property name="text">
+                <string>Protocolo</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">seccion</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listaProtocolos"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <layout class="QHBoxLayout" name="botonesProtocolo">
@@ -784,7 +1059,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
           <item>
            <widget class="QPushButton" name="btnContinuar1">
             <property name="text">
-             <string>Continuar  →</string>
+             <string>Continuar</string>
             </property>
             <property name="primario" stdset="0">
              <bool>true</bool>
@@ -801,44 +1076,51 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
       <widget class="QWidget" name="pagHorario">
        <layout class="QVBoxLayout" name="layoutHorario">
         <property name="spacing">
-         <number>12</number>
+         <number>14</number>
         </property>
         <property name="leftMargin">
          <number>26</number>
         </property>
         <property name="topMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <property name="rightMargin">
          <number>26</number>
         </property>
         <property name="bottomMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <item>
-         <widget class="QLabel" name="lblTituloHorario">
-          <property name="text">
-           <string>Elegir horario</string>
+         <layout class="QVBoxLayout" name="layoutCabeceraHorario">
+          <property name="spacing">
+           <number>2</number>
           </property>
-          <property name="rol" stdset="0">
-           <string notr="true">titulo</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="lblPasoHorario">
-          <property name="text">
-           <string>Paciente · protocolo</string>
-          </property>
-          <property name="rol" stdset="0">
-           <string notr="true">subtitulo</string>
-          </property>
-         </widget>
+          <item>
+           <widget class="QLabel" name="lblTituloHorario">
+            <property name="text">
+             <string>Elegir horario</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblPasoHorario">
+            <property name="text">
+             <string>Paciente · protocolo</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <layout class="QHBoxLayout" name="p2Pasos">
           <property name="spacing">
-           <number>8</number>
+           <number>22</number>
           </property>
           <item>
            <widget class="QLabel" name="p2Paso1">
@@ -853,7 +1135,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
           <item>
            <widget class="QLabel" name="p2Paso2">
             <property name="text">
-             <string>2  Horario</string>
+             <string>2 · Horario</string>
             </property>
             <property name="paso" stdset="0">
              <string notr="true">activo</string>
@@ -863,7 +1145,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
           <item>
            <widget class="QLabel" name="p2Paso3">
             <property name="text">
-             <string>3  Confirmar</string>
+             <string>3 · Confirmar</string>
             </property>
             <property name="paso" stdset="0">
              <string notr="true">pendiente</string>
@@ -903,13 +1185,13 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
               <number>18</number>
              </property>
              <property name="topMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <property name="rightMargin">
               <number>18</number>
              </property>
              <property name="bottomMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <item>
               <widget class="QLabel" name="lblDia">
@@ -950,19 +1232,19 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
             </property>
             <layout class="QVBoxLayout" name="layoutHorarios">
              <property name="spacing">
-              <number>8</number>
+              <number>10</number>
              </property>
              <property name="leftMargin">
               <number>18</number>
              </property>
              <property name="topMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <property name="rightMargin">
               <number>18</number>
              </property>
              <property name="bottomMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <item>
               <widget class="QLabel" name="lblHorarios">
@@ -1013,6 +1295,9 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
         </item>
         <item>
          <layout class="QHBoxLayout" name="botonesHorario">
+          <property name="spacing">
+           <number>10</number>
+          </property>
           <item>
            <spacer name="espacioHorario">
             <property name="orientation">
@@ -1029,7 +1314,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
           <item>
            <widget class="QPushButton" name="btnVolver2">
             <property name="text">
-             <string>←  Volver</string>
+             <string>Volver</string>
             </property>
             <property name="cursor">
              <cursorShape>PointingHandCursor</cursorShape>
@@ -1039,7 +1324,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
           <item>
            <widget class="QPushButton" name="btnContinuar2">
             <property name="text">
-             <string>Continuar  →</string>
+             <string>Continuar</string>
             </property>
             <property name="primario" stdset="0">
              <bool>true</bool>
@@ -1056,44 +1341,51 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
       <widget class="QWidget" name="pagConfirmar">
        <layout class="QVBoxLayout" name="layoutConfirmar">
         <property name="spacing">
-         <number>12</number>
+         <number>14</number>
         </property>
         <property name="leftMargin">
          <number>26</number>
         </property>
         <property name="topMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <property name="rightMargin">
          <number>26</number>
         </property>
         <property name="bottomMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <item>
-         <widget class="QLabel" name="lblTituloConfirmar">
-          <property name="text">
-           <string>Confirmar turno</string>
+         <layout class="QVBoxLayout" name="layoutCabeceraConfirmar">
+          <property name="spacing">
+           <number>2</number>
           </property>
-          <property name="rol" stdset="0">
-           <string notr="true">titulo</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="lblSubConfirmar">
-          <property name="text">
-           <string>Revisá los datos con la paciente antes de guardar</string>
-          </property>
-          <property name="rol" stdset="0">
-           <string notr="true">subtitulo</string>
-          </property>
-         </widget>
+          <item>
+           <widget class="QLabel" name="lblTituloConfirmar">
+            <property name="text">
+             <string>Confirmar turno</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSubConfirmar">
+            <property name="text">
+             <string>Revisá los datos con la paciente antes de guardar</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <layout class="QHBoxLayout" name="p3Pasos">
           <property name="spacing">
-           <number>8</number>
+           <number>22</number>
           </property>
           <item>
            <widget class="QLabel" name="p3Paso1">
@@ -1118,7 +1410,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
           <item>
            <widget class="QLabel" name="p3Paso3">
             <property name="text">
-             <string>3  Confirmar</string>
+             <string>3 · Confirmar</string>
             </property>
             <property name="paso" stdset="0">
              <string notr="true">activo</string>
@@ -1152,19 +1444,19 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
             </property>
             <layout class="QVBoxLayout" name="layoutTarjetaResumen">
              <property name="spacing">
-              <number>12</number>
+              <number>14</number>
              </property>
              <property name="leftMargin">
               <number>18</number>
              </property>
              <property name="topMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <property name="rightMargin">
               <number>18</number>
              </property>
              <property name="bottomMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <item>
               <widget class="QLabel" name="lblResumen">
@@ -1199,6 +1491,9 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
                 </widget>
                </item>
                <item row="1" column="0">
@@ -1215,6 +1510,9 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
                 <widget class="QLabel" name="lblResDni">
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
@@ -1233,6 +1531,9 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
                 </widget>
                </item>
                <item row="3" column="0">
@@ -1249,6 +1550,9 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
                 <widget class="QLabel" name="lblResProtocolo">
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
@@ -1267,6 +1571,9 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
                 </widget>
                </item>
                <item row="5" column="0">
@@ -1284,6 +1591,9 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
                  </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
                 </widget>
                </item>
                <item row="6" column="0">
@@ -1300,6 +1610,29 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
                 <widget class="QLabel" name="lblResHora">
                  <property name="rol" stdset="0">
                   <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="7" column="0">
+                <widget class="QLabel" name="lblKRecordatorio">
+                 <property name="text">
+                  <string>Recordatorio</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">subtitulo</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="7" column="1">
+                <widget class="QLabel" name="lblResRecordatorio">
+                 <property name="rol" stdset="0">
+                  <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
@@ -1328,19 +1661,19 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
             </property>
             <layout class="QVBoxLayout" name="layoutSena">
              <property name="spacing">
-              <number>10</number>
+              <number>8</number>
              </property>
              <property name="leftMargin">
               <number>18</number>
              </property>
              <property name="topMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <property name="rightMargin">
               <number>18</number>
              </property>
              <property name="bottomMargin">
-              <number>16</number>
+              <number>18</number>
              </property>
              <item>
               <widget class="QLabel" name="lblSenaTitulo">
@@ -1368,6 +1701,22 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
                 <bool>true</bool>
                </property>
               </widget>
+             </item>
+             <item>
+              <spacer name="espacioSenaBoton">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>6</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
              </item>
              <item>
               <widget class="QPushButton" name="btnSena">
@@ -1415,6 +1764,9 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
         </item>
         <item>
          <layout class="QHBoxLayout" name="botonesConfirmar">
+          <property name="spacing">
+           <number>10</number>
+          </property>
           <item>
            <spacer name="espacioConfirmar">
             <property name="orientation">
@@ -1431,7 +1783,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
           <item>
            <widget class="QPushButton" name="btnVolver3">
             <property name="text">
-             <string>←  Volver</string>
+             <string>Volver</string>
             </property>
             <property name="cursor">
              <cursorShape>PointingHandCursor</cursorShape>
@@ -1458,39 +1810,46 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
       <widget class="QWidget" name="pagBuscador">
        <layout class="QVBoxLayout" name="layoutBuscador">
         <property name="spacing">
-         <number>12</number>
+         <number>14</number>
         </property>
         <property name="leftMargin">
          <number>26</number>
         </property>
         <property name="topMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <property name="rightMargin">
          <number>26</number>
         </property>
         <property name="bottomMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <item>
-         <widget class="QLabel" name="lblTituloBuscador">
-          <property name="text">
-           <string>Buscador de precios y protocolos</string>
+         <layout class="QVBoxLayout" name="layoutCabeceraBuscador">
+          <property name="spacing">
+           <number>2</number>
           </property>
-          <property name="rol" stdset="0">
-           <string notr="true">titulo</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="lblSubBuscador">
-          <property name="text">
-           <string>Para responder consultas por teléfono sin buscar a mano</string>
-          </property>
-          <property name="rol" stdset="0">
-           <string notr="true">subtitulo</string>
-          </property>
-         </widget>
+          <item>
+           <widget class="QLabel" name="lblTituloBuscador">
+            <property name="text">
+             <string>Precios y protocolos</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSubBuscador">
+            <property name="text">
+             <string>Para responder consultas por teléfono sin buscar a mano</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <widget class="QFrame" name="tarjetaBuscador">
@@ -1502,13 +1861,13 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
             <number>18</number>
            </property>
            <property name="topMargin">
-            <number>16</number>
+            <number>18</number>
            </property>
            <property name="rightMargin">
             <number>18</number>
            </property>
            <property name="bottomMargin">
-            <number>16</number>
+            <number>18</number>
            </property>
            <item>
             <widget class="QLabel" name="lblBuscadorPendiente">
@@ -1544,39 +1903,46 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
       <widget class="QWidget" name="pagBuscarTurnos">
        <layout class="QVBoxLayout" name="layoutBuscarTurnos">
         <property name="spacing">
-         <number>12</number>
+         <number>14</number>
         </property>
         <property name="leftMargin">
          <number>26</number>
         </property>
         <property name="topMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <property name="rightMargin">
          <number>26</number>
         </property>
         <property name="bottomMargin">
-         <number>22</number>
+         <number>24</number>
         </property>
         <item>
-         <widget class="QLabel" name="lblTituloBuscarTurnos">
-          <property name="text">
-           <string>Buscar turnos</string>
+         <layout class="QVBoxLayout" name="layoutCabeceraBuscarTurnos">
+          <property name="spacing">
+           <number>2</number>
           </property>
-          <property name="rol" stdset="0">
-           <string notr="true">titulo</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="lblSubBuscarTurnos">
-          <property name="text">
-           <string>Por nombre, DNI o teléfono de la paciente</string>
-          </property>
-          <property name="rol" stdset="0">
-           <string notr="true">subtitulo</string>
-          </property>
-         </widget>
+          <item>
+           <widget class="QLabel" name="lblTituloBuscarTurnos">
+            <property name="text">
+             <string>Buscar turnos</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSubBuscarTurnos">
+            <property name="text">
+             <string>Por nombre, DNI o teléfono de la paciente</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <widget class="QFrame" name="tarjetaTurnos">
@@ -1591,13 +1957,13 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
             <number>18</number>
            </property>
            <property name="topMargin">
-            <number>16</number>
+            <number>18</number>
            </property>
            <property name="rightMargin">
             <number>18</number>
            </property>
            <property name="bottomMargin">
-            <number>16</number>
+            <number>18</number>
            </property>
            <item>
             <layout class="QHBoxLayout" name="layoutBusqueda">
@@ -1607,7 +1973,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
              <item>
               <widget class="QLineEdit" name="editBuscar">
                <property name="placeholderText">
-                <string>Escribí un nombre, DNI o teléfono (vacío = todos)</string>
+                <string>Nombre, DNI o teléfono (vacío = todos)</string>
                </property>
                <property name="clearButtonEnabled">
                 <bool>true</bool>
@@ -1631,9 +1997,6 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
            </item>
            <item>
             <widget class="QTableWidget" name="tablaTurnos">
-             <property name="focusPolicy">
-              <enum>Qt::NoFocus</enum>
-             </property>
              <property name="editTriggers">
               <set>QAbstractItemView::NoEditTriggers</set>
              </property>
@@ -1653,7 +2016,7 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
               <bool>false</bool>
              </attribute>
              <attribute name="verticalHeaderDefaultSectionSize">
-              <number>38</number>
+              <number>42</number>
              </attribute>
              <attribute name="horizontalHeaderHighlightSections">
               <bool>false</bool>
@@ -1696,9 +2059,9 @@ QHeaderView::section { background: #ffffff; border: none; border-bottom: 1px sol
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="lblSinTurnos">
+            <widget class="QLabel" name="lblCuenta">
              <property name="text">
-              <string>No hay turnos con ese dato.</string>
+              <string/>
              </property>
              <property name="rol" stdset="0">
               <string notr="true">nota</string>

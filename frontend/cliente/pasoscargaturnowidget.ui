@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PasosCargaTurnoWidget</class>
+ <widget class="QWidget" name="PasosCargaTurnoWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>720</width>
+    <height>820</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Cargar Turno en 3 Pasos</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing">
+    <number>10</number>
+   </property>
+   <property name="leftMargin">
+    <number>4</number>
+   </property>
+   <property name="topMargin">
+    <number>4</number>
+   </property>
+   <property name="rightMargin">
+    <number>4</number>
+   </property>
+   <property name="bottomMargin">
+    <number>4</number>
+   </property>
+   <item>
+    <!-- Stack de pasos -->
+    <widget class="QStackedWidget" name="stackedPasos">
+     <!-- ===================== PASO 1 ===================== -->
+     <widget class="QWidget" name="paso1">
+      <layout class="QVBoxLayout" name="layoutPaso1">
+       <property name="spacing">
+        <number>12</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="lblHeaderPaso1">
+         <property name="text">
+          <string>&lt;b style=&quot;font-size:16px; color:#8e2a59;&quot;&gt;Paso 1 de 3: Elegir Protocolo y tus Datos (RF-01)&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <!-- Formulario de datos -->
+        <widget class="QFrame" name="frameDatos">
+         <property name="styleSheet">
+          <string>QFrame#frameDatos { background-color: #ffffff; border: 1px solid #dcdcdc; border-radius: 12px; padding: 10px; }</string>
+         </property>
+         <layout class="QGridLayout" name="gridDatos">
+          <item row="0" column="0">
+           <widget class="QLabel" name="lblNombre">
+            <property name="text">
+             <string>&lt;b&gt;Nombre y Apellido:&lt;/b&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="txtNombre">
+            <property name="placeholderText">
+             <string>Ej: Carolina Morales</string>
+            </property>
+            <property name="minimumHeight">
+             <number>44</number>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="lblDni">
+            <property name="text">
+             <string>&lt;b&gt;DNI:&lt;/b&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="txtDni">
+            <property name="placeholderText">
+             <string>Ej: 36123456</string>
+            </property>
+            <property name="minimumHeight">
+             <number>44</number>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="lblTelefono">
+            <property name="text">
+             <string>&lt;b&gt;Teléfono (WhatsApp):&lt;/b&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="txtTelefono">
+            <property name="placeholderText">
+             <string>Ej: 1144332211</string>
+            </property>
+            <property name="minimumHeight">
+             <number>44</number>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblSelectProto">
+         <property name="text">
+          <string>&lt;b style=&quot;font-size:14px;&quot;&gt;Seleccioná el protocolo deseado:&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QScrollArea" name="scrollProtocolos">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollContentProto">
+          <layout class="QVBoxLayout" name="layoutListaProto">
+           <property name="spacing">
+            <number>10</number>
+           </property>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnPaso1Siguiente">
+         <property name="text">
+          <string>Continuar al Paso 2: Elegir Horario  ➔</string>
+         </property>
+         <property name="minimumHeight">
+          <number>52</number>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string>QPushButton { background-color: #8e2a59; color: white; border-radius: 10px; } QPushButton:hover { background-color: #6d1f43; }</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <!-- ===================== PASO 2 ===================== -->
+     <widget class="QWidget" name="paso2">
+      <layout class="QVBoxLayout" name="layoutPaso2">
+       <property name="spacing">
+        <number>12</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="lblHeaderPaso2">
+         <property name="text">
+          <string>&lt;b style=&quot;font-size:16px; color:#8e2a59;&quot;&gt;Paso 2 de 3: Elegir Fecha y Horario Disponible (RF-01, RF-04)&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="frameFechaProf">
+         <property name="styleSheet">
+          <string>QFrame#frameFechaProf { background-color: #ffffff; border: 1px solid #dcdcdc; border-radius: 12px; padding: 10px; }</string>
+         </property>
+         <layout class="QHBoxLayout" name="layoutFiltros">
+          <item>
+           <widget class="QLabel" name="lblFecha">
+            <property name="text">
+             <string>&lt;b&gt;Fecha:&lt;/b&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDateEdit" name="dateEdit">
+            <property name="calendarPopup">
+             <bool>true</bool>
+            </property>
+            <property name="minimumHeight">
+             <number>44</number>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblProf">
+            <property name="text">
+             <string>&lt;b&gt;Profesional:&lt;/b&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboProf">
+            <property name="minimumHeight">
+             <number>44</number>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblAvisoRF04">
+         <property name="text">
+          <string>&lt;b&gt;Horarios disponibles en tiempo real (RF-04):&lt;/b&gt; Tocá el horario en el que deseás atenderte</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QScrollArea" name="scrollGrillaHorarios">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollContentGrid">
+          <layout class="QGridLayout" name="gridHorarios">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblHorarioSeleccionado">
+         <property name="text">
+          <string>&lt;span style=&quot;color:#777;&quot;&gt;Por favor seleccioná un horario disponible de la grilla táctil.&lt;/span&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="layoutBotonesPaso2">
+         <item>
+          <widget class="QPushButton" name="btnPaso2Volver">
+           <property name="text">
+            <string>⬅  Volver a Paso 1</string>
+           </property>
+           <property name="minimumHeight">
+            <number>52</number>
+           </property>
+           <property name="minimumWidth">
+            <number>180</number>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>11</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string>QPushButton { background-color: #f5f5f5; color: #333; border: 1px solid #ccc; border-radius: 10px; } QPushButton:hover { background-color: #e0e0e0; }</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="spPaso2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnPaso2Siguiente">
+           <property name="text">
+            <string>Continuar al Paso 3: Confirmación  ➔</string>
+           </property>
+           <property name="minimumHeight">
+            <number>52</number>
+           </property>
+           <property name="minimumWidth">
+            <number>300</number>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string>QPushButton { background-color: #8e2a59; color: white; border-radius: 10px; } QPushButton:hover { background-color: #6d1f43; }</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <!-- ===================== PASO 3 ===================== -->
+     <widget class="QWidget" name="paso3">
+      <layout class="QVBoxLayout" name="layoutPaso3">
+       <property name="spacing">
+        <number>14</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="lblHeaderPaso3">
+         <property name="text">
+          <string>&lt;b style=&quot;font-size:16px; color:#8e2a59;&quot;&gt;Paso 3 de 3: Confirmación del Turno y Pago de Seña (RF-01, RF-08, RF-10)&lt;/b&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <!-- Tarjeta de Resumen -->
+        <widget class="QFrame" name="frameResumen">
+         <property name="styleSheet">
+          <string>QFrame#frameResumen { background-color: #ffffff; border: 1px solid #dcdcdc; border-radius: 12px; padding: 14px; }</string>
+         </property>
+         <layout class="QVBoxLayout" name="layoutResumen">
+          <item>
+           <widget class="QLabel" name="lblResumenTexto">
+            <property name="text">
+             <string>Cargando datos del turno...</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <!-- Tarjeta de Seña destacada (RF-10) -->
+        <widget class="QFrame" name="frameTarjetaSenia">
+         <property name="styleSheet">
+          <string>QFrame#frameTarjetaSenia { background-color: #fbebf1; border: 2px solid #8e2a59; border-radius: 12px; padding: 16px; }</string>
+         </property>
+         <layout class="QVBoxLayout" name="layoutSenia">
+          <item>
+           <widget class="QLabel" name="lblTituloSenia">
+            <property name="text">
+             <string>&lt;b style=&quot;font-size:15px; color:#8e2a59;&quot;&gt;💳 Seña Requerida para Confirmar Turno (RF-10)&lt;/b&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblMontoSenia">
+            <property name="text">
+             <string>&lt;h1 style=&quot;color:#8e2a59; margin:6px;&quot;&gt;Monto de Seña: $0&lt;/h1&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblReglaSenia">
+            <property name="text">
+             <string>&lt;b&gt;Reglas de Seña y Cancelación (RF-10):&lt;/b&gt;&lt;br/&gt;• 30% del valor total del protocolo (mínimo $5.000).&lt;br/&gt;• &lt;b style=&quot;color:#2e7d32;&quot;&gt;100% reembolsable&lt;/b&gt; si cancelás con más de 24 horas de anticipación.&lt;br/&gt;• &lt;b style=&quot;color:#c62828;&quot;&gt;No reembolsable&lt;/b&gt; por debajo de las 24 horas previas o por inasistencia.&lt;br/&gt;• Registro simulado (mock - RF-08): no cobra dinero real ni almacena datos bancarios.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="spMidPaso3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="layoutBotonesPaso3">
+         <item>
+          <widget class="QPushButton" name="btnPaso3Volver">
+           <property name="text">
+            <string>⬅  Volver a Paso 2</string>
+           </property>
+           <property name="minimumHeight">
+            <number>52</number>
+           </property>
+           <property name="minimumWidth">
+            <number>180</number>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>11</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string>QPushButton { background-color: #f5f5f5; color: #333; border: 1px solid #ccc; border-radius: 10px; } QPushButton:hover { background-color: #e0e0e0; }</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="spPaso3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnPaso3Confirmar">
+           <property name="text">
+            <string>💳  Confirmar y Pagar Seña (Simulado)</string>
+           </property>
+           <property name="minimumHeight">
+            <number>56</number>
+           </property>
+           <property name="minimumWidth">
+            <number>350</number>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string>QPushButton { background-color: #2e7d32; color: white; border-radius: 10px; } QPushButton:hover { background-color: #1b5e20; }</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <!-- ===================== PASO ÉXITO ===================== -->
+     <widget class="QWidget" name="pasoExito">
+      <layout class="QVBoxLayout" name="layoutExito">
+       <item>
+        <spacer name="spExito1">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblIconoExito">
+         <property name="text">
+          <string>&lt;h1 align=&quot;center&quot; style=&quot;color:#2e7d32; font-size:64px;&quot;&gt;✓&lt;/h1&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblTituloExito">
+         <property name="text">
+          <string>&lt;h2 align=&quot;center&quot; style=&quot;color:#8e2a59;&quot;&gt;¡Turno Confirmado con Éxito!&lt;/h2&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblDescExito">
+         <property name="text">
+          <string>&lt;p align=&quot;center&quot; style=&quot;font-size:13px; color:#444;&quot;&gt;Tu reserva y la seña simulada quedaron registradas en la base del instituto.&lt;br/&gt;&lt;b&gt;Recordatorio de turno generado en el sistema (RF-11):&lt;/b&gt;&lt;br/&gt;Podés consultar o cancelar tu turno en cualquier momento desde esta terminal ingresando tu DNI.&lt;/p&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="spExito2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="layoutBtnExito">
+         <item>
+          <spacer name="spBtnL">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnNuevoTurno">
+           <property name="text">
+            <string>🔄  Agendar Otro Turno / Volver al Inicio</string>
+           </property>
+           <property name="minimumHeight">
+            <number>52</number>
+           </property>
+           <property name="minimumWidth">
+            <number>320</number>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string>QPushButton { background-color: #8e2a59; color: white; border-radius: 10px; } QPushButton:hover { background-color: #6d1f43; }</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="spBtnR">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="spExito3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,6 +1,7 @@
 #include "ventanagestion.h"
 #include "ui_ventanagestion.h"
 
+#include <QGraphicsDropShadowEffect>
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QTextCharFormat>
@@ -20,13 +21,22 @@ VentanaGestion::VentanaGestion(QWidget *parent)
     ui->setupUi(this);   /* crea todos los widgets dibujados en el .ui */
 
     /* Ajustes de aspecto que Qt Designer no deja marcar. */
-    ui->tablaAgenda->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    ui->tablaAgenda->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
     ui->tablaTurnos->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tablaTurnos->horizontalHeader()->setSectionResizeMode(ColProtocolo, QHeaderView::Stretch);
     /* Sábado y domingo vienen en rojo: los dejamos como el resto. */
     ui->calendario->setWeekdayTextFormat(Qt::Saturday, QTextCharFormat());
     ui->calendario->setWeekdayTextFormat(Qt::Sunday, QTextCharFormat());
+
+    /* Sombra suave debajo de cada tarjeta, para que no se vea plano. */
+    for (QFrame *tarjeta : findChildren<QFrame *>()) {
+        if (!tarjeta->property("tarjeta").toBool() && tarjeta != ui->hero)
+            continue;
+        auto *sombra = new QGraphicsDropShadowEffect(tarjeta);
+        sombra->setBlurRadius(28);
+        sombra->setOffset(0, 6);
+        sombra->setColor(QColor(90, 55, 40, 26));   /* marrón casi transparente */
+        tarjeta->setGraphicsEffect(sombra);
+    }
 
     /* Señales y slots: connect(quién avisa, qué pasó, quién reacciona, qué hace). */
 
@@ -40,7 +50,11 @@ VentanaGestion::VentanaGestion(QWidget *parent)
     connect(ui->btnVolver2, &QPushButton::clicked, this, [this] { irA(PagProtocolo); });
     connect(ui->btnContinuar2, &QPushButton::clicked, this, [this] { irA(PagConfirmar); });
     connect(ui->btnVolver3, &QPushButton::clicked, this, [this] { irA(PagHorario); });
-    connect(ui->btnConfirmar, &QPushButton::clicked, this, [this] { ui->menu->setCurrentRow(MenuBuscarTurnos); });
+    connect(ui->btnConfirmar, &QPushButton::clicked, this, [this] {
+        QMessageBox::information(this, "Turno confirmado",
+            "El turno quedó cargado.\nMaría Sosa · jueves 8 de octubre, 09:00");
+        ui->menu->setCurrentRow(MenuBuscarTurnos);
+    });
 
     /* El botón de la seña queda apretado (checkable): cambia el texto. */
     connect(ui->btnSena, &QPushButton::toggled, this, [this](bool pagada) {

@@ -28,13 +28,13 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 1.
 | Santiago | Bautista |
 |---|---|
 | [x] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [ ] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
-| [x] Ventana principal de **Gestión** (960×600 mín.) con menú lateral | [ ] Ventana principal de **Cliente** (terminal vertical, 768×1024 mín.) |
-| [x] Pantallas Gestión 1-3: cargar turno, elegir horario, confirmar y registrar seña (RF-02, RF-04, RF-09, RF-10) | [ ] Pantallas Cliente 1-3: elegir protocolo, elegir horario, confirmar y pagar seña (RF-01, RF-04, RF-08, RF-10) |
-| [x] Pantalla Gestión 5: buscar turnos por nombre, DNI o teléfono (RF-13) | [ ] Pantalla Cliente 5: buscar mi turno por DNI o teléfono (RF-12) |
-| [x] Señales y slots: navegación entre pasos 1-2-3 en Gestión | [ ] Señales y slots: navegación entre pasos 1-2-3 en Cliente, con botones grandes |
+| [x] Ventana principal de **Gestión** (960×600 mín.) con menú lateral | [x] Ventana principal de **Cliente** (terminal vertical, 768×1024 mín.) |
+| [x] Pantallas Gestión 1-3: cargar turno, elegir horario, confirmar y registrar seña (RF-02, RF-04, RF-09, RF-10) | [x] Pantallas Cliente 1-3: elegir protocolo, elegir horario, confirmar y pagar seña (RF-01, RF-04, RF-08, RF-10) |
+| [x] Pantalla Gestión 5: buscar turnos por nombre, DNI o teléfono (RF-13) | [x] Pantalla Cliente 5: buscar mi turno por DNI o teléfono (RF-12) |
+| [x] Señales y slots: navegación entre pasos 1-2-3 en Gestión | [x] Señales y slots: navegación entre pasos 1-2-3 en Cliente, con botones grandes |
 
-Compartido: las pantallas de buscador (Gestión 4 y Cliente 4) las hace **Bautista**
-para las dos y Santiago las reutiliza como widget.
+Compartido: el buscador de precios (Gestión 4 y Cliente 4) es un solo widget,
+`frontend/comun/buscadorprecios`, que usan los dos apartados. Hecho: [x].
 
 ## Semana 2 (martes 13 al lunes 19 de octubre): Persistencia con base de datos
 

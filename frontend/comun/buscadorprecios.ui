@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BuscadorPrecios</class>
+ <widget class="QWidget" name="BuscadorPrecios">
+  <layout class="QVBoxLayout" name="layoutBuscadorPrecios">
+   <property name="spacing">
+    <number>14</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="tarjetaConsulta">
+     <property name="tarjeta" stdset="0">
+      <bool>true</bool>
+     </property>
+     <layout class="QVBoxLayout" name="layoutConsulta">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <property name="leftMargin">
+       <number>18</number>
+      </property>
+      <property name="topMargin">
+       <number>18</number>
+      </property>
+      <property name="rightMargin">
+       <number>18</number>
+      </property>
+      <property name="bottomMargin">
+       <number>18</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="lblConsulta">
+        <property name="text">
+         <string>PALABRA CLAVE</string>
+        </property>
+        <property name="rol" stdset="0">
+         <string notr="true">campo</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="layoutConsultaFila">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QLineEdit" name="editConsulta">
+          <property name="text">
+           <string>láser</string>
+          </property>
+          <property name="placeholderText">
+           <string>Por ejemplo: láser, peeling, limpieza</string>
+          </property>
+          <property name="clearButtonEnabled">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnConsultar">
+          <property name="text">
+           <string>Buscar</string>
+          </property>
+          <property name="primario" stdset="0">
+           <bool>true</bool>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="tarjetaResultados">
+     <property name="tarjeta" stdset="0">
+      <bool>true</bool>
+     </property>
+     <layout class="QVBoxLayout" name="layoutResultados">
+      <property name="spacing">
+       <number>4</number>
+      </property>
+      <property name="leftMargin">
+       <number>18</number>
+      </property>
+      <property name="topMargin">
+       <number>18</number>
+      </property>
+      <property name="rightMargin">
+       <number>18</number>
+      </property>
+      <property name="bottomMargin">
+       <number>18</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="layoutResultadosTitulo">
+        <item>
+         <widget class="QLabel" name="lblResultados">
+          <property name="text">
+           <string>Resultados</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">seccion</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="espacioResultadosTitulo">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblFuente">
+          <property name="text">
+           <string>Base de precios y protocolos</string>
+          </property>
+          <property name="etiqueta" stdset="0">
+           <string notr="true">ok</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QFrame" name="filaResultado1">
+        <property name="fila" stdset="0">
+         <bool>true</bool>
+        </property>
+        <layout class="QHBoxLayout" name="layoutResultado1">
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <property name="leftMargin">
+          <number>2</number>
+         </property>
+         <property name="topMargin">
+          <number>10</number>
+         </property>
+         <property name="rightMargin">
+          <number>2</number>
+         </property>
+         <property name="bottomMargin">
+          <number>10</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="layoutResultadoTxt1">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="lblResNombre1">
+             <property name="text">
+              <string>Depilación láser (zona chica)</string>
+             </property>
+             <property name="rol" stdset="0">
+              <string notr="true">valor</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblResDetalle1">
+             <property name="text">
+              <string>30 min</string>
+             </property>
+             <property name="rol" stdset="0">
+              <string notr="true">nota</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <spacer name="espacioResultado1">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblResPrecio1">
+           <property name="text">
+            <string>$18.000</string>
+           </property>
+           <property name="rol" stdset="0">
+            <string notr="true">hora</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="filaResultado2">
+        <property name="fila" stdset="0">
+         <bool>true</bool>
+        </property>
+        <layout class="QHBoxLayout" name="layoutResultado2">
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <property name="leftMargin">
+          <number>2</number>
+         </property>
+         <property name="topMargin">
+          <number>10</number>
+         </property>
+         <property name="rightMargin">
+          <number>2</number>
+         </property>
+         <property name="bottomMargin">
+          <number>10</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="layoutResultadoTxt2">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="lblResNombre2">
+             <property name="text">
+              <string>Depilación láser (zona media)</string>
+             </property>
+             <property name="rol" stdset="0">
+              <string notr="true">valor</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblResDetalle2">
+             <property name="text">
+              <string>45 min</string>
+             </property>
+             <property name="rol" stdset="0">
+              <string notr="true">nota</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <spacer name="espacioResultado2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblResPrecio2">
+           <property name="text">
+            <string>$27.000</string>
+           </property>
+           <property name="rol" stdset="0">
+            <string notr="true">hora</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="filaResultado3">
+        <property name="fila" stdset="0">
+         <bool>true</bool>
+        </property>
+        <layout class="QHBoxLayout" name="layoutResultado3">
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <property name="leftMargin">
+          <number>2</number>
+         </property>
+         <property name="topMargin">
+          <number>10</number>
+         </property>
+         <property name="rightMargin">
+          <number>2</number>
+         </property>
+         <property name="bottomMargin">
+          <number>10</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="layoutResultadoTxt3">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="lblResNombre3">
+             <property name="text">
+              <string>Depilación láser (zona grande)</string>
+             </property>
+             <property name="rol" stdset="0">
+              <string notr="true">valor</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblResDetalle3">
+             <property name="text">
+              <string>60 min</string>
+             </property>
+             <property name="rol" stdset="0">
+              <string notr="true">nota</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <spacer name="espacioResultado3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblResPrecio3">
+           <property name="text">
+            <string>$36.000</string>
+           </property>
+           <property name="rol" stdset="0">
+            <string notr="true">hora</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblCuentaResultados">
+        <property name="text">
+         <string>3 protocolos coinciden con «láser».</string>
+        </property>
+        <property name="rol" stdset="0">
+         <string notr="true">nota</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="tarjetaWhatsapp">
+     <property name="tarjeta" stdset="0">
+      <bool>true</bool>
+     </property>
+     <layout class="QHBoxLayout" name="layoutWhatsapp" stretch="1,0">
+      <property name="spacing">
+       <number>14</number>
+      </property>
+      <property name="leftMargin">
+       <number>18</number>
+      </property>
+      <property name="topMargin">
+       <number>18</number>
+      </property>
+      <property name="rightMargin">
+       <number>18</number>
+      </property>
+      <property name="bottomMargin">
+       <number>18</number>
+      </property>
+      <item>
+       <layout class="QVBoxLayout" name="layoutWhatsappTxt">
+        <property name="spacing">
+         <number>2</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblWhatsapp">
+          <property name="text">
+           <string>¿No aparece lo que buscás?</string>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">seccion</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblWhatsappNota">
+          <property name="text">
+           <string>La consulta se deriva al WhatsApp del instituto, así no se pierde.</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+          <property name="rol" stdset="0">
+           <string notr="true">nota</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnWhatsapp">
+        <property name="text">
+         <string>Consultar por WhatsApp</string>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <spacer name="espacioBuscadorPrecios">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <connections/>
+</ui>

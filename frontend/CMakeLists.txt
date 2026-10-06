@@ -12,11 +12,29 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
+# Buscador de precios: un widget que usan los dos apartados.
+set(COMUN
+    comun/buscadorprecios.cpp
+    comun/buscadorprecios.h
+    comun/buscadorprecios.ui
+    gestion/recursos.qrc)   # íconos y tipografías
+
 # Apartado Gestión (PC de recepción). Semana 1: solo interfaz, sin backend.
 add_executable(dermalia_gestion
     gestion/main.cpp
     gestion/ventanagestion.cpp
     gestion/ventanagestion.h
     gestion/ventanagestion.ui
-    gestion/recursos.qrc)
+    ${COMUN})
+target_include_directories(dermalia_gestion PRIVATE comun)
 target_link_libraries(dermalia_gestion PRIVATE Qt6::Widgets)
+
+# Apartado Cliente (terminal táctil vertical). Semana 1: solo interfaz.
+add_executable(dermalia_cliente
+    cliente/main.cpp
+    cliente/ventanacliente.cpp
+    cliente/ventanacliente.h
+    cliente/ventanacliente.ui
+    ${COMUN})
+target_include_directories(dermalia_cliente PRIVATE comun)
+target_link_libraries(dermalia_cliente PRIVATE Qt6::Widgets)

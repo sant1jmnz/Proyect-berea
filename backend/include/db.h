@@ -5,6 +5,10 @@
 
 #include <time.h>
 
+#ifdef __cplusplus
+extern "C" {   /* para incluirlo desde Qt (C++) */
+#endif
+
 typedef struct Db Db;
 
 typedef struct {
@@ -29,5 +33,9 @@ int db_buscar_protocolos(Db *db, const char *texto, Protocolo *out, int max, int
 int db_crear_turno(Db *db, int paciente_id, int protocolo_id, int profesional_id,
                    time_t inicio, time_t fin, const char *origen, int sena_monto,
                    int *id_turno);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

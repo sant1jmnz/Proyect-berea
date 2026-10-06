@@ -1,5 +1,4 @@
-.claude/*
-!.claude/skills/
+.claude/
 CLAUDE.md
 build/
 *.user

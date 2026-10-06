@@ -7,6 +7,10 @@
 #include <stddef.h>
 #include <time.h>
 
+#ifdef __cplusplus
+extern "C" {   /* para incluirlo desde Qt (C++) */
+#endif
+
 #define SENA_PORCENTAJE 30       /* RF-10: 30% del valor del protocolo */
 #define SENA_MINIMO 5000         /* RF-10: mínimo $5.000 */
 #define CANCELACION_HORAS 24     /* RF-10: reembolso 100% con más de 24 h */
@@ -45,5 +49,9 @@ int dermalia_superpone(time_t ini1, time_t fin1, time_t ini2, time_t fin2);
  * Escribe en `out` (cerrado con '\0'); devuelve 0 si entra, -1 si no. */
 int dermalia_enlace_whatsapp(const char *telefono, const char *consulta,
                              char *out, size_t out_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

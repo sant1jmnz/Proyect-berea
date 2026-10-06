@@ -6,6 +6,9 @@
 #include <QHeaderView>
 #include <QLocale>
 #include <QMessageBox>
+#include <QTextCharFormat>
+
+#include <algorithm>
 
 /* Orden de las páginas dentro del QStackedWidget `paginas` del .ui. */
 enum Pagina { PagInicio, PagProtocolo, PagHorario, PagConfirmar, PagBuscador, PagBuscarTurnos };
@@ -13,8 +16,8 @@ enum Pagina { PagInicio, PagProtocolo, PagHorario, PagConfirmar, PagBuscador, Pa
 /* A qué página lleva cada fila del menú lateral. Los pasos 2 y 3 no están
  * en el menú: se llega con "Continuar". */
 static const int paginaDeMenu[] = { PagInicio, PagProtocolo, PagBuscador, PagBuscarTurnos };
-enum { MenuBuscarTurnos = 3 };
-enum { ColProtocolo = 3 };   /* columna de `tablaTurnos` */
+enum { MenuCargarTurno = 1, MenuBuscarTurnos = 3 };
+enum { ColProtocolo = 3, ColEstado = 5 };   /* columnas de `tablaTurnos` */
 
 /* Datos de ejemplo, los mismos de db/seed.sql.
  * Semana 2: se reemplazan por db_buscar_protocolos(). */
@@ -47,6 +50,28 @@ static QString textoEstado(EstadoTurno e)
     return "";
 }
 
+static QColor colorEstado(EstadoTurno e)
+{
+    switch (e) {
+    case TURNO_CONFIRMADO: return QColor("#16a34a");   /* verde */
+    case TURNO_CANCELADO:  return QColor("#b91c1c");   /* rojo */
+    case TURNO_AUSENTE:    return QColor("#b45309");   /* naranja */
+    case TURNO_REALIZADO:  break;
+    }
+    return QColor("#6b7280");                          /* gris */
+}
+
+/* Arma un turno completo: el fin sale de la duración del protocolo y la
+ * seña la calcula el backend en C (RF-10), no la interfaz. */
+static Turno armarTurno(const QString &paciente, const QString &dni, const QString &telefono,
+                        const Protocolo &p, const QDateTime &inicio, bool senaPagada)
+{
+    return Turno{ paciente, dni, telefono, QString::fromUtf8(p.nombre), p.precio,
+                  inicio, inicio.addSecs(p.duracion_min * 60),
+                  dermalia_calcular_sena(p.precio), senaPagada,
+                  inicio > QDateTime::currentDateTime() ? TURNO_CONFIRMADO : TURNO_REALIZADO };
+}
+
 VentanaGestion::VentanaGestion(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::VentanaGestion)
 {
@@ -55,20 +80,32 @@ VentanaGestion::VentanaGestion(QWidget *parent)
     for (const Protocolo &p : protocolos)
         ui->listaProtocolos->addItem(QString("%1\n%2 min · %3")
             .arg(QString::fromUtf8(p.nombre)).arg(p.duracion_min).arg(pesos(p.precio)));
-    ui->editFecha->setMinimumDate(QDate::currentDate());
-    ui->editFecha->setDate(QDate::currentDate().addDays(1));
+
+    QDate hoy = QDate::currentDate();
+    ui->calendario->setMinimumDate(hoy);
+    ui->calendario->setSelectedDate(hoy.addDays(1));
+    /* Sábado y domingo vienen en rojo: los dejamos como el resto. */
+    ui->calendario->setWeekdayTextFormat(Qt::Saturday, QTextCharFormat());
+    ui->calendario->setWeekdayTextFormat(Qt::Sunday, QTextCharFormat());
 
     /* Cada columna del ancho de su texto; "Protocolo" ocupa lo que sobra. */
     ui->tablaTurnos->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tablaTurnos->horizontalHeader()->setSectionResizeMode(ColProtocolo, QHeaderView::Stretch);
 
-    /* Un turno viejo de ejemplo, para que la búsqueda no arranque vacía. */
-    QDateTime viejo(QDate::currentDate().addDays(-20), QTime(16, 0));
-    turnos.append(Turno{ "María Sosa", "30111222", "1155550102", "Limpieza facial profunda",
-                    25000, viejo, viejo.addSecs(60 * 60), 7500, true, TURNO_REALIZADO });
+    /* Turnos de ejemplo, para que el prototipo no arranque vacío. */
+    turnos.append(armarTurno("María Sosa", "30111222", "1155550102", protocolos[0],
+                             QDateTime(hoy.addDays(-20), QTime(16, 0)), true));
+    turnos.append(armarTurno("Lucía Fernández", "28444555", "1155550144", protocolos[1],
+                             QDateTime(hoy, QTime(17, 0)), true));
+    turnos.append(armarTurno("Carla Gómez", "33222111", "1155550177", protocolos[2],
+                             QDateTime(hoy.addDays(1), QTime(13, 0)), false));
+    turnos.append(armarTurno("Julieta Díaz", "35666777", "1155550190", protocolos[3],
+                             QDateTime(hoy.addDays(3), QTime(9, 0)), true));
 
     /* Señales y slots: connect(quién avisa, qué pasó, quién reacciona, qué hace). */
     connect(ui->menu, &QListWidget::currentRowChanged, this, &VentanaGestion::cambiarSeccion);
+    connect(ui->btnIrCargar, &QPushButton::clicked, this, [this] { ui->menu->setCurrentRow(MenuCargarTurno); });
+    connect(ui->btnIrBuscar, &QPushButton::clicked, this, [this] { ui->menu->setCurrentRow(MenuBuscarTurnos); });
 
     connect(ui->editPaciente, &QLineEdit::textChanged, this, &VentanaGestion::actualizarBotones);
     connect(ui->editDni, &QLineEdit::textChanged, this, &VentanaGestion::actualizarBotones);
@@ -78,24 +115,29 @@ VentanaGestion::VentanaGestion(QWidget *parent)
 
     /* Navegación de los 3 pasos. */
     connect(ui->btnContinuar1, &QPushButton::clicked, this, [this] { cargarHorarios(); irA(PagHorario); });
-    connect(ui->editFecha, &QDateEdit::dateChanged, this, &VentanaGestion::cargarHorarios);
+    connect(ui->calendario, &QCalendarWidget::selectionChanged, this, &VentanaGestion::cargarHorarios);
     connect(ui->btnVolver2, &QPushButton::clicked, this, [this] { irA(PagProtocolo); });
     connect(ui->btnContinuar2, &QPushButton::clicked, this, &VentanaGestion::mostrarResumen);
     connect(ui->btnVolver3, &QPushButton::clicked, this, [this] { irA(PagHorario); });
     connect(ui->btnConfirmar, &QPushButton::clicked, this, &VentanaGestion::confirmarTurno);
+    /* El botón de la seña queda apretado (checkable): cambia el texto. */
+    connect(ui->btnSena, &QPushButton::toggled, this, [this](bool pagada) {
+        ui->btnSena->setText(pagada ? "✓  Seña pagada" : "Marcar seña como pagada");
+    });
 
     connect(ui->btnBuscar, &QPushButton::clicked, this, &VentanaGestion::buscarTurnos);
     connect(ui->editBuscar, &QLineEdit::returnPressed, this, &VentanaGestion::buscarTurnos);
     connect(ui->tablaTurnos, &QTableWidget::itemSelectionChanged, this, &VentanaGestion::mostrarSeleccion);
     connect(ui->btnCancelarTurno, &QPushButton::clicked, this, &VentanaGestion::cancelarTurno);
 
-    connect(ui->actionAyuda, &QAction::triggered, this, [this] {
+    connect(ui->btnAyuda, &QPushButton::clicked, this, [this] {
         QMessageBox::information(this, "Ayuda",
             "Cargar turno: paciente y protocolo, después horario, después confirmar.\n"
             "Buscar turnos: por nombre, DNI o teléfono; desde ahí se cancela.");
     });
 
     actualizarBotones();
+    actualizarInicio();
 }
 
 VentanaGestion::~VentanaGestion()
@@ -113,8 +155,42 @@ void VentanaGestion::cambiarSeccion(int fila)
     if (fila < 0)
         return;
     irA(paginaDeMenu[fila]);
+    if (paginaDeMenu[fila] == PagInicio)
+        actualizarInicio();
     if (paginaDeMenu[fila] == PagBuscarTurnos)
         buscarTurnos();
+}
+
+/* Pantalla de inicio: los tres números y la lista de próximos turnos. */
+void VentanaGestion::actualizarInicio()
+{
+    QDateTime ahora = QDateTime::currentDateTime();
+    int deHoy = 0, sinSena = 0;
+    QVector<Turno> proximos;
+
+    for (const Turno &t : turnos) {
+        if (t.estado != TURNO_CANCELADO && t.inicio.date() == ahora.date())
+            deHoy++;
+        if (t.estado == TURNO_CONFIRMADO && t.inicio > ahora) {
+            proximos.append(t);
+            if (!t.senaPagada)
+                sinSena++;
+        }
+    }
+    std::sort(proximos.begin(), proximos.end(),
+              [](const Turno &a, const Turno &b) { return a.inicio < b.inicio; });
+
+    ui->lblFechaHoy->setText("Hoy es " + QLocale().toString(ahora.date(), "dddd d 'de' MMMM"));
+    ui->lblNumHoy->setText(QString::number(deHoy));
+    ui->lblNumProximos->setText(QString::number(proximos.size()));
+    ui->lblNumSinSena->setText(QString::number(sinSena));
+
+    ui->listaProximos->clear();
+    for (const Turno &t : proximos)
+        ui->listaProximos->addItem(QString("%1      %2  —  %3")
+            .arg(QLocale().toString(t.inicio, "ddd d/M · HH:mm"), t.paciente, t.protocolo));
+    if (proximos.isEmpty())
+        ui->listaProximos->addItem("No hay turnos próximos.");
 }
 
 void VentanaGestion::actualizarBotones()
@@ -128,7 +204,7 @@ void VentanaGestion::actualizarBotones()
 
 QDateTime VentanaGestion::inicioElegido() const
 {
-    return QDateTime(ui->editFecha->date(),
+    return QDateTime(ui->calendario->selectedDate(),
                      QTime::fromString(ui->listaHorarios->currentItem()->text(), "HH:mm"));
 }
 
@@ -139,10 +215,11 @@ void VentanaGestion::cargarHorarios()
     if (fila < 0)
         return;
     const Protocolo &p = protocolos[fila];
+    QDate dia = ui->calendario->selectedDate();
 
     ui->listaHorarios->clear();
     for (const char *h : horarios) {
-        QDateTime ini(ui->editFecha->date(), QTime::fromString(h, "HH:mm"));
+        QDateTime ini(dia, QTime::fromString(h, "HH:mm"));
         QDateTime fin = ini.addSecs(p.duracion_min * 60);
         bool libre = ini > QDateTime::currentDateTime();
         for (const Turno &t : turnos)
@@ -153,10 +230,11 @@ void VentanaGestion::cargarHorarios()
         if (libre)
             ui->listaHorarios->addItem(h);
     }
-    ui->lblPasoHorario->setText(QString("%1 · %2 · Paso 2 de 3")
-        .arg(ui->editPaciente->text().trimmed(), QString::fromUtf8(p.nombre)));
-    ui->lblHorarios->setText(ui->listaHorarios->count() > 0
-        ? "Horarios disponibles" : "No quedan horarios libres ese día");
+    ui->lblPasoHorario->setText(QString("%1 · %2 (%3 min)")
+        .arg(ui->editPaciente->text().trimmed(), QString::fromUtf8(p.nombre)).arg(p.duracion_min));
+    ui->lblHorarios->setText((ui->listaHorarios->count() > 0 ? "Horarios disponibles — "
+                                                             : "Sin horarios libres — ")
+                             + QLocale().toString(dia, "dddd d 'de' MMMM"));
     actualizarBotones();
 }
 
@@ -172,22 +250,19 @@ void VentanaGestion::mostrarResumen()
     ui->lblResPrecio->setText(pesos(p.precio));
     ui->lblResFecha->setText(QLocale().toString(ini.date(), "dddd d 'de' MMMM"));
     ui->lblResHora->setText(QString("%1 (%2 min)").arg(ini.toString("HH:mm")).arg(p.duracion_min));
-    /* RF-10: la cuenta la hace el backend en C, no la interfaz. */
-    ui->lblSena->setText("Seña a registrar: " + pesos(dermalia_calcular_sena(p.precio)));
-    ui->chkSenaPagada->setChecked(false);
+    ui->lblSena->setText(pesos(dermalia_calcular_sena(p.precio)));
+    ui->btnSena->setChecked(false);
     irA(PagConfirmar);
 }
 
 void VentanaGestion::confirmarTurno()
 {
-    const Protocolo &p = protocolos[ui->listaProtocolos->currentRow()];
-    QDateTime ini = inicioElegido();
     QString paciente = ui->editPaciente->text().trimmed();
 
-    turnos.append(Turno{ paciente, ui->editDni->text().trimmed(), ui->editTelefono->text().trimmed(),
-                    QString::fromUtf8(p.nombre), p.precio, ini, ini.addSecs(p.duracion_min * 60),
-                    dermalia_calcular_sena(p.precio), ui->chkSenaPagada->isChecked(),
-                    TURNO_CONFIRMADO });
+    turnos.append(armarTurno(paciente, ui->editDni->text().trimmed(),
+                             ui->editTelefono->text().trimmed(),
+                             protocolos[ui->listaProtocolos->currentRow()],
+                             inicioElegido(), ui->btnSena->isChecked()));
 
     /* Formulario limpio para el próximo llamado y a ver el turno cargado. */
     ui->editPaciente->clear();
@@ -217,9 +292,11 @@ void VentanaGestion::buscarTurnos()
         ui->tablaTurnos->insertRow(fila);
         for (int c = 0; c < celdas.size(); c++)
             ui->tablaTurnos->setItem(fila, c, new QTableWidgetItem(celdas[c]));
+        ui->tablaTurnos->item(fila, ColEstado)->setForeground(colorEstado(t.estado));
         /* Guardamos qué turno es cada fila, para cancelar el correcto. */
         ui->tablaTurnos->item(fila, 0)->setData(Qt::UserRole, i);
     }
+    ui->lblSinTurnos->setVisible(ui->tablaTurnos->rowCount() == 0);
     mostrarSeleccion();
 }
 

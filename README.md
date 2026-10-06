@@ -109,7 +109,6 @@ docs/
   propuestas.md
 backend/                 # núcleo en C (reglas de negocio) + tests, CMake
 frontend/                # interfaz en Qt Widgets (por ahora, apartado Gestión)
-db/                      # esquema y datos de ejemplo para SQL Server
 README.md                # este archivo, portada de la Carpeta de Proyecto V1
 ```
 
@@ -221,8 +220,6 @@ git --version
 
 Arrancó con la base, sin UI ni acceso a base todavía:
 
-- `db/schema.sql` y `db/seed.sql`: tablas de SQL Server (protocolos,
-  profesionales, disponibilidad, pacientes, turnos, consultas sin respuesta).
 - `backend/`: reglas de negocio en C puro, sin base ni Qt, con tests:
   seña (RF-10), reembolso, recordatorio (RF-11), superposición de horarios
   (RF-04) y enlace `wa.me` (RF-07). Se prueba con
@@ -233,7 +230,7 @@ Arrancó con la base, sin UI ni acceso a base todavía:
   escrito en el `.ui`). Se abre `frontend/CMakeLists.txt` con Qt Creator,
   o por consola:
   `cmake -S frontend -B frontend/build -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build frontend/build && frontend/build/dermalia_gestion`.
-- Siguiente: apartado Cliente en Qt y conectar las pantallas con la capa ODBC.
+- Siguiente: apartado Cliente en Qt y conectar las pantallas con la base.
 
 ## Qué falta
 

@@ -51,6 +51,7 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
 - Si **no es apta**, el instituto se queda con el **10%** y devuelve el
   resto.
 - Sin evaluación "apta" no se puede agendar la cirugía.
+- La evaluación "apta" **vale 6 meses** para agendar la cirugía.
 
 ## Reglas cerradas
 
@@ -108,6 +109,6 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
 
 - Cómo se envía WhatsApp de verdad (API oficial, proveedor intermedio o
   simulación): se discute cuando terminemos de definir lo demás.
-- Qué pasa si la evaluación es apta pero la paciente no agenda la cirugía
-  (¿se devuelve igual? ¿hay un plazo?).
+- Qué pasa con el dinero de la consulta si pasan los 6 meses sin agendar la
+  cirugía.
 - Atributos de cada entidad y cardinalidades (el diagrama lo arma el equipo).

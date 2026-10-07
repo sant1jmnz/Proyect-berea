@@ -44,7 +44,7 @@ quién hizo cada acción.
 | RF-08 | Cliente + Web | ...a la paciente pagar la seña al confirmar su turno con un flujo **simulado que imita un pago real** (estilo Mercado Pago): el sistema registra el estado, sin procesar dinero real. | R3 | Must |
 | RF-09 | Gestión | ...a la recepción registrar el pago de la seña cuando confirma un turno cargado por teléfono (mismo mock que RF-08). | R3 | Must |
 | RF-10 | Todos | ...calcular (de forma simulada) una seña del 30% del precio final del protocolo (mínimo $20.000), y del **40% en cirugías**; reembolsable 100% si se cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
-| RF-11 | Todos | ...enviar un recordatorio de turno por **WhatsApp** a la paciente antes de la fecha reservada, y registrar cada aviso (canal, estado, fecha programada). | R4 | Must |
+| RF-11 | Todos | ...enviar un recordatorio de turno a la paciente antes de la fecha reservada y registrar cada aviso (canal, estado, fecha programada). Canales: **Telegram** (bot, gratis y automático, se usa en el desarrollo y la demo), **Google Calendar** (invitación con recordatorio) y **WhatsApp** (API oficial en producción; mientras tanto, enlace `wa.me` asistido desde la recepción). | R4 | Must |
 | RF-12 | Cliente + Web | ...a la paciente buscar y cancelar su propio turno con su DNI o teléfono, sin cuenta. | R1 | Should |
 | RF-13 | Gestión | ...a la recepción buscar y cancelar el turno de cualquier paciente por nombre, DNI o teléfono. | R1 | Should |
 | RF-14 | Cliente + Web | ...a la paciente hacer preguntas a un **asistente de IA** (precios, protocolos, cuidados) y recibir respuesta; las consultas quedan registradas. | R2 | Should |
@@ -78,7 +78,7 @@ iteración futura (`docs/propuestas.md`).
 | RNF-03 | Usabilidad | Una paciente sin instrucción previa completa la carga de su turno (terminal o web) en menos de 2 minutos. |
 | RNF-04 | Usabilidad | La recepción, con una capacitación breve, completa la carga de un turno en menos de 1 minuto. |
 | RNF-05 | Seguridad | El sistema no maneja pagos reales ni datos de tarjeta: la seña es un mock que imita el flujo de pago y solo registra el estado en MySQL. |
-| RNF-06 | Seguridad | Los datos de contacto y de salud de la paciente se guardan en la base MySQL del instituto. A servicios externos (Google Calendar, WhatsApp, IA) solo se envía lo mínimo necesario; al asistente de IA no se le envían datos personales ni de salud. |
+| RNF-06 | Seguridad | Los datos de contacto y de salud de la paciente se guardan en la base MySQL del instituto. A servicios externos (Google Calendar, Telegram/WhatsApp, IA) solo se envía lo mínimo necesario; al asistente de IA no se le envían datos personales ni de salud. |
 | RNF-07 | Compatibilidad | La terminal funciona en pantalla táctil de al menos 768×1024 px; Gestión, en ventana de escritorio de 960×600 px como mínimo; la web, en celular y escritorio. |
 | RNF-08 | Mantenibilidad | La recepción puede actualizar precios y protocolos sin intervención técnica del equipo. |
 | RNF-09 | Disponibilidad | El apartado Gestión y la terminal funcionan durante todo el horario de atención contra MySQL; las funciones que dependen de servicios externos (WhatsApp, Calendar, IA) degradan sin frenar la carga de turnos. |
@@ -133,7 +133,7 @@ Como paciente, quiero ver un recordatorio antes de mi turno,
 para no faltar ni olvidarme la fecha.
 
 Criterios de aceptación:
-- El recordatorio me llega por WhatsApp con anticipación configurable.
+- El recordatorio me llega por Telegram (o WhatsApp en producción) con anticipación configurable.
 - Después de agendar, puedo agregar el turno a mi Google Calendar con un botón.
 ```
 
@@ -265,7 +265,7 @@ El **ticket promedio por turno** que usan los cálculos es **$150.000**.
 - Si pasan los 6 meses sin agendar: si la paciente **no reclama** (no apela),
   el instituto **se queda con el dinero** de las consultas; si reclama, el
   instituto retiene el **50% del total de las consultas** y devuelve el
-  resto. *(Interpretación a confirmar.)*
+  resto.
 - Si no es apta, el instituto **se queda con el 10%** de la consulta y
   devuelve el resto.
 - Como todo el pago es mock, la devolución y la retención son cambios de
@@ -280,9 +280,10 @@ apartado (carga de turno, buscador, seña), después las búsquedas Should.
 
 ## Qué falta
 
-- **WhatsApp**: definir cómo se envían los avisos (API oficial de WhatsApp
-  Business, un proveedor intermedio o simulación) y qué entra en el alcance
-  del bimestre.
+- **Mensajería**: se usa **Telegram** (bot gratuito) mientras se desarrolla,
+  porque permite automatizar sin pagar. Al pasar a producción se cambia a
+  la **API oficial de WhatsApp**, que es más cómoda para las pacientes. La
+  base no cambia: solo el canal de envío.
 - Actualizar `docs/05-maquetado.md` con las pantallas del apartado Web y las
   nuevas (cuenta, asistente de IA, descuentos).
 

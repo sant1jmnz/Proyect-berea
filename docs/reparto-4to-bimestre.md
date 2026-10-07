@@ -131,7 +131,8 @@ que conocer todo el modelo: en la defensa se evalúa el conocimiento global.
   encarga de la base en Aiven.
 - **Bautista: catálogo, profesionales, cupones y avisos.** Entidades:
   Profesional, Protocolo, Categoría de protocolo, Disponibilidad, Cupón,
-  Regla de beneficio, Tarjeta de regalo, Movimiento de tarjeta, Notificación,
+  Regla de beneficio, Tipo de regla,
+  Tarjeta de regalo, Movimiento de tarjeta, Notificación,
   Canal de notificación, Consulta al asistente. Se encarga de n8n y el bot de
   Telegram.
 

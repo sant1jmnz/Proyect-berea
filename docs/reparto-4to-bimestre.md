@@ -22,7 +22,7 @@ consigna está en [`consigna-bbdd.md`](consigna-bbdd.md); las entidades, en
 docente en Classroom no están acá: si difieren, se ajusta.
 
 **Cómo se trabaja la base:** el diseño se piensa **entre los dos** (primero por
-escrito) y recién cuando está cerrado se pasa a XML para draw.io. Cada uno es
+escrito) y recién cuando está cerrado se hace el diagrama de Peter Chen en draw.io. Cada uno es
 **responsable** de un bloque, pero los dos tienen que conocer todo el modelo
 (en la defensa se evalúa el conocimiento global).
 
@@ -90,7 +90,7 @@ Entregable de la consigna: punto 1. **Jueves 8: los DER en draw.io.**
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Pasar el modelo cerrado a **XML** (el diagrama de Chen completo) | [ ] Importar el XML a draw.io y acomodar los diagramas del bloque de Bautista |
+| [ ] **Hacer el diagrama de Peter Chen** del bloque de Santiago | [ ] **Hacer el diagrama de Peter Chen** del bloque de Bautista |
 | [ ] Acomodar los diagramas del bloque de Santiago | [ ] Revisar cardinalidades `(mín,máx)` y que cada atributo esté en su entidad |
 | [ ] Juntar los dos bloques en **un solo DER conceptual** y revisar la coherencia | [ ] Exportar el DER (imagen y `.drawio`) y subirlo a `docs/diagramas/` |
 | [ ] Entregar el **hito del DER conceptual** en Classroom | [ ] Si sobra tiempo: instalar MySQL local (portable, sin permisos de administrador) |

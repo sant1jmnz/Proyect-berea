@@ -342,4 +342,4 @@ disponibilidad, y envío de notificación.
 - Atributos de **Disponibilidad** (no se definieron todavía): por ejemplo día de la semana, hora de inicio y de fin, y vigencia.
 - Revisar el modelo completo (grupos 1 a 4) y cerrar las preguntas abiertas
   del grupo 3.
-- Pasar el modelo cerrado a XML para draw.io (jueves).
+- Hacer el diagrama de Peter Chen en draw.io (jueves).

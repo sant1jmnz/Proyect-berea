@@ -115,7 +115,7 @@ El pago de la seña es un mock que imita el flujo de un pago real, sin
 procesar dinero ni guardar datos de tarjeta; lo mismo con la compra de
 tarjetas de regalo. Lo demás se conecta a servicios reales o se prevé que
 sí: Google Calendar para el turno de la paciente y del profesional,
-WhatsApp para los recordatorios (forma de envío todavía en discusión) y un
+Telegram para los recordatorios mientras se desarrolla (gratis y automático), con paso a la API oficial de WhatsApp en producción y un
 asistente de IA para consultas. La agenda, los cupones, las tarjetas y el
 log viven en la base MySQL propia.
 

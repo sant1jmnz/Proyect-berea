@@ -211,8 +211,7 @@ salen del turno de la consulta.
    cuánto: por frecuencia (ej. 2 visitas en 1 mes → 10%), por gasto acumulado,
    o por promoción general. Su tipo es una tabla maestra (*Tipo de regla*).
 3. **El estado no se guarda**: un cupón está *usado* si está ligado a un turno,
-   *vencido* si pasó su fecha y *vigente* en otro caso. El QR tampoco se guarda:
-   codifica el `codigo`.
+   *vencido* si pasó su fecha y *vigente* en otro caso.
 4. **El vencimiento sí se guarda en el cupón** (la regla puede cambiar después
    y no debe alterar cupones ya emitidos). Se calcula al emitirlo con la
    vigencia de la regla (2 a 8 semanas).
@@ -221,6 +220,15 @@ salen del turno de la consulta.
    guardan sus datos como atributos y no como relación.
 6. **Cupón y tarjeta no se mezclan en un mismo turno.** Es una regla de
    negocio que se valida en el stored procedure, no una restricción del modelo.
+8. **Códigos y QR rotativos (cada 5 minutos).** Lo que se muestra o se
+   escanea no es un código fijo sino un **token temporal** que se renueva cada
+   5 minutos, como una segunda capa de seguridad contra robo o reuso de una
+   captura. El token **no se guarda**: se calcula a partir de un `secreto`
+   propio de cada cupón y tarjeta y de la ventana de tiempo actual (por
+   ejemplo, un hash del secreto y del tiempo dividido en tramos de 5 minutos).
+   Al validar, el stored procedure lo recalcula y acepta el tramo actual y el
+   anterior (margen por diferencias de reloj). El `codigo` queda como
+   identificador público y no sirve solo. Ver "Qué hace el token" más abajo.
 7. **El monto de un movimiento puede ser negativo**: negativo = devolución de
    saldo a la tarjeta (por ejemplo al cancelar con reembolso).
 
@@ -229,9 +237,21 @@ salen del turno de la consulta.
 |---|---|
 | **Tipo de regla** | id_tipo_regla (PK), nombre |
 | **Regla de beneficio** | id_regla (PK), nombre, umbral *(visitas o monto, según el tipo)*, porcentaje_descuento, vigencia_semanas *(2 a 8)*, activa, ventana_dias *(opc: solo frecuencia)* |
-| **Cupón** | id_cupon (PK), codigo (único), porcentaje_descuento, fecha_emision, fecha_vencimiento |
-| **Tarjeta de regalo** | id_tarjeta (PK), codigo (único), monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono *(opc)* |
+| **Cupón** | id_cupon (PK), codigo (único, público), secreto (interno, nunca se muestra), porcentaje_descuento, fecha_emision, fecha_vencimiento |
+| **Tarjeta de regalo** | id_tarjeta (PK), codigo (único, público), secreto (interno), monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono *(opc)* |
 | **Movimiento de tarjeta** | id_movimiento (PK), monto *(negativo = devolución)*, fecha_movimiento |
+
+### Qué hace el token
+- **Protege contra** el uso de una captura de pantalla vieja o de un código
+  copiado: a los 5 minutos deja de servir.
+- **No reemplaza** al uso único: un cupón ya usado se rechaza igual, aunque el
+  token sea válido.
+- Se pide al sistema con un stored procedure (por ejemplo,
+  `generar_token_cupon`) y se valida con otro (`validar_cupon`), que además
+  deja registrado en el log cada validación aceptada o rechazada.
+- MySQL no trae un HMAC formal; para el trabajo alcanza con un hash con
+  clave (`SHA2` sobre el secreto y el tramo de tiempo). Se aclara en la
+  defensa.
 
 ### Relaciones y cardinalidades (mín,máx)
 - Regla de beneficio (1,1) **es de tipo** (0,N) Tipo de regla
@@ -244,5 +264,7 @@ salen del turno de la consulta.
 
 ## Pendiente de definir
 
+- Cómo ve el token rotativo quien recibe una **tarjeta de regalo** sin tener
+  cuenta (ver la propuesta en el chat).
 - Atributos y cardinalidades de los grupos siguientes: notificaciones y
   asistente; usuarios y log.

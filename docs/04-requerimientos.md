@@ -51,7 +51,7 @@ quién hizo cada acción.
 | RF-15 | Web (+ Cliente) | ...a la paciente **crear una cuenta opcional**; con cuenta ve su historial de turnos sin volver a ingresar su DNI. | R1 | Should |
 | RF-16 | Todos | ...buscar el historial de turnos de una paciente **por DNI** (sin cuenta), tanto desde el apartado Cliente como desde la Web. | R1 | Should |
 | RF-17 | Cliente + Web + Gestión | ...que la paciente con cuenta ingrese un **cupón de descuento por código** mientras agenda ("¿Tenés un cupón de descuento?") y que el precio se actualice antes de pagar. | R3 | Should |
-| RF-22 | Gestión | ...que cada cupón tenga un **código QR**, y que el profesional lo escanee antes del pago para aplicarlo si la paciente no lo cargó al agendar. El escaneo puede hacerse con el **celular del profesional**, un **escáner** o un **lector** conectado a la PC de gestión. | R3 | Should |
+| RF-22 | Gestión | ...que cada cupón tenga un **código QR**, y que el profesional lo escanee antes del pago para aplicarlo si la paciente no lo cargó al agendar. Los códigos y QR son **rotativos** (se renuevan cada 5 minutos). El escaneo puede hacerse con el **celular del profesional**, un **escáner** o un **lector** conectado a la PC de gestión. | R3 | Should |
 | RF-23 | Web + Cliente + Gestión | ...vender y canjear **tarjetas de regalo por monto** (ej. $300.000): la tarjeta tiene saldo y puede gastarse en varias compras y turnos, también por otra persona, hasta que venza. **Un cupón y una tarjeta de regalo no se pueden usar en el mismo turno.** | R3 | Should |
 | RF-25 | Todos | ...que toda **cirugía** requiera una **consulta previa paga**, con su propia seña, y que solo pueda agendarse si el resultado de la evaluación es "apto": si la paciente pasa a la cirugía, el dinero de la consulta se **devuelve**; la evaluación "apta" **vale 6 meses** para agendar la cirugía; si no es apta, el instituto **retiene el 10%** y devuelve el resto. | R1, R3 | Must |
 | RF-24 | Todos | ...generar **cupones automáticos por fidelidad** a las pacientes con cuenta: por frecuencia (ej. 2 visitas en 1 mes → 10%) y por gasto acumulado (ej. superar cierto monto → cupón). | R3 | Should |
@@ -85,6 +85,7 @@ iteración futura (`docs/propuestas.md`).
 | RNF-10 | Seguridad | Las respuestas del asistente de IA se limitan a la información cargada del instituto; si no hay base para responder, deriva al WhatsApp del instituto en vez de inventar. |
 | RNF-11 | Arquitectura | Base de datos MySQL dividida en schemas, aplicación de escritorio en Qt y sitio web, sobre la misma base. Las integraciones externas son Google Calendar, Telegram/WhatsApp (orquestados con n8n) y un asistente de IA. Ver `docs/arquitectura.md`. |
 | RNF-13 | Continuidad | La base tiene respaldos automáticos fuera del servidor, y n8n se reinicia solo si la VM se cae. |
+| RNF-14 | Seguridad | Los códigos y QR de cupones y tarjetas de regalo se renuevan cada 5 minutos y se validan en el servidor; cada validación, aceptada o rechazada, queda en el log. |
 | RNF-12 | Trazabilidad | Todo evento relevante genera un registro en el log (tipo de evento, fecha y hora, usuario, datos de auditoría), poblado por procedimientos almacenados y no a mano. |
 
 ## Historias de usuario

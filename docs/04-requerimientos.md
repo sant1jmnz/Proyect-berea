@@ -81,9 +81,10 @@ iteración futura (`docs/propuestas.md`).
 | RNF-06 | Seguridad | Los datos de contacto y de salud de la paciente se guardan en la base MySQL del instituto. A servicios externos (Google Calendar, Telegram/WhatsApp, IA) solo se envía lo mínimo necesario; al asistente de IA no se le envían datos personales ni de salud. |
 | RNF-07 | Compatibilidad | La terminal funciona en pantalla táctil de al menos 768×1024 px; Gestión, en ventana de escritorio de 960×600 px como mínimo; la web, en celular y escritorio. |
 | RNF-08 | Mantenibilidad | La recepción puede actualizar precios y protocolos sin intervención técnica del equipo. |
-| RNF-09 | Disponibilidad | El apartado Gestión y la terminal funcionan durante todo el horario de atención contra MySQL; las funciones que dependen de servicios externos (WhatsApp, Calendar, IA) degradan sin frenar la carga de turnos. |
+| RNF-09 | Disponibilidad | La base MySQL corre en una VM en la nube y el instituto no puede dejar de atender por un corte de luz o de internet: hay no-break, conexión de respaldo y un **modo contingencia** que guarda los turnos localmente y los sincroniza al volver la conexión. Las funciones que dependen de servicios externos (Telegram/WhatsApp, Calendar, IA) degradan sin frenar la carga de turnos. Ver `docs/arquitectura.md`. |
 | RNF-10 | Seguridad | Las respuestas del asistente de IA se limitan a la información cargada del instituto; si no hay base para responder, deriva al WhatsApp del instituto en vez de inventar. |
-| RNF-11 | Arquitectura | Base de datos MySQL dividida en schemas, aplicación de escritorio en Qt y sitio web, sobre la misma base. Las integraciones externas son Google Calendar, WhatsApp y un asistente de IA. |
+| RNF-11 | Arquitectura | Base de datos MySQL dividida en schemas, aplicación de escritorio en Qt y sitio web, sobre la misma base. Las integraciones externas son Google Calendar, Telegram/WhatsApp (orquestados con n8n) y un asistente de IA. Ver `docs/arquitectura.md`. |
+| RNF-13 | Continuidad | La base tiene respaldos automáticos fuera de la VM, y los servicios (MySQL, n8n) se reinician solos si la VM se cae. |
 | RNF-12 | Trazabilidad | Todo evento relevante genera un registro en el log (tipo de evento, fecha y hora, usuario, datos de auditoría), poblado por procedimientos almacenados y no a mano. |
 
 ## Historias de usuario

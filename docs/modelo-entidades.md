@@ -220,11 +220,11 @@ salen del turno de la consulta.
    guardan sus datos como atributos y no como relación.
 6. **Cupón y tarjeta no se mezclan en un mismo turno.** Es una regla de
    negocio que se valida en el stored procedure, no una restricción del modelo.
-8. **Códigos y QR rotativos (cada 5 minutos).** Lo que se muestra o se
-   escanea no es un código fijo sino un **token temporal** que se renueva cada
-   5 minutos, como una segunda capa de seguridad contra robo o reuso de una
-   captura. El token **no se guarda**: se calcula a partir de un `secreto`
-   propio de cada cupón y tarjeta y de la ventana de tiempo actual (por
+8. **Códigos y QR de los cupones, rotativos (cada 5 minutos).** Lo que se
+   muestra o se escanea no es un código fijo sino un **token temporal** que se
+   renueva cada 5 minutos, como una segunda capa de seguridad contra robo o
+   reuso de una captura. El token **no se guarda**: se calcula a partir de un
+   `secreto` propio de cada cupón y de la ventana de tiempo actual (por
    ejemplo, un hash del secreto y del tiempo dividido en tramos de 5 minutos).
    Al validar, el stored procedure lo recalcula y acepta el tramo actual y el
    anterior (margen por diferencias de reloj). El `codigo` queda como
@@ -238,10 +238,15 @@ salen del turno de la consulta.
 | **Tipo de regla** | id_tipo_regla (PK), nombre |
 | **Regla de beneficio** | id_regla (PK), nombre, umbral *(visitas o monto, según el tipo)*, porcentaje_descuento, vigencia_semanas *(2 a 8)*, activa, ventana_dias *(opc: solo frecuencia)* |
 | **Cupón** | id_cupon (PK), codigo (único, público), secreto (interno, nunca se muestra), porcentaje_descuento, fecha_emision, fecha_vencimiento |
-| **Tarjeta de regalo** | id_tarjeta (PK), codigo (único, público), secreto (interno), monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono *(opc)* |
+| **Tarjeta de regalo** | id_tarjeta (PK), codigo (único, fijo), monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono *(opc)* |
 | **Movimiento de tarjeta** | id_movimiento (PK), monto *(negativo = devolución)*, fecha_movimiento |
 
-### Qué hace el token
+9. **La tarjeta de regalo tiene código fijo.** No rota: se va vaciando a
+   medida que se gasta, hasta agotar el saldo. Como el código fijo funciona
+   como un "billete", se usa un código largo y aleatorio, y los intentos
+   fallidos de validación quedan en el log.
+
+### Qué hace el token (solo cupones)
 - **Protege contra** el uso de una captura de pantalla vieja o de un código
   copiado: a los 5 minutos deja de servir.
 - **No reemplaza** al uso único: un cupón ya usado se rechaza igual, aunque el
@@ -264,7 +269,5 @@ salen del turno de la consulta.
 
 ## Pendiente de definir
 
-- Cómo ve el token rotativo quien recibe una **tarjeta de regalo** sin tener
-  cuenta (ver la propuesta en el chat).
 - Atributos y cardinalidades de los grupos siguientes: notificaciones y
   asistente; usuarios y log.

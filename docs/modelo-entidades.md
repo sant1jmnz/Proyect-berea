@@ -5,7 +5,7 @@ Primer paso del diseño conceptual de la base (consigna en
 los atributos y cardinalidades se van cerrando por grupos (abajo); el diagrama
 de Chen se arma al final.
 
-Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 23.
+Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24.
 
 ## Decisiones tomadas
 
@@ -71,7 +71,7 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 23
 - El **QR** se escanea con el celular del profesional, un escáner o un
   lector en la PC de gestión (las tres opciones valen).
 
-## Entidades (23)
+## Entidades (24)
 
 ### Núcleo
 1. **Paciente** (cuenta opcional)
@@ -103,12 +103,13 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 23
 17. **Canal de notificación** (Telegram, WhatsApp, Google Calendar, WhatsApp asistido)
 18. **Resultado de evaluación** (apto, no apto)
 19. **Origen del turno** (terminal, web, gestión)
+20. **Medio de pago** (tarjeta simulada, transferencia, efectivo, tarjeta de regalo)
 
 ### Seguridad y auditoría
-20. **Usuario** (credenciales; paciente opcional, personal obligatorio)
-21. **Rol**
-22. **Log**
-23. **Tipo de evento**
+21. **Usuario** (credenciales; paciente opcional, personal obligatorio)
+22. **Rol**
+23. **Log**
+24. **Tipo de evento**
 
 Además, dos relaciones N:M que se vuelven **tablas intermedias** en el diseño
 lógico (en el Chen son relaciones, no entidades): *Turno–Protocolo* ("incluye")
@@ -159,8 +160,47 @@ y *Profesional–Protocolo* ("realiza").
 - Paciente (0,1) **tiene cuenta** (0,1) Usuario
 - Profesional (1,1) **tiene cuenta** (0,1) Usuario
 
+## Grupo 2 (propuesto): pagos y evaluación previa
+
+### Decisiones
+1. **La consulta previa es un turno.** Se agenda y se paga como cualquier
+   otro turno (con su seña); la *Evaluación previa* es el resultado médico de
+   ese turno.
+2. **Un turno tiene como máximo un pago de seña.** Si se cancela y se reserva
+   de nuevo, es otro turno y otro pago.
+3. **Lo retenido no se guarda, se calcula.** El pago guarda `monto` y
+   `monto_reembolsado`; lo retenido es la diferencia. Así sirven todas las
+   reglas (10% si no es apta, 50% al vencer con reclamo, 100% al vencer sin
+   reclamo, sin devolución por cancelar con menos de 24 h) sin duplicar datos.
+4. **Medio de pago es tabla maestra** (nueva): permite saber con qué se pagó la
+   seña, incluida una tarjeta de regalo, sin guardar datos de tarjeta.
+5. **La vigencia de 6 meses se calcula** desde `fecha_resultado`; no se guarda
+   la fecha de vencimiento.
+6. **El gasto acumulado para los cupones de fidelidad se calcula** sumando
+   los precios de los turnos realizados; no hace falta un campo aparte.
+
+### Atributos
+| Entidad | Atributos |
+|---|---|
+| **Pago de seña** | id_pago (PK), monto, fecha_pago, codigo_operacion *(simulado)*, monto_reembolsado, fecha_resolucion *(opc: cuando se devuelve o retiene)* |
+| **Estado del pago** | id_estado_pago (PK), nombre *(pendiente, pagada, reembolsada, reembolsada parcial, retenida)* |
+| **Medio de pago** | id_medio_pago (PK), nombre |
+| **Evaluación previa** | id_evaluacion (PK), observaciones *(opc)*, fecha_resultado *(opc, hasta que se resuelve)*, fecha_reclamo *(opc)* |
+| **Resultado de evaluación** | id_resultado (PK), nombre *(pendiente, apto, no apto)* |
+
+### Relaciones y cardinalidades (mín,máx)
+- Turno (0,1) **tiene seña** (1,1) Pago de seña
+- Pago de seña (1,1) **tiene estado** (0,N) Estado del pago
+- Pago de seña (1,1) **se paga con** (0,N) Medio de pago
+- Turno de consulta (1,1) **genera** (1,1) Evaluación previa *(solo en consultas prequirúrgicas: en el resto de los turnos no existe)*
+- Evaluación previa (1,1) **evalúa** (0,N) Protocolo *(la cirugía para la que se evalúa)*
+- Evaluación previa (1,1) **tiene resultado** (0,N) Resultado de evaluación
+- Turno de cirugía (0,1) **se basa en** (0,N) Evaluación previa
+
+La paciente y el profesional de la evaluación no se repiten como atributos:
+salen del turno de la consulta.
+
 ## Pendiente de definir
 
-- Atributos y cardinalidades de los grupos siguientes: pagos y evaluación
-  previa; cupones, tarjetas y reglas; notificaciones y asistente; usuarios y
-  log.
+- Atributos y cardinalidades de los grupos siguientes: cupones, tarjetas y
+  reglas; notificaciones y asistente; usuarios y log.

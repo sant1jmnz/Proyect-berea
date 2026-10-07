@@ -127,7 +127,7 @@ que conocer todo el modelo: en la defensa se evalúa el conocimiento global.
 ### Bloques de cada uno
 - **Santiago: turnos, pagos y auditoría.** Entidades: Paciente, Turno, Pago
   de seña, Evaluación previa, Resultado de evaluación, Estado del turno,
-  Estado del pago, Origen del turno, Usuario, Rol, Log, Tipo de evento. Se
+  Estado del pago, Medio de pago, Origen del turno, Usuario, Rol, Log, Tipo de evento. Se
   encarga de la base en Aiven.
 - **Bautista: catálogo, profesionales, cupones y avisos.** Entidades:
   Profesional, Protocolo, Categoría de protocolo, Disponibilidad, Cupón,

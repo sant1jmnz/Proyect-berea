@@ -111,10 +111,55 @@ Los martes se trabaja el frontend y demás; los miércoles y jueves, el
 backend. La consigna completa está en [`consigna-bbdd.md`](consigna-bbdd.md);
 el avance del diseño, en [`modelo-entidades.md`](modelo-entidades.md).
 
+**Cómo se trabaja:** el diseño se piensa **entre los dos** (primero por
+escrito, entidad por entidad). Recién cuando está cerrado se pasa a XML para
+draw.io. Cada uno es **responsable** de un bloque (lo arma, lo documenta y lo
+defiende primero), pero los dos tienen que conocer todo el modelo: en la
+defensa se evalúa el conocimiento global.
+
+### Bloque de Santiago: turnos, pagos y auditoría
+(sigue con el apartado Gestión y las reglas de negocio)
+
+- **Entidades:** Paciente, Turno, Pago de seña, Evaluación previa, Resultado
+  de evaluación, Estado del turno, Estado del pago, Usuario, Rol, Log, Tipo
+  de evento.
+- **Stored procedures de funcionalidades:** alta y cancelación de turnos,
+  registro de seña y reembolso (incluida la regla de cirugías: consulta
+  previa, 40%, retención y vencimiento de 6 meses), login, alta de cuentas,
+  logs.
+- **Reportes:** 4 de los 8 (por ejemplo turnos por período, ingresos por
+  seña, cancelaciones e inasistencias, rendimiento por estado), el **reporte
+  de auditoría** por rango de fechas y **un** SP `_tuneado`.
+- **Infraestructura de base:** crear la base en Aiven y verificar que acepte
+  stored procedures.
+
+### Bloque de Bautista: catálogo, profesionales, cupones y avisos
+(sigue con el apartado Cliente, protocolos, disponibilidad y buscador)
+
+- **Entidades:** Profesional, Protocolo, Categoría de protocolo,
+  Disponibilidad, Cupón, Regla de beneficio, Tarjeta de regalo, Movimiento de
+  tarjeta, Notificación, Canal de notificación, Consulta al asistente.
+- **Stored procedures de funcionalidades:** ABM de protocolos y
+  profesionales, disponibilidad y horarios libres, cupones (código, QR,
+  reglas de fidelidad), tarjetas de regalo y saldo, notificaciones
+  pendientes, consultas al asistente.
+- **Reportes:** los otros 4 de los 8 (por ejemplo protocolos más pedidos,
+  ocupación por profesional, uso de cupones, saldo de tarjetas) y **un** SP
+  `_tuneado`.
+- **Infraestructura de avisos:** n8n, bot de Telegram y la conexión con la
+  base.
+
+### Compartido
+- Diseño conceptual y lógico: se decide entre los dos.
+- Diagramas (draw.io): cada uno acomoda los de su bloque; los junta Santiago.
+- Documentación de pruebas: cada uno prueba sus stored procedures, con los 4
+  casos de la consigna, y revisa los del otro.
+
 | Hito | Estado |
 |---|---|
 | Definir entidades (mínimo 13) | [x] borrador en `modelo-entidades.md` |
-| Diseño conceptual (Chen), con cardinalidades y modelo de logs | [ ] lo arma el equipo |
+| Atributos y cardinalidades (por escrito, entre los dos) | [ ] grupo 1 propuesto, falta cerrarlo |
+| Diseño conceptual (Chen) en draw.io, con modelo de logs | [ ] |
 | Diseño lógico (Codd), normalizado en 3FN | [ ] |
 | Implementación en MySQL, dividida en schemas, con restricciones referenciales | [ ] |
 | Datos: 50+ registros en la tabla principal, 20+ en las demás; logs solo vía stored procedures | [ ] |

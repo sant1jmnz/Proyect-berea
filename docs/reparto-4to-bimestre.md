@@ -105,66 +105,104 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 6.
 | [ ] Congelar `main`: tag de la versión final | [ ] Congelar la documentación y revisar que el README esté actualizado |
 | [ ] Coevaluación al resto de los equipos | [ ] Coevaluación al resto de los equipos |
 
-## Sección Bases de Datos (miércoles y jueves)
+## Sección Bases de Datos: plan semanal
 
-Los martes se trabaja el frontend y demás; los miércoles y jueves, el
-backend. La consigna completa está en [`consigna-bbdd.md`](consigna-bbdd.md);
-el avance del diseño, en [`modelo-entidades.md`](modelo-entidades.md).
+**Días de trabajo:** los **martes** son de C y frontend (las tablas de
+arriba, Semanas 1 a 6 de la cátedra); los **miércoles y jueves** son de
+backend y Bases de Datos. Las semanas son las mismas (de martes a lunes), así
+que cada semana tiene su tabla de arriba para el martes y su bloque de abajo
+para el miércoles y el jueves.
+
+La consigna completa está en [`consigna-bbdd.md`](consigna-bbdd.md); las
+entidades, en [`modelo-entidades.md`](modelo-entidades.md); la arquitectura,
+en [`arquitectura.md`](arquitectura.md). Las fechas de los hitos que pide el
+docente en Classroom no están en esta tabla: si difieren, se ajusta.
 
 **Cómo se trabaja:** el diseño se piensa **entre los dos** (primero por
-escrito, entidad por entidad). Recién cuando está cerrado se pasa a XML para
-draw.io. Cada uno es **responsable** de un bloque (lo arma, lo documenta y lo
-defiende primero), pero los dos tienen que conocer todo el modelo: en la
-defensa se evalúa el conocimiento global.
+escrito, entidad por entidad) y recién cuando está cerrado se pasa a XML
+para draw.io. Cada uno es **responsable** de un bloque, pero los dos tienen
+que conocer todo el modelo: en la defensa se evalúa el conocimiento global.
 
-### Bloque de Santiago: turnos, pagos y auditoría
-(sigue con el apartado Gestión y las reglas de negocio)
+### Bloques de cada uno
+- **Santiago: turnos, pagos y auditoría.** Entidades: Paciente, Turno, Pago
+  de seña, Evaluación previa, Resultado de evaluación, Estado del turno,
+  Estado del pago, Usuario, Rol, Log, Tipo de evento. Se encarga de la base
+  en Aiven.
+- **Bautista: catálogo, profesionales, cupones y avisos.** Entidades:
+  Profesional, Protocolo, Categoría de protocolo, Disponibilidad, Cupón,
+  Regla de beneficio, Tarjeta de regalo, Movimiento de tarjeta, Notificación,
+  Canal de notificación, Consulta al asistente. Se encarga de n8n y el bot de
+  Telegram.
 
-- **Entidades:** Paciente, Turno, Pago de seña, Evaluación previa, Resultado
-  de evaluación, Estado del turno, Estado del pago, Usuario, Rol, Log, Tipo
-  de evento.
-- **Stored procedures de funcionalidades:** alta y cancelación de turnos,
-  registro de seña y reembolso (incluida la regla de cirugías: consulta
-  previa, 40%, retención y vencimiento de 6 meses), login, alta de cuentas,
-  logs.
-- **Reportes:** 4 de los 8 (por ejemplo turnos por período, ingresos por
-  seña, cancelaciones e inasistencias, rendimiento por estado), el **reporte
-  de auditoría** por rango de fechas y **un** SP `_tuneado`.
-- **Infraestructura de base:** crear la base en Aiven y verificar que acepte
-  stored procedures.
+### Semana 1 (miércoles 7 y jueves 8 de octubre): diseño conceptual, los DER
 
-### Bloque de Bautista: catálogo, profesionales, cupones y avisos
-(sigue con el apartado Cliente, protocolos, disponibilidad y buscador)
+Entregable de la consigna: punto 1, Diseño Conceptual (Peter Chen).
 
-- **Entidades:** Profesional, Protocolo, Categoría de protocolo,
-  Disponibilidad, Cupón, Regla de beneficio, Tarjeta de regalo, Movimiento de
-  tarjeta, Notificación, Canal de notificación, Consulta al asistente.
-- **Stored procedures de funcionalidades:** ABM de protocolos y
-  profesionales, disponibilidad y horarios libres, cupones (código, QR,
-  reglas de fidelidad), tarjetas de regalo y saldo, notificaciones
-  pendientes, consultas al asistente.
-- **Reportes:** los otros 4 de los 8 (por ejemplo protocolos más pedidos,
-  ocupación por profesional, uso de cupones, saldo de tarjetas) y **un** SP
-  `_tuneado`.
-- **Infraestructura de avisos:** n8n, bot de Telegram y la conexión con la
-  base.
-
-### Compartido
-- Diseño conceptual y lógico: se decide entre los dos.
-- Diagramas (draw.io): cada uno acomoda los de su bloque; los junta Santiago.
-- Documentación de pruebas: cada uno prueba sus stored procedures, con los 4
-  casos de la consigna, y revisa los del otro.
-
-| Hito | Estado |
+| Santiago | Bautista |
 |---|---|
-| Definir entidades (mínimo 13) | [x] borrador en `modelo-entidades.md` |
-| Atributos y cardinalidades (por escrito, entre los dos) | [ ] grupo 1 propuesto, falta cerrarlo |
-| Diseño conceptual (Chen) en draw.io, con modelo de logs | [ ] |
-| Diseño lógico (Codd), normalizado en 3FN | [ ] |
-| Implementación en MySQL, dividida en schemas, con restricciones referenciales | [ ] |
-| Datos: 50+ registros en la tabla principal, 20+ en las demás; logs solo vía stored procedures | [ ] |
-| Stored procedures de funcionalidades + 8 reportes + 1 de auditoría + 2 `_tuneado` | [ ] |
-| Documentación de pruebas (4 casos por SP) | [ ] |
+| [ ] **Miércoles (hoy)**: cerrar por escrito, entre los dos, atributos y cardinalidades de las entidades de su bloque | [ ] **Miércoles (hoy)**: cerrar por escrito, entre los dos, atributos y cardinalidades de las entidades de su bloque |
+| [ ] Cardinalidades y regla de cirugías (consulta previa, 40%, 6 meses) | [ ] Cardinalidades de cupones, tarjetas de regalo y notificaciones |
+| [ ] **Modelo de logs** (Log + Tipo de evento): qué datos se guardan para auditoría | [ ] Revisar que las 13 entidades mínimas se cumplan y que lo categorizable sea tabla maestra |
+| [ ] **Jueves**: pasar lo cerrado a XML y armar el DER de su bloque en draw.io | [ ] **Jueves**: pasar lo cerrado a XML y armar el DER de su bloque en draw.io |
+| [ ] Juntar los dos diagramas en uno solo y revisar coherencia | [ ] Revisar el diagrama completo y entregar el hito |
+
+### Semana 2 (miércoles 14 y jueves 15 de octubre): diseño lógico
+
+Entregable de la consigna: punto 2, Diseño Lógico (Edgar Codd), en 3FN.
+
+| Santiago | Bautista |
+|---|---|
+| [ ] Pasar su bloque a tablas: claves primarias y foráneas, tablas intermedias de las N:M | [ ] Pasar su bloque a tablas: claves primarias y foráneas, tablas intermedias de las N:M |
+| [ ] Normalizar en 3FN y justificar cada decisión | [ ] Normalizar en 3FN y justificar cada decisión |
+| [ ] Definir los **schemas** (por ejemplo gestión, catálogo, auditoría) | [ ] Revisar los conectores según cardinalidades y que sea coherente con el DER |
+| [ ] Armar el diagrama lógico | [ ] Revisar y entregar el hito |
+
+### Semana 3 (miércoles 21 y jueves 22 de octubre): implementación en MySQL
+
+Entregable de la consigna: punto 3, Implementación del modelo.
+
+| Santiago | Bautista |
+|---|---|
+| [ ] Instalar MySQL local (portable, sin permisos de administrador) y crear los schemas | [ ] Script `CREATE TABLE` de su bloque con todas las restricciones referenciales |
+| [ ] Script `CREATE TABLE` de su bloque con todas las restricciones referenciales | [ ] Poblar las **tablas maestras** (estados, categorías, canales, resultados) |
+| [ ] Crear la base en Aiven y verificar que acepte stored procedures y eventos | [ ] Probar que el script corre completo en limpio, de punta a punta |
+| [ ] Probar que el modelo implementado refleja el diseño | [ ] Entregar el hito |
+
+### Semana 4 (miércoles 28 y jueves 29 de octubre): datos y primeros stored procedures
+
+Entregable de la consigna: punto 4, poblar el modelo (50+ registros en la tabla principal, 20+ en las demás).
+
+| Santiago | Bautista |
+|---|---|
+| [ ] Poblar Paciente, Turno, Pago y demás de su bloque, con **50+ turnos** | [ ] Poblar Profesional, Protocolo (con cirugías y precios realistas), Cupones, Tarjetas y demás de su bloque, con 20+ cada una |
+| [ ] SPs de **login y logs** (los logs se llenan solo vía SP, nunca a mano) | [ ] SPs de ABM de protocolos y profesionales |
+| [ ] SP de alta de turno | [ ] SP de horarios libres y disponibilidad |
+
+### Semana 5 (miércoles 4 y jueves 5 de noviembre): funcionalidades y primeros reportes
+
+Entregable de la consigna: punto 5, funcionalidades y reportes.
+
+| Santiago | Bautista |
+|---|---|
+| [ ] SPs de cancelación, seña, reembolso y regla de cirugías | [ ] SPs de cupones (código y reglas de fidelidad), tarjetas de regalo y saldo |
+| [ ] **2 reportes** con agrupamiento, reuniones y fechas | [ ] SPs de notificaciones pendientes y de consultas al asistente |
+| [ ] Pruebas (4 casos) de cada SP terminado | [ ] **2 reportes** con agrupamiento, reuniones y fechas |
+| | [ ] Pruebas (4 casos) de cada SP terminado |
+
+### Semana 6 (miércoles 11 y jueves 12 de noviembre): reportes finales, tuning y pruebas
+
+Entregable de la consigna: puntos 5 y 6, y preparación de la defensa.
+
+| Santiago | Bautista |
+|---|---|
+| [ ] **2 reportes** más (llegar a 4 propios, 8 en total) | [ ] **2 reportes** más (llegar a 4 propios, 8 en total) |
+| [ ] SP de **reporte de auditoría** por rango de fechas | [ ] Elegir un reporte y hacer su `_tuneado` |
+| [ ] Elegir un reporte y hacer su `_tuneado` | [ ] Documentar las pruebas de sus SP en el documento de la cátedra |
+| [ ] Documentar las pruebas de sus SP en el documento de la cátedra | [ ] Ensayar la defensa oral: cada uno explica también los SP del otro |
+
+Es un plan ajustado (12 jornadas para toda la consigna): si una semana no
+alcanza, lo pendiente pasa a la siguiente y se anota acá con una línea de
+motivo.
 
 ## Seguimiento
 

@@ -4,7 +4,7 @@ Primer paso del diseño conceptual de la base (consigna en
 [`consigna-bbdd.md`](consigna-bbdd.md)). Acá solo se define **qué entidades hay**;
 los atributos, las cardinalidades y el diagrama de Chen se hacen después.
 
-Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 22.
+Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24.
 
 ## Decisiones tomadas
 
@@ -42,6 +42,26 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 22
 - Las compra una persona y las usa otra, con su código.
 - Tienen **vigencia**.
 
+## Cirugías
+
+- **Seña del 40%** (el resto de los protocolos, 30%).
+- **Consulta previa obligatoria y paga**, con su propia seña.
+- Si la evaluación es **apta** y la paciente pasa a la cirugía, el dinero de
+  la consulta se **devuelve**.
+- Si **no es apta**, el instituto se queda con el **10%** y devuelve el
+  resto.
+- Sin evaluación "apta" no se puede agendar la cirugía.
+
+## Reglas cerradas
+
+- Un **cupón no se puede usar junto con una tarjeta de regalo** en el mismo
+  turno.
+- Los **estados** (de cupón, tarjeta, vigencia) **se calculan**, no se
+  guardan: vigente/vencido sale de la fecha; usado, de que exista un uso;
+  el saldo de la tarjeta, de la suma de sus movimientos.
+- El **QR** se escanea con el celular del profesional, un escáner o un
+  lector en la PC de gestión (las tres opciones valen).
+
 ## Entidades
 
 ### Núcleo
@@ -55,40 +75,39 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 22
 8. **Pago de seña**
 9. **Notificación** (recordatorios y avisos)
 10. **Consulta al asistente** (preguntas a la IA y derivaciones)
+11. **Evaluación previa** (consulta prequirúrgica: paciente, cirugía,
+    turno de la consulta, profesional, fecha, resultado y observaciones)
 
 ### Cupones y tarjetas
-11. **Cupón** (código, QR, % de descuento, vigencia, paciente destinatario,
+12. **Cupón** (código, QR, % de descuento, vigencia, paciente destinatario,
     uso en un turno)
-12. **Regla de beneficio** (frecuencia o gasto acumulado, umbral, % y
+13. **Regla de beneficio** (frecuencia o gasto acumulado, umbral, % y
     vigencia de 2 a 8 semanas)
-13. **Tarjeta de regalo** (código, monto inicial, saldo, vigencia, quién la
+14. **Tarjeta de regalo** (código, monto inicial, saldo, vigencia, quién la
     compró)
-14. **Movimiento de tarjeta** (cada gasto del saldo, ligado a un turno o
+15. **Movimiento de tarjeta** (cada gasto del saldo, ligado a un turno o
     compra)
 
 ### Tablas maestras
-15. **Estado del turno**
-16. **Estado del pago**
-17. **Categoría de protocolo** (faciales, aparatología, medicina estética,
+16. **Estado del turno**
+17. **Estado del pago**
+18. **Categoría de protocolo** (faciales, aparatología, medicina estética,
     cirugías)
-18. **Canal de notificación** (WhatsApp, Google Calendar)
+19. **Canal de notificación** (WhatsApp, Google Calendar)
+20. **Resultado de evaluación** (apto, no apto)
 
 ### Seguridad y auditoría
-19. **Usuario** (credenciales; paciente opcional, personal obligatorio)
-20. **Rol**
-21. **Log**
-22. **Tipo de evento**
+21. **Usuario** (credenciales; paciente opcional, personal obligatorio)
+22. **Rol**
+23. **Log**
+24. **Tipo de evento**
 
 *Especialidad* quedó afuera: la relación profesional-protocolo la reemplaza.
 
 ## Pendiente de definir
 
 - Cómo se envía WhatsApp de verdad (API oficial, proveedor intermedio o
-  simulación).
-- Si el estado del cupón y de la tarjeta (vigente, usado, vencido) se
-  guarda o se **deriva** de la fecha y del uso/saldo (derivarlo evita
-  inconsistencias).
-- Si un cupón se puede acumular con una tarjeta de regalo en el mismo turno
-  y con qué orden se aplican.
-- Seña de las cirugías (¿igual 30% o distinta?).
+  simulación): se discute cuando terminemos de definir lo demás.
+- Qué pasa si la evaluación es apta pero la paciente no agenda la cirugía
+  (¿se devuelve igual? ¿hay un plazo?).
 - Atributos de cada entidad y cardinalidades (el diagrama lo arma el equipo).

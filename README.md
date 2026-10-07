@@ -1,11 +1,19 @@
 # Dermalia
 
 Sistema de gestión de turnos (escritorio y web) para **Dermalia, Instituto de
-Estética Médica** (barrio de Flores, CABA). Repositorio oficial de la
-**Carpeta de Proyecto V1** para la materia *Proyecto Informático I* (Prof.
-Cynthia Berea), 4to año, especialidad Computación, Escuela Técnica de
-CABA. Marco pedagógico: **Buenos Aires Aprende**. Bimestre de 7 semanas
-(desde el 4 de agosto).
+Estética Médica** (barrio de Flores, CABA). Repositorio del proyecto de
+*Proyecto Informático I* y de la sección de **Bases de Datos** (Prof.
+Cynthia Berea y Pablo Linares), 4to año, especialidad Computación, Escuela
+Técnica de CABA. Marco pedagógico: **Buenos Aires Aprende**.
+
+El trabajo se divide en dos bimestres:
+
+- **3er bimestre**: la **Carpeta de Proyecto V1** (formulación y diseño: árboles,
+  MML, requerimientos, maquetado y pitch). Quedó archivada en la rama
+  `dermalia-carpeta-proyecto-v1`.
+- **4° bimestre (actual)**: construir el sistema (frontend en Qt, base de datos
+  MySQL, sitio web), el análisis de competencia y el pitch de venta. Arrancó
+  el **6 de octubre de 2026**.
 
 ## Desafío integrador
 
@@ -13,8 +21,10 @@ CABA. Marco pedagógico: **Buenos Aires Aprende**. Bimestre de 7 semanas
 > nuestra comunidad o escuela para diseñar una propuesta de solución de
 > software viable, justificada y bien estructurada?
 
-Este bimestre **no se programa el sistema**: se lo formula y se lo diseña.
-El desarrollo técnico arranca el bimestre siguiente.
+En el 4° bimestre el objetivo es traducir los requerimientos y la planificación
+del bimestre anterior en un producto de software funcional, con persistencia en
+una base de datos relacional, y validar su viabilidad comercial frente a la
+competencia (ver [`docs/plan-4to-bimestre.md`](docs/plan-4to-bimestre.md)).
 
 ## Propuesta elegida
 
@@ -70,16 +80,20 @@ y 2 del maquetado ("Elegir protocolo", "Elegir horario")*.
 | 1 | Diagnóstico, Árbol de Problemas | [`docs/01-arbol-de-problemas.md`](docs/01-arbol-de-problemas.md) | Hecho |
 | 2 | Propuesta estratégica, Árbol de Objetivos | [`docs/02-arbol-de-objetivos.md`](docs/02-arbol-de-objetivos.md) | Hecho |
 | 3 | Matriz de Marco Lógico (MML) | [`docs/03-matriz-marco-logico.md`](docs/03-matriz-marco-logico.md) | Hecho |
-| 4 | Requerimientos funcionales y no funcionales | [`docs/04-requerimientos.md`](docs/04-requerimientos.md) | Hecho (RF-01 a RF-13, dos apartados; RNF-01 a RNF-11) |
-| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | 5+5 pantallas de escritorio en Qt, apartado Cliente y Gestión |
-| 6 | Pitch (7 a 10 min) | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion armado, falta ensayar y cronometrar con los 4 integrantes |
+| 4 | Requerimientos funcionales y no funcionales | [`docs/04-requerimientos.md`](docs/04-requerimientos.md) | Actualizado al nuevo alcance (RF-01 a RF-25, RNF-01 a RNF-14, tres apartados) |
+| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | Escritorio (Cliente y Gestión) hecho; falta el apartado Web y las pantallas nuevas |
+| 6 | Pitch | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion del bimestre anterior (7 a 10 min); hay que recortarlo al formato de 5 a 7 min |
+| 7 | Consigna de Bases de Datos | [`docs/consigna-bbdd.md`](docs/consigna-bbdd.md) | Transcripta |
+| 8 | Modelo de entidades (27 entidades) | [`docs/modelo-entidades.md`](docs/modelo-entidades.md) | Escrito (grupos 1 a 4); falta el diagrama de Chen con atributos |
+| 9 | Arquitectura y contingencia | [`docs/arquitectura.md`](docs/arquitectura.md) | Borrador (Aiven, n8n, Telegram, modo contingencia) |
+| 10 | Diagramas (Peter Chen, luego Edgar Codd) | [`docs/diagramas/`](docs/diagramas/) | Borrador del Chen con entidades y relaciones |
 
 Documentos de apoyo: [`docs/propuestas.md`](docs/propuestas.md) (las diez
 propuestas relevadas y por qué se eligió esta), [`docs/foda.md`](docs/foda.md)
 (FODA del equipo), [`docs/plan-de-aprendizaje.md`](docs/plan-de-aprendizaje.md)
 (cronograma del 3er bimestre), [`docs/plan-4to-bimestre.md`](docs/plan-4to-bimestre.md)
 (cronograma del 4° bimestre, transcripción del PDF), [`docs/reparto-4to-bimestre.md`](docs/reparto-4to-bimestre.md)
-(tareas de Santiago y Bautista semana a semana) y [`docs/material-catedra.md`](docs/material-catedra.md)
+(tareas de Santiago y Bautista semana a semana, martes de frontend y miércoles y jueves de base de datos) y [`docs/material-catedra.md`](docs/material-catedra.md)
 (resumen de los videos de cátedra, alojados como [release `material-catedra`](https://github.com/sant1jmnz/Proyect-berea/releases/tag/material-catedra)).
 
 ## Indicadores principales (MML: Propósito)
@@ -111,21 +125,29 @@ docs/
   reparto-4to-bimestre.md
   material-catedra.md
   propuestas.md
+  consigna-bbdd.md       # consigna de la sección Bases de Datos
+  modelo-entidades.md    # entidades, atributos y cardinalidades
+  arquitectura.md        # base en la nube, n8n, contingencia
+  diagramas/             # archivos .drawio (Peter Chen, Edgar Codd)
 backend/                 # vacío: el backend y la base MySQL se rehacen desde cero
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
+diseno-dermalia/         # guía de estética de las pantallas
 README.md                # este archivo, portada de la Carpeta de Proyecto V1
 ```
 
-Todo se escribe en **Markdown**, en español. Los diagramas (árboles, flujos)
-van en Mermaid dentro del propio `.md` para que se vean en GitHub. El
+Todo se escribe en **Markdown**, en español. Los diagramas de árboles y flujos
+van en Mermaid dentro del propio `.md` para que se vean en GitHub; los del
+modelo de datos son archivos `.drawio` (se abren en draw.io). El
 maquetado vigente es una página interactiva enlazada desde
 `docs/05-maquetado.md`; el maquetado móvil original sigue en
 [Figma](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled).
 
 ## Equipo y roles
 
-Formalizados como issues del repo (#1 a #4), asignados el 1° de
-septiembre:
+En el 3er bimestre se formalizaron cuatro roles como issues del repo (#1 a
+#4), asignados el 1° de septiembre. En el **4° bimestre** el trabajo técnico lo
+reparten **Santiago y Bautista** (frontend los martes, base de datos los
+miércoles y jueves; ver [`docs/reparto-4to-bimestre.md`](docs/reparto-4to-bimestre.md)):
 
 | Integrante | Rol | Issue |
 |---|---|---|
@@ -136,7 +158,9 @@ septiembre:
 
 ## Herramientas
 
-Miro / FigJam (árboles y MML) · Figma (maquetado original, reemplazado) ·
+Miro / FigJam (árboles y MML) · draw.io (diagramas de Chen y Codd) · MySQL y
+MySQL Workbench · Aiven (base en la nube) · n8n y Telegram (recordatorios) ·
+Figma (maquetado original, reemplazado) ·
 Trello o GitHub Projects (backlog) · GitHub con documentación Markdown ·
 Google Workspace / Classroom · Canva (presentación final).
 
@@ -144,7 +168,8 @@ Google Workspace / Classroom · Canva (presentación final).
 
 Cada integrante trabaja en **su propia rama** (`santiago`, `bautista`), nunca
 directo en `main`. `main` es la versión de todos y se actualiza con Pull
-Requests.
+Requests. La rama `claude-bbdd` es la del asistente (documentación de la base
+de datos) y `dermalia-carpeta-proyecto-v1` guarda la carpeta del 3er bimestre.
 
 ### 1. Primera vez: bajar el repo
 
@@ -218,9 +243,9 @@ git --version
   archivo, tocá el lápiz, y al final "Commit changes" sobre tu rama. Alcanza
   para editar los `.md` de `docs/`.
 
-## Desarrollo técnico (bimestre siguiente)
+## Desarrollo técnico (4° bimestre)
 
-Arrancó con el frontend de escritorio, sin base de datos todavía:
+Arrancó con el frontend de escritorio y el diseño de la base de datos:
 
 - `backend/`: vacío a propósito. Se rehace desde cero junto con la base
   MySQL (consigna en `docs/consigna-bbdd.md`, entidades en
@@ -234,15 +259,26 @@ Arrancó con el frontend de escritorio, sin base de datos todavía:
   `frontend/CMakeLists.txt` con Qt Creator, o por consola:
   `cmake -S frontend -B <carpeta> -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build <carpeta> && <carpeta>/dermalia_cliente`.
   La estética de las pantallas está explicada en `diseno-dermalia/SKILL.md`.
-- Siguiente: diseñar e implementar la base MySQL, conectar las pantallas y empezar el apartado Web.
+- **Base de datos**: modelo de 27 entidades escrito, con el diagrama de Peter
+  Chen en curso. Después vienen el diseño lógico (Codd, 3FN), la
+  implementación en MySQL dividida en schemas, los datos, los stored
+  procedures (funcionalidades, 8 reportes, auditoría, 2 `_tuneado`) y las
+  pruebas. El plan semanal está en `docs/reparto-4to-bimestre.md`.
+- **Arquitectura**: la base va en Aiven (MySQL gratuito), los recordatorios
+  salen con n8n desde una VM gratuita de Google Cloud, con Telegram en
+  desarrollo y WhatsApp en producción (ver `docs/arquitectura.md`).
+- Siguiente: terminar el diagrama de Chen, el diseño lógico, implementar la
+  base, conectar las pantallas y empezar el apartado Web.
 
 ## Qué falta
 
+- Diseño de la base de datos: diagrama de Chen con atributos, diseño lógico,
+  implementación, datos, stored procedures y pruebas (ver el plan semanal).
+- Apartado Web: maquetado y desarrollo.
+- Análisis de competencia, presupuesto y pitch de venta de 5 a 7 minutos.
 - Revisión cruzada (peer review) del maquetado y de los árboles con otro
   equipo: sigue pendiente. Sin fecha concreta por ahora; se retoma si
   aparece otro equipo con quien coordinarla.
 - Armar la presentación de Canva ("Proyecto Informático 1"): recorrido
   semana a semana de lo que se fue haciendo, más los problemas que se
-  encontraron. Es lo último que se arma, una vez que el resto de la
-  Carpeta de Proyecto esté cerrado.
-- Ensayar y cronometrar el pitch con los 4 integrantes.
+  encontraron. Es lo último que se arma.

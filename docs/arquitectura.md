@@ -7,18 +7,18 @@ varias decisiones están marcadas como pendientes.
 
 | Pieza | Dónde corre | Para qué |
 |---|---|---|
-| **MySQL** | VM 1 (Oracle Cloud, Ubuntu 24.04) | Fuente de verdad: turnos, pacientes, cupones, log |
-| **n8n** | VM 2 (la otra instancia Always Free) | Envía los recordatorios y orquesta los servicios externos |
+| **MySQL** | **Aiven for MySQL**, plan gratuito (administrado, en la nube) | Fuente de verdad: turnos, pacientes, cupones, log |
+| **n8n** | VM gratuita `e2-micro` de **Google Cloud** (región de EE. UU.) | Envía los recordatorios y orquesta los servicios externos |
 | **Bot de Telegram** | Telegram | Canal de recordatorios en desarrollo y demo |
 | **WhatsApp API oficial** | Meta | Canal de recordatorios en producción |
 | **Google Calendar** | Google | Turno de la paciente y del profesional |
 | **Asistente de IA** | Servicio externo | Consultas de las pacientes |
 | **Apartados Cliente y Gestión** | PC / terminal del instituto (Qt) | Cargar y consultar turnos |
-| **Sitio web** | Hosting externo gratuito (no ocupa las VMs) | Reserva y cuenta de la paciente |
+| **Sitio web** | Hosting externo gratuito | Reserva y cuenta de la paciente |
 
-Se usan **las dos instancias Always Free** de Oracle (`VM.Standard.E2.1.Micro`:
-1 OCPU, 1 GB de RAM cada una, Ubuntu 24.04, región Santiago), repartidas para
-que ninguna quede justa: una solo para la base y otra solo para n8n.
+Decisión: **Aiven + Google Cloud**, sin las VMs de Oracle. La base y el
+envío de recordatorios quedan en servicios distintos, así que la falla de uno
+no tira al otro, y ninguna máquina queda justa de memoria.
 
 ## Recordatorios con n8n
 
@@ -47,11 +47,12 @@ Objetivo: que el instituto no deje de atender si falla algo.
 | Se corta la luz en el instituto | No-break (UPS) para la PC de recepción, el router y la terminal |
 | Se cae el internet del instituto | Segunda conexión de respaldo (datos móviles del celular o router 4G) |
 | La app no puede llegar a la base | **Modo contingencia** (ver abajo) |
-| Se cae o reinicia la VM | Servicios que arrancan solos (systemd o Docker con reinicio automático) y aviso de caída con un monitor gratuito |
-| Se pierde información de la VM | Respaldos automáticos de la base (volcado programado), copiados fuera de la VM |
+| Se cae la VM de n8n o la base | n8n con reinicio automático (systemd o Docker) y aviso de caída con un monitor gratuito; Aiven mantiene sus propios respaldos |
+| Se pierde información | Respaldos automáticos de Aiven, más un volcado propio programado y copiado fuera de la nube de la base |
 
-La VM está en la nube, así que un corte de luz en el instituto no la afecta;
-lo que sí afecta es que las PCs del instituto no puedan alcanzarla.
+La base y n8n están en la nube, así que un corte de luz en el instituto no
+los afecta; lo que sí afecta es que las PCs del instituto no puedan
+alcanzarlos.
 
 ### Modo contingencia de la app de escritorio
 - La app detecta que no hay conexión y lo avisa con un cartel visible.
@@ -71,26 +72,33 @@ lo que sí afecta es que las PCs del instituto no puedan alcanzarla.
 - Contraseñas y tokens fuera del repositorio.
 - n8n protegido con usuario y contraseña, sin exponerlo sin autenticación.
 
-## Reparto en dos VMs (para no quedar justos)
+## Servicios elegidos (gratuitos)
 
-Con 1 GB de RAM por máquina, MySQL y n8n juntos quedaban muy ajustados. Por
-eso van separados:
-
-| VM | Corre | Ajustes |
+| Servicio | Qué ofrece el plan gratuito | Límites a tener en cuenta |
 |---|---|---|
-| **VM 1** | MySQL | Memoria de intercambio (swap) y MySQL configurado para consumir poco (buffer de InnoDB reducido, `performance_schema` apagado) |
-| **VM 2** | n8n | Swap, n8n con su base interna por defecto, sin servicios extra |
+| **Aiven for MySQL** | 1 CPU, 1 GB de RAM, 1 GB de disco, respaldos incluidos; sin límite de tiempo ni tarjeta | Sin red privada ni IP fija, sin SLA; pueden apagarlo si queda sin uso |
+| **Google Cloud `e2-micro`** | 1 VM siempre gratis, con 30 GB de disco | Gratis solo en 3 regiones de EE. UU.; 1 GB de tráfico saliente al mes; pide tarjeta para crear la cuenta |
 
-- Las dos VMs se comunican por su **red privada** (misma red virtual de
-  Oracle); el puerto de MySQL solo se abre a la VM 2 y no a internet.
-- El sitio web va en un hosting gratuito aparte, para no cargar las VMs.
-- Los respaldos de la base se copian a la VM 2 y a un almacenamiento externo.
-- Oracle puede reclamar instancias Always Free que queden inactivas mucho
-  tiempo; el uso constante del proyecto lo evita.
+Los planes gratuitos cambian: se verifican las condiciones al crear las
+cuentas.
+
+- n8n corre solo en la VM de Google, con swap, y consulta la base de Aiven
+  por internet con conexión cifrada (TLS).
+- Como la base está en la nube, un corte de luz o de internet en el instituto
+  no frena los recordatorios.
+- **Plan B** si no se puede crear la cuenta de Google (por la tarjeta): una
+  tarea programada en GitHub Actions que corre un script cada 5 minutos con la
+  misma consulta a los stored procedures. Es menos cómodo (no hay panel
+  visual y las ejecuciones pueden demorarse), pero no necesita VM.
+- **Desarrollo de la consigna de BBDD:** se hace con MySQL local; la base de
+  Aiven es la de producción y demo.
 
 ## Pendiente
 
-- Confirmar cuál de las dos instancias hace de VM 1 y cuál de VM 2, y que ninguna tenga otro servicio pesado (por ejemplo, un servidor de Minecraft).
-- Definir cómo se conecta la app de escritorio (API o conexión cifrada).
+- Al crear la cuenta de Aiven, verificar que el usuario pueda crear stored
+  procedures y eventos.
+- Confirmar que se puede crear la cuenta de Google Cloud; si no, usar el plan B.
+- Definir cómo se conecta la app de escritorio (API delante de la base o
+  conexión cifrada con un usuario de permisos mínimos).
 - Definir el alcance del modo contingencia.
 - Elegir el hosting del sitio web.

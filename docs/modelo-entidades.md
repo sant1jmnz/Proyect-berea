@@ -52,6 +52,10 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
   resto.
 - Sin evaluación "apta" no se puede agendar la cirugía.
 - La evaluación "apta" **vale 6 meses** para agendar la cirugía.
+- Pasados los 6 meses sin agendar: sin reclamo de la paciente, el instituto
+  se queda con el dinero de las consultas; con reclamo, retiene el 50% del
+  total de las consultas. *(A confirmar.)* La *Evaluación previa* necesita
+  guardar si hubo reclamo y cuándo.
 
 ## Reglas cerradas
 
@@ -109,6 +113,5 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
 
 - Cómo se envía WhatsApp de verdad (API oficial, proveedor intermedio o
   simulación): se discute cuando terminemos de definir lo demás.
-- Qué pasa con el dinero de la consulta si pasan los 6 meses sin agendar la
-  cirugía.
+- Confirmar la regla de los 6 meses (sin reclamo / con reclamo).
 - Atributos de cada entidad y cardinalidades (el diagrama lo arma el equipo).

@@ -262,6 +262,10 @@ El **ticket promedio por turno** que usan los cálculos es **$150.000**.
   consulta se **devuelve**.
 - La evaluación "apta" **vale 6 meses**: la cirugía se puede agendar dentro
   de ese plazo.
+- Si pasan los 6 meses sin agendar: si la paciente **no reclama** (no apela),
+  el instituto **se queda con el dinero** de las consultas; si reclama, el
+  instituto retiene el **50% del total de las consultas** y devuelve el
+  resto. *(Interpretación a confirmar.)*
 - Si no es apta, el instituto **se queda con el 10%** de la consulta y
   devuelve el resto.
 - Como todo el pago es mock, la devolución y la retención son cambios de

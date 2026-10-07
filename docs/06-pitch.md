@@ -29,11 +29,11 @@ Canva, no se dice en este bloque, se deja para las Preguntas anticipadas.
 
 | Bloque | Tiempo | Habla | Contenido | Diapositiva / fuente |
 |---|---|---|---|---|
-| Gancho | 1 min | Clovis | "Dermalia pierde 312 turnos al año por inasistencia, $6.240.000 anuales, y su recepción dedica casi 500 horas al año, más de 60 jornadas laborales completas, a responder las mismas consultas repetidas por WhatsApp." Sin "nuestro proyecto se llama…": arranca directo con el dato, con los mismos números que van a estar en pantalla. | Página "El problema", Canva; tabla de causas, `docs/01-arbol-de-problemas.md` |
+| Gancho | 1 min | Clovis | "Dermalia pierde 312 turnos al año por inasistencia, $46.800.000 anuales, y su recepción dedica casi 500 horas al año, más de 60 jornadas laborales completas, a responder las mismas consultas repetidas por WhatsApp." Sin "nuestro proyecto se llama…": arranca directo con el dato, con los mismos números que van a estar en pantalla. | Página "El problema", Canva; tabla de causas, `docs/01-arbol-de-problemas.md` |
 | Problema | 1.5 min | Santiago | El problema central: la gestión de turnos depende de la atención manual de la recepción por WhatsApp, y sus tres causas directas: sin disponibilidad visible en tiempo real (C1), consultas repetidas respondidas a mano (C2), sin seña ni recordatorio (C3, C4). | Páginas "El problema" y "Causas de ineficiencia", Canva; diagrama del Árbol de Problemas, `docs/01-arbol-de-problemas.md` |
-| Propuesta | 2 min | Bautista | Objetivo general: facilitar la gestión de turnos y consultas automatizando la carga de turnos, el registro de seña y las respuestas frecuentes. Qué hace el sistema, en criollo: cargar un turno en 3 pasos, un buscador que contesta precios y protocolos por palabra clave, seña simulada, recordatorio dentro del sistema, los RF Must de `docs/04-requerimientos.md`, sin nombrarlos por ID. Dos apartados: una terminal táctil en el instituto para que la paciente cargue su propio turno, y la PC de recepción para los turnos que llegan por teléfono. | Página "La propuesta: Dermalia", Canva; tabla de RF, `docs/04-requerimientos.md` |
-| Demostración | 2 min | Nicolás | Recorrer los dos apartados en el maquetado: la terminal (paciente elige protocolo → horario → confirma y paga la seña) y la PC de recepción con el mismo flujo para un turno por teléfono, más la búsqueda de turnos por nombre, DNI o teléfono. Se recorre como una tarea de punta a punta, no pantalla por pantalla suelta. | Página "Cómo funciona", Canva; user flow y mockup, `docs/05-maquetado.md` |
-| Transición | 0.5 min | Santiago | "Recorrimos los dos apartados, terminal y recepción, compartiendo la misma base. Ahora, los números: cómo sabemos que esto funciona." | Puente hablado entre "Cómo funciona" y "Éxito", sin diapositiva propia |
+| Propuesta | 2 min | Bautista | Objetivo general: facilitar la gestión de turnos y consultas automatizando la carga de turnos, el registro de seña y las respuestas frecuentes. Qué hace el sistema, en criollo: cargar un turno en 3 pasos, un buscador que contesta precios y protocolos por palabra clave, seña simulada, recordatorio por WhatsApp, cupones y tarjetas de regalo, un asistente de IA, los RF Must de `docs/04-requerimientos.md`, sin nombrarlos por ID. Tres apartados: una terminal táctil en el instituto, la PC de recepción para los turnos que llegan por teléfono, y un sitio web para que la paciente reserve desde su casa. | Página "La propuesta: Dermalia", Canva; tabla de RF, `docs/04-requerimientos.md` |
+| Demostración | 2 min | Nicolás | Recorrer los apartados en el maquetado: la terminal (paciente elige protocolo → horario → aplica un cupón → confirma y paga la seña), la PC de recepción con el mismo flujo para un turno por teléfono, más la búsqueda de turnos por nombre, DNI o teléfono, y el sitio web de la paciente. Se recorre como una tarea de punta a punta, no pantalla por pantalla suelta. | Página "Cómo funciona", Canva; user flow y mockup, `docs/05-maquetado.md` |
+| Transición | 0.5 min | Santiago | "Recorrimos los apartados, terminal, recepción y web, compartiendo la misma base. Ahora, los números: cómo sabemos que esto funciona." | Puente hablado entre "Cómo funciona" y "Éxito", sin diapositiva propia |
 | Viabilidad | 1.5 min | Santiago | Los cuatro indicadores de éxito, medidos a las 4 semanas de uso: 296 horas liberadas por año en la recepción, 156 turnos recuperados por año, 18 de las 25 consultas diarias resueltas por el buscador sin intervención humana, y 60 superposiciones de agenda evitadas por año. | Página "Éxito", Canva; matriz completa, `docs/03-matriz-marco-logico.md` |
 | Cierre | 0.5 min | Santiago | Este bimestre se formuló y se diseñó; el próximo arranca el desarrollo técnico sobre esta base ya trazada. Se pide al auditorio feedback sobre la propuesta de valor y la seña, antes de empezar a programar. | Página "Gracias", Canva |
 
@@ -56,7 +56,7 @@ intuición.
 Decisión de equipo tomada esta semana, no un dato relevado. Un instituto
 de estética médica (protocolos con tecnología: láser, radiofrecuencia,
 peeling químico) sostiene mejor la seña obligatoria y el ticket promedio
-que usan los indicadores ($20.000 en vez de precios de manicura), y da un
+que usan los indicadores ($150.000 de promedio, con tratamientos de decenas de miles de pesos y cirugías de millones, en vez de precios de manicura), y da un
 posicionamiento más defendible en el pitch que un centro de tratamientos
 simples. El rubro y la lógica del problema (turnos, consultas repetidas,
 inasistencia) no cambian, cambia el catálogo y el nivel de la marca.
@@ -69,13 +69,12 @@ Automatizarlas ataca la fricción directamente, sin que el instituto tenga
 que cambiar de rubro ni invertir en algo distinto de lo que ya usa
 (WhatsApp).
 
-**¿Por qué una terminal y no que la paciente reserve desde su celular?**
-Porque el stack real del equipo es C + SQL Server + Qt de escritorio, sin
-web y sin API externa: un self-service remoto necesita un canal web que
-el equipo no tiene. Una terminal táctil dentro del instituto sí es Qt
-nativo, así que la paciente sigue cargando su propio turno, solo que
-presencial en vez de desde su casa. Para cuando llama por teléfono está
-el apartado de recepción, con el mismo flujo.
+**¿Por qué una terminal, una PC de recepción y además una web?**
+Cada una cubre un momento distinto: la terminal, a la paciente que ya está
+en el instituto; la PC de recepción, a quien llama por teléfono; y el sitio
+web, a quien quiere reservar desde su casa. Al principio el stack del equipo
+no incluía web, pero el alcance se amplió: los tres comparten la misma base
+MySQL y la misma lógica, así que la web no duplica el sistema.
 
 **¿Qué pasa si el supuesto de mayor riesgo no se cumple?**
 El riesgo más alto es que la recepción no adopte el sistema como
@@ -97,9 +96,7 @@ recepción antes/después.
 Historia clínica de tratamientos, gestión de stock de insumos, liquidación
 de comisiones y app nativa quedaron fuera desde el Árbol de Problemas: no
 atacan ninguna de las cuatro causas raíz identificadas. También queda
-fuera cualquier portal self-service para la paciente (lo que antes era la
-"vitrina" con fotos y reseñas): dependía de la API de Google Maps y de un
-canal web que el stack actual no tiene. Y en general: este bimestre no se
+fuera la "vitrina" con fotos y reseñas de Google Maps. Y en general: este bimestre no se
 programa nada, se formula y se diseña: el desarrollo técnico es alcance
 del bimestre siguiente.
 
@@ -113,14 +110,14 @@ decisión de equipo en vez de quedar abiertas esperando un relevamiento
 que nunca iba a llegar, justamente para no perder tiempo del bimestre
 corto.
 
-**¿Por qué está todo simulado en vez de conectado a un servicio real?**
-Restricción del equipo: el backend se hace en C con SQL Server, el
-frontend en Qt de escritorio, sin integraciones por API externa. El
-buscador de precios y protocolos funciona por palabra clave contra una
-tabla propia, la agenda vive en el sistema, y la seña se registra como un
-estado (pagada/no pagada) que marca la recepción. La lógica de negocio
-(30% de seña, derivación a WhatsApp sin coincidencia, recordatorio antes
-del turno) queda igual, solo cambia la implementación.
+**¿Qué está simulado y qué es real?**
+El pago de la seña es un mock que imita el flujo de un pago real, sin
+procesar dinero ni guardar datos de tarjeta; lo mismo con la compra de
+tarjetas de regalo. Lo demás se conecta a servicios reales o se prevé que
+sí: Google Calendar para el turno de la paciente y del profesional,
+WhatsApp para los recordatorios (forma de envío todavía en discusión) y un
+asistente de IA para consultas. La agenda, los cupones, las tarjetas y el
+log viven en la base MySQL propia.
 
 ### Preguntas técnicas y de proceso
 
@@ -129,32 +126,33 @@ El sistema solo muestra horarios que siguen disponibles al momento de
 cargar el turno (RF-04); si dos pantallas leen la grilla en el mismo
 instante, gana quien confirma primero y a la otra se le actualiza la
 disponibilidad al instante. No es un escenario de alta concurrencia
-distribuida: los dos apartados corren contra una sola base local del
-instituto (RNF-09), no hay servidores en paralelo.
+distribuida: los tres apartados corren contra una sola base MySQL, no hay
+servidores en paralelo.
 
-**¿Por qué SQL Server específicamente, y no otra base de datos?**
-Es la tecnología que exige la restricción técnica del proyecto (RNF-11):
-backend en C sobre SQL Server, sin excepción. No fue una comparación
-contra otras bases (MySQL, PostgreSQL); es un dato de la consigna, no una
-elección de diseño libre del equipo.
+**¿Por qué MySQL?**
+La consigna de Bases de Datos lo sugiere por las máquinas de los
+laboratorios (RNF-11). Además es gratuito, tiene Workbench para modelar y
+soporta stored procedures, que la consigna exige para toda la lógica.
 
 **¿Cómo protegen los datos de las pacientes?**
-Nombre, DNI, teléfono y protocolo se guardan solo en la base local del
-instituto, sin sincronizarse con ningún servicio externo (RNF-06). El
+Nombre, DNI, teléfono y protocolo se guardan en la base MySQL del
+instituto; a los servicios externos solo se les manda lo mínimo y al
+asistente de IA no se le envían datos personales ni de salud (RNF-06). El
 sistema tampoco maneja pagos reales ni datos de tarjeta: la seña es un
-mock que solo cambia un estado (pagada/no pagada) en la base (RNF-05).
+mock (RNF-05). El personal ingresa con cuenta propia y cada acción queda en
+un log de auditoría (RF-20).
 
 **¿Qué pasa si se corta internet o falla el sistema a mitad de un turno?**
-Los dos apartados corren en local contra la base del instituto, sin
-depender de internet (RNF-09), así que un corte de internet no los tira
-abajo. Una caída del propio SQL Server sí frena el sistema: no hay un plan
-de contingencia (backup, segundo servidor) definido todavía, queda fuera
-del alcance de este bimestre.
+La terminal y la PC de recepción funcionan contra la base del instituto;
+lo que depende de internet (WhatsApp, Calendar, IA, el sitio web) degrada
+sin frenar la carga de turnos (RNF-09). Una caída del propio servidor MySQL
+sí frena el sistema: no hay un plan de contingencia (backup, segundo
+servidor) definido todavía.
 
 **¿El sistema se podría usar en otro instituto, o está armado solo para Dermalia?**
 La lógica (turnos, buscador, seña, recordatorio) es genérica; lo que está
-a medida de Dermalia es el catálogo de protocolos, los precios y el monto
-de seña. Adaptarlo a otro instituto implicaría recargar esos datos, no
+a medida de Dermalia es el catálogo de protocolos, los precios, el monto
+de seña y las reglas de cupones. Adaptarlo a otro instituto implicaría recargar esos datos, no
 reescribir el sistema.
 
 **¿Qué pasa si un profesional cancela su disponibilidad después de que ya hay turnos cargados en ese horario?**

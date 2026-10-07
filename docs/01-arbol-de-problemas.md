@@ -109,7 +109,7 @@ Board completo: https://miro.com/app/board/uXjVHwuDCKs=/
 | C3 | No se cobra ni confirma seña al reservar | Directa | Centros en España redujeron inasistencias cobrando por adelantado ([Cuatro](https://www.cuatro.com/noticias/economia/20250116/reservas-fantasma-centros-estetica-peluquerias_18_014508640.html)); hoy Dermalia no cobra seña |
 | C3.1 | Cobrar seña hoy exige gestión manual de transferencias | Indirecta (raíz) | La recepción estima que un 10% de pacientes nuevas podría dudar frente a una seña obligatoria; las habituales no la resistirían |
 | C4 | No hay recordatorio automático de turno | Directa | Recordatorios automáticos redujeron inasistencias 50% en un caso documentado ([WhatsApp Business API](https://developargentina.com/blog/whatsapp-business-api-argentina-automatizacion-ventas-2025)) |
-| C4.1 | La recepción no tiene tiempo de avisar turno a cada paciente a mano | Indirecta (raíz) | 6 turnos/semana perdidos por inasistencia, ≈ $120.000/semana (precio promedio de protocolo, $20.000) |
+| C4.1 | La recepción no tiene tiempo de avisar turno a cada paciente a mano | Indirecta (raíz) | 6 turnos/semana perdidos por inasistencia, ≈ $900.000/semana (ticket promedio de $150.000, supuesto de equipo: el catálogo incluye desde tratamientos faciales hasta cirugías) |
 
 ## Tabla de efectos
 

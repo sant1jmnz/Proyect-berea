@@ -72,35 +72,35 @@ Datos del instituto:
   (precios, horarios, "¿qué incluye el protocolo?").
 - 95 minutos por día dedicados a responderlas. Es la línea de base del
   indicador principal.
-- 6 turnos por semana perdidos por inasistencia, ≈ $120.000/semana (precio
-  promedio de protocolo, $20.000).
+- 6 turnos por semana perdidos por inasistencia, ≈ $900.000/semana (ticket
+  promedio de $150.000, supuesto de equipo).
 - 5 superposiciones de turno por mes.
 
 ### Qué hace el sistema
 
-Dos apartados, los dos en Qt de escritorio: una terminal táctil en el
-instituto para que la paciente cargue su propio turno, y la PC de
-recepción para los turnos que llegan por teléfono.
+Tres apartados: una terminal táctil en Qt en el instituto para que la
+paciente cargue su propio turno, la PC de recepción (Qt) para los turnos
+que llegan por teléfono, y un sitio web para la paciente.
 
 | Módulo | Función |
 |---|---|
 | Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema; lo hace la paciente en la terminal o la recepción cuando llama por teléfono |
-| Registro de seña | Simulado (mock): se marca el estado de pago, sin pasarela real ni datos de tarjeta |
-| Buscador de precios y protocolos | Búsqueda por palabra clave contra una base local con precios, protocolos y políticas; si no encuentra coincidencia, marca la derivación a WhatsApp del instituto |
-| Buscar turnos | Por nombre, DNI o teléfono de la paciente, sin enlace ni cuenta |
+| Registro de seña | Simulado (mock que imita un pago real): se registra el estado de pago, sin procesar dinero real ni guardar datos de tarjeta |
+| Buscador de precios y protocolos | Búsqueda por palabra clave contra la base propia, más un asistente de IA; si no hay respuesta, deriva al WhatsApp del instituto |
+| Buscar turnos | Por DNI sin cuenta, o con la cuenta opcional de la paciente |
+| Cupones, tarjetas de regalo y fidelidad | Cupones por código o QR, tarjetas de regalo con saldo y cupones automáticos por buenas rachas |
 
-**Restricción técnica del equipo** (definida después de este relevamiento
-inicial): backend en C con SQL Server, frontend en Qt de escritorio, sin
-integraciones por API externa ni canal web. Por eso el registro de seña y
-el buscador quedaron descriptos arriba como simulados/locales. El detalle
+**Restricción técnica del equipo** (actualizada después de este
+relevamiento inicial): base de datos MySQL, aplicación de escritorio en Qt
+y sitio web, con integraciones externas permitidas (Google Calendar,
+WhatsApp, asistente de IA). El pago sigue siendo un mock. El detalle
 completo, actualizado, está en `docs/03-matriz-marco-logico.md` y
 `docs/04-requerimientos.md`.
 
 ### Fuera de alcance
 
 Historia clínica de tratamientos, gestión de stock de insumos, liquidación
-de comisiones, app nativa, y una vitrina de fotos y reseñas (dependía de
-una API externa). Este bimestre no se programa nada: se formula y se
+de comisiones, app nativa, y una vitrina de fotos y reseñas. Este bimestre no se programa nada: se formula y se
 diseña.
 
 ### Indicadores preliminares
@@ -130,10 +130,10 @@ diseña.
 
 Alta. Alcance delimitado, decisiones técnicas defendibles en el pitch. El
 riesgo de armar demasiadas integraciones externas quedó resuelto de raíz
-por la restricción técnica del equipo (C + SQL Server, sin APIs): no hay
-cuatro integraciones que gestionar, hay cuatro mocks propios. Conviene
-igual marcar cuáles son núcleo (reserva + seña) y cuáles deseables (quiz,
-reseñas).
+por mantener el pago como mock. Con las APIs ahora permitidas (Google
+Calendar, WhatsApp, IA) el riesgo de integraciones vuelve a existir:
+conviene marcar cuáles son núcleo (reserva + seña + log) y cuáles
+deseables (asistente de IA, WhatsApp automático, fidelidad).
 
 ## Propuesta 2: Gestión de inventario y punto de venta (POS simplificado)
 

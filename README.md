@@ -37,8 +37,9 @@ paciente para cargar su propio turno, y la **PC de recepción**, para los
 turnos que llegan por teléfono. Detalle completo en
 [`docs/04-requerimientos.md`](docs/04-requerimientos.md).
 
-**Stack técnico**: backend en **C** con **SQL Server**, frontend en
-**Qt de escritorio**, sin APIs externas.
+**Stack técnico**: base de datos **MySQL**, aplicación de escritorio en
+**Qt** y **sitio web**; se permiten APIs externas (Google Calendar,
+WhatsApp, asistente de IA). El backend se está rehaciendo desde cero.
 
 El equipo relevó diez propuestas en `docs/propuestas.md`. Esta quedó como
 principal frente a otras cuatro (POS de kiosco, adopción de mascotas,

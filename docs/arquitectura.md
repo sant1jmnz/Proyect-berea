@@ -7,17 +7,18 @@ varias decisiones están marcadas como pendientes.
 
 | Pieza | Dónde corre | Para qué |
 |---|---|---|
-| **MySQL** | VM en la nube (Oracle Cloud, Ubuntu 24.04) | Fuente de verdad: turnos, pacientes, cupones, log |
-| **n8n** (instalado en la VM) | La misma VM | Envía los recordatorios y orquesta los servicios externos |
+| **MySQL** | VM 1 (Oracle Cloud, Ubuntu 24.04) | Fuente de verdad: turnos, pacientes, cupones, log |
+| **n8n** | VM 2 (la otra instancia Always Free) | Envía los recordatorios y orquesta los servicios externos |
 | **Bot de Telegram** | Telegram | Canal de recordatorios en desarrollo y demo |
 | **WhatsApp API oficial** | Meta | Canal de recordatorios en producción |
 | **Google Calendar** | Google | Turno de la paciente y del profesional |
 | **Asistente de IA** | Servicio externo | Consultas de las pacientes |
 | **Apartados Cliente y Gestión** | PC / terminal del instituto (Qt) | Cargar y consultar turnos |
-| **Sitio web** | Hosting a definir | Reserva y cuenta de la paciente |
+| **Sitio web** | Hosting externo gratuito (no ocupa las VMs) | Reserva y cuenta de la paciente |
 
-La VM actual es una instancia Always Free de Oracle (`VM.Standard.E2.1.Micro`:
-1 OCPU, 1 GB de RAM, Ubuntu 24.04, región Santiago).
+Se usan **las dos instancias Always Free** de Oracle (`VM.Standard.E2.1.Micro`:
+1 OCPU, 1 GB de RAM cada una, Ubuntu 24.04, región Santiago), repartidas para
+que ninguna quede justa: una solo para la base y otra solo para n8n.
 
 ## Recordatorios con n8n
 
@@ -70,17 +71,26 @@ lo que sí afecta es que las PCs del instituto no puedan alcanzarla.
 - Contraseñas y tokens fuera del repositorio.
 - n8n protegido con usuario y contraseña, sin exponerlo sin autenticación.
 
-## Límites de la VM actual
+## Reparto en dos VMs (para no quedar justos)
 
-Con 1 GB de RAM, MySQL y n8n juntos quedan muy justos. Habría que agregar
-memoria de intercambio (swap) y ajustar MySQL para que consuma poco. Oracle
-también ofrece instancias Always Free con más memoria (arquitectura ARM),
-cuando hay disponibilidad. Además, Oracle puede reclamar instancias Always
-Free que quedan inactivas mucho tiempo.
+Con 1 GB de RAM por máquina, MySQL y n8n juntos quedaban muy ajustados. Por
+eso van separados:
+
+| VM | Corre | Ajustes |
+|---|---|---|
+| **VM 1** | MySQL | Memoria de intercambio (swap) y MySQL configurado para consumir poco (buffer de InnoDB reducido, `performance_schema` apagado) |
+| **VM 2** | n8n | Swap, n8n con su base interna por defecto, sin servicios extra |
+
+- Las dos VMs se comunican por su **red privada** (misma red virtual de
+  Oracle); el puerto de MySQL solo se abre a la VM 2 y no a internet.
+- El sitio web va en un hosting gratuito aparte, para no cargar las VMs.
+- Los respaldos de la base se copian a la VM 2 y a un almacenamiento externo.
+- Oracle puede reclamar instancias Always Free que queden inactivas mucho
+  tiempo; el uso constante del proyecto lo evita.
 
 ## Pendiente
 
-- Decidir si la VM sigue siendo la actual o se usa una con más memoria.
+- Confirmar cuál de las dos instancias hace de VM 1 y cuál de VM 2, y que ninguna tenga otro servicio pesado (por ejemplo, un servidor de Minecraft).
 - Definir cómo se conecta la app de escritorio (API o conexión cifrada).
 - Definir el alcance del modo contingencia.
 - Elegir el hosting del sitio web.

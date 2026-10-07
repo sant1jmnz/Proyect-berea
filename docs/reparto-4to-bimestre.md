@@ -115,7 +115,8 @@ para el miércoles y el jueves.
 
 La consigna completa está en [`consigna-bbdd.md`](consigna-bbdd.md); las
 entidades, en [`modelo-entidades.md`](modelo-entidades.md); la arquitectura,
-en [`arquitectura.md`](arquitectura.md). Las fechas de los hitos que pide el
+en [`arquitectura.md`](arquitectura.md). **Horas disponibles por semana:** miércoles de 13:30 a 16:20 y jueves de
+15:00 a 16:20 (unas 4 horas). Las fechas de los hitos que pide el
 docente en Classroom no están en esta tabla: si difieren, se ajusta.
 
 **Cómo se trabaja:** el diseño se piensa **entre los dos** (primero por
@@ -126,8 +127,8 @@ que conocer todo el modelo: en la defensa se evalúa el conocimiento global.
 ### Bloques de cada uno
 - **Santiago: turnos, pagos y auditoría.** Entidades: Paciente, Turno, Pago
   de seña, Evaluación previa, Resultado de evaluación, Estado del turno,
-  Estado del pago, Usuario, Rol, Log, Tipo de evento. Se encarga de la base
-  en Aiven.
+  Estado del pago, Origen del turno, Usuario, Rol, Log, Tipo de evento. Se
+  encarga de la base en Aiven.
 - **Bautista: catálogo, profesionales, cupones y avisos.** Entidades:
   Profesional, Protocolo, Categoría de protocolo, Disponibilidad, Cupón,
   Regla de beneficio, Tarjeta de regalo, Movimiento de tarjeta, Notificación,

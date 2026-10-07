@@ -1,6 +1,6 @@
 # Dermalia
 
-Sistema de gestión de turnos de escritorio para **Dermalia, Instituto de
+Sistema de gestión de turnos (escritorio y web) para **Dermalia, Instituto de
 Estética Médica** (barrio de Flores, CABA). Repositorio oficial de la
 **Carpeta de Proyecto V1** para la materia *Proyecto Informático I* (Prof.
 Cynthia Berea), 4to año, especialidad Computación, Escuela Técnica de
@@ -21,24 +21,28 @@ El desarrollo técnico arranca el bimestre siguiente.
 La gestión de turnos y consultas del instituto depende hoy de la atención
 manual de la recepción por WhatsApp: 95 minutos diarios respondiendo
 consultas repetidas, 6 turnos perdidos por semana por inasistencia (≈
-$120.000) y 5 superposiciones de agenda por mes. El sistema propuesto
+$900.000) y 5 superposiciones de agenda por mes. El sistema propuesto
 ataca esas cuatro causas con:
 
 | Módulo | Función |
 |---|---|
 | Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema |
 | Buscador de precios y protocolos | Búsqueda por palabra clave; deriva a WhatsApp si no encuentra coincidencia |
-| Registro de seña | Simulado (mock): la recepción marca el estado de pago, sin procesar dinero real |
-| Recordatorio de turno | Generado dentro del sistema, visible al buscar el turno |
-| Buscar turnos | Por nombre, DNI o teléfono de la paciente, sin enlace ni cuenta |
+| Registro de seña | Simulado (mock que imita un pago real), sin procesar dinero real |
+| Recordatorio de turno | Por Telegram (gratis, en desarrollo) y WhatsApp en producción; botón para agregar el turno a Google Calendar |
+| Buscar turnos | Por DNI o teléfono, sin cuenta; con cuenta opcional se guarda el historial |
+| Asistente de IA | Responde consultas con la información del instituto |
+| Cupones y tarjetas de regalo | Cupones por código o QR, tarjetas con saldo y cupones por fidelidad |
 
-Dos apartados: una **terminal táctil** en el instituto, que usa la
-paciente para cargar su propio turno, y la **PC de recepción**, para los
-turnos que llegan por teléfono. Detalle completo en
+Tres apartados: una **terminal táctil** en el instituto, que usa la
+paciente para cargar su propio turno; la **PC de recepción**, para los
+turnos que llegan por teléfono; y un **sitio web** para reservar desde
+cualquier lugar. Detalle completo en
 [`docs/04-requerimientos.md`](docs/04-requerimientos.md).
 
-**Stack técnico**: backend en **C** con **SQL Server**, frontend en
-**Qt de escritorio**, sin APIs externas.
+**Stack técnico**: base de datos **MySQL**, aplicación de escritorio en
+**Qt** y **sitio web**; se permiten APIs externas (Google Calendar,
+WhatsApp, asistente de IA). El backend se está rehaciendo desde cero.
 
 El equipo relevó diez propuestas en `docs/propuestas.md`. Esta quedó como
 principal frente a otras cuatro (POS de kiosco, adopción de mascotas,
@@ -107,7 +111,7 @@ docs/
   reparto-4to-bimestre.md
   material-catedra.md
   propuestas.md
-backend/                 # núcleo en C (reglas de negocio) + tests, CMake
+backend/                 # vacío: el backend y la base MySQL se rehacen desde cero
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
 README.md                # este archivo, portada de la Carpeta de Proyecto V1
 ```
@@ -187,8 +191,6 @@ Antes de mergear, avisá al equipo.
 - Trabajá solo en tu rama; confirmá con `git branch` antes de editar.
 - Nunca uses `git push --force`. Si `git push` da error, avisá.
 - No subas contraseñas, tokens ni archivos con datos reales de pacientes.
-- Para probar el código en C:
-  `cmake -S backend -B backend/build && cmake --build backend/build && ctest --test-dir backend/build`
 
 ### Si estás en una PC de laboratorio sin Git ni permisos
 
@@ -218,12 +220,11 @@ git --version
 
 ## Desarrollo técnico (bimestre siguiente)
 
-Arrancó con la base, sin UI ni acceso a base todavía:
+Arrancó con el frontend de escritorio, sin base de datos todavía:
 
-- `backend/`: reglas de negocio en C puro, sin base ni Qt, con tests:
-  seña (RF-10), reembolso, recordatorio (RF-11), superposición de horarios
-  (RF-04) y enlace `wa.me` (RF-07). Se prueba con
-  `cmake -S backend -B backend/build && cmake --build backend/build && ctest --test-dir backend/build`.
+- `backend/`: vacío a propósito. Se rehace desde cero junto con la base
+  MySQL (consigna en `docs/consigna-bbdd.md`, entidades en
+  `docs/modelo-entidades.md`).
 - `frontend/`: interfaz en Qt 6 (Widgets, pantallas en `.ui` de Qt Designer).
   Están los prototipos navegables de los dos apartados, Gestión
   (`dermalia_gestion`, PC de recepción) y Cliente (`dermalia_cliente`,
@@ -233,7 +234,7 @@ Arrancó con la base, sin UI ni acceso a base todavía:
   `frontend/CMakeLists.txt` con Qt Creator, o por consola:
   `cmake -S frontend -B <carpeta> -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build <carpeta> && <carpeta>/dermalia_cliente`.
   La estética de las pantallas está explicada en `diseno-dermalia/SKILL.md`.
-- Siguiente: conectar las pantallas con la base.
+- Siguiente: diseñar e implementar la base MySQL, conectar las pantallas y empezar el apartado Web.
 
 ## Qué falta
 

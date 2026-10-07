@@ -120,7 +120,7 @@ apartado Web.
 - La seña tiene su propia tarjeta en los dos apartados, separada del
   resumen del turno: la evidencia de `propuestas.md` dice que puede
   generar resistencia en la paciente, así que el monto y la regla (30%
-  del precio final, mínimo $20.000, reembolsable con +24h, RF-10)
+  del precio final, 40% en cirugías, mínimo $20.000, reembolsable con +24h, RF-10)
   quedan visibles antes de confirmar el pago simulado, en vez de aparecer
   como un cargo sorpresa.
 - El buscador de precios y protocolos muestra de dónde sale cada

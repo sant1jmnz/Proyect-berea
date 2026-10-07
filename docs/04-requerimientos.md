@@ -43,7 +43,7 @@ quién hizo cada acción.
 | RF-07 | Todos | ...derivar la consulta al WhatsApp del instituto cuando el buscador o el asistente de IA no puedan responder, y dejarla registrada. | R2 | Must |
 | RF-08 | Cliente + Web | ...a la paciente pagar la seña al confirmar su turno con un flujo **simulado que imita un pago real** (estilo Mercado Pago): el sistema registra el estado, sin procesar dinero real. | R3 | Must |
 | RF-09 | Gestión | ...a la recepción registrar el pago de la seña cuando confirma un turno cargado por teléfono (mismo mock que RF-08). | R3 | Must |
-| RF-10 | Todos | ...calcular (de forma simulada) una seña del 30% del valor del protocolo (mínimo $20.000), reembolsable 100% si se cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
+| RF-10 | Todos | ...calcular (de forma simulada) una seña del 30% del precio final del protocolo (mínimo $20.000), y del **40% en cirugías**; reembolsable 100% si se cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
 | RF-11 | Todos | ...enviar un recordatorio de turno por **WhatsApp** a la paciente antes de la fecha reservada, y registrar cada aviso (canal, estado, fecha programada). | R4 | Must |
 | RF-12 | Cliente + Web | ...a la paciente buscar y cancelar su propio turno con su DNI o teléfono, sin cuenta. | R1 | Should |
 | RF-13 | Gestión | ...a la recepción buscar y cancelar el turno de cualquier paciente por nombre, DNI o teléfono. | R1 | Should |
@@ -51,8 +51,9 @@ quién hizo cada acción.
 | RF-15 | Web (+ Cliente) | ...a la paciente **crear una cuenta opcional**; con cuenta ve su historial de turnos sin volver a ingresar su DNI. | R1 | Should |
 | RF-16 | Todos | ...buscar el historial de turnos de una paciente **por DNI** (sin cuenta), tanto desde el apartado Cliente como desde la Web. | R1 | Should |
 | RF-17 | Cliente + Web + Gestión | ...que la paciente con cuenta ingrese un **cupón de descuento por código** mientras agenda ("¿Tenés un cupón de descuento?") y que el precio se actualice antes de pagar. | R3 | Should |
-| RF-22 | Gestión | ...que cada cupón tenga un **código QR**, y que el profesional lo escanee antes del pago para aplicarlo si la paciente no lo cargó al agendar. | R3 | Should |
-| RF-23 | Web + Cliente + Gestión | ...vender y canjear **tarjetas de regalo por monto** (ej. $300.000): la tarjeta tiene saldo y puede gastarse en varias compras y turnos, también por otra persona, hasta que venza. | R3 | Should |
+| RF-22 | Gestión | ...que cada cupón tenga un **código QR**, y que el profesional lo escanee antes del pago para aplicarlo si la paciente no lo cargó al agendar. El escaneo puede hacerse con el **celular del profesional**, un **escáner** o un **lector** conectado a la PC de gestión. | R3 | Should |
+| RF-23 | Web + Cliente + Gestión | ...vender y canjear **tarjetas de regalo por monto** (ej. $300.000): la tarjeta tiene saldo y puede gastarse en varias compras y turnos, también por otra persona, hasta que venza. **Un cupón y una tarjeta de regalo no se pueden usar en el mismo turno.** | R3 | Should |
+| RF-25 | Todos | ...que toda **cirugía** requiera una **consulta previa paga**, con su propia seña, y que solo pueda agendarse si el resultado de la evaluación es "apto": si la paciente pasa a la cirugía, el dinero de la consulta se **devuelve**; si no es apta, el instituto **retiene el 10%** y devuelve el resto. | R1, R3 | Must |
 | RF-24 | Todos | ...generar **cupones automáticos por fidelidad** a las pacientes con cuenta: por frecuencia (ej. 2 visitas en 1 mes → 10%) y por gasto acumulado (ej. superar cierto monto → cupón). | R3 | Should |
 | RF-18 | Gestión | ...registrar qué **protocolos realiza cada profesional**, y ofrecer en la reserva solo los profesionales habilitados para el protocolo elegido. | R1 | Should |
 | RF-19 | Web + Gestión | ...que, al confirmar el turno, la paciente pueda agregarlo a **su Google Calendar** con un botón, y que el turno se cargue automáticamente en el calendario del **profesional**. | R4 | Should |
@@ -60,8 +61,8 @@ quién hizo cada acción.
 | RF-21 | Web | ...ofrecer el **sitio web** completo para la paciente: catálogo de protocolos, reserva, consulta/cancelación del turno, asistente de IA y cuenta opcional. | R1-R4 | Must |
 
 Los Must son los que atacan directamente las cuatro causas del Árbol de
-Problemas (C1-C4), más el log de auditoría (RF-20) y el sitio web (RF-21),
-que pidió el equipo como parte del alcance. El resto (RF-10, RF-12 a RF-19 y RF-22 a RF-24)
+Problemas (C1-C4), más el log de auditoría (RF-20), el sitio web (RF-21) y la consulta previa de cirugías (RF-25),
+que pidió el equipo como parte del alcance. El resto (RF-10, RF-12 a RF-19, RF-22 a RF-24)
 son Should: mejoran la experiencia pero el sistema funciona sin ellos.
 
 La "vitrina" (fotos antes/después + reseñas de Google Maps) sigue fuera
@@ -225,6 +226,17 @@ Criterios de aceptación:
 - Puedo consultar el log por rango de fechas.
 ```
 
+```
+Como paciente que quiere una cirugía, quiero hacerme primero una consulta de evaluación,
+para saber si estoy apta antes de reservar la operación.
+
+Criterios de aceptación:
+- La consulta previa se paga con su seña y es obligatoria para toda cirugía.
+- Solo puedo agendar la cirugía con una evaluación "apta".
+- Si paso a la cirugía, se me devuelve el dinero de la consulta; si no soy apta, el instituto retiene el 10%.
+- La seña de la cirugía es del 40%.
+```
+
 ## Catálogo y precios de referencia
 
 Dermalia es un instituto de **estética médica**: el catálogo va de
@@ -241,8 +253,17 @@ catálogo real. Valores en pesos argentinos (orden de magnitud 2026):
 | Cirugías | Rinoplastia, lipoescultura, mamoplastia, blefaroplastia | $2.500.000 – $9.000.000 |
 
 El **ticket promedio por turno** que usan los cálculos es **$150.000**.
-Las cirugías pueden requerir una seña distinta (a definir) y una consulta
-de evaluación previa; la categoría del protocolo lo permite modelar.
+### Cirugías
+
+- **Seña del 40%** del precio final (el resto de los protocolos, 30%).
+- **Consulta previa obligatoria y paga**, con su propia seña. Sin
+  evaluación "apta" no se puede agendar la cirugía.
+- Si la evaluación es apta y la paciente pasa a la cirugía, el dinero de la
+  consulta se **devuelve**.
+- Si no es apta, el instituto **se queda con el 10%** de la consulta y
+  devuelve el resto.
+- Como todo el pago es mock, la devolución y la retención son cambios de
+  estado y de monto en el sistema, no movimientos de dinero real.
 
 ## Backlog inicial
 

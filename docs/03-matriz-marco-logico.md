@@ -49,13 +49,16 @@ R3, registro de seña simulado (mock):
   recepción marca el pago como recibido (efectivo o transferencia ya
   confirmada por fuera del sistema), el sistema registra el estado como
   pagado, sin procesar dinero real ni conectarse a ninguna pasarela.
-- A.3.2 Seña del 30% del valor del protocolo (mínimo $20.000); reembolsable
+- A.3.2 Seña del 30% del valor del protocolo (mínimo $20.000; 40% en cirugías); reembolsable
   100% si se cancela con más de 24 h de anticipación, no reembolsable por
   debajo de ese plazo o por inasistencia. Decisión de equipo, no dato
   relevado: no hay una recepción real de Dermalia a quien consultarle. Como
   todo el registro es mock, el "reembolso" también es un cambio de estado
   en el sistema, no una devolución de dinero real.
 
+- A.3.4 Cirugías: consulta previa paga y obligatoria; con evaluación apta el
+  dinero de la consulta se devuelve, si no es apta el instituto retiene el
+  10%. Decisión de equipo.
 - A.3.3 Cupones de descuento (por código y por QR, con vigencia de 2 a 8
   semanas), tarjetas de regalo por monto y cupones automáticos por
   fidelidad (frecuencia y gasto acumulado). Decisión de equipo para

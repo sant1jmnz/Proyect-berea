@@ -5,7 +5,7 @@ Primer paso del diseño conceptual de la base (consigna en
 los atributos y cardinalidades se van cerrando por grupos (abajo); el diagrama
 de Chen se arma al final.
 
-Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 25.
+Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 27.
 
 ## Decisiones tomadas
 
@@ -71,7 +71,7 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 25
 - El **QR** se escanea con el celular del profesional, un escáner o un
   lector en la PC de gestión (las tres opciones valen).
 
-## Entidades (25)
+## Entidades (27)
 
 ### Núcleo
 1. **Paciente** (cuenta opcional)
@@ -102,15 +102,17 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 25
     cirugías)
 17. **Canal de notificación** (Telegram, WhatsApp, Google Calendar, WhatsApp asistido)
 18. **Resultado de evaluación** (apto, no apto)
-19. **Origen del turno** (terminal, web, gestión)
+19. **Origen** (terminal, web, gestión, sistema): desde dónde se hizo algo
 20. **Medio de pago** (tarjeta simulada, transferencia, efectivo, tarjeta de regalo)
 21. **Tipo de regla** (frecuencia de visitas, gasto acumulado, promoción general)
+22. **Estado de notificación** (pendiente, enviada, fallida)
+23. **Tipo de notificación** (recordatorio de turno, confirmación, cancelación, cupón nuevo)
 
 ### Seguridad y auditoría
-22. **Usuario** (credenciales; paciente opcional, personal obligatorio)
-23. **Rol**
-24. **Log**
-25. **Tipo de evento**
+24. **Usuario** (credenciales; paciente opcional, personal obligatorio)
+25. **Rol**
+26. **Log**
+27. **Tipo de evento**
 
 Además, dos relaciones N:M que se vuelven **tablas intermedias** en el diseño
 lógico (en el Chen son relaciones, no entidades): *Turno–Protocolo* ("incluye")
@@ -131,8 +133,9 @@ y *Profesional–Protocolo* ("realiza").
    `precio_aplicado`, así un cambio posterior en el catálogo no altera los
    turnos viejos. El total del turno **no se guarda**: se calcula sumando los
    `precio_aplicado` (evita redundancia).
-4. **Origen del turno es tabla maestra** (terminal, web, gestión): es dato
-   categorizable y sirve para reportes.
+4. **Origen es tabla maestra** (terminal, web, gestión, sistema): es dato
+   categorizable, sirve para reportes y lo comparten el turno, la consulta al
+   asistente y el log.
 5. **Quién cargó el turno queda en el log**, no como relación del turno: un
    turno cargado por una paciente sin cuenta no tiene usuario, y duplicaría
    lo que ya registra la auditoría.
@@ -147,7 +150,7 @@ y *Profesional–Protocolo* ("realiza").
 | **Protocolo** | id_protocolo (PK), nombre, descripcion, precio, duracion_min, activo |
 | **Categoría de protocolo** | id_categoria (PK), nombre, porcentaje_sena, requiere_evaluacion |
 | **Estado del turno** | id_estado_turno (PK), nombre |
-| **Origen del turno** | id_origen (PK), nombre |
+| **Origen** | id_origen (PK), nombre |
 | **Turno** | id_turno (PK), fecha_hora_inicio, fecha_hora_fin, fecha_creacion, google_event_id *(opc)* |
 
 ### Relaciones y cardinalidades (mín,máx)
@@ -157,7 +160,7 @@ y *Profesional–Protocolo* ("realiza").
 - Profesional (1,N) **realiza** (0,N) Protocolo
 - Protocolo (1,1) **pertenece a** (0,N) Categoría de protocolo
 - Turno (1,1) **tiene estado** (0,N) Estado del turno
-- Turno (1,1) **se origina en** (0,N) Origen del turno
+- Turno (1,1) **se origina en** (0,N) Origen
 - Paciente (0,1) **tiene cuenta** (0,1) Usuario
 - Profesional (1,1) **tiene cuenta** (0,1) Usuario
 
@@ -267,7 +270,74 @@ salen del turno de la consulta.
 - Tarjeta de regalo (0,N) **registra** (1,1) Movimiento de tarjeta *(la carga inicial es el atributo `monto_inicial`, no un movimiento)*
 - Movimiento de tarjeta (1,1) **cubre** (0,N) Turno
 
+## Grupo 4 (propuesto): avisos, asistente, cuentas y log
+
+### Decisiones
+1. **Cada aviso es una fila de `Notificación`.** Guarda a quién va, por qué
+   canal, de qué tipo es, cuándo se programó y cómo terminó. Es lo que lee y
+   actualiza n8n con los stored procedures.
+2. **Estado y tipo de la notificación son tablas maestras** (nuevas): son datos
+   categorizables (pendiente/enviada/fallida; recordatorio, confirmación,
+   cancelación, cupón nuevo).
+3. **El destinatario es una paciente o un profesional** (nunca los dos): dos
+   relaciones opcionales con la regla "exactamente una", que se valida con una
+   restricción. El recordatorio de turno se relaciona además con el turno; el
+   aviso de un cupón nuevo no.
+4. **`Origen` se generaliza**: antes "Origen del turno", ahora lo usan también
+   la consulta al asistente y el log (terminal, web, gestión y *sistema*, para
+   lo que hace n8n).
+5. **Cuentas simples.** `Usuario` tiene solo el nombre de usuario, el mail y la
+   contraseña cifrada; los nombres reales ya están en `Paciente` y
+   `Profesional`, y no se duplican (3FN). El personal de recepción y
+   administración se identifica por su nombre de usuario. La contraseña
+   **nunca** se guarda en claro, solo su hash.
+6. **El último acceso y los intentos fallidos no se guardan en `Usuario`**: se
+   calculan desde el log.
+7. **El log guarda quién, qué, cuándo, desde dónde y sobre quién.** Para
+   auditar cambios guarda el valor anterior y el nuevo de lo modificado.
+   Una acción de una paciente sin cuenta queda con usuario vacío y con la
+   paciente involucrada.
+8. **El log solo se escribe desde stored procedures**, nunca a mano ni desde la
+   app directamente (lo pide la consigna).
+9. **La consulta al asistente guarda lo preguntado y respondido**, pero no se
+   le envían datos personales a la IA (RNF-06); si la paciente los escribe,
+   el sistema los filtra antes de enviar la pregunta.
+
+### Atributos
+| Entidad | Atributos |
+|---|---|
+| **Canal de notificación** | id_canal (PK), nombre *(Telegram, WhatsApp, Google Calendar, WhatsApp asistido)* |
+| **Estado de notificación** | id_estado_notificacion (PK), nombre |
+| **Tipo de notificación** | id_tipo_notificacion (PK), nombre |
+| **Notificación** | id_notificacion (PK), mensaje, fecha_programada, intentos, fecha_envio *(opc)*, detalle_error *(opc)* |
+| **Consulta al asistente** | id_consulta (PK), pregunta, fecha_hora, derivada *(sí/no: se derivó a una persona)*, respuesta *(opc)* |
+| **Rol** | id_rol (PK), nombre *(paciente, recepción, profesional, administrador)* |
+| **Usuario** | id_usuario (PK), nombre_usuario (único), email (único), password_hash, activo, fecha_creacion |
+| **Tipo de evento** | id_tipo_evento (PK), nombre, descripcion |
+| **Log** | id_log (PK), fecha_hora, descripcion *(opc)*, ip_origen *(opc)*, tabla_afectada *(opc)*, id_registro_afectado *(opc)*, valor_anterior *(opc)*, valor_nuevo *(opc)*, exitoso |
+
+Tipos de evento previstos: inicio y cierre de sesión, intento fallido, alta y
+cancelación de turno, pago registrado, reembolso o retención, cupón emitido,
+validado o rechazado, uso de tarjeta de regalo, evaluación resuelta, cambio de
+disponibilidad, y envío de notificación.
+
+### Relaciones y cardinalidades (mín,máx)
+- Notificación (1,1) **usa el canal** (0,N) Canal de notificación
+- Notificación (1,1) **tiene estado** (0,N) Estado de notificación
+- Notificación (1,1) **es de tipo** (0,N) Tipo de notificación
+- Paciente (0,N) **recibe** (0,1) Notificación
+- Profesional (0,N) **recibe** (0,1) Notificación *(una de las dos, exactamente)*
+- Turno (0,N) **genera** (0,1) Notificación
+- Paciente (0,N) **consulta** (0,1) Consulta al asistente *(vacío si es invitada)*
+- Consulta al asistente (1,1) **se hace desde** (0,N) Origen
+- Usuario (1,1) **tiene rol** (0,N) Rol
+- Log (1,1) **es de tipo** (0,N) Tipo de evento
+- Log (0,1) **lo hace** (0,N) Usuario *(vacío si lo hace una invitada o el sistema)*
+- Log (0,1) **afecta a** (0,N) Paciente
+- Log (1,1) **se registra desde** (0,N) Origen
+
 ## Pendiente de definir
 
-- Atributos y cardinalidades de los grupos siguientes: notificaciones y
-  asistente; usuarios y log.
+- Revisar el modelo completo (grupos 1 a 4) y cerrar las preguntas abiertas
+  del grupo 3.
+- Pasar el modelo cerrado a XML para draw.io (jueves).

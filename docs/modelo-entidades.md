@@ -163,6 +163,7 @@ y *Profesional–Protocolo* ("realiza").
 - Turno (1,1) **se origina en** (0,N) Origen
 - Paciente (0,1) **tiene cuenta** (0,1) Usuario
 - Profesional (1,1) **tiene cuenta** (0,1) Usuario
+- Profesional (0,N) **tiene** (1,1) Disponibilidad *(franjas horarias del profesional; sus atributos faltan definir)*
 
 ## Grupo 2 (propuesto): pagos y evaluación previa
 
@@ -338,6 +339,7 @@ disponibilidad, y envío de notificación.
 
 ## Pendiente de definir
 
+- Atributos de **Disponibilidad** (no se definieron todavía): por ejemplo día de la semana, hora de inicio y de fin, y vigencia.
 - Revisar el modelo completo (grupos 1 a 4) y cerrar las preguntas abiertas
   del grupo 3.
 - Pasar el modelo cerrado a XML para draw.io (jueves).

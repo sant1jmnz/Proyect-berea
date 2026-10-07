@@ -65,7 +65,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 1.
 
 | Santiago | Bautista |
 |---|---|
-| [x] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [ ] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
+| [x] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [x] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
 | [x] Ventana principal de **Gestión** (960×600 mín.) con menú lateral | [x] Ventana principal de **Cliente** (terminal vertical, 768×1024 mín.) |
 | [x] Pantallas Gestión 1-3: cargar turno, elegir horario, confirmar y registrar seña (RF-02, RF-04, RF-09, RF-10) | [x] Pantallas Cliente 1-3: elegir protocolo, elegir horario, confirmar y pagar seña (RF-01, RF-04, RF-08, RF-10) |
 | [x] Pantalla Gestión 5: buscar turnos por nombre, DNI o teléfono (RF-13) | [x] Pantalla Cliente 5: buscar mi turno por DNI o teléfono (RF-12) |

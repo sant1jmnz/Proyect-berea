@@ -5,7 +5,7 @@ Primer paso del diseño conceptual de la base (consigna en
 los atributos y cardinalidades se van cerrando por grupos (abajo); el diagrama
 de Chen se arma al final.
 
-Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24.
+Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 25.
 
 ## Decisiones tomadas
 
@@ -71,7 +71,7 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
 - El **QR** se escanea con el celular del profesional, un escáner o un
   lector en la PC de gestión (las tres opciones valen).
 
-## Entidades (24)
+## Entidades (25)
 
 ### Núcleo
 1. **Paciente** (cuenta opcional)
@@ -104,12 +104,13 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
 18. **Resultado de evaluación** (apto, no apto)
 19. **Origen del turno** (terminal, web, gestión)
 20. **Medio de pago** (tarjeta simulada, transferencia, efectivo, tarjeta de regalo)
+21. **Tipo de regla** (frecuencia de visitas, gasto acumulado, promoción general)
 
 ### Seguridad y auditoría
-21. **Usuario** (credenciales; paciente opcional, personal obligatorio)
-22. **Rol**
-23. **Log**
-24. **Tipo de evento**
+22. **Usuario** (credenciales; paciente opcional, personal obligatorio)
+23. **Rol**
+24. **Log**
+25. **Tipo de evento**
 
 Además, dos relaciones N:M que se vuelven **tablas intermedias** en el diseño
 lógico (en el Chen son relaciones, no entidades): *Turno–Protocolo* ("incluye")
@@ -200,7 +201,48 @@ y *Profesional–Protocolo* ("realiza").
 La paciente y el profesional de la evaluación no se repiten como atributos:
 salen del turno de la consulta.
 
+## Grupo 3 (propuesto): cupones, reglas y tarjetas de regalo
+
+### Decisiones
+1. **Todo cupón es personal y de un solo uso.** Una promoción para "todas las
+   pacientes con cuenta" no es un código compartido: el sistema genera **un
+   cupón por paciente**. Así cada cupón se usa una vez y se evita contar usos.
+2. **Las reglas emiten los cupones.** *Regla de beneficio* define cuándo y
+   cuánto: por frecuencia (ej. 2 visitas en 1 mes → 10%), por gasto acumulado,
+   o por promoción general. Su tipo es una tabla maestra (*Tipo de regla*).
+3. **El estado no se guarda**: un cupón está *usado* si está ligado a un turno,
+   *vencido* si pasó su fecha y *vigente* en otro caso. El QR tampoco se guarda:
+   codifica el `codigo`.
+4. **El vencimiento sí se guarda en el cupón** (la regla puede cambiar después
+   y no debe alterar cupones ya emitidos). Se calcula al emitirlo con la
+   vigencia de la regla (2 a 8 semanas).
+5. **La tarjeta de regalo tiene saldo calculado**: `monto_inicial` menos la
+   suma de sus movimientos. El comprador puede no ser paciente, por eso se
+   guardan sus datos como atributos y no como relación.
+6. **Cupón y tarjeta no se mezclan en un mismo turno.** Es una regla de
+   negocio que se valida en el stored procedure, no una restricción del modelo.
+7. **El monto de un movimiento puede ser negativo**: negativo = devolución de
+   saldo a la tarjeta (por ejemplo al cancelar con reembolso).
+
+### Atributos
+| Entidad | Atributos |
+|---|---|
+| **Tipo de regla** | id_tipo_regla (PK), nombre |
+| **Regla de beneficio** | id_regla (PK), nombre, umbral *(visitas o monto, según el tipo)*, porcentaje_descuento, vigencia_semanas *(2 a 8)*, activa, ventana_dias *(opc: solo frecuencia)* |
+| **Cupón** | id_cupon (PK), codigo (único), porcentaje_descuento, fecha_emision, fecha_vencimiento |
+| **Tarjeta de regalo** | id_tarjeta (PK), codigo (único), monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono *(opc)* |
+| **Movimiento de tarjeta** | id_movimiento (PK), monto *(negativo = devolución)*, fecha_movimiento |
+
+### Relaciones y cardinalidades (mín,máx)
+- Regla de beneficio (1,1) **es de tipo** (0,N) Tipo de regla
+- Regla de beneficio (0,N) **emite** (1,1) Cupón
+- Paciente (0,N) **recibe** (1,1) Cupón *(solo pacientes con cuenta)*
+- Cupón (0,1) **se aplica en** (0,1) Turno
+- Tarjeta de regalo (1,1) **se compra con** (0,N) Medio de pago
+- Tarjeta de regalo (0,N) **registra** (1,1) Movimiento de tarjeta *(la carga inicial es el atributo `monto_inicial`, no un movimiento)*
+- Movimiento de tarjeta (1,1) **cubre** (0,N) Turno
+
 ## Pendiente de definir
 
-- Atributos y cardinalidades de los grupos siguientes: cupones, tarjetas y
-  reglas; notificaciones y asistente; usuarios y log.
+- Atributos y cardinalidades de los grupos siguientes: notificaciones y
+  asistente; usuarios y log.

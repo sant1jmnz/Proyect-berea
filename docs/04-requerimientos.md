@@ -43,14 +43,17 @@ quién hizo cada acción.
 | RF-07 | Todos | ...derivar la consulta al WhatsApp del instituto cuando el buscador o el asistente de IA no puedan responder, y dejarla registrada. | R2 | Must |
 | RF-08 | Cliente + Web | ...a la paciente pagar la seña al confirmar su turno con un flujo **simulado que imita un pago real** (estilo Mercado Pago): el sistema registra el estado, sin procesar dinero real. | R3 | Must |
 | RF-09 | Gestión | ...a la recepción registrar el pago de la seña cuando confirma un turno cargado por teléfono (mismo mock que RF-08). | R3 | Must |
-| RF-10 | Todos | ...calcular (de forma simulada) una seña del 30% del valor del protocolo (mínimo $5.000), reembolsable 100% si se cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
+| RF-10 | Todos | ...calcular (de forma simulada) una seña del 30% del valor del protocolo (mínimo $20.000), reembolsable 100% si se cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
 | RF-11 | Todos | ...enviar un recordatorio de turno por **WhatsApp** a la paciente antes de la fecha reservada, y registrar cada aviso (canal, estado, fecha programada). | R4 | Must |
 | RF-12 | Cliente + Web | ...a la paciente buscar y cancelar su propio turno con su DNI o teléfono, sin cuenta. | R1 | Should |
 | RF-13 | Gestión | ...a la recepción buscar y cancelar el turno de cualquier paciente por nombre, DNI o teléfono. | R1 | Should |
 | RF-14 | Cliente + Web | ...a la paciente hacer preguntas a un **asistente de IA** (precios, protocolos, cuidados) y recibir respuesta; las consultas quedan registradas. | R2 | Should |
 | RF-15 | Web (+ Cliente) | ...a la paciente **crear una cuenta opcional**; con cuenta ve su historial de turnos sin volver a ingresar su DNI. | R1 | Should |
 | RF-16 | Todos | ...buscar el historial de turnos de una paciente **por DNI** (sin cuenta), tanto desde el apartado Cliente como desde la Web. | R1 | Should |
-| RF-17 | Todos | ...aplicar **descuentos** a las pacientes con cuenta, definidos y administrados desde Gestión. | R3 | Should |
+| RF-17 | Cliente + Web + Gestión | ...que la paciente con cuenta ingrese un **cupón de descuento por código** mientras agenda ("¿Tenés un cupón de descuento?") y que el precio se actualice antes de pagar. | R3 | Should |
+| RF-22 | Gestión | ...que cada cupón tenga un **código QR**, y que el profesional lo escanee antes del pago para aplicarlo si la paciente no lo cargó al agendar. | R3 | Should |
+| RF-23 | Web + Cliente + Gestión | ...vender y canjear **tarjetas de regalo por monto** (ej. $300.000): la tarjeta tiene saldo y puede gastarse en varias compras y turnos, también por otra persona, hasta que venza. | R3 | Should |
+| RF-24 | Todos | ...generar **cupones automáticos por fidelidad** a las pacientes con cuenta: por frecuencia (ej. 2 visitas en 1 mes → 10%) y por gasto acumulado (ej. superar cierto monto → cupón). | R3 | Should |
 | RF-18 | Gestión | ...registrar qué **protocolos realiza cada profesional**, y ofrecer en la reserva solo los profesionales habilitados para el protocolo elegido. | R1 | Should |
 | RF-19 | Web + Gestión | ...que, al confirmar el turno, la paciente pueda agregarlo a **su Google Calendar** con un botón, y que el turno se cargue automáticamente en el calendario del **profesional**. | R4 | Should |
 | RF-20 | Gestión | ...que cada integrante del personal ingrese con **cuenta propia** y que cada acción relevante (inicio de sesión, alta, cancelación, pago) quede en un **log de auditoría** consultable por rango de fechas. | Transversal | Must |
@@ -58,14 +61,12 @@ quién hizo cada acción.
 
 Los Must son los que atacan directamente las cuatro causas del Árbol de
 Problemas (C1-C4), más el log de auditoría (RF-20) y el sitio web (RF-21),
-que pidió el equipo como parte del alcance. El resto (RF-10, RF-12 a RF-19)
+que pidió el equipo como parte del alcance. El resto (RF-10, RF-12 a RF-19 y RF-22 a RF-24)
 son Should: mejoran la experiencia pero el sistema funciona sin ellos.
 
-Se sacó del alcance la "vitrina" (fotos antes/después + reseñas de Google
-Maps) que estaba anotada como Could en una versión anterior: dependía de
-la API de Google Maps, que no es viable con la restricción técnica actual
-(Qt, sin web ni API). Queda anotada en `docs/propuestas.md` como posible
-iteración futura si el proyecto suma en algún momento un componente web.
+La "vitrina" (fotos antes/después + reseñas de Google Maps) sigue fuera
+de este alcance. Con web y APIs ahora permitidas podría reconsiderarse como
+iteración futura (`docs/propuestas.md`).
 
 ## Requerimientos no funcionales
 
@@ -112,7 +113,7 @@ para asegurar mi reserva y saber cuánto se cobra por adelantado.
 
 Criterios de aceptación:
 - El pago es simulado (mock): imita el flujo de un pago real pero no se conecta a ninguna pasarela.
-- El monto se ve antes de confirmar (30%, mínimo $5.000).
+- El monto se ve antes de confirmar (30% del precio final, mínimo $20.000).
 - El sistema no pide ni guarda ningún dato de tarjeta.
 ```
 
@@ -184,6 +185,37 @@ Criterios de aceptación:
 ```
 
 ```
+Como paciente con cuenta, quiero usar un cupón de descuento al agendar,
+para pagar menos en mi turno.
+
+Criterios de aceptación:
+- Hay un campo "¿Tenés un cupón de descuento?" durante la reserva.
+- El precio y la seña se recalculan con el descuento antes de pagar.
+- Si no lo cargué, puedo mostrar mi QR y la profesional lo escanea antes del pago.
+- El cupón tiene vigencia (entre 2 y 8 semanas según el tipo) y se usa una sola vez.
+```
+
+```
+Como paciente, quiero comprar una tarjeta de regalo por un monto,
+para que otra persona pueda hacerse tratamientos en el instituto.
+
+Criterios de aceptación:
+- La tarjeta tiene un monto en pesos y un código; el saldo se descuenta a medida que se usa.
+- Se puede usar en más de un turno hasta agotar el saldo.
+- La tarjeta tiene vigencia; vencida, no se puede usar.
+```
+
+```
+Como administración, quiero que el sistema premie a las pacientes frecuentes,
+para fidelizarlas.
+
+Criterios de aceptación:
+- Con 2 visitas en 1 mes, la paciente con cuenta recibe un cupón del 10%.
+- Al superar cierto gasto acumulado, recibe otro cupón.
+- Cada regla define su porcentaje y su vigencia (2 a 8 semanas).
+```
+
+```
 Como administración, quiero que cada acción del personal quede registrada,
 para auditar errores y saber quién hizo qué.
 
@@ -192,6 +224,25 @@ Criterios de aceptación:
 - El log guarda tipo de evento, fecha y hora y usuario.
 - Puedo consultar el log por rango de fechas.
 ```
+
+## Catálogo y precios de referencia
+
+Dermalia es un instituto de **estética médica**: el catálogo va de
+tratamientos faciales y corporales a procedimientos médicos y cirugías.
+Los precios de referencia que se usan en el sistema y en los cálculos son
+un **supuesto de equipo** (no un dato relevado) y se ajustan al cargar el
+catálogo real. Valores en pesos argentinos (orden de magnitud 2026):
+
+| Categoría | Ejemplos | Rango de referencia |
+|---|---|---|
+| Faciales y corporales | Limpieza profunda, peeling, hidratación | $60.000 – $180.000 |
+| Aparatología | Láser, radiofrecuencia, criolipólisis (por sesión) | $120.000 – $450.000 |
+| Medicina estética | Toxina botulínica, rellenos, bioestimuladores | $250.000 – $900.000 |
+| Cirugías | Rinoplastia, lipoescultura, mamoplastia, blefaroplastia | $2.500.000 – $9.000.000 |
+
+El **ticket promedio por turno** que usan los cálculos es **$150.000**.
+Las cirugías pueden requerir una seña distinta (a definir) y una consulta
+de evaluación previa; la categoría del protocolo lo permite modelar.
 
 ## Backlog inicial
 

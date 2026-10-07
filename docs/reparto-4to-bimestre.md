@@ -28,12 +28,13 @@ escrito) y recién cuando está cerrado se pasa a XML para draw.io. Cada uno es
 
 - **Santiago: turnos, pagos y auditoría.** Entidades: Paciente, Turno, Pago de
   seña, Evaluación previa, Resultado de evaluación, Estado del turno, Estado
-  del pago, Medio de pago, Origen del turno, Usuario, Rol, Log, Tipo de
+  del pago, Medio de pago, Origen, Usuario, Rol, Log, Tipo de
   evento. Se encarga de la base en Aiven.
 - **Bautista: catálogo, profesionales, cupones y avisos.** Entidades:
   Profesional, Protocolo, Categoría de protocolo, Disponibilidad, Cupón, Regla
   de beneficio, Tipo de regla, Tarjeta de regalo, Movimiento de tarjeta,
-  Notificación, Canal de notificación, Consulta al asistente. Se encarga de n8n
+  Notificación, Canal, Estado y Tipo de notificación, Consulta al asistente.
+  Se encarga de n8n
   y del bot de Telegram.
 
 **Dependencia entre martes y miércoles-jueves:** el martes de cada semana

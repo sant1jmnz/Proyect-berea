@@ -29,7 +29,7 @@ ataca esas cuatro causas con:
 | Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema |
 | Buscador de precios y protocolos | Búsqueda por palabra clave; deriva a WhatsApp si no encuentra coincidencia |
 | Registro de seña | Simulado (mock que imita un pago real), sin procesar dinero real |
-| Recordatorio de turno | Por WhatsApp, con botón para agregar el turno a Google Calendar |
+| Recordatorio de turno | Por Telegram (gratis, en desarrollo) y WhatsApp en producción; botón para agregar el turno a Google Calendar |
 | Buscar turnos | Por DNI o teléfono, sin cuenta; con cuenta opcional se guarda el historial |
 | Asistente de IA | Responde consultas con la información del instituto |
 | Cupones y tarjetas de regalo | Cupones por código o QR, tarjetas con saldo y cupones por fidelidad |

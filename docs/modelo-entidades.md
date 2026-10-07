@@ -14,8 +14,11 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
 - Un turno puede tener **varios protocolos**.
 - Cada protocolo se registra **por profesional** (qué protocolos hace cada uno).
 - La seña es un **mock** que imita un pago real.
-- Los recordatorios salen por **WhatsApp** (forma de envío por definir) y por
-  **Google Calendar**.
+- Los recordatorios salen por **Telegram** (bot gratuito y automático, para
+  desarrollo y demo), **Google Calendar** y, en producción, la **API oficial
+  de WhatsApp**. Mientras tanto, la recepción puede avisar con un enlace
+  `wa.me`. La paciente guarda su identificador de Telegram al vincular el
+  bot (atributo de *Paciente*).
 - Hay un **asistente de IA**; sus consultas se registran.
 - Obra social: **no entra**. **Tipo de evento** queda como tabla aparte.
 - Es un instituto de **estética médica**: el catálogo incluye desde
@@ -54,7 +57,7 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
 - La evaluación "apta" **vale 6 meses** para agendar la cirugía.
 - Pasados los 6 meses sin agendar: sin reclamo de la paciente, el instituto
   se queda con el dinero de las consultas; con reclamo, retiene el 50% del
-  total de las consultas. *(A confirmar.)* La *Evaluación previa* necesita
+  total de las consultas. La *Evaluación previa* necesita
   guardar si hubo reclamo y cuándo.
 
 ## Reglas cerradas
@@ -98,7 +101,7 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
 17. **Estado del pago**
 18. **Categoría de protocolo** (faciales, aparatología, medicina estética,
     cirugías)
-19. **Canal de notificación** (WhatsApp, Google Calendar)
+19. **Canal de notificación** (Telegram, WhatsApp, Google Calendar, WhatsApp asistido)
 20. **Resultado de evaluación** (apto, no apto)
 
 ### Seguridad y auditoría
@@ -111,7 +114,4 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 24
 
 ## Pendiente de definir
 
-- Cómo se envía WhatsApp de verdad (API oficial, proveedor intermedio o
-  simulación): se discute cuando terminemos de definir lo demás.
-- Confirmar la regla de los 6 meses (sin reclamo / con reclamo).
 - Atributos de cada entidad y cardinalidades (el diagrama lo arma el equipo).

@@ -53,7 +53,7 @@ quién hizo cada acción.
 | RF-17 | Cliente + Web + Gestión | ...que la paciente con cuenta ingrese un **cupón de descuento por código** mientras agenda ("¿Tenés un cupón de descuento?") y que el precio se actualice antes de pagar. | R3 | Should |
 | RF-22 | Gestión | ...que cada cupón tenga un **código QR**, y que el profesional lo escanee antes del pago para aplicarlo si la paciente no lo cargó al agendar. El escaneo puede hacerse con el **celular del profesional**, un **escáner** o un **lector** conectado a la PC de gestión. | R3 | Should |
 | RF-23 | Web + Cliente + Gestión | ...vender y canjear **tarjetas de regalo por monto** (ej. $300.000): la tarjeta tiene saldo y puede gastarse en varias compras y turnos, también por otra persona, hasta que venza. **Un cupón y una tarjeta de regalo no se pueden usar en el mismo turno.** | R3 | Should |
-| RF-25 | Todos | ...que toda **cirugía** requiera una **consulta previa paga**, con su propia seña, y que solo pueda agendarse si el resultado de la evaluación es "apto": si la paciente pasa a la cirugía, el dinero de la consulta se **devuelve**; si no es apta, el instituto **retiene el 10%** y devuelve el resto. | R1, R3 | Must |
+| RF-25 | Todos | ...que toda **cirugía** requiera una **consulta previa paga**, con su propia seña, y que solo pueda agendarse si el resultado de la evaluación es "apto": si la paciente pasa a la cirugía, el dinero de la consulta se **devuelve**; la evaluación "apta" **vale 6 meses** para agendar la cirugía; si no es apta, el instituto **retiene el 10%** y devuelve el resto. | R1, R3 | Must |
 | RF-24 | Todos | ...generar **cupones automáticos por fidelidad** a las pacientes con cuenta: por frecuencia (ej. 2 visitas en 1 mes → 10%) y por gasto acumulado (ej. superar cierto monto → cupón). | R3 | Should |
 | RF-18 | Gestión | ...registrar qué **protocolos realiza cada profesional**, y ofrecer en la reserva solo los profesionales habilitados para el protocolo elegido. | R1 | Should |
 | RF-19 | Web + Gestión | ...que, al confirmar el turno, la paciente pueda agregarlo a **su Google Calendar** con un botón, y que el turno se cargue automáticamente en el calendario del **profesional**. | R4 | Should |
@@ -260,6 +260,8 @@ El **ticket promedio por turno** que usan los cálculos es **$150.000**.
   evaluación "apta" no se puede agendar la cirugía.
 - Si la evaluación es apta y la paciente pasa a la cirugía, el dinero de la
   consulta se **devuelve**.
+- La evaluación "apta" **vale 6 meses**: la cirugía se puede agendar dentro
+  de ese plazo.
 - Si no es apta, el instituto **se queda con el 10%** de la consulta y
   devuelve el resto.
 - Como todo el pago es mock, la devolución y la retención son cambios de

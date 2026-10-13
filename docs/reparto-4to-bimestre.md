@@ -27,7 +27,7 @@ consigna está en [`consigna-bbdd.md`](consigna-bbdd.md); las entidades, en
 docente en Classroom no están acá: si difieren, se ajusta.
 
 **Cómo se trabaja la base:** el diseño se piensa **entre los dos** (primero por
-escrito) y recién cuando está cerrado se hace el diagrama de Peter Chen en draw.io. Cada uno es
+escrito) y recién cuando está cerrado se pasa a XML para draw.io. Cada uno es
 **responsable** de un bloque, pero los dos tienen que conocer todo el modelo
 (en la defensa se evalúa el conocimiento global).
 
@@ -70,7 +70,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 1.
 
 | Santiago | Bautista |
 |---|---|
-| [x] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [x] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
+| [x] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [ ] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
 | [x] Ventana principal de **Gestión** (960×600 mín.) con menú lateral | [x] Ventana principal de **Cliente** (terminal vertical, 768×1024 mín.) |
 | [x] Pantallas Gestión 1-3: cargar turno, elegir horario, confirmar y registrar seña (RF-02, RF-04, RF-09, RF-10) | [x] Pantallas Cliente 1-3: elegir protocolo, elegir horario, confirmar y pagar seña (RF-01, RF-04, RF-08, RF-10) |
 | [x] Pantalla Gestión 5: buscar turnos por nombre, DNI o teléfono (RF-13) | [x] Pantalla Cliente 5: buscar mi turno por DNI o teléfono (RF-12) |
@@ -95,7 +95,7 @@ Entregable de la consigna: punto 1. **Jueves 8: los DER en draw.io.**
 
 | Santiago | Bautista |
 |---|---|
-| [ ] **Hacer el diagrama de Peter Chen** del bloque de Santiago | [ ] **Hacer el diagrama de Peter Chen** del bloque de Bautista |
+| [ ] Pasar el modelo cerrado a **XML** (el diagrama de Chen completo) | [ ] Importar el XML a draw.io y acomodar los diagramas del bloque de Bautista |
 | [ ] Acomodar los diagramas del bloque de Santiago | [ ] Revisar cardinalidades `(mín,máx)` y que cada atributo esté en su entidad |
 | [ ] Juntar los dos bloques en **un solo DER conceptual** y revisar la coherencia | [ ] Exportar el DER (imagen y `.drawio`) y subirlo a `docs/diagramas/` |
 | [ ] Entregar el **hito del DER conceptual** en Classroom | [ ] Si sobra tiempo: instalar MySQL local (portable, sin permisos de administrador) |
@@ -145,9 +145,9 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 3.
 | Santiago | Bautista |
 |---|---|
 | [ ] Conectar Gestión 1-3 y 5 con la base real (alta de turno, búsqueda y cancelación) | [ ] Conectar Cliente 1-3, 5 y el buscador con la base real |
-| [x] Validaciones de DNI y teléfono (formato, largo, solo dígitos) en los formularios de Gestión | [ ] Validaciones en Cliente (DNI/teléfono) y en el ABM de protocolos (precio ≥ 0, duración > 0) |
+| [x] Validaciones de DNI y teléfono (formato, largo, solo dígitos) en los formularios de Gestión | [ ] Validaciones en Cliente (DNI/teléfono) y en el ABM de protocolos (precio ≥ 0, duración > 0). Hecho: Cliente (DNI/teléfono/nombre) y las funciones de precio y duración en `frontend/comun/validaciones`; falta enchufarlas cuando exista la pantalla de ABM de protocolos |
 | [ ] Integrar seña y reembolso (RF-10) al flujo de confirmar y cancelar | [ ] Recordatorio de turno (RF-11): registro de cada aviso |
-| [ ] Registro de seña como mock que imita un pago real (RF-08/09, RNF-05) | [ ] **Casos de prueba funcional**: planilla con un caso por RF y resultado de cada uno |
+| [ ] Registro de seña como mock que imita un pago real (RF-08/09, RNF-05) | [x] **Casos de prueba funcional**: planilla con un caso por RF y resultado de cada uno (`docs/09-casos-de-prueba.md`) |
 
 Criterio de "Beta": los RF Must (RF-01 a RF-09, RF-11, RF-20 y RF-21) funcionando de punta a punta y sin errores críticos.
 

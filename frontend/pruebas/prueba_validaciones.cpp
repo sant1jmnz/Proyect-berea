@@ -1,7 +1,8 @@
 /* Pruebas de las validaciones que usa la carga de turnos de Gestión
- * (nombre, DNI y teléfono). Las de Cliente y las de precio y duración están
+ * (nombre, DNI y teléfono) y del cálculo de la seña. Las de Cliente y las de precio y duración están
  * en tests/test_cliente.cpp. Cada validación tiene casos válidos, inválidos
  * y bordes. Se corre con el ejecutable prueba_validaciones o con `ctest`. */
+#include "sena.h"
 #include "validaciones.h"
 
 #include <QtTest>
@@ -18,6 +19,8 @@ private slots:
     void telefono_data();
     void telefono();
     void normalizar();
+    void sena_data();
+    void sena();
 };
 
 /* Cada caso: dato de entrada y si tiene que ser válido. */
@@ -96,6 +99,28 @@ void PruebaValidaciones::normalizar()
     QCOMPARE(Validaciones::normalizar("(351) 555-0102"), QString("3515550102"));
     QCOMPARE(Validaciones::normalizar("30.111.222"), QString("30111222"));
     QCOMPARE(Validaciones::normalizar("  "), QString());
+}
+
+/* La seña es solo un porcentaje del precio, sin mínimo. */
+void PruebaValidaciones::sena_data()
+{
+    QTest::addColumn<int>("precio");
+    QTest::addColumn<int>("porcentaje");
+    QTest::addColumn<int>("esperada");
+    QTest::newRow("30% de un protocolo") << 40000 << 30 << 12000;
+    QTest::newRow("40% de una cirugía") << 450000 << 40 << 180000;
+    QTest::newRow("sin mínimo: 30% de $18.000") << 18000 << 30 << 5400;
+    QTest::newRow("redondeo al peso") << 18333 << 30 << 5500;
+    QTest::newRow("precio 0") << 0 << 30 << 0;
+    QTest::newRow("porcentaje 0") << 40000 << 0 << 0;
+}
+
+void PruebaValidaciones::sena()
+{
+    QFETCH(int, precio);
+    QFETCH(int, porcentaje);
+    QFETCH(int, esperada);
+    QCOMPARE(Sena::calcular(precio, porcentaje), esperada);
 }
 
 QTEST_APPLESS_MAIN(PruebaValidaciones)

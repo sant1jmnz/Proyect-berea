@@ -1,15 +1,22 @@
 #include "buscarturnowidget.h"
 #include "ui_buscarturnowidget.h"
+#include "validaciones.h"
 #include <QLabel>
 #include <QPushButton>
 #include <QMessageBox>
 #include <QDate>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 
 BuscarTurnoWidget::BuscarTurnoWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::BuscarTurnoWidget)
 {
     ui->setupUi(this);
+
+    // Semana 3: solo dígitos (y un + inicial para teléfonos con código de país)
+    ui->txtDniTel->setMaxLength(14);
+    ui->txtDniTel->setValidator(new QRegularExpressionValidator(QRegularExpression("^\\+?[0-9]{0,13}$"), this));
 
     inicializarTurnos();
 }
@@ -45,7 +52,16 @@ void BuscarTurnoWidget::agregarTurnoDesdeFormulario(const QString &paciente, con
 }
 
 void BuscarTurnoWidget::on_btnBuscar_clicked() {
-    QString criterio = ui->txtDniTel->text().trimmed();
+    const QString criterio = ui->txtDniTel->text().trimmed();
+    if (!criterio.isEmpty()) {
+        QString errorDni, errorTel;
+        if (!Validaciones::dniValido(criterio, &errorDni) && !Validaciones::telefonoValido(criterio, &errorTel)) {
+            QMessageBox::warning(this, "Dato incorrecto",
+                                 "Ingresá un DNI (7 u 8 dígitos) o un teléfono (10 a 13 dígitos), solo números.");
+            ui->txtDniTel->setFocus();
+            return;
+        }
+    }
     mostrarResultados(criterio);
 }
 
@@ -72,7 +88,8 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
     QList<int> encontrados;
     for (int indice = 0; indice < m_turnos.size(); ++indice) {
         const auto &t = m_turnos.at(indice);
-        if (t.dni.contains(criterio) || t.telefono.contains(criterio) || t.paciente.toLower().contains(criterio.toLower())) {
+        const QString buscado = Validaciones::normalizar(criterio);
+        if (t.dni == buscado || t.telefono == buscado) {
             encontrados.append(indice);
         }
     }

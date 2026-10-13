@@ -15,11 +15,7 @@ struct Protocolo {
     QString nombre;
     int duracionMin;
     int precio;
-    bool esCirugia;
 };
-
-enum class EstadoTurno { Confirmado, Realizado, Cancelado };
-enum class EstadoSena { Pendiente, Pagada, Reembolsada, Retenida };
 
 struct Turno {
     QString paciente;
@@ -27,26 +23,16 @@ struct Turno {
     QString telefono;   /* solo dígitos */
     QString protocolo;
     QDateTime fechaHora;
-    int duracionMin;
-    int sena;
-    EstadoSena estadoSena;
-    QString medioPago;  /* vacío mientras la seña está pendiente */
-    QString comprobante;
-    EstadoTurno estado;
+    bool senaPagada;
 };
 
 namespace DatosPrueba {
 
 QVector<Protocolo> protocolos();
-/* Turnos de ejemplo armados a partir de hoy, así siempre hay uno a más de
- * 24 h (la seña se reembolsa) y otro a menos (no se reembolsa). */
-QVector<Turno> turnos(const QDateTime &ahora);
+/* Turnos de ejemplo en los días siguientes a hoy. */
+QVector<Turno> turnos(const QDate &hoy);
 /* Horarios en que atiende el instituto, de lunes a sábado. */
 QStringList horariosDelDia();
-QStringList mediosDePago();
-
-QString texto(EstadoTurno estado);
-QString texto(EstadoSena estado);
 
 }
 

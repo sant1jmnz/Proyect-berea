@@ -17,12 +17,12 @@ set(COMUN
     comun/buscadorprecios.cpp
     comun/buscadorprecios.h
     comun/buscadorprecios.ui
-    comun/reglas.cpp       # validaciones y seña (Semana 3)
+    comun/reglas.cpp       # validaciones (Semana 3)
     comun/reglas.h
     gestion/recursos.qrc)   # íconos y tipografías
 
-# Apartado Gestión (PC de recepción). Semana 3: validaciones, seña y
-# cancelación sobre datos de prueba, todavía sin base.
+# Apartado Gestión (PC de recepción). Semana 3: validaciones sobre datos de
+# prueba, todavía sin base.
 add_executable(dermalia_gestion
     gestion/main.cpp
     gestion/datosprueba.cpp
@@ -65,7 +65,7 @@ target_link_libraries(dermalia_cliente_bautista PRIVATE Qt6::Widgets)
 
 configure_file(cliente/styles.qss styles.qss COPYONLY)
 
-# Pruebas automáticas de las reglas de negocio (Semana 3). Se corren con el
+# Pruebas automáticas de las validaciones (Semana 3). Se corren con el
 # ejecutable prueba_reglas o con `ctest` desde la carpeta de compilación.
 enable_testing()
 add_executable(prueba_reglas

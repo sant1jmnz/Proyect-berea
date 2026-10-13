@@ -83,6 +83,7 @@ QLabel#lblRecordatorio { color: #8E3A50; background: #F7E8EB; border-radius: 10p
 /* ---- campos y botones ---- */
 QLineEdit { border: 1px solid #E8DCCF; border-radius: 10px; padding: 9px 12px; background: #FFFFFF; selection-background-color: #A8475F; }
 QLineEdit:focus { border-color: #A8475F; }
+QLineEdit[error=&quot;true&quot;] { border-color: #A33A3A; background: #FBEFEF; }
 QPushButton { border: 1px solid #D9C3A0; border-radius: 18px; padding: 9px 22px; font-weight: 700; background: #FFFDFA; }
 QPushButton:hover { background: #F3EAE0; }
 QPushButton:focus { border-color: #A8475F; }

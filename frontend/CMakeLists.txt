@@ -38,3 +38,24 @@ add_executable(dermalia_cliente
     ${COMUN})
 target_include_directories(dermalia_cliente PRIVATE comun)
 target_link_libraries(dermalia_cliente PRIVATE Qt6::Widgets)
+
+# Implementación de Bautista: flujo funcional de turnos, buscador y
+# cancelación. Se mantiene como ejecutable separado para preservar la
+# interfaz Cliente ya existente en la rama.
+add_executable(dermalia_cliente_bautista
+    cliente/main_bautista.cpp
+    cliente/mainwindow.cpp
+    cliente/mainwindow.h
+    cliente/mainwindow.ui
+    cliente/pasoscargaturnowidget.cpp
+    cliente/pasoscargaturnowidget.h
+    cliente/pasoscargaturnowidget.ui
+    cliente/buscadorwidget.cpp
+    cliente/buscadorwidget.h
+    cliente/buscadorwidget.ui
+    cliente/buscarturnowidget.cpp
+    cliente/buscarturnowidget.h
+    cliente/buscarturnowidget.ui)
+target_link_libraries(dermalia_cliente_bautista PRIVATE Qt6::Widgets)
+
+configure_file(cliente/styles.qss styles.qss COPYONLY)

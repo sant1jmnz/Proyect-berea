@@ -22,7 +22,7 @@ consigna está en [`consigna-bbdd.md`](consigna-bbdd.md); las entidades, en
 docente en Classroom no están acá: si difieren, se ajusta.
 
 **Cómo se trabaja la base:** el diseño se piensa **entre los dos** (primero por
-escrito) y recién cuando está cerrado se pasa a XML para draw.io. Cada uno es
+escrito) y recién cuando está cerrado se hace el diagrama de Peter Chen en draw.io. Cada uno es
 **responsable** de un bloque, pero los dos tienen que conocer todo el modelo
 (en la defensa se evalúa el conocimiento global).
 
@@ -65,7 +65,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 1.
 
 | Santiago | Bautista |
 |---|---|
-| [x] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [ ] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
+| [x] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [x] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
 | [x] Ventana principal de **Gestión** (960×600 mín.) con menú lateral | [x] Ventana principal de **Cliente** (terminal vertical, 768×1024 mín.) |
 | [x] Pantallas Gestión 1-3: cargar turno, elegir horario, confirmar y registrar seña (RF-02, RF-04, RF-09, RF-10) | [x] Pantallas Cliente 1-3: elegir protocolo, elegir horario, confirmar y pagar seña (RF-01, RF-04, RF-08, RF-10) |
 | [x] Pantalla Gestión 5: buscar turnos por nombre, DNI o teléfono (RF-13) | [x] Pantalla Cliente 5: buscar mi turno por DNI o teléfono (RF-12) |
@@ -90,7 +90,7 @@ Entregable de la consigna: punto 1. **Jueves 8: los DER en draw.io.**
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Pasar el modelo cerrado a **XML** (el diagrama de Chen completo) | [ ] Importar el XML a draw.io y acomodar los diagramas del bloque de Bautista |
+| [ ] **Hacer el diagrama de Peter Chen** del bloque de Santiago | [ ] **Hacer el diagrama de Peter Chen** del bloque de Bautista |
 | [ ] Acomodar los diagramas del bloque de Santiago | [ ] Revisar cardinalidades `(mín,máx)` y que cada atributo esté en su entidad |
 | [ ] Juntar los dos bloques en **un solo DER conceptual** y revisar la coherencia | [ ] Exportar el DER (imagen y `.drawio`) y subirlo a `docs/diagramas/` |
 | [ ] Entregar el **hito del DER conceptual** en Classroom | [ ] Si sobra tiempo: instalar MySQL local (portable, sin permisos de administrador) |

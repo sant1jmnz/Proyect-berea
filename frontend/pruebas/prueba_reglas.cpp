@@ -1,5 +1,5 @@
 /* Pruebas automáticas de las reglas de negocio (Semana 3, QA).
- * Cada función tiene al menos 4 casos: válidos, inválidos y bordes.
+ * Cada validación tiene al menos 4 casos: válidos, inválidos y bordes.
  * Se corren desde Qt Creator (ejecutable prueba_reglas) o con `ctest`. */
 #include "reglas.h"
 
@@ -16,10 +16,6 @@ private slots:
     void dni();
     void telefono_data();
     void telefono();
-    void sena_data();
-    void sena();
-    void reembolso_data();
-    void reembolso();
 };
 
 /* Cada caso: dato de entrada y si tiene que ser válido. */
@@ -83,47 +79,6 @@ void PruebaReglas::telefono()
     QFETCH(QString, entrada);
     QFETCH(bool, valido);
     QCOMPARE(Reglas::validarTelefono(entrada).isEmpty(), valido);
-}
-
-void PruebaReglas::sena_data()
-{
-    QTest::addColumn<int>("precio");
-    QTest::addColumn<bool>("cirugia");
-    QTest::addColumn<int>("esperada");
-    QTest::newRow("30% supera el mínimo") << 120000 << false << 36000;
-    QTest::newRow("30% no llega al mínimo") << 40000 << false << 20000;
-    QTest::newRow("precio menor al mínimo: tope en el precio") << 18000 << false << 18000;
-    QTest::newRow("cirugía al 40%") << 450000 << true << 180000;
-    QTest::newRow("cirugía barata: mínimo") << 30000 << true << 20000;
-    QTest::newRow("redondeo al peso") << 100001 << false << 30000;
-    QTest::newRow("precio 0") << 0 << false << 0;
-}
-
-void PruebaReglas::sena()
-{
-    QFETCH(int, precio);
-    QFETCH(bool, cirugia);
-    QFETCH(int, esperada);
-    QCOMPARE(Reglas::calcularSena(precio, cirugia), esperada);
-}
-
-void PruebaReglas::reembolso_data()
-{
-    QTest::addColumn<int>("horasAntes");   /* cuántas horas antes del turno se cancela */
-    QTest::addColumn<bool>("reembolsa");
-    QTest::newRow("3 días antes") << 72 << true;
-    QTest::newRow("25 horas antes") << 25 << true;
-    QTest::newRow("justo 24 horas antes") << 24 << false;
-    QTest::newRow("3 horas antes") << 3 << false;
-    QTest::newRow("después del turno (inasistencia)") << -2 << false;
-}
-
-void PruebaReglas::reembolso()
-{
-    QFETCH(int, horasAntes);
-    QFETCH(bool, reembolsa);
-    const QDateTime turno(QDate(2026, 10, 22), QTime(9, 0));
-    QCOMPARE(Reglas::senaReembolsable(turno, turno.addSecs(-horasAntes * 3600)), reembolsa);
 }
 
 QTEST_APPLESS_MAIN(PruebaReglas)

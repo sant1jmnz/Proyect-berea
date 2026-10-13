@@ -56,19 +56,4 @@ QString validarTelefono(const QString &telefono)
     return {};
 }
 
-int calcularSena(int precio, bool esCirugia)
-{
-    if (precio <= 0)
-        return 0;
-    const int porcentaje = esCirugia ? PorcentajeSenaCirugia : PorcentajeSena;
-    /* Se redondea al peso: 30% de $18.333 = $5.499,9 → $5.500. */
-    const int sena = (precio * porcentaje + 50) / 100;
-    return qMin(qMax(sena, SenaMinima), precio);
-}
-
-bool senaReembolsable(const QDateTime &turno, const QDateTime &cancelacion)
-{
-    return cancelacion.secsTo(turno) > qint64(HorasParaReembolso) * 3600;
-}
-
 }

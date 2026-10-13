@@ -146,8 +146,8 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 3.
 |---|---|
 | [ ] Conectar Gestión 1-3 y 5 con la base real (alta de turno, búsqueda y cancelación) | [ ] Conectar Cliente 1-3, 5 y el buscador con la base real |
 | [x] Validaciones de DNI y teléfono (formato, largo, solo dígitos) en los formularios de Gestión | [ ] Validaciones en Cliente (DNI/teléfono) y en el ABM de protocolos (precio ≥ 0, duración > 0) |
-| [x] Integrar seña y reembolso (RF-10) al flujo de confirmar y cancelar | [ ] Recordatorio de turno (RF-11): registro de cada aviso |
-| [x] Registro de seña como mock que imita un pago real (RF-08/09, RNF-05) | [ ] **Casos de prueba funcional**: planilla con un caso por RF y resultado de cada uno |
+| [ ] Integrar seña y reembolso (RF-10) al flujo de confirmar y cancelar | [ ] Recordatorio de turno (RF-11): registro de cada aviso |
+| [ ] Registro de seña como mock que imita un pago real (RF-08/09, RNF-05) | [ ] **Casos de prueba funcional**: planilla con un caso por RF y resultado de cada uno |
 
 Criterio de "Beta": los RF Must (RF-01 a RF-09, RF-11, RF-20 y RF-21) funcionando de punta a punta y sin errores críticos.
 

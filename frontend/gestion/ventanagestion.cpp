@@ -1,7 +1,7 @@
 #include "ventanagestion.h"
 #include "ui_ventanagestion.h"
 
-#include "reglas.h"
+#include "validaciones.h"
 
 #include <QGraphicsDropShadowEffect>
 #include <QHeaderView>
@@ -24,6 +24,14 @@ enum { ColPaciente, ColDni, ColTelefono, ColProtocolo, ColFecha, ColEstado, ColS
 static QString pesos(int monto)
 {
     return "$" + QLocale().toString(monto);   /* $25.000 */
+}
+
+/* "+54 11 4444-3322" → "541144443322": así se compara y se guarda. */
+static QString soloDigitos(const QString &texto)
+{
+    QString limpio = Validaciones::normalizar(texto);
+    limpio.remove('+');
+    return limpio;
 }
 
 static QString fechaLarga(const QDate &fecha)
@@ -66,7 +74,7 @@ VentanaGestion::VentanaGestion(QWidget *parent)
      * espacios, guiones y paréntesis. La regla completa se revisa al continuar. */
     ui->editDni->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{0,8}"), this));
     ui->editTelefono->setValidator(
-        new QRegularExpressionValidator(QRegularExpression("[\\d \\-()]{0,20}"), this));
+        new QRegularExpressionValidator(QRegularExpression("\\+?[\\d \\-()]{0,20}"), this));
     ui->editTelefono->setPlaceholderText("11 5555-0102");
     ui->editPaciente->setPlaceholderText("Nombre y apellido");
     ui->editPaciente->clear();
@@ -159,11 +167,16 @@ void VentanaGestion::marcarError(QLineEdit *campo, bool hayError)
 /* Paso 1: se revisan todos los datos juntos y se avisa todo lo que falta. */
 void VentanaGestion::continuarPaso1()
 {
+    QString errorNombre, errorDni, errorTelefono;
+    Validaciones::nombreValido(ui->editPaciente->text(), &errorNombre);
+    Validaciones::dniValido(ui->editDni->text(), &errorDni);
+    Validaciones::telefonoValido(ui->editTelefono->text(), &errorTelefono);
+
     struct Revision { QLineEdit *campo; QString error; };
     const Revision revisiones[] = {
-        { ui->editPaciente, Reglas::validarNombre(ui->editPaciente->text()) },
-        { ui->editDni, Reglas::validarDni(ui->editDni->text()) },
-        { ui->editTelefono, Reglas::validarTelefono(ui->editTelefono->text()) },
+        { ui->editPaciente, errorNombre },
+        { ui->editDni, errorDni },
+        { ui->editTelefono, errorTelefono },
     };
 
     QStringList errores;
@@ -258,7 +271,7 @@ void VentanaGestion::confirmarTurno()
     }
 
     const Turno t = { ui->editPaciente->text().simplified(), ui->editDni->text().trimmed(),
-                      Reglas::sinSeparadores(ui->editTelefono->text()), p->nombre, inicio,
+                      soloDigitos(ui->editTelefono->text()), p->nombre, inicio,
                       ui->btnSena->isChecked() };
     turnos.append(t);
 
@@ -289,7 +302,7 @@ void VentanaGestion::reiniciarCarga()
 void VentanaGestion::buscarTurnos()
 {
     const QString texto = ui->editBuscar->text().simplified();
-    const QString numeros = Reglas::sinSeparadores(texto);
+    const QString numeros = soloDigitos(texto);
     const bool esNumero = !numeros.isEmpty() && std::all_of(numeros.cbegin(), numeros.cend(),
                                                             [](QChar c) { return c.isDigit(); });
 

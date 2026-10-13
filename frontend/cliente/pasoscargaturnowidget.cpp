@@ -1,14 +1,24 @@
 #include "pasoscargaturnowidget.h"
 #include "ui_pasoscargaturnowidget.h"
+#include "validaciones.h"
 #include <QMessageBox>
 #include <QRadioButton>
 #include <QLabel>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 
 PasosCargaTurnoWidget::PasosCargaTurnoWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::PasosCargaTurnoWidget)
 {
     ui->setupUi(this);
+
+    // Semana 3: máscaras de entrada (solo se pueden tipear los caracteres válidos)
+    ui->txtDni->setMaxLength(8);
+    ui->txtDni->setValidator(new QRegularExpressionValidator(QRegularExpression("^[0-9]{0,8}$"), this));
+    ui->txtTelefono->setMaxLength(14);
+    ui->txtTelefono->setValidator(new QRegularExpressionValidator(QRegularExpression("^\\+?[0-9]{0,13}$"), this));
+    ui->txtNombre->setMaxLength(60);
 
     // Inicializar controles de Paso 2
     ui->dateEdit->setDate(QDate::currentDate().addDays(1));
@@ -204,10 +214,24 @@ void PasosCargaTurnoWidget::on_btnPaso1Siguiente_clicked() {
     m_pacienteDni = ui->txtDni->text().trimmed();
     m_pacienteTelefono = ui->txtTelefono->text().trimmed();
 
-    if (m_pacienteNombre.isEmpty() || m_pacienteDni.isEmpty() || m_pacienteTelefono.isEmpty()) {
-        QMessageBox::warning(this, "Datos Requeridos", "Por favor completá tu Nombre, DNI y Teléfono para poder continuar.");
+    QString error;
+    if (!Validaciones::nombreValido(m_pacienteNombre, &error)) {
+        QMessageBox::warning(this, "Dato incorrecto: Nombre", error);
+        ui->txtNombre->setFocus();
         return;
     }
+    if (!Validaciones::dniValido(m_pacienteDni, &error)) {
+        QMessageBox::warning(this, "Dato incorrecto: DNI", error);
+        ui->txtDni->setFocus();
+        return;
+    }
+    if (!Validaciones::telefonoValido(m_pacienteTelefono, &error)) {
+        QMessageBox::warning(this, "Dato incorrecto: Teléfono", error);
+        ui->txtTelefono->setFocus();
+        return;
+    }
+    m_pacienteDni = Validaciones::normalizar(m_pacienteDni);
+    m_pacienteTelefono = Validaciones::normalizar(m_pacienteTelefono);
 
     ui->stackedPasos->setCurrentIndex(1); // Paso 2: Horarios
 }

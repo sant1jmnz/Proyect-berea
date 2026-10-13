@@ -43,6 +43,8 @@ target_link_libraries(dermalia_cliente PRIVATE Qt6::Widgets)
 # cancelación. Se mantiene como ejecutable separado para preservar la
 # interfaz Cliente ya existente en la rama.
 add_executable(dermalia_cliente_bautista
+    comun/validaciones.cpp
+    comun/validaciones.h
     cliente/main_bautista.cpp
     cliente/mainwindow.cpp
     cliente/mainwindow.h
@@ -56,6 +58,31 @@ add_executable(dermalia_cliente_bautista
     cliente/buscarturnowidget.cpp
     cliente/buscarturnowidget.h
     cliente/buscarturnowidget.ui)
+target_include_directories(dermalia_cliente_bautista PRIVATE comun)
 target_link_libraries(dermalia_cliente_bautista PRIVATE Qt6::Widgets)
 
 configure_file(cliente/styles.qss styles.qss COPYONLY)
+
+# Pruebas automáticas del apartado Cliente (Semana 3, QA). Solo se arman si Qt Test está instalado.
+# Se corren con: QT_QPA_PLATFORM=offscreen ./dermalia_tests
+find_package(Qt6 QUIET COMPONENTS Test)
+if(Qt6Test_FOUND)
+    add_executable(dermalia_tests
+        tests/test_cliente.cpp
+        comun/validaciones.cpp
+        comun/validaciones.h
+        cliente/pasoscargaturnowidget.cpp
+        cliente/pasoscargaturnowidget.h
+        cliente/pasoscargaturnowidget.ui
+        cliente/buscadorwidget.cpp
+        cliente/buscadorwidget.h
+        cliente/buscadorwidget.ui
+        cliente/buscarturnowidget.cpp
+        cliente/buscarturnowidget.h
+        cliente/buscarturnowidget.ui)
+    target_include_directories(dermalia_tests PRIVATE comun cliente)
+    target_link_libraries(dermalia_tests PRIVATE Qt6::Widgets Qt6::Test)
+    enable_testing()
+    add_test(NAME cliente COMMAND dermalia_tests)
+    set_tests_properties(cliente PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()

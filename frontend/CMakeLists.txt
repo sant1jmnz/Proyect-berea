@@ -19,6 +19,7 @@ set(COMUN
     comun/buscadorprecios.ui
     comun/validaciones.cpp   # validaciones compartidas (Semana 3)
     comun/validaciones.h
+    comun/sena.h             # seña = porcentaje de la categoría
     gestion/recursos.qrc)   # íconos y tipografías
 
 # Apartado Gestión (PC de recepción). Semana 3: validaciones sobre datos de

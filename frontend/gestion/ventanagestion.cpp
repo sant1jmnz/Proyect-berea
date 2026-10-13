@@ -5,7 +5,6 @@
 
 #include <QGraphicsDropShadowEffect>
 #include <QHeaderView>
-#include <QInputDialog>
 #include <QMessageBox>
 #include <QRegularExpressionValidator>
 #include <QStyle>
@@ -58,15 +57,10 @@ VentanaGestion::VentanaGestion(QWidget *parent)
     /* Datos de prueba: reemplazan los textos de ejemplo escritos en el .ui. */
     const QDateTime ahora = QDateTime::currentDateTime();
     protocolos = DatosPrueba::protocolos();
-    turnos = DatosPrueba::turnos(ahora);
+    turnos = DatosPrueba::turnos(ahora.date());
     cargarProtocolos();
     ui->lblFechaHoy->setText(QLocale().toString(ahora.date(), "dddd d 'de' MMMM 'de' yyyy"));
     ui->calendario->setMinimumDate(ahora.date());   /* no se cargan turnos en el pasado */
-    ui->lblReglaSena->setText(
-        QString("%1% del protocolo (%2% en cirugías), mínimo %3 y nunca más que el precio. "
-                "Se reembolsa si se cancela con más de %4 h de anticipación (RF-10).")
-            .arg(Reglas::PorcentajeSena).arg(Reglas::PorcentajeSenaCirugia)
-            .arg(pesos(Reglas::SenaMinima)).arg(Reglas::HorasParaReembolso));
 
     /* Mientras se escribe, el DNI solo acepta números y el teléfono números,
      * espacios, guiones y paréntesis. La regla completa se revisa al continuar. */
@@ -94,14 +88,16 @@ VentanaGestion::VentanaGestion(QWidget *parent)
     connect(ui->btnVolver2, &QPushButton::clicked, this, [this] { irA(PagProtocolo); });
     connect(ui->btnContinuar2, &QPushButton::clicked, this, &VentanaGestion::continuarPaso2);
     connect(ui->btnVolver3, &QPushButton::clicked, this, [this] { irA(PagHorario); });
-    connect(ui->btnSena, &QPushButton::clicked, this, &VentanaGestion::registrarSena);
+
+    /* El botón de la seña queda apretado (checkable): cambia el texto. */
+    connect(ui->btnSena, &QPushButton::toggled, this, [this](bool pagada) {
+        ui->btnSena->setText(pagada ? "✓  Seña pagada" : "Marcar seña como pagada");
+    });
     connect(ui->btnConfirmar, &QPushButton::clicked, this, &VentanaGestion::confirmarTurno);
 
     /* Buscar turnos: con el botón o con Enter. */
     connect(ui->btnBuscar, &QPushButton::clicked, this, &VentanaGestion::buscarTurnos);
     connect(ui->editBuscar, &QLineEdit::returnPressed, this, &VentanaGestion::buscarTurnos);
-    connect(ui->tablaTurnos, &QTableWidget::itemSelectionChanged, this, &VentanaGestion::mostrarRecordatorio);
-    connect(ui->btnCancelarTurno, &QPushButton::clicked, this, &VentanaGestion::cancelarTurno);
 
     connect(ui->btnAyuda, &QPushButton::clicked, this, [this] {
         QMessageBox::information(this, "Ayuda",
@@ -109,7 +105,6 @@ VentanaGestion::VentanaGestion(QWidget *parent)
             "Buscar turnos: por nombre, DNI o teléfono; desde ahí se cancela.");
     });
 
-    actualizarBotonSena();
     actualizarHorarios();
     buscarTurnos();
 }
@@ -218,7 +213,7 @@ void VentanaGestion::actualizarHorarios()
         if (inicio <= ahora)
             continue;
         const bool ocupado = std::any_of(turnos.cbegin(), turnos.cend(), [&](const Turno &t) {
-            return t.estado == EstadoTurno::Confirmado && t.fechaHora == inicio;
+            return t.fechaHora == inicio;
         });
         if (!ocupado)
             ui->listaHorarios->addItem(hora);
@@ -250,47 +245,7 @@ void VentanaGestion::continuarPaso2()
     ui->lblResHora->setText(QString("%1 (%2 min)").arg(inicio.toString("HH:mm")).arg(p->duracionMin));
     const QDateTime aviso = inicio.addDays(-1);
     ui->lblResRecordatorio->setText(QString("%1 · %2 (RF-11)").arg(fechaLarga(aviso.date()), aviso.toString("HH:mm")));
-    ui->lblSena->setText(pesos(Reglas::calcularSena(p->precio, p->esCirugia)));
     irA(PagConfirmar);
-}
-
-void VentanaGestion::actualizarBotonSena()
-{
-    ui->btnSena->setChecked(senaPagada);
-    ui->btnSena->setText(senaPagada ? QString("✓  Seña pagada · %1").arg(medioPago)
-                                    : "Registrar pago de la seña");
-}
-
-/* RF-09 y RNF-05: pago simulado. Imita el registro de un pago real (medio de
- * pago y comprobante) pero no mueve dinero ni pide datos de tarjeta. */
-void VentanaGestion::registrarSena()
-{
-    if (senaPagada) {
-        const auto respuesta = QMessageBox::question(this, "Anular el pago",
-            QString("¿Anular el registro del pago de la seña (comprobante %1)?").arg(comprobante));
-        if (respuesta == QMessageBox::Yes) {
-            senaPagada = false;
-            medioPago.clear();
-            comprobante.clear();
-        }
-        actualizarBotonSena();
-        return;
-    }
-
-    bool ok = false;
-    const QString medio = QInputDialog::getItem(this, "Registrar pago de la seña",
-        QString("Seña a cobrar: %1\n\n¿Con qué medio pagó la paciente?").arg(ui->lblSena->text()),
-        DatosPrueba::mediosDePago(), 0, false, &ok);
-    if (ok) {
-        senaPagada = true;
-        medioPago = medio;
-        comprobante = QString("SIM-%1").arg(proximoComprobante++, 6, 10, QChar('0'));
-        QMessageBox::information(this, "Pago registrado",
-            QString("Seña de %1 registrada como pagada.\nMedio: %2\nComprobante: %3\n\n"
-                    "Es un registro simulado: no se procesó dinero real.")
-                .arg(ui->lblSena->text(), medioPago, comprobante));
-    }
-    actualizarBotonSena();
 }
 
 void VentanaGestion::confirmarTurno()
@@ -302,25 +257,9 @@ void VentanaGestion::confirmarTurno()
         return;
     }
 
-    if (!senaPagada) {
-        const auto respuesta = QMessageBox::question(this, "Seña sin pagar",
-            "La seña todavía no está pagada.\n¿Confirmar el turno igual? Queda con la seña pendiente.");
-        if (respuesta != QMessageBox::Yes)
-            return;
-    }
-
-    Turno t;
-    t.paciente = ui->editPaciente->text().simplified();
-    t.dni = ui->editDni->text().trimmed();
-    t.telefono = Reglas::sinSeparadores(ui->editTelefono->text());
-    t.protocolo = p->nombre;
-    t.fechaHora = inicio;
-    t.duracionMin = p->duracionMin;
-    t.sena = Reglas::calcularSena(p->precio, p->esCirugia);
-    t.estadoSena = senaPagada ? EstadoSena::Pagada : EstadoSena::Pendiente;
-    t.medioPago = medioPago;
-    t.comprobante = comprobante;
-    t.estado = EstadoTurno::Confirmado;
+    const Turno t = { ui->editPaciente->text().simplified(), ui->editDni->text().trimmed(),
+                      Reglas::sinSeparadores(ui->editTelefono->text()), p->nombre, inicio,
+                      ui->btnSena->isChecked() };
     turnos.append(t);
 
     QMessageBox::information(this, "Turno confirmado",
@@ -342,10 +281,7 @@ void VentanaGestion::reiniciarCarga()
     }
     ui->listaProtocolos->clearSelection();
     ui->listaProtocolos->setCurrentRow(-1);
-    senaPagada = false;
-    medioPago.clear();
-    comprobante.clear();
-    actualizarBotonSena();
+    ui->btnSena->setChecked(false);
     actualizarHorarios();
 }
 
@@ -357,104 +293,34 @@ void VentanaGestion::buscarTurnos()
     const bool esNumero = !numeros.isEmpty() && std::all_of(numeros.cbegin(), numeros.cend(),
                                                             [](QChar c) { return c.isDigit(); });
 
-    filasTabla.clear();
-    for (int i = 0; i < turnos.size(); ++i) {
-        const Turno &t = turnos[i];
-        const bool coincide = texto.isEmpty()
+    QVector<Turno> encontrados;
+    for (const Turno &t : turnos) {
+        if (texto.isEmpty()
             || (esNumero && (t.dni.contains(numeros) || t.telefono.contains(numeros)))
-            || (!esNumero && t.paciente.contains(texto, Qt::CaseInsensitive));
-        if (coincide)
-            filasTabla.append(i);
+            || (!esNumero && t.paciente.contains(texto, Qt::CaseInsensitive)))
+            encontrados.append(t);
     }
-    std::sort(filasTabla.begin(), filasTabla.end(),
-              [this](int a, int b) { return turnos[a].fechaHora < turnos[b].fechaHora; });
+    std::sort(encontrados.begin(), encontrados.end(),
+              [](const Turno &a, const Turno &b) { return a.fechaHora < b.fechaHora; });
 
+    const QDateTime ahora = QDateTime::currentDateTime();
     ui->tablaTurnos->clearContents();
-    ui->tablaTurnos->setRowCount(filasTabla.size());
-    for (int fila = 0; fila < filasTabla.size(); ++fila) {
-        const Turno &t = turnos[filasTabla[fila]];
+    ui->tablaTurnos->setRowCount(encontrados.size());
+    for (int fila = 0; fila < encontrados.size(); ++fila) {
+        const Turno &t = encontrados[fila];
+        const bool realizado = t.fechaHora < ahora;
         const QString columnas[] = {
-            t.paciente, t.dni, t.telefono, t.protocolo,
-            t.fechaHora.toString("dd/MM/yy HH:mm"), DatosPrueba::texto(t.estado),
-            QString("%1 (%2)").arg(pesos(t.sena), DatosPrueba::texto(t.estadoSena)),
+            t.paciente, t.dni, t.telefono, t.protocolo, t.fechaHora.toString("dd/MM/yy HH:mm"),
+            realizado ? "Realizado" : "Confirmado", t.senaPagada ? "Pagada" : "Sin pagar",
         };
         for (int col = ColPaciente; col <= ColSena; ++col) {
             auto *item = new QTableWidgetItem(columnas[col]);
-            if (t.estado == EstadoTurno::Realizado)
+            if (realizado)
                 item->setForeground(QColor(122, 106, 100));   /* gris: ya pasó */
-            else if (t.estado == EstadoTurno::Cancelado)
-                item->setForeground(QColor(163, 58, 58));     /* rojo: cancelado */
             ui->tablaTurnos->setItem(fila, col, item);
         }
     }
 
-    const int cantidad = filasTabla.size();
+    const int cantidad = encontrados.size();
     ui->lblCuenta->setText(cantidad == 1 ? "1 turno" : QString("%1 turnos").arg(cantidad));
-    mostrarRecordatorio();
-}
-
-/* RF-11: muestra cuándo sale el recordatorio del turno elegido. */
-void VentanaGestion::mostrarRecordatorio()
-{
-    const int fila = ui->tablaTurnos->currentRow();
-    const bool haySeleccion = fila >= 0 && fila < filasTabla.size()
-                              && !ui->tablaTurnos->selectedItems().isEmpty();
-    if (!haySeleccion) {
-        ui->lblRecordatorio->setText("Elegí un turno de la tabla para ver su recordatorio o cancelarlo.");
-        return;
-    }
-
-    const Turno &t = turnos[filasTabla[fila]];
-    const QDateTime aviso = t.fechaHora.addDays(-1);
-    if (t.estado != EstadoTurno::Confirmado)
-        ui->lblRecordatorio->setText(QString("Turno %1: no tiene recordatorio.").arg(DatosPrueba::texto(t.estado).toLower()));
-    else if (aviso <= QDateTime::currentDateTime())
-        ui->lblRecordatorio->setText("El recordatorio de este turno ya se envió (RF-11).");
-    else
-        ui->lblRecordatorio->setText(QString("Recordatorio programado para el %1 · %2 (RF-11).")
-                                         .arg(fechaLarga(aviso.date()), aviso.toString("HH:mm")));
-}
-
-/* RF-13 y RF-10: cancela el turno elegido. Si la seña estaba pagada, se
- * reembolsa con más de 24 h de anticipación; si no, el instituto la retiene. */
-void VentanaGestion::cancelarTurno()
-{
-    const int fila = ui->tablaTurnos->currentRow();
-    if (fila < 0 || fila >= filasTabla.size() || ui->tablaTurnos->selectedItems().isEmpty()) {
-        QMessageBox::information(this, "Cancelar turno", "Primero elegí un turno de la tabla.");
-        return;
-    }
-
-    Turno &t = turnos[filasTabla[fila]];
-    if (t.estado != EstadoTurno::Confirmado) {
-        QMessageBox::warning(this, "Cancelar turno",
-            QString("Este turno ya está %1: no se puede cancelar.").arg(DatosPrueba::texto(t.estado).toLower()));
-        return;
-    }
-
-    const QDateTime ahora = QDateTime::currentDateTime();
-    const bool reembolsa = Reglas::senaReembolsable(t.fechaHora, ahora);
-    QString detalleSena;
-    if (t.estadoSena != EstadoSena::Pagada)
-        detalleSena = "La seña no estaba pagada: no hay nada que devolver.";
-    else if (reembolsa)
-        detalleSena = QString("Faltan más de %1 h: se reembolsa la seña completa (%2).")
-                          .arg(Reglas::HorasParaReembolso).arg(pesos(t.sena));
-    else
-        detalleSena = QString("Faltan menos de %1 h: la seña de %2 no se reembolsa.")
-                          .arg(Reglas::HorasParaReembolso).arg(pesos(t.sena));
-
-    const auto respuesta = QMessageBox::question(this, "Cancelar turno",
-        QString("¿Cancelar el turno de %1?\n%2 · %3, %4\n\n%5")
-            .arg(t.paciente, t.protocolo, fechaLarga(t.fechaHora.date()), t.fechaHora.toString("HH:mm"),
-                 detalleSena));
-    if (respuesta != QMessageBox::Yes)
-        return;
-
-    t.estado = EstadoTurno::Cancelado;
-    if (t.estadoSena == EstadoSena::Pagada)
-        t.estadoSena = reembolsa ? EstadoSena::Reembolsada : EstadoSena::Retenida;
-
-    buscarTurnos();
-    actualizarHorarios();   /* el horario vuelve a quedar libre */
 }

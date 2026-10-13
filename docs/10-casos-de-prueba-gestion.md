@@ -3,7 +3,7 @@
 Cinco casos, uno por cada validación de la carga de un turno (RF-02, pasos 1
 y 2). Mismo formato que la planilla de Cliente
 ([`09-casos-de-prueba.md`](09-casos-de-prueba.md)); la plantilla de la cátedra
-está en [`catedra/semana-3-casos-de-prueba-funcional.pdf`](catedra/semana-3-casos-de-prueba-funcional.pdf).
+está en [`catedra/semana-3-casos-de-prueba-funcional.md`](catedra/semana-3-casos-de-prueba-funcional.md).
 Responsable: Santiago (apartado Gestión).
 
 **Cómo se ejecutaron:** se abrió la ventana de Gestión, se cargaron los datos

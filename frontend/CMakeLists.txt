@@ -10,18 +10,23 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Test)
 
 # Buscador de precios: un widget que usan los dos apartados.
 set(COMUN
     comun/buscadorprecios.cpp
     comun/buscadorprecios.h
     comun/buscadorprecios.ui
+    comun/reglas.cpp       # validaciones (Semana 3)
+    comun/reglas.h
     gestion/recursos.qrc)   # íconos y tipografías
 
-# Apartado Gestión (PC de recepción). Semana 1: solo interfaz, sin backend.
+# Apartado Gestión (PC de recepción). Semana 3: validaciones sobre datos de
+# prueba, todavía sin base.
 add_executable(dermalia_gestion
     gestion/main.cpp
+    gestion/datosprueba.cpp
+    gestion/datosprueba.h
     gestion/ventanagestion.cpp
     gestion/ventanagestion.h
     gestion/ventanagestion.ui
@@ -59,3 +64,14 @@ add_executable(dermalia_cliente_bautista
 target_link_libraries(dermalia_cliente_bautista PRIVATE Qt6::Widgets)
 
 configure_file(cliente/styles.qss styles.qss COPYONLY)
+
+# Pruebas automáticas de las validaciones (Semana 3). Se corren con el
+# ejecutable prueba_reglas o con `ctest` desde la carpeta de compilación.
+enable_testing()
+add_executable(prueba_reglas
+    pruebas/prueba_reglas.cpp
+    comun/reglas.cpp
+    comun/reglas.h)
+target_include_directories(prueba_reglas PRIVATE comun)
+target_link_libraries(prueba_reglas PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME prueba_reglas COMMAND prueba_reglas)

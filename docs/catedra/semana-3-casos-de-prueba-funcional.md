@@ -2,8 +2,7 @@
 
 Proyecto Informático 1 - Prof. Cynthia Berea
 
-Transcripción del PDF de cátedra
-([`semana-3-casos-de-prueba-funcional.pdf`](semana-3-casos-de-prueba-funcional.pdf)).
+Transcripción del PDF de cátedra de la Semana 3.
 
 ## ¿Qué es un caso de prueba funcional?
 

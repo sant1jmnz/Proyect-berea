@@ -151,7 +151,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 3.
 
 Criterio de "Beta": los RF Must (RF-01 a RF-09, RF-11, RF-20 y RF-21) funcionando de punta a punta y sin errores críticos.
 
-Los casos de prueba siguen el formato de la cátedra: [`catedra/semana-3-casos-de-prueba-funcional.pdf`](catedra/semana-3-casos-de-prueba-funcional.pdf) (identificador, descripción, precondiciones, pasos, resultado esperado y real, criterio de aprobación).
+Los casos de prueba siguen el formato de la cátedra: [`catedra/semana-3-casos-de-prueba-funcional.md`](catedra/semana-3-casos-de-prueba-funcional.md) (identificador, descripción, precondiciones, pasos, resultado esperado y real, criterio de aprobación).
 
 ### Miércoles: backend y Bases de Datos
 

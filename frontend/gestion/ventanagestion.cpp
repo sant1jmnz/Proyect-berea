@@ -1,6 +1,7 @@
 #include "ventanagestion.h"
 #include "ui_ventanagestion.h"
 
+#include "sena.h"
 #include "validaciones.h"
 
 #include <QGraphicsDropShadowEffect>
@@ -226,7 +227,7 @@ void VentanaGestion::actualizarHorarios()
         if (inicio <= ahora)
             continue;
         const bool ocupado = std::any_of(turnos.cbegin(), turnos.cend(), [&](const Turno &t) {
-            return t.fechaHora == inicio;
+            return t.inicio == inicio;
         });
         if (!ocupado)
             ui->listaHorarios->addItem(hora);
@@ -254,6 +255,11 @@ void VentanaGestion::continuarPaso2()
     ui->lblResTelefono->setText(ui->editTelefono->text().simplified());
     ui->lblResProtocolo->setText(p->nombre);
     ui->lblResPrecio->setText(pesos(p->precio));
+    ui->lblSena->setText(pesos(Sena::calcular(p->precio, p->categoria.porcentajeSena)));
+    ui->lblReglaSena->setText(
+        QString("%1% del precio (categoría %2); se descuenta del total al pagar. "
+                "Se reembolsa si se cancela con más de 24 h de anticipación (RF-10).")
+            .arg(p->categoria.porcentajeSena).arg(p->categoria.nombre));
     ui->lblResFecha->setText(fechaLarga(inicio.date()));
     ui->lblResHora->setText(QString("%1 (%2 min)").arg(inicio.toString("HH:mm")).arg(p->duracionMin));
     const QDateTime aviso = inicio.addDays(-1);
@@ -271,7 +277,9 @@ void VentanaGestion::confirmarTurno()
     }
 
     const Turno t = { ui->editPaciente->text().simplified(), ui->editDni->text().trimmed(),
-                      soloDigitos(ui->editTelefono->text()), p->nombre, inicio,
+                      soloDigitos(ui->editTelefono->text()), p->nombre, p->precio,
+                      Sena::calcular(p->precio, p->categoria.porcentajeSena), inicio,
+                      inicio.addSecs(p->duracionMin * 60), EstadoTurno::Confirmado, "Gestión",
                       ui->btnSena->isChecked() };
     turnos.append(t);
 
@@ -314,21 +322,21 @@ void VentanaGestion::buscarTurnos()
             encontrados.append(t);
     }
     std::sort(encontrados.begin(), encontrados.end(),
-              [](const Turno &a, const Turno &b) { return a.fechaHora < b.fechaHora; });
+              [](const Turno &a, const Turno &b) { return a.inicio < b.inicio; });
 
-    const QDateTime ahora = QDateTime::currentDateTime();
     ui->tablaTurnos->clearContents();
     ui->tablaTurnos->setRowCount(encontrados.size());
     for (int fila = 0; fila < encontrados.size(); ++fila) {
         const Turno &t = encontrados[fila];
-        const bool realizado = t.fechaHora < ahora;
         const QString columnas[] = {
-            t.paciente, t.dni, t.telefono, t.protocolo, t.fechaHora.toString("dd/MM/yy HH:mm"),
-            realizado ? "Realizado" : "Confirmado", t.senaPagada ? "Pagada" : "Sin pagar",
+            t.paciente, t.dni, t.telefono, t.protocolo, t.inicio.toString("dd/MM/yy HH:mm"),
+            DatosPrueba::texto(t.estado),
+            QString("%1 (%2)").arg(pesos(t.sena),
+                                   t.senaPagada ? "pagada" : "sin pagar"),
         };
         for (int col = ColPaciente; col <= ColSena; ++col) {
             auto *item = new QTableWidgetItem(columnas[col]);
-            if (realizado)
+            if (t.estado == EstadoTurno::Realizado)
                 item->setForeground(QColor(122, 106, 100));   /* gris: ya pasó */
             ui->tablaTurnos->setItem(fila, col, item);
         }

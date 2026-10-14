@@ -197,10 +197,10 @@ y *Profesional–Protocolo* ("realiza").
 - Turno (0,1) **tiene seña** (1,1) Pago de seña
 - Pago de seña (1,1) **tiene estado** (0,N) Estado del pago
 - Pago de seña (1,1) **se paga con** (0,N) Medio de pago
-- Turno de consulta (1,1) **genera** (1,1) Evaluación previa *(solo en consultas prequirúrgicas: en el resto de los turnos no existe)*
+- Turno (0,1) **genera** (1,1) Evaluación previa *(el turno de la consulta prequirúrgica; en el resto de los turnos no existe)*
 - Evaluación previa (1,1) **evalúa** (0,N) Protocolo *(la cirugía para la que se evalúa)*
 - Evaluación previa (1,1) **tiene resultado** (0,N) Resultado de evaluación
-- Turno de cirugía (0,1) **se basa en** (0,N) Evaluación previa
+- Turno (0,1) **se basa en** (0,N) Evaluación previa *(el turno de la cirugía)*
 
 La paciente y el profesional de la evaluación no se repiten como atributos:
 salen del turno de la consulta.

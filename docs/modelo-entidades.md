@@ -339,7 +339,7 @@ disponibilidad, y envío de notificación.
 
 ## Pendiente de definir
 
-- Atributos de **Disponibilidad** (no se definieron todavía): por ejemplo día de la semana, hora de inicio y de fin, y vigencia.
+- Atributos de **Disponibilidad**: definidos en `diagramas/README.md` (fecha, hora de inicio y fin, activa).
 - Revisar el modelo completo (grupos 1 a 4) y cerrar las preguntas abiertas
   del grupo 3.
 - Hacer el diagrama de Peter Chen en draw.io (jueves).

@@ -70,8 +70,10 @@ recién se vuelven tabla intermedia en el diseño lógico.
 
 ## Relaciones y cardinalidades
 
-Formato: `Entidad A (mín,máx) — relación — (mín,máx) Entidad B`, tipo entre
-corchetes. En las relaciones 1:N, el lado "N" es el que lleva la clave foránea
+Formato: `Entidad A (mín,máx) — relación — (mín,máx) Entidad B`. El (mín,máx)
+de cada entidad es cuántas veces participa una instancia suya en la relación.
+El tipo se lee de izquierda a derecha (N:1 = muchas de A por cada una de B) y
+sale del máximo del lado opuesto. En las relaciones 1:N, el lado "N" es el que lleva la clave foránea
 en el diseño lógico.
 
 ### Núcleo
@@ -99,13 +101,16 @@ administración); la restricción se valida en la base.
 | 11 | Turno **tiene seña** Pago de seña | Turno (0,1) — Pago (1,1) | 1:1 |
 | 12 | Pago de seña **tiene estado** Estado del pago | Pago (1,1) — Estado (0,N) | N:1 |
 | 13 | Pago de seña **se paga con** Medio de pago | Pago (1,1) — Medio (0,N) | N:1 |
-| 14 | Turno de consulta **genera** Evaluación previa | Turno (0,1) — Evaluación (1,1) | 1:1 |
+| 14 | Turno **genera** Evaluación previa (el turno de la consulta prequirúrgica) | Turno (0,1) — Evaluación (1,1) | 1:1 |
 | 15 | Evaluación previa **evalúa** Protocolo (la cirugía) | Evaluación (1,1) — Protocolo (0,N) | N:1 |
 | 16 | Evaluación previa **tiene resultado** Resultado de evaluación | Evaluación (1,1) — Resultado (0,N) | N:1 |
-| 17 | Turno de cirugía **se basa en** Evaluación previa | Turno (0,1) — Evaluación (0,N) | N:1 |
+| 17 | Turno **se basa en** Evaluación previa (el turno de la cirugía) | Turno (0,1) — Evaluación (0,N) | N:1 |
 
-La paciente y el profesional de la evaluación salen del turno de la consulta
-(relación 14), no se repiten.
+Turno es una sola entidad: la 14 y la 17 son dos relaciones distintas entre
+las mismas entidades. En la 14 el turno es el de la consulta prequirúrgica
+(solo existe en las consultas); en la 17 es el de la cirugía, que pasa por una
+evaluación "apta". La paciente y el profesional de la evaluación salen del
+turno de la consulta (relación 14), no se repiten.
 
 ### Cupones, reglas y tarjetas de regalo
 

@@ -1,10 +1,21 @@
 #include "ventanagestion.h"
 #include "ui_ventanagestion.h"
 
+#include "avisoconexion.h"
+#include "conexionapp.h"
+#include "paginaavisos.h"
+#include "paginapacientes.h"
+#include "paginaprofesionales.h"
+#include "paginaprotocolos.h"
+#include "reembolso.h"
 #include "sena.h"
 #include "validaciones.h"
 
 #include <QGraphicsDropShadowEffect>
+#include <QHBoxLayout>
+#include <QRandomGenerator>
+#include <QTimer>
+#include <QVBoxLayout>
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QRegularExpressionValidator>
@@ -13,12 +24,15 @@
 #include <algorithm>
 
 /* Orden de las páginas dentro del QStackedWidget `paginas` del .ui. */
-enum Pagina { PagInicio, PagProtocolo, PagHorario, PagConfirmar, PagBuscador, PagBuscarTurnos };
+enum Pagina { PagInicio, PagProtocolo, PagHorario, PagConfirmar, PagBuscador, PagBuscarTurnos,
+              /* se agregan por código en armarPantallasNuevas() */
+              PagProtocolos, PagProfesionales, PagPacientes, PagAvisos };
 
 /* A qué página lleva cada fila del menú lateral. Los pasos 2 y 3 no están
  * en el menú: se llega con "Continuar". */
-static const int paginaDeMenu[] = { PagInicio, PagProtocolo, PagBuscador, PagBuscarTurnos };
-enum { MenuCargarTurno = 1, MenuBuscarTurnos = 3 };
+static const int paginaDeMenu[] = { PagInicio, PagProtocolo, PagBuscador, PagBuscarTurnos,
+                                    PagProtocolos, PagProfesionales, PagPacientes, PagAvisos };
+enum { MenuCargarTurno = 1, MenuBuscarTurnos = 3, MenuPacientes = 6 };
 /* Columnas de `tablaTurnos`. */
 enum { ColPaciente, ColDni, ColTelefono, ColProtocolo, ColFecha, ColEstado, ColSena };
 
@@ -40,7 +54,7 @@ static QString fechaLarga(const QDate &fecha)
     return QLocale().toString(fecha, "dddd d 'de' MMMM");   /* jueves 8 de octubre */
 }
 
-VentanaGestion::VentanaGestion(QWidget *parent)
+VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingencia)
     : QMainWindow(parent), ui(new Ui::VentanaGestion)
 {
     ui->setupUi(this);   /* crea todos los widgets dibujados en el .ui */
@@ -67,6 +81,12 @@ VentanaGestion::VentanaGestion(QWidget *parent)
     const QDateTime ahora = QDateTime::currentDateTime();
     protocolos = DatosPrueba::protocolos();
     turnos = DatosPrueba::turnos(ahora.date());
+    profesionales = DatosPrueba::profesionales(ahora.date());
+    pacientes = DatosPrueba::pacientes();
+    for (const Turno &t : std::as_const(turnos))   /* los turnos futuros ya tienen su aviso */
+        if (t.estado == EstadoTurno::Confirmado && t.inicio > ahora)
+            avisos.programar(t.paciente, t.dni, t.telefono, t.protocolo, t.inicio, ahora);
+    armarPantallasNuevas();
     cargarProtocolos();
     ui->lblFechaHoy->setText(QLocale().toString(ahora.date(), "dddd d 'de' MMMM 'de' yyyy"));
     ui->calendario->setMinimumDate(ahora.date());   /* no se cargan turnos en el pasado */
@@ -114,6 +134,17 @@ VentanaGestion::VentanaGestion(QWidget *parent)
             "Buscar turnos: por nombre, DNI o teléfono; desde ahí se cancela.");
     });
 
+    connect(ui->btnCancelarTurno, &QPushButton::clicked, this, &VentanaGestion::cancelarTurno);
+    connect(ui->tablaTurnos, &QTableWidget::itemSelectionChanged, this, &VentanaGestion::turnoElegido);
+    ui->tablaTurnos->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tablaTurnos->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tablaTurnos->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    /* Franja de aviso y modo contingencia (RNF-09). La conexión se prueba
+     * apenas se muestra la ventana, para no demorar el arranque. */
+    conexion = new ConexionApp(franja, ConfigBD::desdeEntorno(), archivoContingencia, this);
+    QTimer::singleShot(0, conexion, &ConexionApp::probar);
+
     actualizarHorarios();
     buscarTurnos();
 }
@@ -121,6 +152,60 @@ VentanaGestion::VentanaGestion(QWidget *parent)
 VentanaGestion::~VentanaGestion()
 {
     delete ui;
+}
+
+/* Agrega al menú y al QStackedWidget las pantallas que se arman por código:
+ * Protocolos, Profesionales, Pacientes y Avisos; y pone arriba la franja de
+ * "sin conexión con la base". */
+void VentanaGestion::armarPantallasNuevas()
+{
+    for (const char *texto : { "Protocolos", "Profesionales", "Pacientes", "Avisos" })
+        ui->menu->addItem(texto);
+
+    paginaProtocolos = new PaginaProtocolos(&protocolos);
+    paginaProfesionales = new PaginaProfesionales(&profesionales, &protocolos);
+    paginaPacientes = new PaginaPacientes(&pacientes);
+    paginaAvisos = new PaginaAvisos(&avisos);
+    paginaProtocolos->setObjectName("pagProtocolos");
+    paginaProfesionales->setObjectName("pagProfesionales");
+    paginaPacientes->setObjectName("pagPacientes");
+    paginaAvisos->setObjectName("pagAvisos");
+    for (QWidget *pagina : { static_cast<QWidget *>(paginaProtocolos), static_cast<QWidget *>(paginaProfesionales),
+                             static_cast<QWidget *>(paginaPacientes), static_cast<QWidget *>(paginaAvisos) })
+        ui->paginas->addWidget(pagina);   /* quedan en el orden de Pagina */
+
+    connect(paginaProtocolos, &PaginaProtocolos::cambiaron, this, &VentanaGestion::protocolosCambiaron);
+    connect(paginaPacientes, &PaginaPacientes::cargarTurnoPara, this, &VentanaGestion::cargarTurnoPara);
+
+    /* La franja va arriba del contenido, a lo ancho de las pantallas. */
+    franja = new AvisoConexion;
+    franja->setObjectName("avisoConexion");
+    auto *capaCentral = qobject_cast<QHBoxLayout *>(ui->central->layout());
+    const int lugar = capaCentral->indexOf(ui->paginas);
+    capaCentral->removeWidget(ui->paginas);
+    auto *columna = new QWidget;
+    auto *capaColumna = new QVBoxLayout(columna);
+    capaColumna->setContentsMargins(0, 0, 0, 0);
+    capaColumna->setSpacing(0);
+    auto *margen = new QWidget;
+    auto *capaMargen = new QHBoxLayout(margen);
+    capaMargen->setContentsMargins(28, 14, 28, 0);
+    capaMargen->addWidget(franja);
+    capaColumna->addWidget(margen);
+    capaColumna->addWidget(ui->paginas, 1);
+    capaCentral->insertWidget(lugar, columna, 1);
+}
+
+/* Código de operación del pago simulado (mock): SIM-123456, sin repetirse. */
+QString VentanaGestion::nuevoCodigoOperacion() const
+{
+    for (;;) {
+        const QString codigo = QString("SIM-%1").arg(QRandomGenerator::global()->bounded(100000, 1000000));
+        const bool usado = std::any_of(turnos.cbegin(), turnos.cend(),
+                                       [&](const Turno &t) { return t.codigoOperacion == codigo; });
+        if (!usado)
+            return codigo;
+    }
 }
 
 void VentanaGestion::irA(int pagina)
@@ -137,8 +222,28 @@ void VentanaGestion::cambiarSeccion(int fila)
 void VentanaGestion::cargarProtocolos()
 {
     ui->listaProtocolos->clear();
-    for (const Protocolo &p : protocolos)
+    protocolosVisibles.clear();
+    for (int i = 0; i < protocolos.size(); ++i) {
+        const Protocolo &p = protocolos[i];
+        if (!p.activo)
+            continue;   /* los protocolos dados de baja ya no se ofrecen */
+        protocolosVisibles << i;
         ui->listaProtocolos->addItem(QString("%1\n%2 min · %3").arg(p.nombre).arg(p.duracionMin).arg(pesos(p.precio)));
+    }
+}
+
+void VentanaGestion::protocolosCambiaron()
+{
+    cargarProtocolos();
+    paginaProfesionales->recargarProtocolos();
+}
+
+void VentanaGestion::cargarTurnoPara(const QString &nombre, const QString &dni, const QString &telefono)
+{
+    ui->editPaciente->setText(nombre);
+    ui->editDni->setText(dni);
+    ui->editTelefono->setText(telefono);
+    ui->menu->setCurrentRow(MenuCargarTurno);
 }
 
 const Protocolo *VentanaGestion::protocoloElegido() const
@@ -146,7 +251,7 @@ const Protocolo *VentanaGestion::protocoloElegido() const
     const int fila = ui->listaProtocolos->currentRow();
     if (!ui->listaProtocolos->currentItem() || !ui->listaProtocolos->currentItem()->isSelected())
         return nullptr;
-    return (fila >= 0 && fila < protocolos.size()) ? &protocolos[fila] : nullptr;
+    return (fila >= 0 && fila < protocolosVisibles.size()) ? &protocolos[protocolosVisibles[fila]] : nullptr;
 }
 
 QDateTime VentanaGestion::horarioElegido() const
@@ -227,7 +332,7 @@ void VentanaGestion::actualizarHorarios()
         if (inicio <= ahora)
             continue;
         const bool ocupado = std::any_of(turnos.cbegin(), turnos.cend(), [&](const Turno &t) {
-            return t.inicio == inicio;
+            return t.inicio == inicio && t.estado != EstadoTurno::Cancelado;
         });
         if (!ocupado)
             ui->listaHorarios->addItem(hora);
@@ -280,15 +385,33 @@ void VentanaGestion::confirmarTurno()
                       soloDigitos(ui->editTelefono->text()), p->nombre, p->precio,
                       Sena::calcular(p->precio, p->categoria.porcentajeSena), inicio,
                       inicio.addSecs(p->duracionMin * 60), EstadoTurno::Confirmado, "Gestión",
-                      ui->btnSena->isChecked() };
-    turnos.append(t);
+                      ui->btnSena->isChecked(), QString(), 0 };
+    Turno nuevo = t;
+    /* Seña simulada (RF-09, RNF-05): imita un pago real pero no mueve dinero. */
+    if (nuevo.senaPagada)
+        nuevo.codigoOperacion = nuevoCodigoOperacion();
+    turnos.append(nuevo);
+    /* Recordatorio 24 h antes (RF-11): queda registrado en la pantalla Avisos. */
+    const QDateTime ahora = QDateTime::currentDateTime();
+    avisos.programar(nuevo.paciente, nuevo.dni, nuevo.telefono, nuevo.protocolo, nuevo.inicio, ahora);
+    paginaAvisos->recargar();
 
-    QMessageBox::information(this, "Turno confirmado",
-        QString("El turno quedó cargado.\n%1 · %2, %3")
-            .arg(t.paciente, fechaLarga(inicio.date()), inicio.toString("HH:mm")));
+    QString mensaje = QString("El turno quedó cargado.\n%1 · %2, %3")
+                          .arg(nuevo.paciente, fechaLarga(inicio.date()), inicio.toString("HH:mm"));
+    if (nuevo.senaPagada)
+        mensaje += QString("\nPago de la seña simulado y aprobado (código %1).").arg(nuevo.codigoOperacion);
+    /* Sin base, el turno se guarda en este equipo hasta que vuelva la conexión (RNF-09). */
+    if (!conexion->hayConexion()) {
+        if (conexion->guardarEnContingencia({ nuevo.paciente, nuevo.dni, nuevo.telefono, nuevo.protocolo,
+                                              nuevo.inicio, nuevo.sena, nuevo.senaPagada, nuevo.origen, {} }))
+            mensaje += "\nNo hay conexión con la base: el turno se guardó en este equipo y se enviará cuando vuelva.";
+        else
+            mensaje += "\nAtención: no hay conexión con la base y tampoco se pudo guardar el turno en este equipo.";
+    }
+    QMessageBox::information(this, "Turno confirmado", mensaje);
 
     reiniciarCarga();
-    ui->editBuscar->setText(t.dni);   /* muestra el turno recién cargado */
+    ui->editBuscar->setText(nuevo.dni);   /* muestra el turno recién cargado */
     buscarTurnos();
     ui->menu->setCurrentRow(MenuBuscarTurnos);
 }
@@ -314,34 +437,112 @@ void VentanaGestion::buscarTurnos()
     const bool esNumero = !numeros.isEmpty() && std::all_of(numeros.cbegin(), numeros.cend(),
                                                             [](QChar c) { return c.isDigit(); });
 
-    QVector<Turno> encontrados;
-    for (const Turno &t : turnos) {
+    QVector<int> encontrados;
+    for (int i = 0; i < turnos.size(); ++i) {
+        const Turno &t = turnos[i];
         if (texto.isEmpty()
             || (esNumero && (t.dni.contains(numeros) || t.telefono.contains(numeros)))
             || (!esNumero && t.paciente.contains(texto, Qt::CaseInsensitive)))
-            encontrados.append(t);
+            encontrados.append(i);
     }
     std::sort(encontrados.begin(), encontrados.end(),
-              [](const Turno &a, const Turno &b) { return a.inicio < b.inicio; });
+              [this](int a, int b) { return turnos[a].inicio < turnos[b].inicio; });
+    filaATurno = encontrados;
 
+    ui->tablaTurnos->blockSignals(true);
     ui->tablaTurnos->clearContents();
     ui->tablaTurnos->setRowCount(encontrados.size());
     for (int fila = 0; fila < encontrados.size(); ++fila) {
-        const Turno &t = encontrados[fila];
+        const Turno &t = turnos[encontrados[fila]];
+        QString sena = QString("%1 (%2)").arg(pesos(t.sena), t.senaPagada ? "pagada" : "sin pagar");
+        if (t.estado == EstadoTurno::Cancelado && t.senaPagada)
+            sena = t.reembolsado > 0 ? QString("%1 (reembolsada)").arg(pesos(t.reembolsado))
+                                     : QString("%1 (no reembolsable)").arg(pesos(t.sena));
         const QString columnas[] = {
             t.paciente, t.dni, t.telefono, t.protocolo, t.inicio.toString("dd/MM/yy HH:mm"),
-            DatosPrueba::texto(t.estado),
-            QString("%1 (%2)").arg(pesos(t.sena),
-                                   t.senaPagada ? "pagada" : "sin pagar"),
+            DatosPrueba::texto(t.estado), sena,
         };
         for (int col = ColPaciente; col <= ColSena; ++col) {
             auto *item = new QTableWidgetItem(columnas[col]);
-            if (t.estado == EstadoTurno::Realizado)
-                item->setForeground(QColor(122, 106, 100));   /* gris: ya pasó */
+            if (t.estado == EstadoTurno::Realizado || t.estado == EstadoTurno::Cancelado)
+                item->setForeground(QColor(122, 106, 100));   /* gris: ya pasó o se canceló */
             ui->tablaTurnos->setItem(fila, col, item);
         }
     }
+    ui->tablaTurnos->blockSignals(false);
+    turnoElegido();
 
     const int cantidad = encontrados.size();
     ui->lblCuenta->setText(cantidad == 1 ? "1 turno" : QString("%1 turnos").arg(cantidad));
+}
+
+/* Muestra el recordatorio del turno elegido y habilita Cancelar solo si se
+ * puede cancelar (un turno ya realizado o ya cancelado no). */
+void VentanaGestion::turnoElegido()
+{
+    const int fila = ui->tablaTurnos->currentRow();
+    const bool hay = fila >= 0 && fila < filaATurno.size() && !ui->tablaTurnos->selectedItems().isEmpty();
+    if (!hay) {
+        ui->btnCancelarTurno->setEnabled(false);
+        ui->lblRecordatorio->setText("Elegí un turno de la lista para ver su recordatorio y poder cancelarlo.");
+        return;
+    }
+    const Turno &t = turnos[filaATurno[fila]];
+    ui->btnCancelarTurno->setEnabled(t.estado == EstadoTurno::Confirmado);
+
+    QString texto = "Sin recordatorio programado.";
+    for (const Aviso &a : avisos.todos()) {
+        if (a.dni == t.dni && a.inicioTurno == t.inicio) {
+            texto = QString("Recordatorio por %1 · %2 · programado para el %3 (RF-11).")
+                        .arg(Recordatorios::nombre(a.canal), Recordatorios::nombre(a.estado).toLower(),
+                             QLocale().toString(a.programado, "dddd d 'de' MMMM · HH:mm"));
+            break;
+        }
+    }
+    if (t.estado == EstadoTurno::Cancelado)
+        texto = "Turno cancelado: ya no se envían avisos.";
+    ui->lblRecordatorio->setText(texto);
+}
+
+/* RF-13 y RF-10: se cancela el turno elegido. Con más de 24 h de anticipación
+ * y la seña pagada, se devuelve el 100%; si no, la seña queda retenida. */
+void VentanaGestion::cancelarTurno()
+{
+    const int fila = ui->tablaTurnos->currentRow();
+    if (fila < 0 || fila >= filaATurno.size())
+        return;
+    Turno &t = turnos[filaATurno[fila]];
+    if (t.estado != EstadoTurno::Confirmado) {
+        QMessageBox::information(this, "No se puede cancelar", "Solo se cancelan turnos confirmados.");
+        return;
+    }
+
+    const QDateTime ahora = QDateTime::currentDateTime();
+    const int devolver = Reembolso::monto(t.sena, t.senaPagada, t.inicio, ahora);
+    QString regla;
+    if (!t.senaPagada)
+        regla = "La seña no estaba pagada: no hay nada que devolver.";
+    else if (devolver > 0)
+        regla = QString("Faltan más de %1 horas: se devuelve la seña completa (%2).")
+                    .arg(Reembolso::HORAS_LIMITE).arg(pesos(devolver));
+    else
+        regla = QString("Faltan %1 horas o menos: la seña (%2) no se devuelve (RF-10).")
+                    .arg(Reembolso::HORAS_LIMITE).arg(pesos(t.sena));
+
+    const auto respuesta = QMessageBox::question(this, "Cancelar turno",
+        QString("¿Cancelar el turno de %1 del %2?\n\n%3")
+            .arg(t.paciente, t.inicio.toString("dd/MM/yy HH:mm"), regla));
+    if (respuesta != QMessageBox::Yes)
+        return;
+
+    t.estado = EstadoTurno::Cancelado;
+    t.reembolsado = devolver;
+    avisos.anularDeTurno(t.dni, t.inicio);   /* el recordatorio ya no tiene sentido */
+    paginaAvisos->recargar();
+    actualizarHorarios();                    /* el horario vuelve a estar libre */
+    buscarTurnos();
+    if (fila < ui->tablaTurnos->rowCount())
+        ui->tablaTurnos->selectRow(fila);    /* sigue a la vista, ya como cancelado */
+    QMessageBox::information(this, "Turno cancelado",
+        devolver > 0 ? QString("Turno cancelado. Se devolvieron %1.").arg(pesos(devolver)) : "Turno cancelado.");
 }

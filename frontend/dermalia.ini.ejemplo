@@ -1,0 +1,17 @@
+; Datos de conexión a la base de datos de Dermalia.
+; Copiar este archivo como "dermalia.ini" (queda sin subir a git) y completar.
+; También se pueden usar variables de entorno, que tienen prioridad:
+;   DERMALIA_DB_HOST, DERMALIA_DB_PORT, DERMALIA_DB_USER, DERMALIA_DB_PASS,
+;   DERMALIA_DB_NAME, DERMALIA_DB_SSL
+;
+; MySQL local (laboratorio): host 127.0.0.1, puerto 3306, ssl desactivado.
+; Aiven: usar el host, el puerto y el usuario que muestra el panel de Aiven
+; y activar ssl (Aiven no acepta conexiones sin cifrar).
+; NO subir la contraseña al repositorio.
+[base]
+host=127.0.0.1
+puerto=3306
+usuario=
+clave=
+base=
+ssl=false

@@ -1,2 +1,5 @@
 .claude/
 CLAUDE.md
+build/
+*.user
+*.autosave

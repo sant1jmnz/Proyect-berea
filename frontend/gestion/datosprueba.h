@@ -7,6 +7,8 @@
 #ifndef DATOSPRUEBA_H
 #define DATOSPRUEBA_H
 
+#include "disponibilidad.h"
+
 #include <QDateTime>
 #include <QString>
 #include <QStringList>
@@ -24,6 +26,25 @@ struct Protocolo {
     int duracionMin;
     int precio;
     Categoria categoria;
+    bool activo = true;        /* una baja lo oculta, no lo borra: los turnos viejos lo siguen mostrando */
+};
+
+/* Profesional: qué protocolos hace (RF-18) y cuándo atiende (RF-03). */
+struct Profesional {
+    QString nombre;
+    QString matricula;
+    bool activo;
+    QStringList protocolos;    /* nombres de los protocolos que realiza */
+    QVector<Franja> franjas;
+};
+
+/* Paciente (la cuenta es opcional; se identifica por DNI). */
+struct Paciente {
+    QString nombre;
+    QString dni;
+    QString telefono;          /* solo dígitos */
+    QString email;             /* opcional */
+    QDate nacimiento;
 };
 
 /* Estado del turno (tabla maestra). */
@@ -41,13 +62,18 @@ struct Turno {
     EstadoTurno estado;
     QString origen;         /* Origen (tabla maestra): Gestión, Terminal, Web */
     bool senaPagada;
+    QString codigoOperacion;   /* de la seña (mock): SIM-000123; vacío si no se pagó */
+    int reembolsado = 0;       /* seña devuelta al cancelar (RF-10) */
 };
 
 namespace DatosPrueba {
 
+QVector<Categoria> categorias();
 QVector<Protocolo> protocolos();
 /* Turnos de ejemplo en los días siguientes a hoy. */
 QVector<Turno> turnos(const QDate &hoy);
+QVector<Profesional> profesionales(const QDate &hoy);
+QVector<Paciente> pacientes();
 /* Horarios en que atiende el instituto, de lunes a sábado. */
 QStringList horariosDelDia();
 

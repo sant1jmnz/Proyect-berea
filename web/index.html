@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="es-AR" class="sin-js">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dermalia · Reservá tu turno</title>
+    <meta name="description" content="Dermalia, Instituto de Estética Médica en Flores, CABA. Elegí tu protocolo, tu horario y confirmá tu turno en tres pasos." />
+    <meta name="theme-color" content="#FCF8F2" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>document.documentElement.classList.replace('sin-js', 'con-js');</script>
+    <link rel="stylesheet" href="/src/estilos/base.css" />
+    <link rel="stylesheet" href="/src/estilos/componentes.css" />
+  </head>
+  <body data-pagina="inicio">
+    <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+    <!-- Loader: la D se dibuja y se vuelve gota (ivan.technology). -->
+    <div class="cargador" aria-hidden="true">
+      <div class="cargador__centro">
+        <svg class="cargador__logo" viewBox="0 0 92 92" fill="none" stroke="#A8475F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle class="cargador__aro" cx="46" cy="46" r="44" stroke="#D9C3A0" />
+          <path class="cargador__d" d="M36 28h10c11 0 19 8 19 18s-8 18-19 18H36z" />
+        </svg>
+        <div class="cargador__barra"><div class="cargador__progreso"></div></div>
+        <div class="cargador__pie"><span>Dermalia</span><span class="cargador__porcentaje numero">0%</span></div>
+      </div>
+    </div>
+
+    <div class="telon" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path class="telon__ola" fill="#A8475F" d="M0 100 C 30 100 70 100 100 100 L100 100 L0 100 Z" />
+      </svg>
+    </div>
+
+    <div class="cursor" aria-hidden="true"></div>
+    <div class="cursor__punto" aria-hidden="true"></div>
+
+    <header class="cabecera">
+      <div class="envoltura cabecera__fila">
+        <a class="marca" href="/" aria-label="Dermalia, inicio">
+          <span class="marca__d" aria-hidden="true">D</span>
+          <span class="rueda" data-rueda>Dermalia</span>
+        </a>
+        <nav class="nav" aria-label="Principal">
+          <a class="nav__link" href="#protocolos">Protocolos</a>
+          <a class="nav__link" href="#sena">La seña</a>
+          <a class="nav__link" href="/mi-turno.html" data-transicion>Mi turno</a>
+          <a class="boton boton--chico" href="/reservar.html" data-transicion data-magnetico><span class="rueda" data-rueda>Sacar un turno</span></a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="contenido">
+      <!-- Hero: la perla 3D (tesseract) sobre ilustraciones de línea (pixelismo). -->
+      <section class="hero" aria-labelledby="titulo-hero">
+        <div class="formas" aria-hidden="true">
+          <svg viewBox="0 0 600 600" style="width: 62vw; right: -12vw; top: -8vw" data-parallax="0.25">
+            <path class="forma forma--1" fill="#F7E8EB" d="M421 99c56 41 104 113 96 182-8 70-72 138-146 170-75 33-160 30-216-13S75 312 86 236c11-77 62-146 129-171 66-25 150 0 206 34Z" />
+          </svg>
+          <svg viewBox="0 0 600 600" style="width: 34vw; left: -10vw; bottom: -6vw" data-parallax="-0.15">
+            <path class="forma forma--2" fill="#FBF3E6" d="M452 168c40 60 39 151-2 214-41 64-122 100-197 89-76-11-145-70-162-141-17-72 18-156 82-205 65-49 239-17 279 43Z" />
+          </svg>
+        </div>
+
+        <div class="hero__fondo" aria-hidden="true">
+          <!-- Gotero -->
+          <svg class="ilustracion" viewBox="0 0 200 220" style="width: 150px; left: 4%; top: 18%" fill="none" stroke="#D9C3A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-parallax="0.4">
+            <path d="M78 96h44a18 18 0 0 1 18 18v74a18 18 0 0 1-18 18H78a18 18 0 0 1-18-18v-74a18 18 0 0 1 18-18Z" />
+            <path d="M82 96V74h36v22" />
+            <path d="M88 74V46a12 12 0 0 1 24 0v28" />
+            <path d="M76 138h48M76 154h30" />
+          </svg>
+          <!-- Rama -->
+          <svg class="ilustracion" viewBox="0 0 200 200" style="width: 190px; right: 6%; bottom: 8%" fill="none" stroke="#D9C3A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-parallax="0.6">
+            <path d="M22 182C62 142 110 98 180 22" />
+            <path d="M64 140c-22-4-38-20-42-44 24 2 42 18 42 44Z" />
+            <path d="M96 106c-4-22 4-42 22-56 8 22 0 42-22 56Z" />
+            <path d="M98 128c20-10 42-8 60 6-20 12-42 10-60-6Z" />
+            <path d="M138 66c16-12 34-14 50-6-14 14-32 16-50 6Z" />
+          </svg>
+          <!-- Pote -->
+          <svg class="ilustracion" viewBox="0 0 200 200" style="width: 120px; left: 38%; bottom: 6%" fill="none" stroke="#D9C3A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-parallax="0.3">
+            <path d="M40 112h120v56a18 18 0 0 1-18 18H58a18 18 0 0 1-18-18v-56Z" />
+            <path d="M50 112V94a8 8 0 0 1 8-8h84a8 8 0 0 1 8 8v18" />
+            <path d="M62 142c12 8 64 8 76 0" />
+          </svg>
+        </div>
+
+        <div class="envoltura hero__grilla">
+          <div>
+            <h1 class="hero__titulo" id="titulo-hero" data-revelar>Tu piel, tu horario, <em>sin esperar</em></h1>
+            <p class="hero__bajada" data-aparecer>
+              Elegí el protocolo, mirá los horarios libres y confirmá tu turno con una seña. Tres pasos,
+              sin esperar que te respondan por WhatsApp.
+            </p>
+            <div class="hero__acciones" data-aparecer>
+              <a class="boton boton--primario" href="/reservar.html" data-transicion data-magnetico><span class="rueda" data-rueda>Sacar un turno</span></a>
+              <a class="boton" href="#protocolos" data-magnetico><span class="rueda" data-rueda>Ver protocolos y precios</span></a>
+            </div>
+          </div>
+
+          <div class="hero__escena" data-perla role="button" aria-label="Perla en 3D: mantenela apretada para inflarla">
+            <p class="hero__pista" data-aparecer>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <circle class="pista__onda" cx="12" cy="12" r="8" stroke-opacity="0.5" />
+              </svg>
+              Mantené apretada la perla
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cifras que cuentan al aparecer (dark-moon). -->
+      <section class="envoltura" aria-label="Dermalia en números">
+        <div class="cifras">
+          <div class="cifra">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
+              <path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11Z" />
+              <path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" />
+            </svg>
+            <span class="cifra__valor numero" data-contar="3">3</span>
+            <span class="cifra__texto">pasos para reservar, desde el celu o la compu</span>
+          </div>
+          <div class="cifra">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+            <span class="cifra__valor numero"><span data-contar="24">24</span> h</span>
+            <span class="cifra__texto">antes del turno podés cancelar y te devolvemos la seña</span>
+          </div>
+          <div class="cifra">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
+              <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            <span class="cifra__valor numero"><span data-contar="30">30</span> %</span>
+            <span class="cifra__texto">de seña para confirmar; el resto se paga en el instituto</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cómo funciona: un trazo dorado une los tres pasos. -->
+      <section class="seccion" id="como-funciona" aria-labelledby="titulo-pasos">
+        <div class="envoltura">
+          <h2 class="titulo-seccion" id="titulo-pasos" data-revelar>Cómo se saca un turno</h2>
+          <p class="bajada" data-aparecer>El mismo recorrido que en la terminal del instituto, ahora desde donde estés.</p>
+
+          <div class="pasos">
+            <svg class="pasos__trazo" viewBox="0 0 1200 200" preserveAspectRatio="none" fill="none" aria-hidden="true">
+              <path data-trazo-scroll stroke="#D9C3A0" stroke-width="1.5"
+                d="M52 92C230 -10 330 190 452 92S700 -10 852 92s270 100 330 0" />
+            </svg>
+
+            <article class="paso">
+              <div class="paso__icono">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
+                  <path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11Z" />
+                  <path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" />
+                </svg>
+                <span class="paso__numero numero">1</span>
+              </div>
+              <h3>Elegí tu protocolo</h3>
+              <p>Uno o varios en el mismo turno. Ves el precio y cuánto dura cada uno antes de seguir.</p>
+            </article>
+
+            <article class="paso">
+              <div class="paso__icono">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
+                  <rect x="3" y="5" width="18" height="16" rx="2" />
+                  <path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" />
+                </svg>
+                <span class="paso__numero numero">2</span>
+              </div>
+              <h3>Elegí tu horario</h3>
+              <p>Solo aparecen los horarios libres de verdad, los mismos que ve la recepción.</p>
+            </article>
+
+            <article class="paso">
+              <div class="paso__icono">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="m8 12 3 3 5-6" />
+                </svg>
+                <span class="paso__numero numero">3</span>
+              </div>
+              <h3>Confirmá con la seña</h3>
+              <p>Pagás la seña (en esta versión es simulada) y te llega el recordatorio. Lo podés sumar a tu Google Calendar.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <div class="marquesina" aria-hidden="true">
+        <div class="marquesina__pista" data-marquesina></div>
+      </div>
+
+      <!-- Catálogo con buscador (RF-05) y vitrina 3D (pixelismo). -->
+      <section class="seccion" id="protocolos" aria-labelledby="titulo-catalogo">
+        <div class="envoltura">
+          <h2 class="titulo-seccion" id="titulo-catalogo" data-revelar>Protocolos y precios</h2>
+          <p class="bajada" data-aparecer>Buscá por nombre o por lo que querés tratar. Si no encontrás algo, escribinos.</p>
+
+          <div class="catalogo">
+            <div>
+              <div class="chips" role="group" aria-label="Filtrar por categoría" data-chips></div>
+              <label class="buscador">
+                <span class="solo-lectores">Buscar protocolo</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-4-4" />
+                </svg>
+                <input class="campo" type="search" placeholder="Por ejemplo: manchas, láser, hidratación…" autocomplete="off" data-buscar />
+              </label>
+              <ul class="lista-protocolos" data-lista aria-live="polite"></ul>
+              <div class="sin-resultados tarjeta" data-sin-resultados hidden>
+                <p>No encontramos un protocolo con esa palabra. Te respondemos por WhatsApp.</p>
+                <a class="boton" href="https://wa.me/" target="_blank" rel="noopener" data-whatsapp>Consultar por WhatsApp</a>
+              </div>
+            </div>
+
+            <div class="vitrina" data-vitrina aria-hidden="true">
+              <p class="vitrina__rotulo" data-vitrina-rotulo>Todos</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Seña transparente (RF-10): calculadora. -->
+      <section class="seccion" id="sena" aria-labelledby="titulo-sena">
+        <div class="envoltura sena">
+          <div>
+            <h2 class="titulo-seccion" id="titulo-sena" data-revelar>La seña, clara desde el principio</h2>
+            <ul class="sena__lista">
+              <li data-aparecer>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
+                  <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z" /><path d="m9 12 2 2 4-4" />
+                </svg>
+                <span><strong>Te la devolvemos entera</strong> si cancelás con más de 24 horas de anticipación.</span>
+              </li>
+              <li data-aparecer>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
+                  <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+                </svg>
+                <span><strong>Con menos de 24 horas</strong> o si no venís, la seña no se devuelve.</span>
+              </li>
+              <li data-aparecer>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
+                  <rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h4" />
+                </svg>
+                <span><strong>En esta versión el pago es simulado:</strong> no te pedimos tarjeta.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="tarjeta-sena" data-aparecer>
+            <label class="etiqueta-campo" for="calc-protocolo">Calculá tu seña</label>
+            <select class="selector" id="calc-protocolo" data-calc-protocolo></select>
+            <p class="sena__monto numero" data-calc-monto aria-live="polite">$0</p>
+            <p class="sena__regla" data-calc-regla></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="seccion cierre" aria-labelledby="titulo-cierre">
+        <div class="envoltura">
+          <h2 class="titulo-seccion" id="titulo-cierre" data-revelar>¿Ya tenés un turno?</h2>
+          <p class="bajada" data-aparecer>Buscalo con tu DNI o tu teléfono, sin crear una cuenta. Desde ahí también lo podés cancelar.</p>
+          <div class="hero__acciones" data-aparecer>
+            <a class="boton" href="/mi-turno.html" data-transicion data-magnetico><span class="rueda" data-rueda>Buscar mi turno</span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <a class="boton boton--primario flotante" href="/reservar.html" data-transicion data-flotante tabindex="-1">Sacar un turno</a>
+
+    <footer class="pie">
+      <div class="envoltura">
+        <div class="pie__grilla">
+          <p>Dermalia, Instituto de Estética Médica<br />Flores, Ciudad de Buenos Aires</p>
+          <p>Lunes a sábado<br /><a href="https://wa.me/" target="_blank" rel="noopener" data-whatsapp>Escribinos por WhatsApp</a></p>
+          <p><a href="/reservar.html" data-transicion>Sacar un turno</a><br /><a href="/mi-turno.html" data-transicion>Mi turno</a></p>
+        </div>
+        <p class="pie__marca" aria-hidden="true" data-pie-marca>Dermalia</p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/js/paginas/inicio.js"></script>
+  </body>
+</html>

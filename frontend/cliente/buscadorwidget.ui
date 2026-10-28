@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BuscadorWidget</class>
+ <widget class="QWidget" name="BuscadorWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>720</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Buscador de Precios y Protocolos</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing">
+    <number>12</number>
+   </property>
+   <property name="leftMargin">
+    <number>8</number>
+   </property>
+   <property name="topMargin">
+    <number>8</number>
+   </property>
+   <property name="rightMargin">
+    <number>8</number>
+   </property>
+   <property name="bottomMargin">
+    <number>8</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="lblTitulo">
+     <property name="text">
+      <string>&lt;b style=&quot;font-size:16px; color:#8e2a59;&quot;&gt;🔍 Buscador de Precios y Protocolos Médicos&lt;/b&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="lblSubtitulo">
+     <property name="text">
+      <string>Escribí el nombre de un tratamiento, tecnología o palabra clave para consultar duración, precios y seña requerida:</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="txtBuscar">
+     <property name="placeholderText">
+      <string>Ej: láser, peeling, arrugas, manchas, limpieza, radiofrecuencia...</string>
+     </property>
+     <property name="minimumHeight">
+      <number>46</number>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QScrollArea" name="scrollResultados">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollContent">
+      <layout class="QVBoxLayout" name="layoutResultados">
+       <property name="spacing">
+        <number>10</number>
+       </property>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <!-- Card de derivación a WhatsApp (RF-07) -->
+    <widget class="QFrame" name="frameWhatsApp">
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <layout class="QHBoxLayout" name="layoutWa">
+      <item>
+       <widget class="QLabel" name="lblWaIcon">
+        <property name="text">
+         <string>&lt;h2 style=&quot;color:#25d366;&quot;&gt;💬&lt;/h2&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblWaTexto">
+        <property name="text">
+         <string>&lt;b&gt;No encontramos resultados para tu consulta en la base de datos.&lt;/b&gt;&lt;br/&gt;Derivar consulta personalizada al WhatsApp oficial de Dermalia (wa.me/5491123456789):</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnWhatsApp">
+        <property name="text">
+         <string>Abrir WhatsApp (wa.me)</string>
+        </property>
+        <property name="minimumHeight">
+         <number>44</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

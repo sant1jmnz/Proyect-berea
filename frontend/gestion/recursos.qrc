@@ -1,0 +1,11 @@
+<RCC>
+ <qresource prefix="/">
+  <file>iconos/inicio.svg</file>
+  <file>iconos/turno.svg</file>
+  <file>iconos/precios.svg</file>
+  <file>iconos/buscar.svg</file>
+  <file>fuentes/Lato-Regular.ttf</file>
+  <file>fuentes/Lato-Bold.ttf</file>
+  <file>fuentes/PlayfairDisplay.ttf</file>
+ </qresource>
+</RCC>

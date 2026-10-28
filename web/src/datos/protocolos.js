@@ -10,17 +10,30 @@ export const categorias = [
 ];
 
 export const protocolos = [
-  { id: 'limpieza', nombre: 'Limpieza facial profunda', duracionMin: 60, precio: 25000, categoria: 'faciales',
+  { id: 'limpieza', nombre: 'Limpieza facial profunda', duracionMin: 60, precio: 25000, categoria: 'faciales', capa: 'epidermis',
     descripcion: 'Higiene, extracción y máscara calmante para piel mixta o grasa.' },
-  { id: 'peeling', nombre: 'Peeling químico', duracionMin: 45, precio: 40000, categoria: 'faciales',
+  { id: 'peeling', nombre: 'Peeling químico', duracionMin: 45, precio: 40000, categoria: 'faciales', capa: 'epidermis',
     descripcion: 'Renueva la capa superficial y empareja manchas y textura.' },
-  { id: 'mesoterapia', nombre: 'Mesoterapia facial', duracionMin: 45, precio: 55000, categoria: 'medicina',
+  { id: 'mesoterapia', nombre: 'Mesoterapia facial', duracionMin: 45, precio: 55000, categoria: 'medicina', capa: 'dermis',
     descripcion: 'Microinyecciones de vitaminas y ácido hialurónico para hidratar.' },
-  { id: 'laser', nombre: 'Depilación láser (zona chica)', duracionMin: 30, precio: 18000, categoria: 'aparatologia',
+  { id: 'laser', nombre: 'Depilación láser (zona chica)', duracionMin: 30, precio: 18000, categoria: 'aparatologia', capa: 'dermis',
     descripcion: 'Axilas, bozo o cavado. Se hace en sesiones cada 4 a 6 semanas.' },
 ];
 
 export const categoriaDe = (p) => categorias.find((c) => c.id === p.categoria);
+
+/* Capas de la piel del modelo 3D del inicio: en cuál actúa principalmente
+ * cada protocolo (campo "capa" de arriba). */
+export const capas = [
+  { id: 'epidermis', nombre: 'Epidermis', profundidad: 'La capa de afuera, menos de 1 mm',
+    texto: 'Es la que se ve: textura, brillo, poros y manchas superficiales.' },
+  { id: 'dermis', nombre: 'Dermis', profundidad: 'Debajo, de 1 a 4 mm',
+    texto: 'Tiene el colágeno, la hidratación profunda y la raíz del vello.' },
+  { id: 'hipodermis', nombre: 'Hipodermis', profundidad: 'La más profunda: tejido graso',
+    texto: 'Da volumen y contorno. Acá trabajan los tratamientos corporales y las cirugías.' },
+];
+
+export const protocolosDeCapa = (id) => protocolos.filter((p) => p.capa === id);
 
 /* Horarios de ejemplo: el instituto atiende de lunes a sábado. */
 export const horasDelDia = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00'];

@@ -8,6 +8,9 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* La cabecera fija no tapa lo que recibe el foco. */
+  scroll-padding-top: 96px;
+  -webkit-tap-highlight-color: rgb(247 232 235 / 0.6);
 }
 
 html.lenis,
@@ -47,6 +50,7 @@ h3 {
   line-height: 1.08;
   margin: 0;
   letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 p {
@@ -69,6 +73,12 @@ input,
 select {
   font: inherit;
   color: inherit;
+}
+
+button,
+a,
+[role='button'] {
+  touch-action: manipulation;
 }
 
 :focus-visible {

@@ -84,9 +84,9 @@ y 2 del maquetado ("Elegir protocolo", "Elegir horario")*.
 | 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | Escritorio (Cliente y Gestión) hecho; falta el apartado Web y las pantallas nuevas |
 | 6 | Pitch | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion del bimestre anterior (7 a 10 min); hay que recortarlo al formato de 5 a 7 min |
 | 7 | Consigna de Bases de Datos | [`docs/consigna-bbdd.md`](docs/consigna-bbdd.md) | Transcripta |
-| 8 | Modelo de entidades (27 entidades) | [`docs/modelo-entidades.md`](docs/modelo-entidades.md) | Escrito (grupos 1 a 4); falta el diagrama de Chen con atributos |
+| 8 | Modelo de entidades (27 entidades) | [`docs/modelo-entidades.md`](docs/modelo-entidades.md) | Escrito (grupos 1 a 4) |
 | 9 | Arquitectura y contingencia | [`docs/arquitectura.md`](docs/arquitectura.md) | Borrador (Aiven, n8n, Telegram, modo contingencia) |
-| 10 | Diagramas (Peter Chen, luego Edgar Codd) | [`docs/diagramas/`](docs/diagramas/) | Borrador del Chen con entidades y relaciones |
+| 10 | Diagramas (Peter Chen, luego Edgar Codd) | [`docs/diagramas/`](docs/diagramas/) | Descripción escrita del Chen: entidades, atributos, relaciones y cardinalidades |
 
 Documentos de apoyo: [`docs/propuestas.md`](docs/propuestas.md) (las diez
 propuestas relevadas y por qué se eligió esta), [`docs/foda.md`](docs/foda.md)
@@ -128,7 +128,7 @@ docs/
   consigna-bbdd.md       # consigna de la sección Bases de Datos
   modelo-entidades.md    # entidades, atributos y cardinalidades
   arquitectura.md        # base en la nube, n8n, contingencia
-  diagramas/             # archivos .drawio (Peter Chen, Edgar Codd)
+  diagramas/             # diseño conceptual escrito (Peter Chen)
 backend/                 # vacío: el backend y la base MySQL se rehacen desde cero
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
 diseno-dermalia/         # guía de estética de las pantallas
@@ -137,7 +137,7 @@ README.md                # este archivo, portada de la Carpeta de Proyecto V1
 
 Todo se escribe en **Markdown**, en español. Los diagramas de árboles y flujos
 van en Mermaid dentro del propio `.md` para que se vean en GitHub; los del
-modelo de datos son archivos `.drawio` (se abren en draw.io). El
+modelo de datos se describen por escrito en `docs/diagramas/`. El
 maquetado vigente es una página interactiva enlazada desde
 `docs/05-maquetado.md`; el maquetado móvil original sigue en
 [Figma](https://www.figma.com/design/qEWMXwg68LQOtj9PzRnh1A/Untitled).

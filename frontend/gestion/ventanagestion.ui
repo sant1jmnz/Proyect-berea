@@ -1,0 +1,3414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>VentanaGestion</class>
+ <widget class="QMainWindow" name="VentanaGestion">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1120</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>960</width>
+    <height>600</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Dermalia — Sistema de Turnos (Gestión)</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget { font-family: &quot;Lato&quot;; font-size: 14px; color: #3A2B2B; }
+QWidget#central { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #FCF8F2, stop:1 #F5ECE6); }
+
+/* ---- barra lateral ---- */
+QFrame#barraLateral { background: #F3EAE0; border: none; border-right: 1px solid #E8DCCF; }
+QLabel#lblLogo { font-family: &quot;Playfair Display&quot;; font-size: 22px; color: #8A6A3B; border: 1px solid #B8935A; border-radius: 22px; }
+QLabel#lblMarca { font-family: &quot;Playfair Display&quot;; font-size: 24px; font-weight: 600; }
+QLabel#lblSubmarca { color: #8A6A3B; font-size: 10px; font-weight: 700; }
+QFrame#lineaMarca { background: #D9C3A0; border: none; }
+QListWidget#menu { background: transparent; border: none; outline: 0; }
+QListWidget#menu::item { padding: 11px 12px; border: 1px solid transparent; border-radius: 10px; color: #6B5B57; margin-bottom: 3px; }
+QListWidget#menu::item:hover { background: #EBDFD3; }
+QListWidget#menu::item:selected { background: #FFFDFA; border: 1px solid #E8DCCF; color: #A8475F; }
+QLabel#lblPie { color: #7A6A64; font-size: 12px; }
+QPushButton#btnAyuda { background: transparent; }
+
+/* ---- textos ---- */
+QLabel[rol=&quot;titulo&quot;] { font-family: &quot;Playfair Display&quot;; font-size: 30px; font-weight: 600; }
+QLabel[rol=&quot;subtitulo&quot;] { color: #7A6A64; }
+QLabel[rol=&quot;seccion&quot;] { font-family: &quot;Playfair Display&quot;; font-size: 18px; font-weight: 600; }
+QLabel[rol=&quot;campo&quot;] { color: #8A6A3B; font-size: 11px; font-weight: 700; }
+QLabel[rol=&quot;valor&quot;] { font-weight: 700; }
+QLabel[rol=&quot;nota&quot;] { color: #7A6A64; font-size: 12px; }
+QLabel[rol=&quot;numero&quot;] { font-size: 26px; font-weight: 700; color: #3A2B2B; }
+
+/* ---- indicador de pasos ---- */
+QLabel[paso=&quot;activo&quot;] { font-weight: 700; border: none; border-bottom: 2px solid #B8935A; padding: 4px 2px 6px 2px; }
+QLabel[paso=&quot;hecho&quot;] { color: #A8475F; border: none; border-bottom: 2px solid #E8C9D0; padding: 4px 2px 6px 2px; }
+QLabel[paso=&quot;pendiente&quot;] { color: #7A6A64; border: none; border-bottom: 2px solid #E8DCCF; padding: 4px 2px 6px 2px; }
+
+/* ---- tarjetas ---- */
+QFrame[tarjeta=&quot;true&quot;] { background: #FFFDFA; border: 1px solid #F0E7DC; border-radius: 14px; }
+
+/* ---- destacado del inicio ---- */
+QFrame#hero { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #9C3F57, stop:1 #C27A8B); border: none; border-radius: 16px; }
+QFrame#hero QLabel { color: #FFFFFF; background: transparent; }
+QFrame#hero QLabel#lblHeroEtiqueta { color: #F6DDE3; font-size: 11px; font-weight: 700; }
+QFrame#hero QLabel#lblHeroTitulo { font-family: &quot;Playfair Display&quot;; font-size: 24px; font-weight: 600; }
+QFrame#hero QLabel#lblHeroDetalle { color: #F9E9ED; }
+QFrame#hero QPushButton#btnIrCargar { background: #FFFDFA; border-color: #FFFDFA; color: #8E3A50; }
+QFrame#hero QPushButton#btnIrCargar:hover { background: #F7E8EB; }
+QFrame#hero QPushButton#btnIrBuscar { background: transparent; border-color: #EBC3CD; color: #FFFFFF; }
+QFrame#hero QPushButton#btnIrBuscar:hover { background: #B0566C; }
+
+/* ---- iniciales, etiquetas e íconos ---- */
+QLabel[avatar=&quot;rosa&quot;] { background: #F7E8EB; color: #8E3A50; border-radius: 18px; font-weight: 700; font-size: 12px; }
+QLabel[avatar=&quot;dorado&quot;] { background: #FBF3E6; color: #8A6A3B; border-radius: 18px; font-weight: 700; font-size: 12px; }
+QLabel[avatar=&quot;salvia&quot;] { background: #EAF1EA; color: #4F6B53; border-radius: 18px; font-weight: 700; font-size: 12px; }
+QLabel[avatar=&quot;libre&quot;] { background: transparent; color: #A89C95; border: 1px dashed #D9C3A0; border-radius: 18px; font-size: 16px; }
+QLabel[etiqueta=&quot;ok&quot;] { background: #EAF1EA; color: #4F6B53; border-radius: 11px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+QLabel[etiqueta=&quot;pendiente&quot;] { background: #FBF3E6; color: #8A6A3B; border-radius: 11px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+QLabel[icono=&quot;true&quot;] { background: #F7E8EB; border-radius: 20px; }
+QLabel[rol=&quot;hora&quot;] { font-weight: 700; }
+QLabel[rol=&quot;apagado&quot;] { color: #A89C95; }
+QFrame[fila=&quot;true&quot;] { background: transparent; border: none; border-bottom: 1px solid #F3EBE1; border-radius: 0; }
+QLabel#lblUsuario { font-weight: 700; }
+QFrame#tarjetaSena { background: #FBF3E6; border: 1px solid #E5D2B0; }
+QLabel#lblSena { font-size: 36px; font-weight: 700; color: #8A6A3B; }
+QLabel#lblRecordatorio { color: #8E3A50; background: #F7E8EB; border-radius: 10px; padding: 8px 14px; }
+
+/* ---- campos y botones ---- */
+QLineEdit { border: 1px solid #E8DCCF; border-radius: 10px; padding: 9px 12px; background: #FFFFFF; selection-background-color: #A8475F; }
+QLineEdit:focus { border-color: #A8475F; }
+QLineEdit[error=&quot;true&quot;] { border-color: #A33A3A; background: #FBEFEF; }
+QPushButton { border: 1px solid #D9C3A0; border-radius: 18px; padding: 9px 22px; font-weight: 700; background: #FFFDFA; }
+QPushButton:hover { background: #F3EAE0; }
+QPushButton:focus { border-color: #A8475F; }
+QPushButton[primario=&quot;true&quot;] { background: #A8475F; border-color: #A8475F; color: #FFFFFF; }
+QPushButton[primario=&quot;true&quot;]:hover { background: #8E3A50; border-color: #8E3A50; }
+QPushButton[peligro=&quot;true&quot;] { color: #A33A3A; border-color: #E3BFBF; }
+QPushButton[peligro=&quot;true&quot;]:hover { background: #FBEFEF; }
+QPushButton#btnSena { background: #8A6A3B; border-color: #8A6A3B; color: #FFFFFF; }
+QPushButton#btnSena:checked { background: #5F7F63; border-color: #5F7F63; }
+QPushButton:disabled { background: #EFE8E0; border-color: #E8DCCF; color: #A89C95; }
+
+/* ---- listas ---- */
+QListWidget#listaProtocolos, QListWidget#listaHorarios, QListWidget#listaProximos { border: none; outline: 0; background: transparent; }
+QListWidget#listaProtocolos::item { border: 1px solid #E8DCCF; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; background: #FFFFFF; }
+QListWidget#listaProtocolos::item:hover { border-color: #D9A9B4; }
+QListWidget#listaProtocolos::item:selected { border-color: #A8475F; background: #F7E8EB; color: #3A2B2B; }
+QListWidget#listaHorarios::item { border: 1px solid #E8DCCF; border-radius: 18px; padding: 9px 24px; margin-right: 8px; margin-bottom: 8px; background: #FFFFFF; }
+QListWidget#listaHorarios::item:hover { border-color: #D9A9B4; }
+QListWidget#listaHorarios::item:selected { border-color: #A8475F; background: #A8475F; color: #FFFFFF; }
+QListWidget#listaProximos::item { padding: 11px 2px; border-bottom: 1px solid #F0E7DC; }
+
+/* ---- calendario ---- */
+QCalendarWidget QWidget#qt_calendar_navigationbar { background: #FFFDFA; }
+QCalendarWidget QToolButton { color: #3A2B2B; font-weight: 700; background: transparent; border: none; border-radius: 6px; padding: 4px 8px; }
+QCalendarWidget QToolButton:hover { background: #F7E8EB; }
+QCalendarWidget QToolButton#qt_calendar_prevmonth { qproperty-icon: none; qproperty-text: &quot;‹&quot;; font-size: 20px; }
+QCalendarWidget QToolButton#qt_calendar_nextmonth { qproperty-icon: none; qproperty-text: &quot;›&quot;; font-size: 20px; }
+QCalendarWidget QAbstractItemView { background: #FFFDFA; alternate-background-color: #FFFDFA; selection-background-color: #A8475F; selection-color: #FFFFFF; outline: 0; border: none; }
+QCalendarWidget QAbstractItemView:disabled { color: #CFC4BA; }
+
+/* ---- tablas ---- */
+QTableWidget#tablaTurnos { font-size: 13px; }
+QTableWidget { border: none; background: #FFFDFA; alternate-background-color: #FBF6EF; selection-background-color: #F7E8EB; selection-color: #3A2B2B; outline: 0; }
+QHeaderView::section { background: #FFFDFA; border: none; border-bottom: 1px solid #D9C3A0; padding: 8px; font-size: 11px; font-weight: 700; color: #8A6A3B; }
+
+/* ---- barras de desplazamiento ---- */
+QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+QScrollBar::handle:vertical { background: #DCCFC0; border-radius: 3px; min-height: 30px; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
+QScrollBar::handle:horizontal { background: #DCCFC0; border-radius: 3px; min-width: 30px; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
+  </property>
+  <widget class="QWidget" name="central">
+   <layout class="QHBoxLayout" name="layoutCentral">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="barraLateral">
+      <property name="minimumSize">
+       <size>
+        <width>228</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>228</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <layout class="QVBoxLayout" name="layoutLateral">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <property name="leftMargin">
+        <number>18</number>
+       </property>
+       <property name="topMargin">
+        <number>24</number>
+       </property>
+       <property name="rightMargin">
+        <number>18</number>
+       </property>
+       <property name="bottomMargin">
+        <number>18</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="layoutMarca">
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="lblLogo">
+           <property name="text">
+            <string>D</string>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>44</width>
+             <height>44</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>44</width>
+             <height>44</height>
+            </size>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="layoutMarcaTexto">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="lblMarca">
+             <property name="text">
+              <string>Dermalia</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblSubmarca">
+             <property name="text">
+              <string>ESTÉTICA MÉDICA</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="espacioMarca">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>10</height>
+          </size>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QFrame" name="lineaMarca">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>1</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>1</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="espacioMarca2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>10</height>
+          </size>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QListWidget" name="menu">
+         <property name="iconSize">
+          <size>
+           <width>18</width>
+           <height>18</height>
+          </size>
+         </property>
+         <property name="currentRow">
+          <number>0</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>Inicio</string>
+          </property>
+          <property name="icon">
+           <iconset resource="recursos.qrc">
+            <normaloff>:/iconos/inicio.svg</normaloff>
+            <selectedoff>:/iconos/inicio.svg</selectedoff>
+           </iconset>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Cargar turno</string>
+          </property>
+          <property name="icon">
+           <iconset resource="recursos.qrc">
+            <normaloff>:/iconos/turno.svg</normaloff>
+            <selectedoff>:/iconos/turno.svg</selectedoff>
+           </iconset>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Buscador de precios</string>
+          </property>
+          <property name="icon">
+           <iconset resource="recursos.qrc">
+            <normaloff>:/iconos/precios.svg</normaloff>
+            <selectedoff>:/iconos/precios.svg</selectedoff>
+           </iconset>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Buscar turnos</string>
+          </property>
+          <property name="icon">
+           <iconset resource="recursos.qrc">
+            <normaloff>:/iconos/buscar.svg</normaloff>
+            <selectedoff>:/iconos/buscar.svg</selectedoff>
+           </iconset>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="layoutUsuario">
+         <property name="spacing">
+          <number>10</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="avatarUsuario">
+           <property name="text">
+            <string>R</string>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>36</width>
+             <height>36</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>36</width>
+             <height>36</height>
+            </size>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="avatar" stdset="0">
+            <string notr="true">dorado</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="layoutUsuarioTexto">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="lblUsuario">
+             <property name="text">
+              <string>Recepción</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblPie">
+             <property name="text">
+              <string>Flores, CABA</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <spacer name="espacioUsuario">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="espacioUsuario2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>6</height>
+          </size>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnAyuda">
+         <property name="text">
+          <string>Ayuda</string>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="paginas">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="pagInicio">
+       <layout class="QVBoxLayout" name="layoutInicio">
+        <property name="spacing">
+         <number>14</number>
+        </property>
+        <property name="leftMargin">
+         <number>26</number>
+        </property>
+        <property name="topMargin">
+         <number>24</number>
+        </property>
+        <property name="rightMargin">
+         <number>26</number>
+        </property>
+        <property name="bottomMargin">
+         <number>24</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="layoutCabeceraInicio">
+          <property name="spacing">
+           <number>2</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="lblTituloInicio">
+            <property name="text">
+             <string>Agenda del día</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblFechaHoy">
+            <property name="text">
+             <string>martes 6 de octubre de 2026</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="layoutInicioCuerpo" stretch="3,2">
+          <property name="spacing">
+           <number>14</number>
+          </property>
+          <item>
+           <layout class="QVBoxLayout" name="layoutInicioIzq">
+            <property name="spacing">
+             <number>14</number>
+            </property>
+            <item>
+             <widget class="QFrame" name="hero">
+              <layout class="QVBoxLayout" name="layoutHero">
+               <property name="spacing">
+                <number>2</number>
+               </property>
+               <property name="leftMargin">
+                <number>22</number>
+               </property>
+               <property name="topMargin">
+                <number>16</number>
+               </property>
+               <property name="rightMargin">
+                <number>22</number>
+               </property>
+               <property name="bottomMargin">
+                <number>18</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="lblHeroEtiqueta">
+                 <property name="text">
+                  <string>PRÓXIMO TURNO · MESOTERAPIA FACIAL</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="lblHeroTitulo">
+                 <property name="text">
+                  <string>13:00 · Carla Gómez</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="espacioHero0">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>8</height>
+                  </size>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Fixed</enum>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="layoutHeroBotones">
+                 <property name="spacing">
+                  <number>10</number>
+                 </property>
+                 <item>
+                  <widget class="QPushButton" name="btnIrCargar">
+                   <property name="text">
+                    <string>Nuevo turno</string>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btnIrBuscar">
+                   <property name="text">
+                    <string>Buscar un turno</string>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="espacioHero">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QFrame" name="tarjetaAgenda">
+              <property name="tarjeta" stdset="0">
+               <bool>true</bool>
+              </property>
+              <layout class="QVBoxLayout" name="layoutAgenda">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>18</number>
+               </property>
+               <property name="topMargin">
+                <number>16</number>
+               </property>
+               <property name="rightMargin">
+                <number>18</number>
+               </property>
+               <property name="bottomMargin">
+                <number>10</number>
+               </property>
+               <item>
+                <layout class="QHBoxLayout" name="layoutAgendaTitulo">
+                 <item>
+                  <widget class="QLabel" name="lblAgenda">
+                   <property name="text">
+                    <string>Hoy en el instituto</string>
+                   </property>
+                   <property name="rol" stdset="0">
+                    <string notr="true">seccion</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="espacioAgendaTitulo">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="lblAgendaSena">
+                   <property name="text">
+                    <string>SEÑA</string>
+                   </property>
+                   <property name="rol" stdset="0">
+                    <string notr="true">campo</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <spacer name="espacioAgenda0">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>4</height>
+                  </size>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Fixed</enum>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QFrame" name="filaAgenda1">
+                 <property name="fila" stdset="0">
+                  <bool>true</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="layoutFila1">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>6</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>6</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblHora1">
+                    <property name="text">
+                     <string>09:00</string>
+                    </property>
+                    <property name="rol" stdset="0">
+                     <string notr="true">hora</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="avatarAgenda1">
+                    <property name="text">
+                     <string>MS</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="avatar" stdset="0">
+                     <string notr="true">rosa</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="layoutFilaTxt1">
+                    <property name="spacing">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="lblNombre1">
+                      <property name="text">
+                       <string>María Sosa</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">valor</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="lblDetalle1">
+                      <property name="text">
+                       <string>Limpieza facial profunda</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">nota</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <spacer name="espacioFila1">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="lblSenaFila1">
+                    <property name="text">
+                     <string>Pagada</string>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>24</height>
+                     </size>
+                    </property>
+                    <property name="etiqueta" stdset="0">
+                     <string notr="true">ok</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="filaAgenda2">
+                 <property name="fila" stdset="0">
+                  <bool>true</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="layoutFila2">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>6</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>6</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblHora2">
+                    <property name="text">
+                     <string>10:30</string>
+                    </property>
+                    <property name="rol" stdset="0">
+                     <string notr="true">hora</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="avatarAgenda2">
+                    <property name="text">
+                     <string>+</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="avatar" stdset="0">
+                     <string notr="true">libre</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="lblNombre2">
+                    <property name="text">
+                     <string>Horario disponible</string>
+                    </property>
+                    <property name="rol" stdset="0">
+                     <string notr="true">apagado</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="espacioFila2">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="filaAgenda3">
+                 <property name="fila" stdset="0">
+                  <bool>true</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="layoutFila3">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>6</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>6</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblHora3">
+                    <property name="text">
+                     <string>13:00</string>
+                    </property>
+                    <property name="rol" stdset="0">
+                     <string notr="true">hora</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="avatarAgenda3">
+                    <property name="text">
+                     <string>CG</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="avatar" stdset="0">
+                     <string notr="true">dorado</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="layoutFilaTxt3">
+                    <property name="spacing">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="lblNombre3">
+                      <property name="text">
+                       <string>Carla Gómez</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">valor</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="lblDetalle3">
+                      <property name="text">
+                       <string>Mesoterapia facial</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">nota</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <spacer name="espacioFila3">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="lblSenaFila3">
+                    <property name="text">
+                     <string>Pendiente</string>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>24</height>
+                     </size>
+                    </property>
+                    <property name="etiqueta" stdset="0">
+                     <string notr="true">pendiente</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="filaAgenda4">
+                 <property name="fila" stdset="0">
+                  <bool>true</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="layoutFila4">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>6</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>6</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblHora4">
+                    <property name="text">
+                     <string>15:30</string>
+                    </property>
+                    <property name="rol" stdset="0">
+                     <string notr="true">hora</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="avatarAgenda4">
+                    <property name="text">
+                     <string>+</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="avatar" stdset="0">
+                     <string notr="true">libre</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="lblNombre4">
+                    <property name="text">
+                     <string>Horario disponible</string>
+                    </property>
+                    <property name="rol" stdset="0">
+                     <string notr="true">apagado</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="espacioFila4">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="filaAgenda5">
+                 <property name="fila" stdset="0">
+                  <bool>true</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="layoutFila5">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>6</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>6</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="lblHora5">
+                    <property name="text">
+                     <string>17:00</string>
+                    </property>
+                    <property name="rol" stdset="0">
+                     <string notr="true">hora</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="avatarAgenda5">
+                    <property name="text">
+                     <string>LF</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="avatar" stdset="0">
+                     <string notr="true">salvia</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="layoutFilaTxt5">
+                    <property name="spacing">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="lblNombre5">
+                      <property name="text">
+                       <string>Lucía Fernández</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">valor</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="lblDetalle5">
+                      <property name="text">
+                       <string>Peeling químico</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">nota</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <spacer name="espacioFila5">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="lblSenaFila5">
+                    <property name="text">
+                     <string>Pagada</string>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>24</height>
+                     </size>
+                    </property>
+                    <property name="etiqueta" stdset="0">
+                     <string notr="true">ok</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <spacer name="espacioAgenda">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="layoutInicioDer">
+            <property name="spacing">
+             <number>14</number>
+            </property>
+            <item>
+             <layout class="QGridLayout" name="layoutStats">
+              <property name="spacing">
+               <number>12</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QFrame" name="tarjetaHoy">
+                <property name="tarjeta" stdset="0">
+                 <bool>true</bool>
+                </property>
+                <layout class="QHBoxLayout" name="layoutHoy">
+                 <property name="spacing">
+                  <number>12</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>14</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>12</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>14</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>12</number>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="iconoHoy">
+                   <property name="minimumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                   <property name="pixmap">
+                    <pixmap resource="recursos.qrc">:/iconos/turno.svg</pixmap>
+                   </property>
+                   <property name="icono" stdset="0">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QVBoxLayout" name="layoutTxtHoy">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QLabel" name="lblNumHoy">
+                     <property name="text">
+                      <string>3</string>
+                     </property>
+                     <property name="rol" stdset="0">
+                      <string notr="true">numero</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="lblTxtHoy">
+                     <property name="text">
+                      <string>Turnos hoy</string>
+                     </property>
+                     <property name="rol" stdset="0">
+                      <string notr="true">nota</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QFrame" name="tarjetaLibres">
+                <property name="tarjeta" stdset="0">
+                 <bool>true</bool>
+                </property>
+                <layout class="QHBoxLayout" name="layoutLibres">
+                 <property name="spacing">
+                  <number>12</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>14</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>12</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>14</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>12</number>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="iconoLibres">
+                   <property name="minimumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                   <property name="pixmap">
+                    <pixmap resource="recursos.qrc">:/iconos/inicio.svg</pixmap>
+                   </property>
+                   <property name="icono" stdset="0">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QVBoxLayout" name="layoutTxtLibres">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QLabel" name="lblNumLibres">
+                     <property name="text">
+                      <string>2</string>
+                     </property>
+                     <property name="rol" stdset="0">
+                      <string notr="true">numero</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="lblTxtLibres">
+                     <property name="text">
+                      <string>Libres hoy</string>
+                     </property>
+                     <property name="rol" stdset="0">
+                      <string notr="true">nota</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QFrame" name="tarjetaProximos">
+                <property name="tarjeta" stdset="0">
+                 <bool>true</bool>
+                </property>
+                <layout class="QHBoxLayout" name="layoutProximos">
+                 <property name="spacing">
+                  <number>12</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>14</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>12</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>14</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>12</number>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="iconoProximos">
+                   <property name="minimumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                   <property name="pixmap">
+                    <pixmap resource="recursos.qrc">:/iconos/buscar.svg</pixmap>
+                   </property>
+                   <property name="icono" stdset="0">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QVBoxLayout" name="layoutTxtProximos">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QLabel" name="lblNumProximos">
+                     <property name="text">
+                      <string>5</string>
+                     </property>
+                     <property name="rol" stdset="0">
+                      <string notr="true">numero</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="lblTxtProximos">
+                     <property name="text">
+                      <string>Próximos</string>
+                     </property>
+                     <property name="rol" stdset="0">
+                      <string notr="true">nota</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QFrame" name="tarjetaSinSena">
+                <property name="tarjeta" stdset="0">
+                 <bool>true</bool>
+                </property>
+                <layout class="QHBoxLayout" name="layoutSinSena">
+                 <property name="spacing">
+                  <number>12</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>14</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>12</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>14</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>12</number>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="iconoSinSena">
+                   <property name="minimumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>40</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                   <property name="pixmap">
+                    <pixmap resource="recursos.qrc">:/iconos/precios.svg</pixmap>
+                   </property>
+                   <property name="icono" stdset="0">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QVBoxLayout" name="layoutTxtSinSena">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QLabel" name="lblNumSinSena">
+                     <property name="text">
+                      <string>1</string>
+                     </property>
+                     <property name="rol" stdset="0">
+                      <string notr="true">numero</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="lblTxtSinSena">
+                     <property name="text">
+                      <string>Sin seña</string>
+                     </property>
+                     <property name="rol" stdset="0">
+                      <string notr="true">nota</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QFrame" name="tarjetaProximos">
+              <property name="tarjeta" stdset="0">
+               <bool>true</bool>
+              </property>
+              <layout class="QVBoxLayout" name="layoutProximos">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>18</number>
+               </property>
+               <property name="topMargin">
+                <number>16</number>
+               </property>
+               <property name="rightMargin">
+                <number>18</number>
+               </property>
+               <property name="bottomMargin">
+                <number>10</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="lblProximos">
+                 <property name="text">
+                  <string>Próximos días</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">seccion</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="espacioProximos0">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>4</height>
+                  </size>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Fixed</enum>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QFrame" name="filaProximo1">
+                 <property name="fila" stdset="0">
+                  <bool>true</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="layoutProximo1">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>8</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>8</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="avatarProximo1">
+                    <property name="text">
+                     <string>JD</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="avatar" stdset="0">
+                     <string notr="true">rosa</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="layoutProximoTxt1">
+                    <property name="spacing">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="lblProximoNombre1">
+                      <property name="text">
+                       <string>Julieta Díaz</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">valor</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="lblProximoDetalle1">
+                      <property name="text">
+                       <string>mié 7 · 13:00 · Depilación láser</string>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>true</bool>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">nota</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="filaProximo2">
+                 <property name="fila" stdset="0">
+                  <bool>true</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="layoutProximo2">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>8</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>8</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="avatarProximo2">
+                    <property name="text">
+                     <string>AR</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="avatar" stdset="0">
+                     <string notr="true">salvia</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="layoutProximoTxt2">
+                    <property name="spacing">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="lblProximoNombre2">
+                      <property name="text">
+                       <string>Ana Ruiz</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">valor</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="lblProximoDetalle2">
+                      <property name="text">
+                       <string>vie 9 · 09:00 · Peeling químico</string>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>true</bool>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">nota</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QFrame" name="filaProximo3">
+                 <property name="fila" stdset="0">
+                  <bool>true</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="layoutProximo3">
+                  <property name="spacing">
+                   <number>12</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>8</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>8</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="avatarProximo3">
+                    <property name="text">
+                     <string>MS</string>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>36</width>
+                      <height>36</height>
+                     </size>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="avatar" stdset="0">
+                     <string notr="true">dorado</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="layoutProximoTxt3">
+                    <property name="spacing">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="lblProximoNombre3">
+                      <property name="text">
+                       <string>María Sosa</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">valor</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="lblProximoDetalle3">
+                      <property name="text">
+                       <string>jue 8 · 09:00 · Depilación láser</string>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>true</bool>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">nota</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <spacer name="espacioProximos">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagProtocolo">
+       <layout class="QVBoxLayout" name="layoutProtocolo">
+        <property name="spacing">
+         <number>14</number>
+        </property>
+        <property name="leftMargin">
+         <number>26</number>
+        </property>
+        <property name="topMargin">
+         <number>24</number>
+        </property>
+        <property name="rightMargin">
+         <number>26</number>
+        </property>
+        <property name="bottomMargin">
+         <number>24</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="layoutCabeceraProtocolo">
+          <property name="spacing">
+           <number>2</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="lblTituloProtocolo">
+            <property name="text">
+             <string>Cargar turno</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSubProtocolo">
+            <property name="text">
+             <string>Datos de la paciente y protocolo que pide</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="p1Pasos">
+          <property name="spacing">
+           <number>22</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="p1Paso1">
+            <property name="text">
+             <string>1 · Protocolo</string>
+            </property>
+            <property name="paso" stdset="0">
+             <string notr="true">activo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="p1Paso2">
+            <property name="text">
+             <string>2 · Horario</string>
+            </property>
+            <property name="paso" stdset="0">
+             <string notr="true">pendiente</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="p1Paso3">
+            <property name="text">
+             <string>3 · Confirmar</string>
+            </property>
+            <property name="paso" stdset="0">
+             <string notr="true">pendiente</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="p1PasosEspacio">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="layoutProtocoloCuerpo" stretch="2,3">
+          <property name="spacing">
+           <number>12</number>
+          </property>
+          <item>
+           <widget class="QFrame" name="tarjetaPaciente">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutPaciente">
+             <property name="spacing">
+              <number>5</number>
+             </property>
+             <property name="leftMargin">
+              <number>18</number>
+             </property>
+             <property name="topMargin">
+              <number>18</number>
+             </property>
+             <property name="rightMargin">
+              <number>18</number>
+             </property>
+             <property name="bottomMargin">
+              <number>18</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lblSeccionPaciente">
+               <property name="text">
+                <string>Paciente</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">seccion</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioSeccionPaciente">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>2</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblPaciente">
+               <property name="text">
+                <string>NOMBRE Y APELLIDO</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">campo</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="editPaciente">
+               <property name="placeholderText">
+                <string>María Sosa</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioPaciente">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>4</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblDni">
+               <property name="text">
+                <string>DNI</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">campo</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="editDni">
+               <property name="placeholderText">
+                <string>Solo números</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioDni">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>4</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblTelefono">
+               <property name="text">
+                <string>TELÉFONO</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">campo</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="editTelefono">
+               <property name="placeholderText">
+                <string>11 5555-0102</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioTelefono">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>4</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <spacer name="espacioPaciente">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblNotaPaciente">
+               <property name="text">
+                <string>Con el DNI o el teléfono después se encuentra el turno en «Buscar turnos».</string>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">nota</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="tarjetaProtocolos">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutProtocolos">
+             <property name="spacing">
+              <number>10</number>
+             </property>
+             <property name="leftMargin">
+              <number>18</number>
+             </property>
+             <property name="topMargin">
+              <number>18</number>
+             </property>
+             <property name="rightMargin">
+              <number>18</number>
+             </property>
+             <property name="bottomMargin">
+              <number>18</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lblProtocolos">
+               <property name="text">
+                <string>Protocolo</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">seccion</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listaProtocolos">
+               <item>
+                <property name="text">
+                 <string>Limpieza facial profunda
+60 min · $25.000</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Peeling químico
+45 min · $40.000</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Mesoterapia facial
+45 min · $55.000</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Depilación láser (zona chica)
+30 min · $18.000</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="botonesProtocolo">
+          <item>
+           <spacer name="espacioProtocolo">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnContinuar1">
+            <property name="text">
+             <string>Continuar</string>
+            </property>
+            <property name="primario" stdset="0">
+             <bool>true</bool>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagHorario">
+       <layout class="QVBoxLayout" name="layoutHorario">
+        <property name="spacing">
+         <number>14</number>
+        </property>
+        <property name="leftMargin">
+         <number>26</number>
+        </property>
+        <property name="topMargin">
+         <number>24</number>
+        </property>
+        <property name="rightMargin">
+         <number>26</number>
+        </property>
+        <property name="bottomMargin">
+         <number>24</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="layoutCabeceraHorario">
+          <property name="spacing">
+           <number>2</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="lblTituloHorario">
+            <property name="text">
+             <string>Elegir horario</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblPasoHorario">
+            <property name="text">
+             <string>María Sosa · Depilación láser (zona chica) (30 min)</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="p2Pasos">
+          <property name="spacing">
+           <number>22</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="p2Paso1">
+            <property name="text">
+             <string>✓  Protocolo</string>
+            </property>
+            <property name="paso" stdset="0">
+             <string notr="true">hecho</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="p2Paso2">
+            <property name="text">
+             <string>2 · Horario</string>
+            </property>
+            <property name="paso" stdset="0">
+             <string notr="true">activo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="p2Paso3">
+            <property name="text">
+             <string>3 · Confirmar</string>
+            </property>
+            <property name="paso" stdset="0">
+             <string notr="true">pendiente</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="p2PasosEspacio">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="layoutHorarioCuerpo" stretch="0,1">
+          <property name="spacing">
+           <number>12</number>
+          </property>
+          <item>
+           <widget class="QFrame" name="tarjetaCalendario">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutCalendario">
+             <property name="spacing">
+              <number>8</number>
+             </property>
+             <property name="leftMargin">
+              <number>18</number>
+             </property>
+             <property name="topMargin">
+              <number>18</number>
+             </property>
+             <property name="rightMargin">
+              <number>18</number>
+             </property>
+             <property name="bottomMargin">
+              <number>18</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lblDia">
+               <property name="text">
+                <string>Día</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">seccion</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCalendarWidget" name="calendario">
+               <property name="minimumSize">
+                <size>
+                 <width>364</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="gridVisible">
+                <bool>false</bool>
+               </property>
+               <property name="verticalHeaderFormat">
+                <enum>QCalendarWidget::NoVerticalHeader</enum>
+               </property>
+               <property name="horizontalHeaderFormat">
+                <enum>QCalendarWidget::SingleLetterDayNames</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="tarjetaHorarios">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutHorarios">
+             <property name="spacing">
+              <number>10</number>
+             </property>
+             <property name="leftMargin">
+              <number>18</number>
+             </property>
+             <property name="topMargin">
+              <number>18</number>
+             </property>
+             <property name="rightMargin">
+              <number>18</number>
+             </property>
+             <property name="bottomMargin">
+              <number>18</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lblHorarios">
+               <property name="text">
+                <string>Horarios disponibles</string>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">seccion</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listaHorarios">
+               <property name="movement">
+                <enum>QListView::Static</enum>
+               </property>
+               <property name="flow">
+                <enum>QListView::LeftToRight</enum>
+               </property>
+               <property name="isWrapping" stdset="0">
+                <bool>true</bool>
+               </property>
+               <property name="resizeMode">
+                <enum>QListView::Adjust</enum>
+               </property>
+               <item>
+                <property name="text">
+                 <string>09:00</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>10:30</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>13:00</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>15:30</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>17:00</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblNotaHorario">
+               <property name="text">
+                <string>No se muestran los horarios ya ocupados: así no se pisan dos turnos (RF-04).</string>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">nota</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="botonesHorario">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <item>
+           <spacer name="espacioHorario">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnVolver2">
+            <property name="text">
+             <string>Volver</string>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnContinuar2">
+            <property name="text">
+             <string>Continuar</string>
+            </property>
+            <property name="primario" stdset="0">
+             <bool>true</bool>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagConfirmar">
+       <layout class="QVBoxLayout" name="layoutConfirmar">
+        <property name="spacing">
+         <number>14</number>
+        </property>
+        <property name="leftMargin">
+         <number>26</number>
+        </property>
+        <property name="topMargin">
+         <number>24</number>
+        </property>
+        <property name="rightMargin">
+         <number>26</number>
+        </property>
+        <property name="bottomMargin">
+         <number>24</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="layoutCabeceraConfirmar">
+          <property name="spacing">
+           <number>2</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="lblTituloConfirmar">
+            <property name="text">
+             <string>Confirmar turno</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSubConfirmar">
+            <property name="text">
+             <string>Revisá los datos con la paciente antes de guardar</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="p3Pasos">
+          <property name="spacing">
+           <number>22</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="p3Paso1">
+            <property name="text">
+             <string>✓  Protocolo</string>
+            </property>
+            <property name="paso" stdset="0">
+             <string notr="true">hecho</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="p3Paso2">
+            <property name="text">
+             <string>✓  Horario</string>
+            </property>
+            <property name="paso" stdset="0">
+             <string notr="true">hecho</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="p3Paso3">
+            <property name="text">
+             <string>3 · Confirmar</string>
+            </property>
+            <property name="paso" stdset="0">
+             <string notr="true">activo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="p3PasosEspacio">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="layoutConfirmarCuerpo" stretch="1,1">
+          <property name="spacing">
+           <number>12</number>
+          </property>
+          <item>
+           <widget class="QFrame" name="tarjetaResumen">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutTarjetaResumen">
+             <property name="spacing">
+              <number>14</number>
+             </property>
+             <property name="leftMargin">
+              <number>18</number>
+             </property>
+             <property name="topMargin">
+              <number>18</number>
+             </property>
+             <property name="rightMargin">
+              <number>18</number>
+             </property>
+             <property name="bottomMargin">
+              <number>18</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lblResumen">
+               <property name="text">
+                <string>Resumen del turno</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">seccion</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QFormLayout" name="layoutResumen">
+               <property name="horizontalSpacing">
+                <number>28</number>
+               </property>
+               <property name="verticalSpacing">
+                <number>10</number>
+               </property>
+               <item row="0" column="0">
+                <widget class="QLabel" name="lblKPaciente">
+                 <property name="text">
+                  <string>Paciente</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">subtitulo</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLabel" name="lblResPaciente">
+                 <property name="text">
+                  <string>María Sosa</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="lblKDni">
+                 <property name="text">
+                  <string>DNI</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">subtitulo</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLabel" name="lblResDni">
+                 <property name="text">
+                  <string>30111222</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="lblKTelefono">
+                 <property name="text">
+                  <string>Teléfono</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">subtitulo</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QLabel" name="lblResTelefono">
+                 <property name="text">
+                  <string>11 5555-0102</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="lblKProtocolo">
+                 <property name="text">
+                  <string>Protocolo</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">subtitulo</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QLabel" name="lblResProtocolo">
+                 <property name="text">
+                  <string>Depilación láser (zona chica)</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="lblKPrecio">
+                 <property name="text">
+                  <string>Precio total</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">subtitulo</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <widget class="QLabel" name="lblResPrecio">
+                 <property name="text">
+                  <string>$18.000</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="0">
+                <widget class="QLabel" name="lblKFecha">
+                 <property name="text">
+                  <string>Fecha</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">subtitulo</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1">
+                <widget class="QLabel" name="lblResFecha">
+                 <property name="text">
+                  <string>jueves 8 de octubre</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="0">
+                <widget class="QLabel" name="lblKHora">
+                 <property name="text">
+                  <string>Hora</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">subtitulo</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="1">
+                <widget class="QLabel" name="lblResHora">
+                 <property name="text">
+                  <string>09:00 (30 min)</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="7" column="0">
+                <widget class="QLabel" name="lblKRecordatorio">
+                 <property name="text">
+                  <string>Recordatorio</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">subtitulo</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="7" column="1">
+                <widget class="QLabel" name="lblResRecordatorio">
+                 <property name="text">
+                  <string>miércoles 7 de octubre · 09:00 (RF-11)</string>
+                 </property>
+                 <property name="rol" stdset="0">
+                  <string notr="true">valor</string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <spacer name="espacioResumen">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="tarjetaSena">
+            <property name="tarjeta" stdset="0">
+             <bool>true</bool>
+            </property>
+            <layout class="QVBoxLayout" name="layoutSena">
+             <property name="spacing">
+              <number>8</number>
+             </property>
+             <property name="leftMargin">
+              <number>18</number>
+             </property>
+             <property name="topMargin">
+              <number>18</number>
+             </property>
+             <property name="rightMargin">
+              <number>18</number>
+             </property>
+             <property name="bottomMargin">
+              <number>18</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="lblSenaTitulo">
+               <property name="text">
+                <string>SEÑA A REGISTRAR</string>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">campo</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblSena">
+               <property name="text">
+                <string>$5.400</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblReglaSena">
+               <property name="text">
+                <string>30% del protocolo, mínimo $5.000; se descuenta del total al pagar. Se reembolsa si se cancela con más de 24 h de anticipación (RF-10).</string>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioSenaBoton">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>6</height>
+                </size>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnSena">
+               <property name="text">
+                <string>Marcar seña como pagada</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="espacioSena">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="lblNotaSena">
+               <property name="text">
+                <string>Registro simulado: el sistema no procesa dinero real ni pide datos de tarjeta, solo guarda el estado. El cobro lo hace la recepción por fuera del sistema.</string>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+               <property name="rol" stdset="0">
+                <string notr="true">nota</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="botonesConfirmar">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <item>
+           <spacer name="espacioConfirmar">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnVolver3">
+            <property name="text">
+             <string>Volver</string>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnConfirmar">
+            <property name="text">
+             <string>Confirmar turno</string>
+            </property>
+            <property name="primario" stdset="0">
+             <bool>true</bool>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagBuscador">
+       <layout class="QVBoxLayout" name="layoutBuscador">
+        <property name="spacing">
+         <number>14</number>
+        </property>
+        <property name="leftMargin">
+         <number>26</number>
+        </property>
+        <property name="topMargin">
+         <number>24</number>
+        </property>
+        <property name="rightMargin">
+         <number>26</number>
+        </property>
+        <property name="bottomMargin">
+         <number>24</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="layoutCabeceraBuscador">
+          <property name="spacing">
+           <number>2</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="lblTituloBuscador">
+            <property name="text">
+             <string>Precios y protocolos</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSubBuscador">
+            <property name="text">
+             <string>Para responder consultas por teléfono sin buscar a mano</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="BuscadorPrecios" name="buscador" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pagBuscarTurnos">
+       <layout class="QVBoxLayout" name="layoutBuscarTurnos">
+        <property name="spacing">
+         <number>14</number>
+        </property>
+        <property name="leftMargin">
+         <number>26</number>
+        </property>
+        <property name="topMargin">
+         <number>24</number>
+        </property>
+        <property name="rightMargin">
+         <number>26</number>
+        </property>
+        <property name="bottomMargin">
+         <number>24</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="layoutCabeceraBuscarTurnos">
+          <property name="spacing">
+           <number>2</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="lblTituloBuscarTurnos">
+            <property name="text">
+             <string>Buscar turnos</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">titulo</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblSubBuscarTurnos">
+            <property name="text">
+             <string>Por nombre, DNI o teléfono de la paciente</string>
+            </property>
+            <property name="rol" stdset="0">
+             <string notr="true">subtitulo</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QFrame" name="tarjetaTurnos">
+          <property name="tarjeta" stdset="0">
+           <bool>true</bool>
+          </property>
+          <layout class="QVBoxLayout" name="layoutTurnos">
+           <property name="spacing">
+            <number>10</number>
+           </property>
+           <property name="leftMargin">
+            <number>18</number>
+           </property>
+           <property name="topMargin">
+            <number>18</number>
+           </property>
+           <property name="rightMargin">
+            <number>18</number>
+           </property>
+           <property name="bottomMargin">
+            <number>18</number>
+           </property>
+           <item>
+            <layout class="QHBoxLayout" name="layoutBusqueda">
+             <property name="spacing">
+              <number>8</number>
+             </property>
+             <item>
+              <widget class="QLineEdit" name="editBuscar">
+               <property name="placeholderText">
+                <string>Nombre, DNI o teléfono (vacío = todos)</string>
+               </property>
+               <property name="clearButtonEnabled">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnBuscar">
+               <property name="text">
+                <string>Buscar</string>
+               </property>
+               <property name="primario" stdset="0">
+                <bool>true</bool>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QTableWidget" name="tablaTurnos">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::SingleSelection</enum>
+             </property>
+             <property name="selectionBehavior">
+              <enum>QAbstractItemView::SelectRows</enum>
+             </property>
+             <property name="showGrid">
+              <bool>false</bool>
+             </property>
+             <attribute name="verticalHeaderVisible">
+              <bool>false</bool>
+             </attribute>
+             <attribute name="verticalHeaderDefaultSectionSize">
+              <number>42</number>
+             </attribute>
+             <attribute name="horizontalHeaderHighlightSections">
+              <bool>false</bool>
+             </attribute>
+             <column>
+              <property name="text">
+               <string>Paciente</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>DNI</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Teléfono</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Protocolo</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Fecha y hora</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Estado</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Seña</string>
+              </property>
+             </column>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <item row="0" column="0">
+              <property name="text">
+               <string>María Sosa</string>
+              </property>
+             </item>
+             <item row="0" column="1">
+              <property name="text">
+               <string>30111222</string>
+              </property>
+             </item>
+             <item row="0" column="2">
+              <property name="text">
+               <string>1155550102</string>
+              </property>
+             </item>
+             <item row="0" column="3">
+              <property name="text">
+               <string>Limpieza facial profunda</string>
+              </property>
+             </item>
+             <item row="0" column="4">
+              <property name="text">
+               <string>16/09/26 16:00</string>
+              </property>
+             </item>
+             <item row="0" column="5">
+              <property name="text">
+               <string>Realizado</string>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>122</red>
+                 <green>106</green>
+                 <blue>100</blue>
+                </color>
+               </brush>
+              </property>
+             </item>
+             <item row="0" column="6">
+              <property name="text">
+               <string>$7.500 (pagada)</string>
+              </property>
+             </item>
+             <item row="1" column="0">
+              <property name="text">
+               <string>María Sosa</string>
+              </property>
+             </item>
+             <item row="1" column="1">
+              <property name="text">
+               <string>30111222</string>
+              </property>
+             </item>
+             <item row="1" column="2">
+              <property name="text">
+               <string>1155550102</string>
+              </property>
+             </item>
+             <item row="1" column="3">
+              <property name="text">
+               <string>Depilación láser (zona chica)</string>
+              </property>
+             </item>
+             <item row="1" column="4">
+              <property name="text">
+               <string>08/10/26 09:00</string>
+              </property>
+             </item>
+             <item row="1" column="5">
+              <property name="text">
+               <string>Confirmado</string>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>95</red>
+                 <green>127</green>
+                 <blue>99</blue>
+                </color>
+               </brush>
+              </property>
+             </item>
+             <item row="1" column="6">
+              <property name="text">
+               <string>$5.400 (pagada)</string>
+              </property>
+             </item>
+             <item row="2" column="0">
+              <property name="text">
+               <string>Carla Gómez</string>
+              </property>
+             </item>
+             <item row="2" column="1">
+              <property name="text">
+               <string>33222111</string>
+              </property>
+             </item>
+             <item row="2" column="2">
+              <property name="text">
+               <string>1155550177</string>
+              </property>
+             </item>
+             <item row="2" column="3">
+              <property name="text">
+               <string>Mesoterapia facial</string>
+              </property>
+             </item>
+             <item row="2" column="4">
+              <property name="text">
+               <string>06/10/26 13:00</string>
+              </property>
+             </item>
+             <item row="2" column="5">
+              <property name="text">
+               <string>Confirmado</string>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>95</red>
+                 <green>127</green>
+                 <blue>99</blue>
+                </color>
+               </brush>
+              </property>
+             </item>
+             <item row="2" column="6">
+              <property name="text">
+               <string>$16.500 (sin pagar)</string>
+              </property>
+             </item>
+             <item row="3" column="0">
+              <property name="text">
+               <string>Lucía Fernández</string>
+              </property>
+             </item>
+             <item row="3" column="1">
+              <property name="text">
+               <string>28444555</string>
+              </property>
+             </item>
+             <item row="3" column="2">
+              <property name="text">
+               <string>1155550144</string>
+              </property>
+             </item>
+             <item row="3" column="3">
+              <property name="text">
+               <string>Peeling químico</string>
+              </property>
+             </item>
+             <item row="3" column="4">
+              <property name="text">
+               <string>06/10/26 17:00</string>
+              </property>
+             </item>
+             <item row="3" column="5">
+              <property name="text">
+               <string>Confirmado</string>
+              </property>
+              <property name="foreground">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>95</red>
+                 <green>127</green>
+                 <blue>99</blue>
+                </color>
+               </brush>
+              </property>
+             </item>
+             <item row="3" column="6">
+              <property name="text">
+               <string>$12.000 (pagada)</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lblCuenta">
+             <property name="text">
+              <string>4 turnos</string>
+             </property>
+             <property name="rol" stdset="0">
+              <string notr="true">nota</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="botonesBuscarTurnos">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="lblRecordatorio">
+            <property name="text">
+             <string>Recordatorio programado para el miércoles 7 de octubre · 09:00 (RF-11).</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="espacioBuscarTurnos">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnCancelarTurno">
+            <property name="text">
+             <string>Cancelar turno</string>
+            </property>
+            <property name="peligro" stdset="0">
+             <bool>true</bool>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>BuscadorPrecios</class>
+   <extends>QWidget</extends>
+   <header>buscadorprecios.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="recursos.qrc"/>
+ </resources>
+ <connections/>
+</ui>

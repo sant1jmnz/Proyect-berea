@@ -109,7 +109,7 @@ Board completo: https://miro.com/app/board/uXjVHwuDCKs=/
 | C3 | No se cobra ni confirma seña al reservar | Directa | Centros en España redujeron inasistencias cobrando por adelantado ([Cuatro](https://www.cuatro.com/noticias/economia/20250116/reservas-fantasma-centros-estetica-peluquerias_18_014508640.html)); hoy Dermalia no cobra seña |
 | C3.1 | Cobrar seña hoy exige gestión manual de transferencias | Indirecta (raíz) | La recepción estima que un 10% de pacientes nuevas podría dudar frente a una seña obligatoria; las habituales no la resistirían |
 | C4 | No hay recordatorio automático de turno | Directa | Recordatorios automáticos redujeron inasistencias 50% en un caso documentado ([WhatsApp Business API](https://developargentina.com/blog/whatsapp-business-api-argentina-automatizacion-ventas-2025)) |
-| C4.1 | La recepción no tiene tiempo de avisar turno a cada paciente a mano | Indirecta (raíz) | 6 turnos/semana perdidos por inasistencia, ≈ $120.000/semana (precio promedio de protocolo, $20.000) |
+| C4.1 | La recepción no tiene tiempo de avisar turno a cada paciente a mano | Indirecta (raíz) | 6 turnos/semana perdidos por inasistencia, ≈ $900.000/semana (ticket promedio de $150.000, supuesto de equipo: el catálogo incluye desde tratamientos faciales hasta cirugías) |
 
 ## Tabla de efectos
 
@@ -134,22 +134,19 @@ cadena se sostiene leída en voz alta, que es la regla de la cátedra.
 
 Se atacan con el sistema, y justifican la propuesta:
 
-- C1 / C1.1 → módulo de reserva con agenda propia, disponible en el
-  terminal de la paciente y en la PC de recepción (sin sincronizar con
-  ningún calendario externo).
+- C1 / C1.1 → módulo de reserva con agenda propia en MySQL, disponible en la
+  terminal, la web y la PC de recepción.
 - C2 / C2.1 → buscador de precios y protocolos por palabra clave, contra
   una base propia, en la terminal y en la PC de recepción.
-- C3 / C3.1 → registro de seña simulado (mock): se marca el estado de
-  pago al confirmar el turno, sin procesar dinero real.
-- C4 / C4.1 → recordatorio de turno simulado, visible al buscar el turno.
+- C3 / C3.1 → registro de seña simulado (mock que imita un pago real): se marca el
+  estado de pago al confirmar el turno, sin procesar dinero real.
+- C4 / C4.1 → recordatorio de turno por WhatsApp y Google Calendar.
 
-**Restricción técnica del equipo**: backend en C con SQL Server, frontend
-en Qt de escritorio, sin web y sin API externa. El sistema tiene dos
-apartados, los dos nativos en Qt: una terminal táctil en el instituto para
-que la paciente cargue su propio turno, y la PC de recepción para los
-turnos que llegan por teléfono. El pago, la agenda y las respuestas del
-buscador funcionan dentro del propio sistema, sin conectarse a ningún
-servicio externo.
+**Restricción técnica del equipo (actualizada)**: base MySQL, aplicación
+de escritorio en Qt y sitio web, con integraciones externas permitidas
+(Google Calendar, WhatsApp, asistente de IA). El sistema tiene tres
+apartados: terminal táctil en el instituto, PC de recepción y sitio web.
+El pago sigue siendo simulado (mock).
 
 Quedan fuera de alcance de este bimestre: historia clínica de
 tratamientos, gestión de stock de insumos, liquidación de comisiones, app

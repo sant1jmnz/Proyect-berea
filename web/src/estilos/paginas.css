@@ -559,3 +559,73 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Reloj del paso 2. */
+.horario {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  gap: 24px;
+  align-items: start;
+}
+
+.reloj {
+  margin: 22px 0 0;
+  text-align: center;
+}
+
+.reloj svg {
+  width: 170px;
+  height: 170px;
+  margin-inline: auto;
+}
+
+.reloj figcaption {
+  margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+  .horario {
+    grid-template-columns: 1fr;
+  }
+
+  .reloj {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+  }
+
+  .reloj svg {
+    width: 110px;
+    height: 110px;
+    margin: 0;
+  }
+}
+
+/* Anillo de plazo en Mi turno. */
+.plazo {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.anillo {
+  width: 80px;
+  height: 80px;
+}
+
+.anillo__num {
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 700;
+  fill: var(--texto);
+}
+
+.anillo__txt {
+  font-family: var(--sans);
+  font-size: 9px;
+  fill: var(--texto-2);
+}

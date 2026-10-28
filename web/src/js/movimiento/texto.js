@@ -1,6 +1,7 @@
 /* Texto en movimiento: letras que ruedan (dark-moon) y títulos que se
  * revelan por líneas con SplitText. */
 import { gsap, SplitText, movimientoReducido } from './gsap.js';
+import { alEstarListo } from './cargador.js';
 
 /* Cada letra lleva una copia debajo; al pasar el mouse suben las dos. */
 export function prepararRuedas(raiz = document) {
@@ -46,7 +47,7 @@ export function revelarTitulos() {
           paused: Boolean(enHero),
           scrollTrigger: enHero ? undefined : { trigger: el, start: 'top 88%', once: true },
         });
-        if (enHero) document.addEventListener('dermalia:listo', () => tween.play(), { once: true });
+        if (enHero) alEstarListo(() => tween.play());
         return tween;
       },
     });
@@ -66,7 +67,7 @@ export function aparecerBloques() {
       paused: Boolean(enHero),
       scrollTrigger: enHero ? undefined : { trigger: el, start: 'top 92%', once: true },
     });
-    if (enHero) document.addEventListener('dermalia:listo', () => tween.play(), { once: true });
+    if (enHero) alEstarListo(() => tween.play());
   });
 }
 

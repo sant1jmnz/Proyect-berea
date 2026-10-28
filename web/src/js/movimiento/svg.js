@@ -1,6 +1,7 @@
 /* Movimiento con SVG: trazos que se dibujan, formas que respiran, cifras que
  * cuentan, parallax y la marquesina de protocolos. */
 import { gsap, ScrollTrigger, movimientoReducido } from './gsap.js';
+import { alEstarListo } from './cargador.js';
 
 /* Íconos [data-dibujar]: el trazo se dibuja al entrar en pantalla. */
 export function dibujarIconos() {
@@ -34,9 +35,9 @@ export function ilustraciones() {
   const trazos = document.querySelectorAll('.ilustracion path');
   if (!trazos.length || movimientoReducido()) return;
   gsap.set(trazos, { drawSVG: 0 });
-  document.addEventListener('dermalia:listo', () => {
+  alEstarListo(() => {
     gsap.to(trazos, { drawSVG: '100%', duration: 2.4, stagger: 0.08, ease: 'power2.inOut', delay: 0.4 });
-  }, { once: true });
+  });
 }
 
 /* Formas orgánicas que cambian de forma en bucle (MorphSVG). */
@@ -115,5 +116,30 @@ export function marquesina(textos) {
         .to(empuje, { v: 1 + extra, duration: 0.2, onUpdate: aplicar })
         .to(empuje, { v: 1, duration: 1.2, onUpdate: aplicar });
     },
+  });
+}
+
+/* Olas divisorias [data-ola="otra forma"]: la curva cambia de forma con el scroll. */
+export function olasDivisorias() {
+  if (movimientoReducido()) return;
+  document.querySelectorAll('[data-ola]').forEach((path) => {
+    gsap.to(path, {
+      morphSVG: path.dataset.ola,
+      ease: 'none',
+      scrollTrigger: { trigger: path.closest('svg'), start: 'top bottom', end: 'bottom top', scrub: 1 },
+    });
+  });
+}
+
+/* Dibujos [data-dibujar-scroll]: sus trazos avanzan a medida que bajás. */
+export function dibujosConScroll() {
+  if (movimientoReducido()) return;
+  document.querySelectorAll('[data-dibujar-scroll]').forEach((svg) => {
+    gsap.fromTo(svg.querySelectorAll('path, circle'), { drawSVG: '0%' }, {
+      drawSVG: '100%',
+      stagger: 0.1,
+      ease: 'none',
+      scrollTrigger: { trigger: svg, start: 'top 95%', end: 'bottom 60%', scrub: 0.8 },
+    });
   });
 }

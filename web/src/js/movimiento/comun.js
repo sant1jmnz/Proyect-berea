@@ -1,7 +1,7 @@
 /* Lo que comparten las tres páginas. */
 import { iniciarScroll } from './scroll.js';
 import { prepararRuedas, revelarTitulos, aparecerBloques, marcaDelPie } from './texto.js';
-import { dibujarIconos, trazosConScroll, ilustraciones, formasQueRespiran, parallax, contadores } from './svg.js';
+import { dibujarIconos, trazosConScroll, ilustraciones, formasQueRespiran, parallax, contadores, olasDivisorias, dibujosConScroll } from './svg.js';
 import { iniciarCursor, botonesMagneticos } from './cursor.js';
 import { iniciarCabecera } from './cabecera.js';
 import { iniciarTransiciones } from './transiciones.js';
@@ -24,6 +24,8 @@ export function iniciarComun() {
   formasQueRespiran();
   parallax();
   contadores();
+  olasDivisorias();
+  dibujosConScroll();
   marcaDelPie();
   iniciarCursor();
   botonesMagneticos();

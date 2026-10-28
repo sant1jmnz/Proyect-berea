@@ -92,6 +92,7 @@ opciones.addEventListener('click', (e) => {
     if (elegido) gsap.from(boton.querySelector('.opcion__marca path'), { drawSVG: 0, duration: 0.5, ease: 'power2.out' });
   }
   $('[data-siguiente="2"]').disabled = estado.elegidos.size === 0;
+  pintarReloj();
   pintarResumen();
 });
 
@@ -125,6 +126,7 @@ contDias.addEventListener('click', (e) => {
   contDias.querySelectorAll('.dia').forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
   $('[data-siguiente="3"]').disabled = true;
   pintarHoras();
+  pintarReloj();
   pintarResumen();
 });
 
@@ -135,9 +137,45 @@ contHoras.addEventListener('click', (e) => {
   contHoras.querySelectorAll('.hora').forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
   if (!reducido) gsap.fromTo(boton, { scale: 0.85 }, { scale: 1, duration: 0.7, ease: 'elastic.out(1.1, 0.35)' });
   $('[data-siguiente="3"]').disabled = false;
+  pintarReloj();
   pintarResumen();
 });
 pintarHoras();
+
+/* Reloj del paso 2: agujas en la hora elegida y un arco con la duración total. */
+const reloj = {
+  arco: $('[data-reloj-arco]'),
+  hora: $('[data-reloj-hora]'),
+  minuto: $('[data-reloj-minuto]'),
+  texto: $('[data-reloj-texto]'),
+};
+$('[data-reloj-marcas]').innerHTML = Array.from({ length: 12 }, (_, i) => {
+  const a = (i / 12) * Math.PI * 2;
+  const r1 = i % 3 ? 66 : 62;
+  return `<line x1="${80 + Math.sin(a) * r1}" y1="${80 - Math.cos(a) * r1}" x2="${80 + Math.sin(a) * 70}" y2="${80 - Math.cos(a) * 70}"/>`;
+}).join('');
+gsap.set(reloj.arco, { drawSVG: '0% 0%' });
+gsap.set([reloj.hora, reloj.minuto], { svgOrigin: '80 80' });
+
+const duracionTexto = (min) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ''}` : `${min} min`);
+
+function pintarReloj() {
+  if (!estado.hora) {
+    reloj.texto.textContent = 'Elegí un horario y acá vas a ver cuánto dura tu turno.';
+    gsap.to(reloj.arco, { drawSVG: '0% 0%', duration: reducido ? 0 : 0.5 });
+    return;
+  }
+  const [h, m] = estado.hora.split(':').map(Number);
+  const { duracion } = cuentas();
+  const inicio = ((h % 12) + m / 60) / 12;
+  const fin = inicio + duracion / 60 / 12;
+  const finHora = new Date(2000, 0, 1, h, m + duracion);
+  reloj.texto.textContent = `De ${estado.hora} a ${String(finHora.getHours()).padStart(2, '0')}:${String(finHora.getMinutes()).padStart(2, '0')} h · ${duracionTexto(duracion)}`;
+  const d = reducido ? 0 : 1.1;
+  gsap.to(reloj.hora, { rotation: ((h % 12) + m / 60) * 30, duration: d, ease: 'elastic.out(1, 0.6)' });
+  gsap.to(reloj.minuto, { rotation: 360 + m * 6, duration: d, ease: 'elastic.out(1, 0.6)' });
+  gsap.to(reloj.arco, { drawSVG: `${inicio * 100}% ${Math.min(fin, 1) * 100}%`, duration: d, ease: 'power3.inOut' });
+}
 
 /* ---------- Navegación entre pasos ---------- */
 
@@ -314,6 +352,14 @@ function celebrar() {
     });
     gsap.to(p, { autoAlpha: 0, duration: 0.6, delay: 1.8 });
   }
+}
+
+// Si llegaste desde una ficha del inicio (?protocolo=...), ya viene elegido.
+const preelegido = new URLSearchParams(location.search).get('protocolo');
+if (protocolos.some((p) => p.id === preelegido)) {
+  estado.elegidos.add(preelegido);
+  $(`[data-protocolo="${preelegido}"]`).setAttribute('aria-pressed', 'true');
+  $('[data-siguiente="2"]').disabled = false;
 }
 
 pintarResumen();

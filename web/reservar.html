@@ -90,7 +90,21 @@
             <h2 class="titulo-panel" id="titulo-p2">Elegí tu horario</h2>
             <p class="nota">Solo ves los horarios libres. El instituto atiende de lunes a sábado.</p>
             <div class="dias" role="group" aria-label="Día" data-dias></div>
-            <div class="horas" role="group" aria-label="Horario" data-horas></div>
+            <div class="horario">
+              <div class="horas" role="group" aria-label="Horario" data-horas></div>
+              <!-- Reloj: marca la hora elegida y pinta cuánto dura el turno. -->
+              <figure class="reloj">
+                <svg viewBox="0 0 160 160" aria-hidden="true">
+                  <circle cx="80" cy="80" r="72" fill="#FFFDFA" stroke="#E8DCCF" stroke-width="1.5" />
+                  <g data-reloj-marcas stroke="#D9C3A0" stroke-width="2" stroke-linecap="round"></g>
+                  <circle data-reloj-arco cx="80" cy="80" r="58" fill="none" stroke="#A8475F" stroke-opacity="0.35" stroke-width="12" transform="rotate(-90 80 80)" />
+                  <line data-reloj-hora x1="80" y1="80" x2="80" y2="46" stroke="#3A2B2B" stroke-width="4" stroke-linecap="round" />
+                  <line data-reloj-minuto x1="80" y1="80" x2="80" y2="30" stroke="#A8475F" stroke-width="2.5" stroke-linecap="round" />
+                  <circle cx="80" cy="80" r="5" fill="#A8475F" />
+                </svg>
+                <figcaption class="nota" data-reloj-texto aria-live="polite">Elegí un horario y acá vas a ver cuánto dura tu turno.</figcaption>
+              </figure>
+            </div>
             <div class="acciones">
               <button class="boton" type="button" data-anterior="1">Volver</button>
               <button class="boton boton--primario" type="button" data-siguiente="3" disabled>Continuar</button>

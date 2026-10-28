@@ -89,6 +89,10 @@
         <div class="envoltura hero__grilla">
           <div>
             <h1 class="hero__titulo" id="titulo-hero" data-revelar>Tu piel, tu horario, <em>sin esperar</em></h1>
+            <svg class="hero__subrayado" viewBox="0 0 420 34" fill="none" aria-hidden="true">
+              <path d="M6 22C70 8 150 6 230 14s130 12 184-6" stroke="#D9C3A0" stroke-width="3" stroke-linecap="round" />
+              <path d="M40 28c60-8 140-10 220-4" stroke="#A8475F" stroke-width="2" stroke-linecap="round" stroke-opacity="0.5" />
+            </svg>
             <p class="hero__bajada" data-aparecer>
               Elegí el protocolo, mirá los horarios libres y confirmá tu turno con una seña. Tres pasos,
               sin esperar que te respondan por WhatsApp.
@@ -99,13 +103,26 @@
             </div>
           </div>
 
-          <div class="hero__escena" data-perla role="button" aria-label="Perla en 3D: mantenela apretada para inflarla">
-            <p class="hero__pista" data-aparecer>
+          <!-- Capas de la piel en 3D: elegí una y mirá qué protocolos actúan ahí. -->
+          <div class="hero__escena piel" data-piel>
+            <div class="piel__lienzo" data-piel-lienzo></div>
+            <svg class="piel__lineas" aria-hidden="true">
+              <path data-linea="epidermis" />
+              <path data-linea="dermis" />
+              <path data-linea="hipodermis" />
+            </svg>
+            <div class="piel__rotulos" role="group" aria-label="Capas de la piel: elegí una para ver sus protocolos">
+              <button type="button" class="piel__rotulo" data-capa="epidermis" aria-pressed="false"><strong>Epidermis</strong><span>superficie</span></button>
+              <button type="button" class="piel__rotulo" data-capa="dermis" aria-pressed="false"><strong>Dermis</strong><span>colágeno y vello</span></button>
+              <button type="button" class="piel__rotulo" data-capa="hipodermis" aria-pressed="false"><strong>Hipodermis</strong><span>volumen</span></button>
+            </div>
+            <div class="piel__info tarjeta" data-piel-info aria-live="polite" hidden></div>
+            <p class="hero__pista" data-piel-pista>
               <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="3" />
                 <circle class="pista__onda" cx="12" cy="12" r="8" stroke-opacity="0.5" />
               </svg>
-              Mantené apretada la perla
+              Tocá una capa para ver qué protocolos actúan ahí. Mantené apretado para separarlas.
             </p>
           </div>
         </div>
@@ -140,6 +157,11 @@
           </div>
         </div>
       </section>
+
+      <svg class="ola-divisoria" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="none" stroke="#D9C3A0" stroke-width="1.5" d="M0 45C240 10 480 80 720 45S1200 10 1440 45" data-ola="M0 45C240 80 480 10 720 45S1200 80 1440 45" />
+        <path fill="none" stroke="#A8475F" stroke-opacity="0.35" stroke-width="1" d="M0 60C300 30 520 90 760 55S1180 25 1440 60" data-ola="M0 30C300 70 520 20 760 60S1180 75 1440 30" />
+      </svg>
 
       <!-- Cómo funciona: un trazo dorado une los tres pasos. -->
       <section class="seccion" id="como-funciona" aria-labelledby="titulo-pasos">
@@ -215,13 +237,23 @@
               </label>
               <ul class="lista-protocolos" data-lista aria-live="polite"></ul>
               <div class="sin-resultados tarjeta" data-sin-resultados hidden>
+                <svg class="sin-resultados__ilustracion" viewBox="0 0 120 90" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="50" cy="42" r="24" stroke="#D9C3A0" stroke-width="2" />
+                  <path d="m68 60 16 16" stroke="#A8475F" stroke-width="3" />
+                  <path d="M42 36c2-4 6-6 10-6" stroke="#D9C3A0" stroke-width="2" />
+                  <path class="destello" d="M96 18v10M91 23h10M20 70v6M17 73h6" stroke="#A8475F" stroke-width="2" />
+                </svg>
                 <p>No encontramos un protocolo con esa palabra. Te respondemos por WhatsApp.</p>
                 <a class="boton" href="https://wa.me/" target="_blank" rel="noopener" data-whatsapp>Consultar por WhatsApp</a>
               </div>
             </div>
 
-            <div class="vitrina" data-vitrina aria-hidden="true">
-              <p class="vitrina__rotulo" data-vitrina-rotulo>Todos</p>
+            <!-- Vitrina 3D: cada objeto es un protocolo; tocalo para ver su ficha. -->
+            <div class="vitrina" data-vitrina>
+              <p class="vitrina__rotulo" data-vitrina-rotulo aria-hidden="true">Todos</p>
+              <p class="vitrina__ayuda">Cada objeto es un protocolo. Tocalo para ver su ficha; cuanto más grande, más caro.</p>
+              <div class="vitrina__tooltip numero" data-vitrina-tooltip aria-hidden="true" hidden></div>
+              <div class="vitrina__detalle tarjeta" data-vitrina-detalle aria-live="polite" hidden></div>
             </div>
           </div>
         </div>
@@ -257,11 +289,33 @@
           <div class="tarjeta-sena" data-aparecer>
             <label class="etiqueta-campo" for="calc-protocolo">Calculá tu seña</label>
             <select class="selector" id="calc-protocolo" data-calc-protocolo></select>
-            <p class="sena__monto numero" data-calc-monto aria-live="polite">$0</p>
-            <p class="sena__regla" data-calc-regla></p>
+            <div class="sena__resultado">
+              <div>
+                <p class="sena__monto numero" data-calc-monto aria-live="polite">$0</p>
+                <p class="sena__regla" data-calc-regla></p>
+              </div>
+              <!-- Qué parte del precio es la seña y qué parte se paga en el instituto. -->
+              <figure class="dona" aria-hidden="true">
+                <svg viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="48" fill="none" stroke="#E5D2B0" stroke-width="14" />
+                  <circle class="dona__sena" data-dona cx="60" cy="60" r="48" fill="none" stroke="#A8475F" stroke-width="14" stroke-linecap="round" transform="rotate(-90 60 60)" />
+                  <text x="60" y="58" text-anchor="middle" class="dona__pct numero" data-dona-pct>30 %</text>
+                  <text x="60" y="76" text-anchor="middle" class="dona__txt">de seña</text>
+                </svg>
+                <figcaption class="dona__leyenda">
+                  <span><i class="punto punto--rosa"></i>Seña ahora</span>
+                  <span><i class="punto punto--dorado"></i>En el instituto</span>
+                </figcaption>
+              </figure>
+            </div>
           </div>
         </div>
       </section>
+
+      <svg class="ola-divisoria" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="none" stroke="#D9C3A0" stroke-width="1.5" d="M0 45C240 10 480 80 720 45S1200 10 1440 45" data-ola="M0 45C240 80 480 10 720 45S1200 80 1440 45" />
+        <path fill="none" stroke="#A8475F" stroke-opacity="0.35" stroke-width="1" d="M0 60C300 30 520 90 760 55S1180 25 1440 60" data-ola="M0 30C300 70 520 20 760 60S1180 75 1440 30" />
+      </svg>
 
       <section class="seccion cierre" aria-labelledby="titulo-cierre">
         <div class="envoltura">
@@ -283,7 +337,19 @@
           <p>Lunes a sábado<br /><a href="https://wa.me/" target="_blank" rel="noopener" data-whatsapp>Escribinos por WhatsApp</a></p>
           <p><a href="/reservar.html" data-transicion>Sacar un turno</a><br /><a href="/mi-turno.html" data-transicion>Mi turno</a></p>
         </div>
-        <p class="pie__marca" aria-hidden="true" data-pie-marca>Dermalia</p>
+        <div class="pie__fondo">
+          <svg class="pie__rama" viewBox="0 0 260 200" fill="none" stroke="#D9C3A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar-scroll>
+            <path d="M10 190C70 150 150 110 250 20" />
+            <path d="M60 156c-26-2-46-20-52-48 28 0 48 20 52 48Z" />
+            <path d="M104 124c-6-26 2-50 24-66 10 26 0 50-24 66Z" />
+            <path d="M110 140c24-12 50-10 72 6-24 14-50 12-72-6Z" />
+            <path d="M168 82c18-14 40-16 58-6-16 16-38 18-58 6Z" />
+            <path d="M196 64c-2-20 6-38 22-48 6 20-2 38-22 48Z" />
+            <circle cx="232" cy="34" r="5" />
+            <circle cx="40" cy="176" r="3" />
+          </svg>
+          <p class="pie__marca" aria-hidden="true" data-pie-marca>Dermalia</p>
+        </div>
       </div>
     </footer>
 

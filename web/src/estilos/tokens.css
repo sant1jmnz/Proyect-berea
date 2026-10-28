@@ -1,0 +1,62 @@
+/* Paleta y tipografías de Dermalia (diseno-dermalia/SKILL.md).
+ * No inventar colores: si hace falta uno, usar el más parecido de acá. */
+
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('/fuentes/PlayfairDisplay.ttf') format('truetype');
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fuentes/Lato-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fuentes/Lato-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --crema: #fcf8f2;
+  --crema-2: #f5ece6;
+  --tarjeta: #fffdfa;
+  --borde-tarjeta: #f0e7dc;
+  --borde-campo: #e8dccf;
+
+  --texto: #3a2b2b;
+  --texto-2: #7a6a64;
+  --apagado: #a89c95;
+
+  --rosa: #a8475f;
+  --rosa-hover: #8e3a50;
+  --rosa-suave: #f7e8eb;
+  --icono: #8e5a68;
+
+  --dorado: #8a6a3b;
+  --dorado-linea: #d9c3a0;
+  --dorado-suave: #fbf3e6;
+  --dorado-borde: #e5d2b0;
+
+  --salvia: #5f7f63;
+  --salvia-fondo: #eaf1ea;
+  --salvia-texto: #4f6b53;
+
+  --rojo: #a33a3a;
+  --rojo-borde: #e3bfbf;
+
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'Lato', system-ui, sans-serif;
+
+  --radio: 14px;
+  --pildora: 999px;
+  --gutter: clamp(16px, 4vw, 56px);
+  --ancho: 1240px;
+
+  --ease-salida: cubic-bezier(0.16, 1, 0.3, 1);
+}

@@ -1,0 +1,561 @@
+/* Páginas internas: reservar y mi turno. */
+
+.pagina {
+  padding-top: 130px;
+  padding-bottom: 120px;
+  min-height: 100svh;
+}
+
+.titulo-pagina {
+  font-size: clamp(42px, 6.4vw, 88px);
+}
+
+.titulo-panel {
+  font-size: clamp(28px, 3vw, 38px);
+}
+
+.nota {
+  margin-top: 8px;
+  color: var(--texto-2);
+  font-size: 15px;
+}
+
+.apagado {
+  color: var(--apagado);
+}
+
+.error {
+  grid-column: 1 / -1;
+  min-height: 1.6em;
+  color: var(--rojo);
+  font-size: 15px;
+}
+
+/* ---------- Indicador de pasos ---------- */
+
+.indicador {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  max-width: 640px;
+  margin: 44px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.indicador__paso {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--apagado);
+  font-size: 15px;
+  transition: color 0.4s;
+}
+
+.indicador__paso:first-child {
+  align-items: flex-start;
+}
+
+.indicador__paso:nth-child(3) {
+  align-items: flex-end;
+}
+
+.indicador__circulo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--tarjeta);
+  border: 1px solid var(--borde-campo);
+  font-weight: 700;
+  transition: background-color 0.4s, border-color 0.4s, color 0.4s;
+}
+
+.indicador__circulo svg {
+  position: absolute;
+  inset: 10px;
+  opacity: 0;
+}
+
+.indicador__paso[aria-current='step'] {
+  color: var(--texto);
+  font-weight: 700;
+}
+
+.indicador__paso[aria-current='step'] .indicador__circulo {
+  border-color: var(--dorado);
+  color: var(--dorado);
+  box-shadow: 0 0 0 5px var(--dorado-suave);
+}
+
+.indicador__paso.hecho {
+  color: var(--rosa);
+}
+
+.indicador__paso.hecho .indicador__circulo {
+  background: var(--rosa);
+  border-color: var(--rosa);
+}
+
+.indicador__paso.hecho .indicador__num {
+  opacity: 0;
+}
+
+.indicador__paso.hecho .indicador__circulo svg {
+  opacity: 1;
+}
+
+.indicador__linea {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: 21px;
+  width: calc(100% - 44px);
+  height: 2px;
+}
+
+/* ---------- Reserva ---------- */
+
+.reserva {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: clamp(24px, 4vw, 56px);
+  margin-top: 56px;
+  align-items: start;
+}
+
+.panel {
+  position: relative;
+}
+
+.opciones {
+  display: grid;
+  gap: 14px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.opcion {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-height: 84px;
+  padding: 16px 22px;
+  text-align: left;
+  border: 1px solid var(--borde-tarjeta);
+  border-radius: var(--radio);
+  background: var(--tarjeta);
+  cursor: pointer;
+  transition: border-color 0.3s, background-color 0.3s, box-shadow 0.3s;
+}
+
+.opcion:hover {
+  border-color: var(--borde-campo);
+  box-shadow: 0 14px 30px -24px rgb(58 43 43 / 0.6);
+}
+
+.opcion[aria-pressed='true'] {
+  border-color: var(--rosa);
+  background: var(--rosa-suave);
+}
+
+.opcion__marca {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--borde-campo);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.opcion__marca svg {
+  width: 20px;
+  height: 20px;
+}
+
+.opcion[aria-pressed='true'] .opcion__marca {
+  background: var(--rosa);
+  border-color: var(--rosa);
+}
+
+.opcion__nombre {
+  display: block;
+  font-family: var(--serif);
+  font-size: 21px;
+}
+
+.opcion__meta {
+  display: block;
+  color: var(--texto-2);
+  font-size: 15px;
+}
+
+.opcion__precio {
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .opcion {
+    grid-template-columns: 36px 1fr auto;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .opcion__nombre {
+    font-size: 19px;
+    line-height: 1.25;
+  }
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+.acciones--centro {
+  justify-content: center;
+}
+
+/* Días y horarios en píldoras. */
+.dias {
+  display: flex;
+  gap: 10px;
+  margin-top: 26px;
+  padding-bottom: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.dia {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 76px;
+  padding: 12px 0;
+  border: 1px solid var(--borde-campo);
+  border-radius: 18px;
+  background: var(--tarjeta);
+  color: var(--texto-2);
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.dia strong {
+  font-size: 24px;
+  color: var(--texto);
+}
+
+.dia[aria-pressed='true'] {
+  background: var(--rosa-suave);
+  border-color: var(--rosa);
+  color: var(--rosa-hover);
+}
+
+.horas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+  min-height: 56px;
+}
+
+.hora {
+  min-width: 92px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--borde-campo);
+  border-radius: var(--pildora);
+  background: var(--tarjeta);
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.hora[aria-pressed='true'] {
+  background: var(--rosa);
+  border-color: var(--rosa);
+  color: #fff;
+  font-weight: 700;
+}
+
+.hora:disabled {
+  color: var(--apagado);
+  text-decoration: line-through;
+  cursor: not-allowed;
+  background: transparent;
+}
+
+/* Formulario del paso 3. */
+.formulario {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.campo-grupo {
+  display: block;
+}
+
+.campo-grupo--ancho {
+  grid-column: 1 / -1;
+}
+
+.campo:user-invalid {
+  border-color: var(--rojo-borde);
+}
+
+.cupon {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .formulario {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Resumen. */
+.resumen {
+  position: sticky;
+  top: 110px;
+  padding: 26px;
+}
+
+.resumen__titulo {
+  font-size: 26px;
+}
+
+.resumen__lista {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 0 0 16px;
+  list-style: none;
+  border-bottom: 1px solid var(--borde-tarjeta);
+}
+
+.resumen__lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+
+.resumen__fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  color: var(--texto-2);
+  font-size: 15px;
+}
+
+.resumen__fila strong {
+  color: var(--texto);
+  text-align: right;
+}
+
+.resumen__sena {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--dorado-suave);
+  border: 1px solid var(--dorado-borde);
+}
+
+.resumen__monto {
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--rosa-hover);
+}
+
+.nota--simulada {
+  color: var(--dorado);
+  font-weight: 700;
+}
+
+@media (max-width: 920px) {
+  .reserva {
+    grid-template-columns: 1fr;
+  }
+
+  .resumen {
+    position: relative;
+    top: 0;
+  }
+}
+
+/* Listo. */
+.panel--listo {
+  text-align: center;
+  padding: 24px 0;
+  outline: none;
+}
+
+.listo__check {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 26px;
+}
+
+.panel--listo .nota {
+  max-width: 46ch;
+  margin-inline: auto;
+}
+
+.petalos {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  perspective: 600px;
+  overflow: visible;
+}
+
+.petalo {
+  position: absolute;
+  left: 50%;
+  top: 60px;
+  width: 16px;
+  height: 22px;
+  border-radius: 80% 0 80% 0;
+}
+
+/* ---------- Pago simulado ---------- */
+
+.pago {
+  width: min(440px, calc(100vw - 32px));
+  padding: 0;
+  border: 0;
+  border-radius: 24px;
+  background: var(--tarjeta);
+  color: var(--texto);
+  box-shadow: 0 40px 80px -30px rgb(58 43 43 / 0.5);
+}
+
+.pago::backdrop {
+  background: rgb(58 43 43 / 0.35);
+  backdrop-filter: blur(4px);
+}
+
+.pago__caja {
+  padding: 32px;
+}
+
+.pago__monto {
+  margin-top: 18px;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--rosa-hover);
+}
+
+.pago__estado {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  color: var(--texto-2);
+}
+
+.pago__estado svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* ---------- Mi turno ---------- */
+
+.buscar-turno {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  max-width: 640px;
+  margin-top: 40px;
+}
+
+.resultado {
+  max-width: 640px;
+  margin-top: 36px;
+}
+
+.turno {
+  display: grid;
+  gap: 6px;
+  padding: 28px;
+}
+
+.turno + .turno {
+  margin-top: 16px;
+}
+
+.turno__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.turno h2 {
+  font-size: 28px;
+}
+
+.etiqueta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 14px;
+  border-radius: var(--pildora);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.etiqueta--ok {
+  background: var(--salvia-fondo);
+  color: var(--salvia-texto);
+}
+
+.etiqueta--pendiente {
+  background: var(--dorado-suave);
+  color: var(--dorado);
+}
+
+.etiqueta--cancelado {
+  background: var(--crema-2);
+  color: var(--texto-2);
+}
+
+.turno__dato {
+  color: var(--texto-2);
+}
+
+.turno__dato strong {
+  color: var(--texto);
+}
+
+.turno .acciones {
+  justify-content: flex-start;
+  margin-top: 18px;
+}
+
+@media (max-width: 560px) {
+  .buscar-turno {
+    grid-template-columns: 1fr;
+  }
+}

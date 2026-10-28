@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es-AR" class="sin-js">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mi turno · Dermalia</title>
+    <meta name="description" content="Buscá tu turno en Dermalia con tu DNI o teléfono, sin cuenta, y cancelalo si lo necesitás." />
+    <meta name="theme-color" content="#FCF8F2" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script>document.documentElement.classList.replace('sin-js', 'con-js');</script>
+    <link rel="stylesheet" href="/src/estilos/base.css" />
+    <link rel="stylesheet" href="/src/estilos/componentes.css" />
+    <link rel="stylesheet" href="/src/estilos/paginas.css" />
+  </head>
+  <body data-pagina="mi-turno">
+    <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+    <div class="telon" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path class="telon__ola" fill="#A8475F" d="M0 100 C 30 100 70 100 100 100 L100 100 L0 100 Z" />
+      </svg>
+    </div>
+    <div class="cursor" aria-hidden="true"></div>
+    <div class="cursor__punto" aria-hidden="true"></div>
+
+    <header class="cabecera con-fondo">
+      <div class="envoltura cabecera__fila">
+        <a class="marca" href="/" data-transicion aria-label="Dermalia, inicio">
+          <span class="marca__d" aria-hidden="true">D</span>
+          <span class="rueda" data-rueda>Dermalia</span>
+        </a>
+        <nav class="nav" aria-label="Principal">
+          <a class="nav__link" href="/#protocolos" data-transicion>Protocolos</a>
+          <a class="nav__link" href="/mi-turno.html" aria-current="page">Mi turno</a>
+          <a class="boton boton--chico" href="/reservar.html" data-transicion data-magnetico><span class="rueda" data-rueda>Sacar un turno</span></a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="contenido" class="envoltura pagina">
+      <div class="formas" aria-hidden="true">
+        <svg viewBox="0 0 600 600" style="width: 46vw; right: -14vw; top: 6vw">
+          <path class="forma" fill="#F7E8EB" d="M421 99c56 41 104 113 96 182-8 70-72 138-146 170-75 33-160 30-216-13S75 312 86 236c11-77 62-146 129-171 66-25 150 0 206 34Z" />
+        </svg>
+      </div>
+
+      <div class="encabezado-pagina">
+        <h1 class="titulo-pagina" data-revelar>Buscá tu turno</h1>
+        <p class="bajada" data-aparecer>Con tu DNI o tu teléfono, sin crear una cuenta. Si cancelás con más de 24 horas, te devolvemos la seña.</p>
+      </div>
+
+      <form class="buscar-turno" data-buscar-turno data-aparecer novalidate>
+        <label>
+          <span class="solo-lectores">DNI o teléfono</span>
+          <input class="campo" name="clave" inputmode="numeric" autocomplete="off" placeholder="DNI o teléfono, solo números…" required />
+        </label>
+        <button class="boton boton--primario" type="submit">Buscar</button>
+      </form>
+      <p class="nota" data-aparecer>Para probar, buscá el DNI 30111222.</p>
+
+      <div class="resultado" data-resultado aria-live="polite"></div>
+    </main>
+
+    <script type="module" src="/src/js/paginas/mi-turno.js"></script>
+  </body>
+</html>

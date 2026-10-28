@@ -52,7 +52,7 @@ cualquier lugar. Detalle completo en
 
 **Stack técnico**: base de datos **MySQL**, aplicación de escritorio en
 **Qt** y **sitio web**; se permiten APIs externas (Google Calendar,
-WhatsApp, asistente de IA). El backend se está rehaciendo desde cero.
+WhatsApp, asistente de IA). La base ya tiene su script de tablas en `backend/`.
 
 El equipo relevó diez propuestas en `docs/propuestas.md`. Esta quedó como
 principal frente a otras cuatro (POS de kiosco, adopción de mascotas,
@@ -136,7 +136,7 @@ docs/
   10-casos-de-prueba-cliente.md  # casos de prueba funcional de Cliente
   catedra/               # material de cátedra transcripto (con ejemplos de conexión C y MySQL)
   diagramas/             # diseño conceptual escrito (Peter Chen)
-backend/                 # vacío: el backend y la base MySQL se rehacen desde cero
+backend/                 # base MySQL: tablas en 9 schemas, pruebas de estructura y revisión
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
 web/                     # sitio web para la paciente (Vite, GSAP, Three.js)
 diseno-dermalia/         # guía de estética de las pantallas
@@ -255,9 +255,13 @@ git --version
 
 Arrancó con el frontend de escritorio y el diseño de la base de datos:
 
-- `backend/`: vacío a propósito. Se rehace desde cero junto con la base
-  MySQL (consigna en `docs/consigna-bbdd.md`, entidades en
-  `docs/modelo-entidades.md`).
+- `backend/`: la base MySQL. `codigobasededatossolotablas.sql` crea las 31
+  tablas repartidas en 9 schemas (`seguridad`, `personas`, `clinica`,
+  `agenda`, `pagos`, `beneficios`, `notificaciones`, `auditoria`,
+  `asistente`), como pide la consigna (punto 3c); `pruebas_estructura.sql`
+  comprueba que cada restricción rechace lo que debe, y `REVISION.md` explica
+  los cambios de la revisión y qué reglas quedan para los stored procedures.
+  Faltan los datos, los stored procedures y los reportes.
 - `frontend/`: interfaz en Qt 6 (Widgets). Gestión (`dermalia_gestion`, PC de
   recepción) carga y cancela turnos (seña simulada y reembolso de 24 h),
   administra protocolos, profesionales con su disponibilidad y pacientes, y

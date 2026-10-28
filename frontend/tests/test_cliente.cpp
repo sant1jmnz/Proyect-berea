@@ -255,6 +255,20 @@ private slots:
         QVERIFY(sinResultados);
     }
 
+    // ---------- RF-11: recordatorio visible en el turno ----------
+    void rf11_cada_turno_muestra_su_recordatorio() {
+        BuscarTurnoWidget w;
+        w.findChild<QLineEdit *>("txtDniTel")->setText("38123456");
+        w.findChild<QPushButton *>("btnBuscar")->click();
+        int recordatorios = 0;
+        for (auto *l : w.findChildren<QLabel *>()) {
+            if (l->text().contains("Recordatorio activo en sistema (RF-11)")) {
+                ++recordatorios;
+            }
+        }
+        QCOMPARE(recordatorios, 1);
+    }
+
     void rf12_busqueda_invalida_muestra_aviso() {
         BuscarTurnoWidget w;
         auto *txt = w.findChild<QLineEdit *>("txtDniTel");

@@ -94,7 +94,10 @@ propuestas relevadas y por qué se eligió esta), [`docs/foda.md`](docs/foda.md)
 (cronograma del 3er bimestre), [`docs/plan-4to-bimestre.md`](docs/plan-4to-bimestre.md)
 (cronograma del 4° bimestre, transcripción del PDF), [`docs/reparto-4to-bimestre.md`](docs/reparto-4to-bimestre.md)
 (tareas de Santiago y Bautista semana a semana, martes de frontend y miércoles y jueves de base de datos) y [`docs/material-catedra.md`](docs/material-catedra.md)
-(resumen de los videos de cátedra, alojados como [release `material-catedra`](https://github.com/sant1jmnz/Proyect-berea/releases/tag/material-catedra)).
+(resumen de los videos de cátedra, alojados como [release `material-catedra`](https://github.com/sant1jmnz/Proyect-berea/releases/tag/material-catedra)),
+[`docs/catedra/bbdd-006-conectar-c-con-mysql.md`](docs/catedra/bbdd-006-conectar-c-con-mysql.md) (PPT de la cátedra para conectar C/C++ con MySQL, con sus ejemplos),
+[`docs/conexion-base.md`](docs/conexion-base.md) (cómo se conecta la aplicación a MySQL o a Aiven, y el modo contingencia) y los casos de prueba funcional de Gestión y Cliente
+([`docs/09-casos-de-prueba.md`](docs/09-casos-de-prueba.md), [`docs/10-casos-de-prueba-cliente.md`](docs/10-casos-de-prueba-cliente.md)).
 
 ## Indicadores principales (MML: Propósito)
 
@@ -128,6 +131,10 @@ docs/
   consigna-bbdd.md       # consigna de la sección Bases de Datos
   modelo-entidades.md    # entidades, atributos y cardinalidades
   arquitectura.md        # base en la nube, n8n, contingencia
+  conexion-base.md       # conexión de la app a MySQL/Aiven y modo contingencia
+  09-casos-de-prueba.md          # casos de prueba funcional de Gestión
+  10-casos-de-prueba-cliente.md  # casos de prueba funcional de Cliente
+  catedra/               # material de cátedra transcripto (con ejemplos de conexión C y MySQL)
   diagramas/             # diseño conceptual escrito (Peter Chen)
 backend/                 # vacío: el backend y la base MySQL se rehacen desde cero
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
@@ -250,15 +257,21 @@ Arrancó con el frontend de escritorio y el diseño de la base de datos:
 - `backend/`: vacío a propósito. Se rehace desde cero junto con la base
   MySQL (consigna en `docs/consigna-bbdd.md`, entidades en
   `docs/modelo-entidades.md`).
-- `frontend/`: interfaz en Qt 6 (Widgets, pantallas en `.ui` de Qt Designer).
-  Están los prototipos navegables de los dos apartados, Gestión
-  (`dermalia_gestion`, PC de recepción) y Cliente (`dermalia_cliente`,
-  terminal táctil vertical): solo pantallas y navegación, sin base ni lógica
-  (los datos que se ven son texto de ejemplo escrito en el `.ui`). El
-  buscador de precios es un widget compartido (`frontend/comun/`). Se abre
-  `frontend/CMakeLists.txt` con Qt Creator, o por consola:
-  `cmake -S frontend -B <carpeta> -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build <carpeta> && <carpeta>/dermalia_cliente`.
-  La estética de las pantallas está explicada en `diseno-dermalia/SKILL.md`.
+- `frontend/`: interfaz en Qt 6 (Widgets). Gestión (`dermalia_gestion`, PC de
+  recepción) carga y cancela turnos (seña simulada y reembolso de 24 h),
+  administra protocolos, profesionales con su disponibilidad y pacientes, y
+  registra los avisos de turno; Cliente (`dermalia_cliente_bautista`,
+  terminal táctil) tiene la carga de turno en 3 pasos, el buscador y buscar y
+  cancelar el turno. Todo trabaja con **datos de prueba** hasta que exista la
+  base. La conexión a MySQL (con `mysql.h`, como pide la cátedra) y el
+  **modo contingencia** (aviso "sin conexión" y turnos guardados en el
+  equipo) ya están: ver `docs/conexion-base.md`. El buscador de precios es un
+  widget compartido (`frontend/comun/`). Se abre `frontend/CMakeLists.txt` con
+  Qt Creator, o por consola:
+  `cmake -S frontend -B <carpeta> -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build <carpeta> && <carpeta>/dermalia_gestion`.
+  Las pruebas automáticas corren con `QT_QPA_PLATFORM=offscreen ctest` dentro
+  de la carpeta de compilación. La estética de las pantallas está explicada
+  en `diseno-dermalia/SKILL.md`.
 - **Base de datos**: modelo de 27 entidades escrito, con el diagrama de Peter
   Chen en curso. Después vienen el diseño lógico (Codd, 3FN), la
   implementación en MySQL dividida en schemas, los datos, los stored

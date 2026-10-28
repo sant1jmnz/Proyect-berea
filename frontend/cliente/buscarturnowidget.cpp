@@ -1,4 +1,5 @@
 #include "buscarturnowidget.h"
+#include "reembolso.h"
 #include "ui_buscarturnowidget.h"
 #include "validaciones.h"
 #include <QLabel>
@@ -192,7 +193,7 @@ void BuscarTurnoWidget::onCancelarTurno() {
         TurnoItem &turno = m_turnos[indice];
         const QDate fecha = QDate::fromString(turno.fecha, "dd/MM/yyyy");
         const QTime hora = QTime::fromString(turno.hora, "HH:mm");
-        const bool reembolsable = QDateTime::currentDateTime().secsTo(QDateTime(fecha, hora)) > 24 * 60 * 60;
+        const bool reembolsable = Reembolso::aTiempo(QDateTime(fecha, hora), QDateTime::currentDateTime());
         turno.estado = "Cancelado";
         turno.seniaEstado = reembolsable ? "Reembolsada (100%)" : "Sin reembolso (< 24 hs)";
         emit turnoCancelado(turno.fecha, turno.hora, turno.profesional);

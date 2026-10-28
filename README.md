@@ -278,10 +278,13 @@ Arrancó con el frontend de escritorio y el diseño de la base de datos:
   implementación en MySQL dividida en schemas, los datos, los stored
   procedures (funcionalidades, 8 reportes, auditoría, 2 `_tuneado`) y las
   pruebas. El plan semanal está en `docs/reparto-4to-bimestre.md`.
-- `web/`: el sitio para la paciente (apartado Web). Inicio con una perla 3D
-  que se infla si la mantenés apretada, catálogo con buscador y una vitrina
-  3D, calculadora de seña, reserva en 3 pasos con cupón y pago simulado, y
-  "Mi turno" para buscar y cancelar por DNI. Por ahora con datos fijos (los
+- `web/`: el sitio para la paciente (apartado Web). Inicio con un modelo 3D
+  de las capas de la piel (tocás una capa y ves qué protocolos actúan ahí),
+  catálogo con buscador y una vitrina 3D donde cada objeto es un protocolo
+  (tocalo para ver su ficha y reservarlo), calculadora de seña con gráfico,
+  reserva en 3 pasos con un reloj que muestra cuánto dura el turno, cupón y
+  pago simulado, y "Mi turno" para buscar y cancelar por DNI, con un anillo
+  que marca el plazo de 24 h para el reembolso. Por ahora con datos fijos (los
   mismos de `frontend/gestion/datosprueba.cpp`). Para verlo:
   `cd web && npm install && npm run dev`, y abrir `http://localhost:5173`.
 - **Arquitectura**: la base va en Aiven (MySQL gratuito), los recordatorios

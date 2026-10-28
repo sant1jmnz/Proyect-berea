@@ -81,7 +81,7 @@ y 2 del maquetado ("Elegir protocolo", "Elegir horario")*.
 | 2 | Propuesta estratégica, Árbol de Objetivos | [`docs/02-arbol-de-objetivos.md`](docs/02-arbol-de-objetivos.md) | Hecho |
 | 3 | Matriz de Marco Lógico (MML) | [`docs/03-matriz-marco-logico.md`](docs/03-matriz-marco-logico.md) | Hecho |
 | 4 | Requerimientos funcionales y no funcionales | [`docs/04-requerimientos.md`](docs/04-requerimientos.md) | Actualizado al nuevo alcance (RF-01 a RF-25, RNF-01 a RNF-14, tres apartados) |
-| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | Escritorio (Cliente y Gestión) hecho; falta el apartado Web y las pantallas nuevas |
+| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | Escritorio (Cliente y Gestión) hecho; Web con primer maquetado en `web/` (inicio, reserva, mi turno) |
 | 6 | Pitch | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion del bimestre anterior (7 a 10 min); hay que recortarlo al formato de 5 a 7 min |
 | 7 | Consigna de Bases de Datos | [`docs/consigna-bbdd.md`](docs/consigna-bbdd.md) | Transcripta |
 | 8 | Modelo de entidades (27 entidades) | [`docs/modelo-entidades.md`](docs/modelo-entidades.md) | Escrito (grupos 1 a 4) |
@@ -94,7 +94,10 @@ propuestas relevadas y por qué se eligió esta), [`docs/foda.md`](docs/foda.md)
 (cronograma del 3er bimestre), [`docs/plan-4to-bimestre.md`](docs/plan-4to-bimestre.md)
 (cronograma del 4° bimestre, transcripción del PDF), [`docs/reparto-4to-bimestre.md`](docs/reparto-4to-bimestre.md)
 (tareas de Santiago y Bautista semana a semana, martes de frontend y miércoles y jueves de base de datos) y [`docs/material-catedra.md`](docs/material-catedra.md)
-(resumen de los videos de cátedra, alojados como [release `material-catedra`](https://github.com/sant1jmnz/Proyect-berea/releases/tag/material-catedra)).
+(resumen de los videos de cátedra, alojados como [release `material-catedra`](https://github.com/sant1jmnz/Proyect-berea/releases/tag/material-catedra)),
+[`docs/catedra/bbdd-006-conectar-c-con-mysql.md`](docs/catedra/bbdd-006-conectar-c-con-mysql.md) (PPT de la cátedra para conectar C/C++ con MySQL, con sus ejemplos),
+[`docs/conexion-base.md`](docs/conexion-base.md) (cómo se conecta la aplicación a MySQL o a Aiven, y el modo contingencia) y los casos de prueba funcional de Gestión y Cliente
+([`docs/09-casos-de-prueba.md`](docs/09-casos-de-prueba.md), [`docs/10-casos-de-prueba-cliente.md`](docs/10-casos-de-prueba-cliente.md)).
 
 ## Indicadores principales (MML: Propósito)
 
@@ -128,9 +131,14 @@ docs/
   consigna-bbdd.md       # consigna de la sección Bases de Datos
   modelo-entidades.md    # entidades, atributos y cardinalidades
   arquitectura.md        # base en la nube, n8n, contingencia
+  conexion-base.md       # conexión de la app a MySQL/Aiven y modo contingencia
+  09-casos-de-prueba.md          # casos de prueba funcional de Gestión
+  10-casos-de-prueba-cliente.md  # casos de prueba funcional de Cliente
+  catedra/               # material de cátedra transcripto (con ejemplos de conexión C y MySQL)
   diagramas/             # diseño conceptual escrito (Peter Chen)
 backend/                 # vacío: el backend y la base MySQL se rehacen desde cero
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
+web/                     # sitio web para la paciente (Vite, GSAP, Three.js)
 diseno-dermalia/         # guía de estética de las pantallas
 README.md                # este archivo, portada de la Carpeta de Proyecto V1
 ```
@@ -250,31 +258,44 @@ Arrancó con el frontend de escritorio y el diseño de la base de datos:
 - `backend/`: vacío a propósito. Se rehace desde cero junto con la base
   MySQL (consigna en `docs/consigna-bbdd.md`, entidades en
   `docs/modelo-entidades.md`).
-- `frontend/`: interfaz en Qt 6 (Widgets, pantallas en `.ui` de Qt Designer).
-  Están los prototipos navegables de los dos apartados, Gestión
-  (`dermalia_gestion`, PC de recepción) y Cliente (`dermalia_cliente`,
-  terminal táctil vertical): solo pantallas y navegación, sin base ni lógica
-  (los datos que se ven son texto de ejemplo escrito en el `.ui`). El
-  buscador de precios es un widget compartido (`frontend/comun/`). Se abre
-  `frontend/CMakeLists.txt` con Qt Creator, o por consola:
-  `cmake -S frontend -B <carpeta> -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build <carpeta> && <carpeta>/dermalia_cliente`.
-  La estética de las pantallas está explicada en `diseno-dermalia/SKILL.md`.
+- `frontend/`: interfaz en Qt 6 (Widgets). Gestión (`dermalia_gestion`, PC de
+  recepción) carga y cancela turnos (seña simulada y reembolso de 24 h),
+  administra protocolos, profesionales con su disponibilidad y pacientes, y
+  registra los avisos de turno; Cliente (`dermalia_cliente_bautista`,
+  terminal táctil) tiene la carga de turno en 3 pasos, el buscador y buscar y
+  cancelar el turno. Todo trabaja con **datos de prueba** hasta que exista la
+  base. La conexión a MySQL (con `mysql.h`, como pide la cátedra) y el
+  **modo contingencia** (aviso "sin conexión" y turnos guardados en el
+  equipo) ya están: ver `docs/conexion-base.md`. El buscador de precios es un
+  widget compartido (`frontend/comun/`). Se abre `frontend/CMakeLists.txt` con
+  Qt Creator, o por consola:
+  `cmake -S frontend -B <carpeta> -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build <carpeta> && <carpeta>/dermalia_gestion`.
+  Las pruebas automáticas corren con `QT_QPA_PLATFORM=offscreen ctest` dentro
+  de la carpeta de compilación. La estética de las pantallas está explicada
+  en `diseno-dermalia/SKILL.md`.
 - **Base de datos**: modelo de 27 entidades escrito, con el diagrama de Peter
   Chen en curso. Después vienen el diseño lógico (Codd, 3FN), la
   implementación en MySQL dividida en schemas, los datos, los stored
   procedures (funcionalidades, 8 reportes, auditoría, 2 `_tuneado`) y las
   pruebas. El plan semanal está en `docs/reparto-4to-bimestre.md`.
+- `web/`: el sitio para la paciente (apartado Web). Inicio con una perla 3D
+  que se infla si la mantenés apretada, catálogo con buscador y una vitrina
+  3D, calculadora de seña, reserva en 3 pasos con cupón y pago simulado, y
+  "Mi turno" para buscar y cancelar por DNI. Por ahora con datos fijos (los
+  mismos de `frontend/gestion/datosprueba.cpp`). Para verlo:
+  `cd web && npm install && npm run dev`, y abrir `http://localhost:5173`.
 - **Arquitectura**: la base va en Aiven (MySQL gratuito), los recordatorios
   salen con n8n desde una VM gratuita de Google Cloud, con Telegram en
   desarrollo y WhatsApp en producción (ver `docs/arquitectura.md`).
 - Siguiente: terminar el diagrama de Chen, el diseño lógico, implementar la
-  base, conectar las pantallas y empezar el apartado Web.
+  base, conectar las pantallas y conectar el sitio web a la base.
 
 ## Qué falta
 
 - Diseño de la base de datos: diagrama de Chen con atributos, diseño lógico,
   implementación, datos, stored procedures y pruebas (ver el plan semanal).
-- Apartado Web: maquetado y desarrollo.
+- Apartado Web: conectarlo a la base; faltan la cuenta, las tarjetas de regalo,
+  el asistente de IA y el número real de WhatsApp (`web/src/js/movimiento/comun.js`).
 - Análisis de competencia, presupuesto y pitch de venta de 5 a 7 minutos.
 - Revisión cruzada (peer review) del maquetado y de los árboles con otro
   equipo: sigue pendiente. Sin fecha concreta por ahora; se retoma si

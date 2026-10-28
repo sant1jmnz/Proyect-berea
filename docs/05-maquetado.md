@@ -35,8 +35,16 @@ https://claude.ai/artifact/LAL3dVf5JWdd3SD7VYuRFX
 Pensado como referencia visual para construir la interfaz real en Qt
 Designer / Qt Widgets (el apartado Cliente en una ventana táctil vertical,
 el apartado Gestión en una ventana de escritorio horizontal), no como el
-diseño final pixel a pixel. El apartado Web todavía no tiene maquetado
-propio: está pendiente.
+diseño final pixel a pixel.
+
+## Sitio web (apartado Web)
+
+El apartado Web ya tiene un primer maquetado navegable en [`web/`](../web/)
+(Vite + GSAP + Three.js, con datos fijos y sin base todavía): inicio con
+catálogo y buscador, reserva en 3 pasos con seña simulada y "Mi turno" para
+buscar y cancelar por DNI o teléfono. Usa la misma paleta y tipografías que
+la app de escritorio; el movimiento sale de cinco sitios de referencia
+(ver [`web/REFERENCIAS.md`](../web/REFERENCIAS.md)).
 
 ## User flow
 
@@ -94,19 +102,21 @@ y, si corresponde, un cupón o una tarjeta aplicados.
 | 5, Buscar turnos (nombre/DNI/teléfono) | RF-13, RF-11 (recordatorio) |
 | 6, Escanear QR de cupón o tarjeta (pendiente) | RF-22, RF-23 |
 
-**Apartado Web** (pendiente de maquetar)
+**Apartado Web** (maquetado en `web/`)
 
 | Pantalla | RF cubiertos |
 |---|---|
-| Catálogo y reserva | RF-01, RF-04, RF-21 |
-| Cupón, tarjeta de regalo y pago de seña | RF-08, RF-10, RF-17, RF-23 |
-| Agregar a Google Calendar | RF-19 |
-| Cuenta, historial y cupones | RF-15, RF-16, RF-24 |
-| Asistente de IA | RF-14, RF-07 |
+| Catálogo y reserva (`index.html`, `reservar.html`) | RF-01, RF-04, RF-05, RF-07, RF-21 |
+| Cupón y pago de seña simulado (`reservar.html`, paso 3) | RF-08, RF-10, RF-17 |
+| Agregar a Google Calendar (`reservar.html`, al confirmar) | RF-19 |
+| Buscar y cancelar mi turno (`mi-turno.html`) | RF-12, RF-16 |
+| Tarjeta de regalo (pendiente) | RF-23 |
+| Cuenta, historial y cupones (pendiente) | RF-15, RF-24 |
+| Asistente de IA (pendiente) | RF-14, RF-07 |
 
 Pantallas sin wireframe todavía: administración de disponibilidad y
-protocolos por profesional (RF-03, RF-18), escaneo de QR (RF-22) y todo el
-apartado Web.
+protocolos por profesional (RF-03, RF-18), escaneo de QR (RF-22) y, en el
+apartado Web, la cuenta, las tarjetas de regalo y el asistente de IA.
 
 ## Justificación de las decisiones de diseño
 

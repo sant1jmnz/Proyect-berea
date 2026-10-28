@@ -3,7 +3,10 @@
 #include "pasoscargaturnowidget.h"
 #include "buscadorwidget.h"
 #include "buscarturnowidget.h"
+#include "avisoconexion.h"
+#include "conexionapp.h"
 #include <QMessageBox>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -32,6 +35,30 @@ MainWindow::MainWindow(QWidget *parent) :
             m_buscarTurnoWidget, &BuscarTurnoWidget::agregarTurnoDesdeFormulario);
     connect(m_buscarTurnoWidget, &BuscarTurnoWidget::turnoCancelado,
             m_pasosCargaWidget, &PasosCargaTurnoWidget::liberarHorario);
+
+    // Aviso cuando la base no responde y modo contingencia (RNF-09): sin base, los turnos
+    // confirmados se guardan en este equipo y se envían cuando vuelva la conexión.
+    m_aviso = new AvisoConexion(this);
+    ui->mainVerticalLayout->insertWidget(1, m_aviso);   // debajo del encabezado
+    m_conexion = new ConexionApp(m_aviso, ConfigBD::desdeEntorno(), QString(), this);
+    QTimer::singleShot(0, m_conexion, &ConexionApp::probar);
+    connect(m_pasosCargaWidget, &PasosCargaTurnoWidget::turnoConfirmado, this,
+            [this](const QString &paciente, const QString &dni, const QString &telefono,
+                   const QString &protocolo, const QString &fecha, const QString &hora,
+                   const QString &, double senia) {
+                if (m_conexion->hayConexion())
+                    return;
+                TurnoPendiente t;
+                t.paciente = paciente;
+                t.dni = dni;
+                t.telefono = telefono;
+                t.protocolo = protocolo;
+                t.inicio = QDateTime(QDate::fromString(fecha, "dd/MM/yyyy"), QTime::fromString(hora, "HH:mm"));
+                t.sena = qRound(senia);
+                t.senaPagada = true;    // en la terminal la seña se paga (simulada) al confirmar
+                t.origen = "Terminal";
+                m_conexion->guardarEnContingencia(t);
+            });
 
     // Inicializar en la pantalla 1
     actualizarEstadoBotonesNav(0);

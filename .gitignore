@@ -3,3 +3,7 @@ CLAUDE.md
 build/
 *.user
 *.autosave
+
+# Datos de conexión a la base (con contraseña): no se suben
+dermalia.ini
+pendientes.json

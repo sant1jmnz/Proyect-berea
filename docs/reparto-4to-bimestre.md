@@ -86,8 +86,8 @@ Entregable de la consigna: punto 1, Diseño Conceptual (Peter Chen). **Hoy (7 de
 |---|---|
 | [x] Grupo 1 (Paciente, Profesional, Protocolo, Turno): atributos, decisiones y cardinalidades cerrados | [x] Revisar el grupo 1 y las reglas de cirugía |
 | [x] Grupo 2 (pago de seña, evaluación previa): propuesto y aprobado | [x] Grupo 3 (cupones, reglas, tarjetas de regalo): propuesto, con códigos rotativos solo en cupones |
-| [ ] **Grupo 4, modelo de logs**: Log, Tipo de evento, Usuario y Rol (qué datos se guardan para auditoría) | [ ] **Grupo 4**: Notificación, Canal y Consulta al asistente |
-| [ ] Revisar contra la consigna: mínimo 13 entidades, cardinalidades y todo lo categorizable como tabla maestra | [ ] Revisar contra la consigna y cerrar las dos preguntas abiertas del grupo 3 |
+| [x] **Grupo 4, modelo de logs**: Log, Tipo de evento, Usuario y Rol (qué datos se guardan para auditoría) | [x] **Grupo 4**: Notificación, Canal y Consulta al asistente |
+| [x] Revisar contra la consigna: mínimo 13 entidades, cardinalidades y todo lo categorizable como tabla maestra (tabla "Cumplimiento de la consigna" en `docs/diagramas/README.md`) | [ ] Revisar contra la consigna y cerrar las dos preguntas abiertas del grupo 3 |
 
 ### Jueves: backend y Bases de Datos
 
@@ -108,9 +108,9 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 2.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Capa de conexión Qt a MySQL (`QSqlDatabase`) con la base local y manejo de errores de conexión | [ ] Mensaje claro en pantalla cuando la base no responde (RNF-09) y modo contingencia: avisar y guardar localmente |
-| [ ] Probar la conexión de punta a punta contra una tabla de prueba | [ ] Armar la pantalla de **administración de protocolos** (RF-05/06) sobre datos de prueba |
-| [ ] Preparar el formulario de **pacientes** (alta y búsqueda) sobre datos de prueba | [ ] Preparar la pantalla de **profesionales y disponibilidad** (RF-03) sobre datos de prueba |
+| [x] Capa de conexión a MySQL con manejo de errores de conexión. Hecha como pide la cátedra (PPT 006, `mysql.h`) en `frontend/comun/basedatos.cpp`, no con `QSqlDatabase`; ver `docs/conexion-base.md` | [x] Mensaje claro en pantalla cuando la base no responde (RNF-09) y modo contingencia: avisar y guardar localmente (franja de aviso en Gestión y Cliente; los turnos se guardan en el equipo) |
+| [ ] Probar la conexión de punta a punta contra una tabla de prueba (falta: todavía no hay base. La capa se probó con servidor inalcanzable y sin configuración) | [x] Armar la pantalla de **administración de protocolos** (RF-05/06) sobre datos de prueba (alta, modificación y baja, en Gestión) |
+| [x] Preparar el formulario de **pacientes** (alta y búsqueda) sobre datos de prueba | [x] Preparar la pantalla de **profesionales y disponibilidad** (RF-03) sobre datos de prueba (con los protocolos que realiza cada profesional, RF-18) |
 
 Las pantallas se conectan a la base real en la Semana 3, cuando ya hay tablas y stored procedures.
 
@@ -144,10 +144,10 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 3.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Conectar Gestión 1-3 y 5 con la base real (alta de turno, búsqueda y cancelación) | [ ] Conectar Cliente 1-3, 5 y el buscador con la base real |
-| [x] Validaciones de DNI y teléfono (formato, largo, solo dígitos) en los formularios de Gestión | [ ] Validaciones en Cliente (DNI/teléfono) y en el ABM de protocolos (precio ≥ 0, duración > 0). Hecho: Cliente (DNI/teléfono/nombre) y las funciones de precio y duración en `frontend/comun/validaciones`; falta enchufarlas cuando exista la pantalla de ABM de protocolos |
-| [ ] Integrar seña y reembolso (RF-10) al flujo de confirmar y cancelar | [ ] Recordatorio de turno (RF-11): registro de cada aviso |
-| [ ] Registro de seña como mock que imita un pago real (RF-08/09, RNF-05) | [ ] **Casos de prueba funcional**: planilla con un caso por RF y resultado de cada uno |
+| [ ] Conectar Gestión 1-3 y 5 con la base real (alta de turno, búsqueda y cancelación). Pasa a la semana siguiente: depende de la base y los stored procedures; la capa de conexión y el modo contingencia ya están | [ ] Conectar Cliente 1-3, 5 y el buscador con la base real. Pasa a la semana siguiente por el mismo motivo |
+| [x] Validaciones de DNI y teléfono (formato, largo, solo dígitos) en los formularios de Gestión | [x] Validaciones en Cliente (DNI/teléfono) y en el ABM de protocolos (precio ≥ 0, duración > 0). Cliente (DNI/teléfono/nombre) y, en la pantalla de protocolos de Gestión, las funciones de precio y duración de `frontend/comun/validaciones` |
+| [x] Integrar seña y reembolso (RF-10) al flujo de confirmar y cancelar (Gestión: botón *Cancelar turno* en "Buscar turnos") | [x] Recordatorio de turno (RF-11): registro de cada aviso (pantalla *Avisos* de Gestión; Cliente muestra el recordatorio de cada turno) |
+| [x] Registro de seña como mock que imita un pago real (RF-08/09, RNF-05): código de operación `SIM-…` | [x] **Casos de prueba funcional**: planilla con un caso por RF y resultado de cada uno (`docs/10-casos-de-prueba-cliente.md`) |
 
 Criterio de "Beta": los RF Must (RF-01 a RF-09, RF-11, RF-20 y RF-21) funcionando de punta a punta y sin errores críticos.
 

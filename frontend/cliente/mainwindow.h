@@ -12,6 +12,7 @@ class BuscadorWidget;
 class BuscarTurnoWidget;
 class AvisoConexion;
 class ConexionApp;
+class Repositorio;
 
 /**
  * @brief MainWindow - Ventana principal de Cliente (terminal vertical, 768×1024 mín.)
@@ -42,6 +43,7 @@ private:
     BuscarTurnoWidget *m_buscarTurnoWidget;
     AvisoConexion *m_aviso;     // franja "sin conexión con la base" (RNF-09)
     ConexionApp *m_conexion;    // conexión + turnos guardados en el equipo
+    Repositorio *m_repositorio = nullptr;   // stored procedures de la base (null = datos de prueba)
 
     void configurarVentanaVertical();
     void actualizarEstadoBotonesNav(int index);

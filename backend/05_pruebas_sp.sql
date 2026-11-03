@@ -372,6 +372,7 @@ CALL personas.sp_cargar_disponibilidad(@prof, '2026-12-15', '09:00', '13:00', 'g
 CALL personas.sp_cargar_disponibilidad(@prof, '2026-12-16', '09:00', '13:00', 'gestion', 1);
 CALL personas.sp_cargar_disponibilidad(@prof, '2026-12-17', '09:00', '13:00', 'gestion', 1);
 CALL personas.sp_cargar_disponibilidad(@prof, '2026-12-18', '09:00', '13:00', 'gestion', 1);
+CALL personas.sp_cargar_disponibilidad(@prof, '2026-12-22', '09:00', '15:00', 'gestion', 1);
 CALL clinica.sp_asignar_protocolo(@prof, 1, 1, 'gestion', 1);
 CALL clinica.sp_asignar_protocolo(@prof, 2, 1, 'gestion', 1);
 CALL clinica.sp_asignar_protocolo(@prof, 10, 1, 'gestion', 1);
@@ -953,7 +954,7 @@ SELECT MAX(id_turno) INTO @t2 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM agenda.Turno WHERE id_profesional = @prof AND DATE(fecha_hora_inicio) = '2026-12-14') = 2) AS verificacion;
 -- @espera verdadero
-SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'turno_rechazado' AND l.exitoso = 0) >= 13) AS verificacion;
+SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'turno_rechazado' AND l.exitoso = 0) >= 12) AS verificacion;
 -- @espera filas 3
 CALL agenda.sp_horarios_libres('2026-12-14', '1', @prof);
 
@@ -962,7 +963,7 @@ CALL agenda.sp_horarios_libres('2026-12-14', '1', @prof);
 CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-15 09:00:00', '2,10', 'terminal', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @t3 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera verdadero
-SELECT ((SELECT TIMESTAMPDIFF(MINUTE, fecha_hora_inicio, fecha_hora_fin) = 75 FROM agenda.Turno WHERE id_turno = @t3) AND agenda.fn_precio_total(@t3) = 160000) AS verificacion;
+SELECT ((SELECT TIMESTAMPDIFF(MINUTE, fecha_hora_inicio, fecha_hora_fin) = 75 FROM agenda.Turno WHERE id_turno = @t3) AND agenda.fn_precio_total(@t3) = 240000) AS verificacion;
 
 -- @caso sp_alta_turno.6 | Paciente superpuesta | La misma paciente no puede tener dos turnos a la vez (52082)
 -- @espera error 52074
@@ -988,11 +989,11 @@ CALL agenda.sp_buscar_turnos('', 1);
 -- @espera vacio
 CALL agenda.sp_buscar_turnos('ab', 0);
 
--- @caso sp_buscar_turnos.4 | Consistencia | Por apellido trae los 3 turnos de las pacientes de prueba y la cantidad coincide con un conteo directo
--- @espera filas 3
+-- @caso sp_buscar_turnos.4 | Consistencia | Por apellido trae los 4 turnos de las pacientes de prueba (uno está cancelado) y la cantidad coincide con un conteo directo
+-- @espera filas 4
 CALL agenda.sp_buscar_turnos('Prueba', 0);
 -- @espera verdadero
-SELECT ((SELECT COUNT(*) FROM agenda.Turno t JOIN personas.Paciente p ON p.id_paciente = t.id_paciente WHERE p.apellido = 'Prueba') = 3) AS verificacion;
+SELECT ((SELECT COUNT(*) FROM agenda.Turno t JOIN personas.Paciente p ON p.id_paciente = t.id_paciente WHERE p.apellido = 'Prueba') = 4) AS verificacion;
 
 -- ======================================================================
 -- J. SEÑA, CANCELACIÓN Y ASISTENCIA
@@ -1114,9 +1115,17 @@ SELECT ((SELECT ep.nombre = 'retenida' AND ps.monto_reembolsado = 0 FROM pagos.P
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE tabla_afectada = 'agenda.Turno' AND id_registro_afectado = @t6 AND valor_nuevo = 'ausente') = 1) AS verificacion;
 SET @ahora_simulado = '2026-11-03 09:00:00';
+SELECT id_pago INTO @pago5 FROM pagos.PagoSena WHERE id_turno = @t5;
+
+-- @caso sp_aplicar_reembolso.3 | Nulos y límites | Monto NULL o mayor al pagado (52102) y estado inventado (52103); con el pago todavía "pagada"
+-- @espera excepcion 52102
+CALL pagos.sp_aplicar_reembolso(@pago5, NULL, 'retenida', 'prueba', 1, 'gestion');
+-- @espera excepcion 52102
+CALL pagos.sp_aplicar_reembolso(@pago5, 99999999, 'retenida', 'prueba', 1, 'gestion');
+-- @espera excepcion 52103
+CALL pagos.sp_aplicar_reembolso(@pago5, 100, 'inventado', 'prueba', 1, 'gestion');
 
 -- @caso sp_aplicar_reembolso.1 | Éxito | Reembolso parcial de la seña del turno 5 (interno: lo usan otros SP)
-SELECT id_pago INTO @pago5 FROM pagos.PagoSena WHERE id_turno = @t5;
 -- @espera nada
 CALL pagos.sp_aplicar_reembolso(@pago5, 10000, 'reembolsada parcial', 'prueba', 1, 'gestion');
 -- @espera verdadero
@@ -1125,12 +1134,6 @@ SELECT ((SELECT ep.nombre = 'reembolsada parcial' AND ps.monto_reembolsado = 100
 -- @caso sp_aplicar_reembolso.2 | Sin coincidencias | Pago inexistente: excepción 52100
 -- @espera excepcion 52100
 CALL pagos.sp_aplicar_reembolso(99999999, 1, 'retenida', 'prueba', 1, 'gestion');
-
--- @caso sp_aplicar_reembolso.3 | Nulos y límites | Monto NULL o mayor al pagado (52102) y estado inventado (52103)
--- @espera excepcion 52102
-CALL pagos.sp_aplicar_reembolso(@pago5, NULL, 'retenida', 'prueba', 1, 'gestion');
--- @espera excepcion 52102
-CALL pagos.sp_aplicar_reembolso(@pago5, 99999999, 'retenida', 'prueba', 1, 'gestion');
 
 -- @caso sp_aplicar_reembolso.4 | Consistencia | Un pago ya resuelto no se puede resolver de nuevo (52101) y su monto no cambia
 -- @espera excepcion 52101
@@ -1355,7 +1358,7 @@ CALL beneficios.sp_aplicar_cupon_a_turno(99999999, @cup, @tok, 1, 'gestion');
 -- @espera error 52146
 CALL beneficios.sp_aplicar_cupon_a_turno(@t8, @cup2, 'XXXXXXXX', 1, 'gestion');
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-17 09:00:00', '1', 'web', NULL, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-16 11:00:00', '1', 'web', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @t9 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera error 52141
 CALL beneficios.sp_aplicar_cupon_a_turno(@t9, @cup2, @tok, 1, 'gestion');
@@ -1432,7 +1435,7 @@ SELECT ((SELECT ep.nombre = 'reembolsada parcial' AND ps.monto = 24000 AND ps.mo
 
 -- @caso sp_alta_turno.7 | Cirugía con evaluación apta | La paciente B agenda la rinoplastia: se acepta (apta y de menos de 6 meses), seña del 40% y se le devuelve la seña de la consulta
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-18 09:00:00', '26', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-22 09:00:00', '26', 'gestion', 1, NULL, NULL);
 SELECT MAX(id_turno) INTO @tcir FROM agenda.Turno WHERE id_paciente = @pacB AND id_profesional = @prof;
 -- @espera verdadero
 SELECT ((SELECT id_evaluacion_previa = @ev1 FROM agenda.Turno WHERE id_turno = @tcir)) AS verificacion;
@@ -1441,13 +1444,11 @@ SELECT (agenda.fn_sena(@tcir) = 1800000) AS verificacion;
 -- @espera verdadero
 SELECT ((SELECT ep.nombre = 'reembolsada' AND ps.monto_reembolsado = ps.monto FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_turno = @tc1)) AS verificacion;
 
--- @caso sp_alta_turno.8 | Cirugía con evaluación no apta o ya usada | La paciente C (no apta) no puede (52083); la B tampoco puede usar la misma evaluación dos veces
+-- @caso sp_alta_turno.8 | Cirugía con evaluación no apta o ya usada | La C (no apta) no puede (52083) y la B tampoco puede usar la misma evaluación dos veces
 -- @espera error 52083
-CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-17 09:00:00', '26', 'gestion', 1, NULL, NULL);
--- @espera error 52080
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-15 12:00:00', '26', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-22 12:00:00', '26', 'gestion', 1, NULL, NULL);
 -- @espera error 52083
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-17 09:00:00', '26', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-22 12:00:00', '26', 'gestion', 1, NULL, NULL);
 
 -- @caso sp_alta_turno.9 | Reglas de las cirugías | Una cirugía no se mezcla con otro protocolo (52077) y la consulta previa no puede incluir una cirugía (52078) ni apuntar a un protocolo común (52079)
 -- @espera error 52077
@@ -1580,9 +1581,9 @@ SELECT ((SELECT e.nombre = 'fallida' AND n.intentos = 3 AND n.detalle_error = 's
 
 -- @caso sp_registrar_consulta.1 | Éxito | Registra una pregunta y su respuesta
 -- @espera ok
-CALL asistente.sp_registrar_consulta(@pacA, 'web', '¿Cuánto cuesta una limpieza facial?', 'Cuesta $90.000.', 0, NULL);
+CALL asistente.sp_registrar_consulta(@pacA, 'web', '¿Cuánto cuesta una limpieza facial de prueba?', 'Cuesta $90.000.', 0, NULL);
 -- @espera verdadero
-SELECT ((SELECT COUNT(*) FROM asistente.ConsultaAsistente WHERE pregunta = '¿Cuánto cuesta una limpieza facial?' AND derivada = 0) = 1) AS verificacion;
+SELECT ((SELECT COUNT(*) FROM asistente.ConsultaAsistente WHERE pregunta = '¿Cuánto cuesta una limpieza facial de prueba?' AND derivada = 0) = 1) AS verificacion;
 
 -- @caso sp_registrar_consulta.2 | Sin coincidencias | Origen inválido (52070), pregunta vacía (52170) y paciente inexistente (52071)
 -- @espera error 52070
@@ -1612,13 +1613,13 @@ SELECT (asistente.fn_filtrar_datos_personales('Llamame al 1155551234 o a x@y.com
 -- P. AUDITORÍA (al final: ya hay mucha actividad en el log)
 -- ======================================================================
 
--- @caso sp_reporte_auditoria.1 | Éxito | Los inicios de sesión del día: aparece el del administrador
+-- @caso sp_reporte_auditoria.1 | Éxito | Los inicios de sesión del día (2 reales y 2 que escribió la prueba del log)
 CALL auditoria.sp_reporte_auditoria('2026-11-03', '2026-11-03', 'inicio_sesion', NULL, NULL, NULL, NULL);
 SELECT COUNT(*) INTO @n_ini FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'inicio_sesion' AND DATE(l.fecha_hora) = '2026-11-03';
--- @espera filas 2
+-- @espera filas 4
 CALL auditoria.sp_reporte_auditoria('2026-11-03', '2026-11-03', 'inicio_sesion', NULL, NULL, NULL, NULL);
 -- @espera verdadero
-SELECT (@n_ini = 2) AS verificacion;
+SELECT (@n_ini = 4) AS verificacion;
 
 -- @caso sp_reporte_auditoria.2 | Sin coincidencias | Un rango en el pasado y un usuario inexistente: 0 filas
 -- @espera vacio

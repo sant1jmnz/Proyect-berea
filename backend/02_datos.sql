@@ -7,7 +7,7 @@
 -- propósito: se llena solo ejecutando los stored procedures (ver 07_actividad_con_sps.sql).
 -- Contraseña de todos los usuarios de ejemplo: dermalia2026 (guardada como SHA-256).
 -- "Ahora" de los datos de ejemplo: 3 de noviembre de 2026.
--- Generado con un script determinista (misma semilla = mismos datos).
+-- Los datos se generaron de forma determinista y este archivo es la fuente: para cambiarlos se edita acá.
 
 SET NAMES utf8mb4;
 

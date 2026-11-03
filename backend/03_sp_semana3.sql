@@ -40,7 +40,7 @@ END//
 DROP PROCEDURE IF EXISTS auditoria.sp_registrar_log//
 CREATE PROCEDURE auditoria.sp_registrar_log(
     IN p_tipo VARCHAR(50), IN p_id_usuario INT, IN p_id_paciente INT, IN p_origen VARCHAR(50),
-    IN p_descripcion VARCHAR(500), IN p_tabla VARCHAR(100), IN p_id_registro INT,
+    IN p_descripcion VARCHAR(2000), IN p_tabla VARCHAR(100), IN p_id_registro INT,
     IN p_anterior LONGTEXT, IN p_nuevo LONGTEXT, IN p_exitoso TINYINT, IN p_ip VARCHAR(45))
 BEGIN
     INSERT INTO auditoria.Log (id_tipo_evento, id_usuario, id_paciente, id_origen, fecha_hora, descripcion,
@@ -258,7 +258,7 @@ BEGIN
     IF v_cuenta IS NOT NULL THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52021, MESSAGE_TEXT = 'Esa paciente ya tiene cuenta';
     END IF;
-    IF p_nombre_usuario IS NULL OR p_nombre_usuario NOT REGEXP '^[a-z0-9._-]{4,50}$' THEN
+    IF p_nombre_usuario IS NULL OR NOT REGEXP_LIKE(p_nombre_usuario, '^[a-z0-9._-]{4,50}$', 'c') THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52022, MESSAGE_TEXT = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
     END IF;
     IF p_email IS NULL OR p_email NOT REGEXP '^[^@ ]+@[^@ ]+[.][^@ ]+$' THEN
@@ -440,7 +440,7 @@ BEGIN
     IF p_telefono IS NULL OR p_telefono NOT REGEXP '^[+]?[0-9]{10,13}$' THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52032, MESSAGE_TEXT = 'El teléfono debe tener de 10 a 13 dígitos';
     END IF;
-    IF p_nombre_usuario IS NULL OR p_nombre_usuario NOT REGEXP '^[a-z0-9._-]{4,50}$' THEN
+    IF p_nombre_usuario IS NULL OR NOT REGEXP_LIKE(p_nombre_usuario, '^[a-z0-9._-]{4,50}$', 'c') THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52022, MESSAGE_TEXT = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
     END IF;
     IF p_password_hash IS NULL OR p_password_hash NOT REGEXP '^[0-9a-f]{64}$' THEN

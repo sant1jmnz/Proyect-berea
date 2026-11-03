@@ -41,12 +41,9 @@ ejemplo de la base (`backend/02_datos.sql`): paciente **Carla Gómez, DNI
 contingencia** (franja amarilla), guarda el turno en el equipo y avisa. Si
 también falla el programa, mostrar el sitio web (`web/`, `npm run dev`) y los
 reportes ya ejecutados en Workbench (`backend/05_reportes_semana5.sql`).
-**Antes de empezar:** recargar la base (`01` a `07`), poner el reloj en hora
-y probar la conexión. **Importante:** mientras las pantallas Qt no estén
-conectadas a la base (ver `docs/15-guia-por-semana.md`), los pasos 1 a 4 se
-muestran sobre los datos de prueba del programa y el paso 5 (auditoría) y los
-reportes se muestran ejecutando los stored procedures en Workbench. Si las
-pantallas ya usan `Repositorio`, la demo es toda en el programa.
+**Antes de empezar:** recargar la base (`01` a `08`), ingresar con `recepcion1` / `dermalia2026` y probar la
+conexión. Las pantallas de Gestión y de la terminal ya trabajan con la base (si no hay conexión, usan los datos
+de prueba y lo avisan). Para el paso 5 se abre la pantalla **Reportes** (auditoría) del mismo programa.
 
 ## Objeciones y respuestas
 
@@ -85,13 +82,11 @@ superposiciones, ≥70% de consultas resueltas con el buscador. Todavía no hay
 usuarios reales: lo que mostramos es el diseño y la prueba de las reglas, no
 resultados medidos.
 
-**"¿Es realizable con el equipo que son?"** Para el bimestre sí. Hecho y
-probado: la base completa (reglas, reportes, auditoría, 198 casos de prueba) y
-la capa que le habla desde Qt (`Repositorio`, probada contra MySQL real). Las
-pantallas de Gestión, Cliente y el sitio funcionan con datos de prueba; conectarlas
-a la base es lo que falta (tarea de la guía por semana). Lo que queda para una
-etapa posterior —pasarela de pagos real, WhatsApp oficial, Google Calendar— está
-identificado y presupuestado.
+**"¿Es realizable con el equipo que son?"** Para el bimestre sí, y está hecho: la base completa (reglas,
+reportes, auditoría), Gestión y la terminal conectadas a ella, el sitio con su API y 222 casos de prueba más las
+pruebas de integración contra MySQL real. Lo que queda para una etapa posterior —pasarela de pagos real,
+WhatsApp oficial, Google Calendar y las pantallas de cupones por QR, tarjetas y cirugías— está identificado y
+presupuestado.
 
 ## Para el día
 

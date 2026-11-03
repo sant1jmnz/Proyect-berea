@@ -4,7 +4,7 @@ Pruebas funcionales de los **stored procedures** de Dermalia, con el formato que
 pide la consigna (`docs/consigna-bbdd.md`, punto 6b) y la plantilla de la cátedra
 (`docs/catedra/semana-3-casos-de-prueba-funcional.md`).
 
-**Resultado: 198 casos, 198 aprobados, 0 con fallas** (MySQL 8.0.46, base
+**Resultado: 222 casos, 222 aprobados, 0 con fallas** (MySQL 8.0.46, base
 recién cargada con `backend/01` a `06`).
 
 ## Cómo se corren
@@ -86,7 +86,7 @@ regla y de notificación, resultado de evaluación) tienen los valores que defin
 (entre 3 y 5), no 20: no tendría sentido inventar estados. Conviene confirmar este criterio con el
 docente.
 
-## Detalle de los 198 casos
+## Detalle de los 222 casos
 
 | Caso | Tipo | Descripción | Resultado |
 |---|---|---|---|
@@ -284,7 +284,45 @@ docente.
 | sp_registrar_consulta.2 | Sin coincidencias | Origen inválido (52070), pregunta vacía (52170) y paciente inexistente (52071) | OK |
 | sp_registrar_consulta.3 | Nulos y límites | Pregunta NULL (52170); sin paciente (invitada) y sin respuesta se registra; derivada NULL vale 0 | OK |
 | sp_registrar_consulta.4 | Consistencia | Los datos personales se filtran antes de guardar (email y teléfono) y la derivación queda registrada | OK |
+| sp_turnos_del_periodo.1 | Éxito | Los turnos de todo noviembre (hay muchos: la agenda del mes) | OK |
+| sp_turnos_del_periodo.2 | Sin coincidencias | Un rango de 2020: 0 filas | OK |
+| sp_turnos_del_periodo.3 | Nulos y límites | Fechas NULL o rango invertido: 0 filas | OK |
+| sp_turnos_del_periodo.4 | Consistencia | Igual a su SELECT directo (mismas filas y valores) | OK |
+| sp_listar_pacientes.1 | Éxito | Trae todas las pacientes (63 con las de prueba: 60 de ejemplo + A, B, C + 2 altas de prueba) | OK |
+| sp_listar_pacientes.2 | Sin coincidencias | No tiene parámetros: una paciente dada de alta aparece sola (la lista crece en 1) | OK |
+| sp_listar_pacientes.3 | Nulos y límites | La paciente sin cuenta y sin email aparece igual, con tiene_cuenta = 0 | OK |
+| sp_listar_pacientes.4 | Consistencia | El orden es por apellido y nombre y no se pierde ninguna fila | OK |
+| sp_listar_profesionales.1 | Éxito | Trae a los profesionales activos e inactivos | OK |
+| sp_listar_profesionales.2 | Sin coincidencias | Un profesional dado de baja sigue en la lista, con activo = 0 | OK |
+| sp_listar_profesionales.3 | Nulos y límites | Sin parámetros: no puede fallar | OK |
+| sp_listar_profesionales.4 | Consistencia | Cantidad igual al conteo directo | OK |
+| sp_listar_profesional_protocolo.1 | Éxito | Un par por cada protocolo que hace cada profesional | OK |
+| sp_listar_profesional_protocolo.2 | Sin coincidencias | Un protocolo quitado deja de aparecer | OK |
+| sp_listar_profesional_protocolo.3 | Nulos y límites | Sin parámetros: no puede fallar | OK |
+| sp_listar_profesional_protocolo.4 | Consistencia | Cada par existe en las dos tablas | OK |
+| sp_listar_disponibilidad.1 | Éxito | Las franjas activas desde el 14/12 incluyen las del profesional de prueba | OK |
+| sp_listar_disponibilidad.2 | Sin coincidencias | Desde una fecha lejana no hay franjas | OK |
+| sp_listar_disponibilidad.3 | Nulos y límites | Fecha NULL: 0 filas | OK |
+| sp_listar_disponibilidad.4 | Consistencia | Una franja dada de baja no aparece | OK |
+| sp_listar_notificaciones.1 | Éxito | Los avisos de noviembre | OK |
+| sp_listar_notificaciones.2 | Sin coincidencias | Un rango sin avisos: 0 filas | OK |
+| sp_listar_notificaciones.3 | Nulos y límites | Fechas NULL o invertidas: 0 filas | OK |
+| sp_listar_notificaciones.4 | Consistencia | Cada aviso trae su turno cuando lo tiene | OK |
 | sp_reporte_auditoria.1 | Éxito | Los inicios de sesión del día (2 reales y 2 que escribió la prueba del log) | OK |
 | sp_reporte_auditoria.2 | Sin coincidencias | Un rango en el pasado y un usuario inexistente: 0 filas | OK |
 | sp_reporte_auditoria.3 | Nulos y límites | Fechas NULL o rango invertido: 0 filas; el último día se incluye completo | OK |
 | sp_reporte_auditoria.4 | Consistencia | Los filtros coinciden con un SELECT directo: solo fallos del tipo "intento_fallido" desde la web | OK |
+
+## Pruebas de las aplicaciones contra la base
+
+Además de los casos de SQL, las aplicaciones se prueban contra el MySQL real (se saltean si no hay base):
+
+| Prueba | Qué recorre |
+|---|---|
+| `frontend/pruebas/prueba_base.cpp` | La capa `Repositorio`: catálogo, ingreso, paciente nueva, horario libre, turno, seña, búsqueda y cancelación con reembolso |
+| `frontend/pruebas/prueba_gestion_base.cpp` | La ventana de Gestión conectada: lee los datos, carga un turno con seña (dialogos incluidos), lo busca y lo cancela; la pantalla Reportes; y la sincronización de la contingencia |
+| `frontend/pruebas/prueba_cliente_base.cpp` | La terminal: elegir protocolo, profesional y horario de la base, reservar con seña simulada |
+| `web/api/servidor.test.js` | La API del sitio: catálogo, horarios, reserva (con y sin fecha de nacimiento), superposición rechazada, búsqueda y cancelación |
+| Recorrido en navegador (Playwright) | Reservar en el sitio, verlo en "Mi turno" y cancelarlo: la base queda con el turno cancelado y la seña reembolsada |
+
+Se corren con `DERMALIA_DB_USER=root ctest --test-dir build` y `DERMALIA_DB_USER=root npm run test:api`.

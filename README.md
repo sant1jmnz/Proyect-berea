@@ -134,9 +134,18 @@ docs/
   conexion-base.md       # conexión de la app a MySQL/Aiven y modo contingencia
   09-casos-de-prueba.md          # casos de prueba funcional de Gestión
   10-casos-de-prueba-cliente.md  # casos de prueba funcional de Cliente
+  07-competencia.md      # análisis de competencia y PUV (Semana 4)
+  08-presupuesto.md      # presupuesto, monetización y retorno (Semana 5)
+  11-pruebas-bbdd.md     # documentación de pruebas de la base y tuning
+  12-contrato-sp.md      # catálogo de stored procedures y códigos de error
+  13-manual-tecnico.md   14-manual-usuario.md
+  15-guia-por-semana.md  # qué traer de esta rama cada semana
   catedra/               # material de cátedra transcripto (con ejemplos de conexión C y MySQL)
   diagramas/             # diseño conceptual escrito (Peter Chen)
-backend/                 # base MySQL: tablas en 9 schemas, pruebas de estructura y revisión
+backend/                 # base MySQL: tablas en 9 schemas, datos, stored procedures, reportes, tuning y pruebas
+  01 codigobasededatossolotablas.sql  02_datos.sql  03_sp_semana3.sql  04_sp_semana4.sql
+  05_reportes_semana5.sql  06_tuning_semana6.sql  07_actividad_con_sps.sql  05_pruebas_sp.sql
+  medir_tuning.sql  pruebas/correr_pruebas.py
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
 web/                     # sitio web para la paciente (Vite, GSAP, Three.js)
 diseno-dermalia/         # guía de estética de las pantallas

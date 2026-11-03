@@ -5,11 +5,11 @@ instituto —la **paciente** (en la terminal táctil o en el sitio web) y la
 **recepción** (en la PC)— y la **administración**, que consulta reportes y auditoría.
 Para instalar o mantener el sistema, ver el [manual técnico](13-manual-tecnico.md).
 
-> **Qué está en pantalla y qué solo en la base.** Las reglas de cupones con QR rotativo, tarjetas de
-> regalo, cirugías con consulta previa, auditoría y reportes **ya están hechas y probadas en la base**
-> (stored procedures). Las pantallas de Qt y del sitio que las usan se van conectando semana a semana
-> (ver [`15-guia-por-semana.md`](15-guia-por-semana.md)); hasta entonces se pueden usar desde Workbench
-> con los `CALL` de [`12-contrato-sp.md`](12-contrato-sp.md).
+> **Qué está en pantalla y qué solo en la base.** Gestión, la terminal y el sitio trabajan con la base: turnos,
+> seña, cancelación, protocolos, pacientes, profesionales, avisos y reportes. Las reglas de **cupones con QR
+> rotativo, tarjetas de regalo y consulta previa de cirugías** están hechas y probadas en la base, pero todavía
+> no tienen pantalla propia (ver [`15-guia-por-semana.md`](15-guia-por-semana.md)): mientras tanto se usan
+> desde Workbench con los `CALL` de [`12-contrato-sp.md`](12-contrato-sp.md).
 >
 > Las pantallas de este manual son las del programa. Mientras no estén conectadas a la base
 > real, trabajan con datos de ejemplo (turnos de María Sosa, Carla Gómez, Lucía Fernández).
@@ -57,8 +57,9 @@ Ingresá tu **DNI** o tu teléfono y ves tus turnos. Podés **cancelarlos**:
 
 ## 3. Para la recepción (programa de Gestión)
 
-Menú de la izquierda: **Inicio, Cargar turno, Buscador de precios, Buscar turnos**, y las
-pantallas de **Protocolos, Profesionales, Pacientes y Avisos**.
+**Al abrir el programa** pide el usuario y la contraseña del personal (cada acción queda registrada a nombre de
+quien ingresó). Menú de la izquierda: **Inicio, Cargar turno, Buscador de precios, Buscar turnos**, y las
+pantallas de **Protocolos, Profesionales, Pacientes, Avisos y Reportes**.
 
 - **Inicio:** agenda del día con el estado de cada turno (Pagada / Pendiente) y los horarios libres.
 - **Cargar turno** (cuando la paciente llama): 1) elegir protocolo (o varios), 2) elegir horario, 3) confirmar
@@ -73,13 +74,16 @@ pantallas de **Protocolos, Profesionales, Pacientes y Avisos**.
 - **Pacientes:** alta y búsqueda. Mismas validaciones que en la terminal: DNI de 7 u 8 dígitos y
   teléfono de 10 a 13 dígitos.
 - **Avisos:** recordatorios enviados y pendientes.
+- **Reportes:** elegí uno de los 8 reportes (o la auditoría), el rango de fechas y *Consultar*.
+- **Primera vez de una paciente:** al cargar su turno el programa le pide el apellido y la fecha de nacimiento.
 
 Si aparece la franja amarilla **"sin conexión con la base de datos"**, el programa sigue
-funcionando: guarda los turnos en la PC y avisa cuántos esperan. Tocá *Reintentar* para volver a conectar.
+funcionando: guarda los turnos en la PC y avisa cuántos esperan. Tocá *Reintentar* para volver a conectar: al
+conectar, los turnos guardados **se envían solos** y el programa avisa cuáles no se pudieron enviar y por qué.
 
 ## 4. Para la administración
 
-Se consultan desde la base (Workbench) o desde las pantallas que se agreguen:
+Se consultan desde la pantalla **Reportes** de Gestión o desde la base (Workbench):
 
 | Pregunta | Reporte (stored procedure) |
 |---|---|

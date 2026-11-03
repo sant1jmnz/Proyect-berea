@@ -310,13 +310,14 @@ Arrancó con el frontend de escritorio y el diseño de la base de datos:
 
 El trabajo del 4° bimestre está armado en la rama `claude/awesome-hopper-20z4z2`; cada semana se
 trae lo que toca a la rama de cada uno (ver [`docs/15-guia-por-semana.md`](docs/15-guia-por-semana.md)).
-Ya hecho y probado en esa rama: datos de ejemplo, stored procedures, 8 reportes, auditoría, tuning
-medido, 198 casos de prueba, la capa `Repositorio` de Qt, el informe de competencia, el presupuesto,
-el pitch de 5 a 7 minutos y los manuales.
+Ya hecho y probado en esa rama: base con datos, stored procedures, 8 reportes, auditoría, tuning medido y
+222 casos de prueba; **Gestión, la terminal y el sitio web conectados a la base** (con pruebas de integración
+contra MySQL real); modo contingencia que se sincroniza; usuarios de la base con permisos mínimos; informe de
+competencia, presupuesto, pitch de 5 a 7 minutos y manuales.
 
-- **Conectar las pantallas Qt a la base** (hoy leen datos de prueba) y el **sitio web** (necesita una API).
-- Envío real de recordatorios con n8n (Telegram / WhatsApp / Google Calendar) y sincronización de la contingencia.
-- Pantallas para cupones, tarjetas de regalo, cirugías y reportes (la base ya las resuelve).
-- Verificar las celdas "a verificar" del análisis de competencia (`docs/07-competencia.md`).
-- Armar las diapositivas del pitch y la presentación de Canva.
+- Plantillas de **n8n** (`n8n/`): escritas pero sin probar en una instancia real.
+- Pasarela de pagos real, WhatsApp oficial y Google Calendar (hoy: seña simulada, enlace `wa.me`, enlace de Calendar).
+- Pantallas para cupones por QR, tarjetas de regalo y consulta previa de cirugías (la base ya las resuelve).
+- El sitio ofrece los 4 protocolos del maquetado; la base tiene 30.
+- Verificar las celdas "a verificar" del análisis de competencia (`docs/07-competencia.md`) y armar las diapositivas del pitch.
 - Revisión cruzada (peer review) del maquetado y de los árboles con otro equipo: sigue pendiente.

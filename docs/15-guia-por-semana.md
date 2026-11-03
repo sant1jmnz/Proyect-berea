@@ -76,20 +76,38 @@ El archivo `04_sp_semana4.sql` es uno solo; se puede subir de una vez o por part
 | Miércoles | **Documento de pruebas** de la cátedra | `docs/11-pruebas-bbdd.md` | Pasar a la plantilla que entrega el docente |
 | Jueves | **Defensa técnica** | Todo lo anterior | Ver "Preguntas de defensa" abajo |
 
-## Lo que NO está hecho (y hay que hacer a mano)
+## El frontend, el sitio y n8n: qué traer y cuándo
 
-1. **Conectar las pantallas Qt a la base.** La capa `frontend/comun/repositorio.*` está lista y probada
-   contra MySQL real, pero `ventanagestion.cpp` y las pantallas del Cliente todavía leen
-   `gestion/datosprueba.cpp`. Es la tarea "Conectar Gestión 1-3 y 5 / Cliente 1-3, 5 con la base real".
-   Camino: en cada pantalla, reemplazar la llamada a `DatosPrueba::...` por el método de `Repositorio`
-   (`listarProtocolos`, `horariosLibres`, `altaTurno`, `registrarSena`, `cancelarTurno`, `buscarTurnos`) y
-   mostrar `Respuesta::mensaje` cuando `ok` sea falso. Probar con `prueba_base`.
-2. **Sitio web conectado a la base.** Hoy usa datos fijos. Hace falta una API intermedia que llame a los SP.
-3. **Envío real de recordatorios** (flujo de n8n, bot de Telegram, WhatsApp oficial) y **Google Calendar**.
-4. **Sincronizar los turnos guardados en contingencia** al volver la conexión (hoy se guardan y se cuentan).
-5. **Verificar la competencia**: las celdas "a verificar" de `07-competencia.md`.
-6. **Presentación (Canva / diapositivas)** del pitch y **revisión cruzada** con otro equipo.
-7. **Pantallas** para cupones, tarjetas de regalo, cirugías y reportes (la base ya las resuelve).
+Las **pantallas Qt y el sitio ya están conectados a la base** en esta rama, con los datos de la base cuando hay
+conexión y con los datos de prueba cuando no (así las pruebas viejas siguen andando). Se traen por partes, de
+menor a mayor dependencia:
+
+| Cuándo | Tarea del plan | Traer de esta rama |
+|---|---|---|
+| Semana 3, martes (pasa a la 4) | **Conectar Gestión 1-3 y 5 / Cliente 1-3, 5 con la base real** | `frontend/comun/repositorio.*`, `frontend/gestion/datosbase.*`, `frontend/gestion/dialogologin.*`, los cambios en `ventanagestion.*`, `pagina*.cpp` y los widgets de `frontend/cliente/`, `CMakeLists.txt`; pruebas `prueba_base.cpp`, `prueba_gestion_base.cpp`, `prueba_cliente_base.cpp` |
+| Semana 4, martes | Modo contingencia: enviar los turnos guardados al volver la conexión | `frontend/comun/conexionapp.*`, `contingencia.*` |
+| Semana 5, martes | Pantalla **Reportes** (los 8 reportes y la auditoría) | `frontend/gestion/paginareportes.*` |
+| Semana 5 | **Sitio web** conectado: API y reserva real | `web/api/`, `web/src/datos/api.js`, cambios en `reservar.*`, `mi-turno.js`, `vite.config.js`, `package.json` |
+| Semana 5 | Recordatorios con **n8n** | `n8n/` (plantillas, ver `n8n/README.md`) |
+| Semana 6 | Usuarios de la base con permisos mínimos | `backend/08_usuarios.sql` |
+
+Cada uno tiene que **correr la prueba de lo que trae** (`DERMALIA_DB_USER=root ctest --test-dir build`,
+`npm run test:api`) con la base cargada. Conviene hacerlo en la PC del laboratorio con Qt Creator.
+
+## Lo que sigue pendiente (y hay que hacer a mano)
+
+1. **Plantillas de n8n sin probar:** se escribieron según el formato de n8n pero no hay una instancia acá para
+   importarlas. Hay que importarlas, poner las credenciales y probar un aviso real.
+2. **Pasarela de pagos real, WhatsApp oficial (Meta) y Google Calendar:** hoy la seña es simulada, WhatsApp es
+   un enlace `wa.me` que abre la recepción y el botón de Calendar es un enlace.
+3. **Pantallas para cupones por QR, tarjetas de regalo y consulta previa de cirugías:** la base los resuelve
+   (tienen stored procedures probados) pero Gestión, Cliente y el sitio todavía no tienen una pantalla para
+   cada uno. La carga de un turno acepta el cupón en el sitio (campo "Cupón") y en la API.
+4. **El sitio solo reserva los 4 protocolos del maquetado** (se relacionan con la base por nombre); la base tiene 30.
+   Para mostrar todos hay que rehacer el catálogo del sitio, que tiene el modelo 3D por capas de la piel.
+5. **Contraseñas con algoritmo lento** (bcrypt/argon2) en lugar de SHA-256 sin sal, para producción.
+6. **Verificar la competencia:** las celdas "a verificar" de `docs/07-competencia.md`.
+7. **Diapositivas / Canva del pitch** y **revisión cruzada** con otro equipo.
 8. Confirmar con el docente el criterio de las tablas maestras con menos de 20 filas.
 
 ## Preguntas de defensa (la base)

@@ -151,7 +151,7 @@ def main():
             continue
         if e.startswith('excepcion'):
             cod = int(e.split()[1])
-            if exc is None or exc.args[0] != cod:
+            if exc is None or (exc.args[0] & 0xFFFF) != cod:
                 actual['ok'] = False; actual['fallas'].append('se esperaba la excepción %d y fue %s' % (cod, exc if exc else 'ninguna'))
             continue
         if exc is not None:

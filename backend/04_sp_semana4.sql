@@ -27,7 +27,8 @@ CREATE PROCEDURE pagos.sp_registrar_sena(
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
-    DECLARE v_logueado TINYINT DEFAULT 0;
+    DECLARE v_tipo_log VARCHAR(50) DEFAULT 'pago_registrado';  -- tipo de evento si el pago se rechaza
+    DECLARE v_desc_log VARCHAR(500) DEFAULT NULL;              -- motivo del rechazo (si no, el mensaje de error)
     DECLARE v_estado VARCHAR(50);
     DECLARE v_paciente INT;
     DECLARE v_inicio DATETIME;
@@ -43,10 +44,8 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        IF v_logueado = 0 THEN
-            CALL auditoria.sp_registrar_log('pago_registrado', p_id_usuario, v_paciente, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
-                                            'pagos.PagoSena', NULL, NULL, NULL, 0, NULL);
-        END IF;
+        CALL auditoria.sp_registrar_log(v_tipo_log, p_id_usuario, v_paciente, p_origen, COALESCE(v_desc_log, CONCAT('Error ', v_errno, ': ', v_msg)),
+                                        'pagos.PagoSena', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
@@ -77,18 +76,14 @@ BEGIN
 
     IF p_medio_pago = 'tarjeta de regalo' THEN
         IF EXISTS (SELECT 1 FROM beneficios.Cupon WHERE id_turno = p_id_turno) THEN
-            SET v_logueado = 1;
-            CALL auditoria.sp_registrar_log('tarjeta_rechazada', p_id_usuario, v_paciente, p_origen,
-                'Un turno con cupón no puede pagarse con tarjeta de regalo', 'pagos.TarjetaRegalo', NULL, NULL, NULL, 0, NULL);
+            SET v_tipo_log = 'tarjeta_rechazada', v_desc_log = 'Un turno con cupón no puede pagarse con tarjeta de regalo';
             SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52116, MESSAGE_TEXT = 'Un cupón y una tarjeta de regalo no se pueden usar en el mismo turno';
         END IF;
         SELECT id_tarjeta, fecha_vencimiento INTO v_tarjeta, v_venc
           FROM pagos.TarjetaRegalo WHERE codigo = p_codigo_tarjeta FOR UPDATE;
         IF v_tarjeta IS NULL OR v_venc <= auditoria.fn_ahora() OR pagos.fn_saldo_tarjeta(v_tarjeta) < v_monto THEN
-            SET v_logueado = 1;
-            CALL auditoria.sp_registrar_log('tarjeta_rechazada', p_id_usuario, v_paciente, p_origen,
-                IF(v_tarjeta IS NULL, 'Código de tarjeta inexistente', IF(v_venc <= auditoria.fn_ahora(), 'Tarjeta vencida', 'Saldo insuficiente')),
-                'pagos.TarjetaRegalo', v_tarjeta, NULL, NULL, 0, NULL);
+            SET v_tipo_log = 'tarjeta_rechazada',
+                v_desc_log = IF(v_tarjeta IS NULL, 'Código de tarjeta inexistente', IF(v_venc <= auditoria.fn_ahora(), 'Tarjeta vencida', 'Saldo insuficiente'));
             SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52117, MESSAGE_TEXT = 'La tarjeta de regalo no existe, está vencida o no tiene saldo suficiente';
         END IF;
     END IF;
@@ -485,6 +480,7 @@ BEGIN
     SELECT COALESCE(MAX(id_cupon), 0) INTO v_max_antes FROM beneficios.Cupon;
     START TRANSACTION;
     INSERT INTO beneficios.Cupon (id_regla, id_paciente, codigo, secreto, porcentaje_descuento, fecha_emision, fecha_vencimiento)
+    WITH RECURSIVE nums AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM nums WHERE n < 30)
     SELECT cand.id_regla, cand.id_paciente,
            CONCAT('DER-', UPPER(LEFT(SHA2(CONCAT(UUID(), RAND()), 256), 8))),
            SHA2(CONCAT(UUID(), RAND()), 256),
@@ -504,14 +500,17 @@ BEGIN
             UNION ALL
             -- gasto acumulado
             SELECT r.id_regla, g.id_paciente, r.porcentaje_descuento, r.vigencia_semanas
-              FROM beneficios.ReglaBeneficio r
+              FROM nums
+              JOIN beneficios.ReglaBeneficio r ON TRUE
               JOIN beneficios.TipoRegla tr ON tr.id_tipo_regla = r.id_tipo_regla AND tr.nombre = 'gasto acumulado'
               JOIN (SELECT t.id_paciente, SUM(agenda.fn_precio_final(t.id_turno)) AS gasto
                       FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre = 'realizado'
                      GROUP BY t.id_paciente) g ON TRUE
               JOIN personas.Paciente p ON p.id_paciente = g.id_paciente AND p.id_usuario IS NOT NULL
              WHERE r.activa = 1
-               AND FLOOR(g.gasto / r.umbral) > (SELECT COUNT(*) FROM beneficios.Cupon c WHERE c.id_regla = r.id_regla AND c.id_paciente = p.id_paciente)
+               -- un cupón por cada múltiplo del umbral que la paciente ya superó y todavía no tiene
+               AND nums.n > (SELECT COUNT(*) FROM beneficios.Cupon c WHERE c.id_regla = r.id_regla AND c.id_paciente = p.id_paciente)
+               AND nums.n <= FLOOR(g.gasto / r.umbral)
             UNION ALL
             -- promoción general: una vez por paciente con cuenta
             SELECT r.id_regla, p.id_paciente, r.porcentaje_descuento, r.vigencia_semanas

@@ -1610,6 +1610,169 @@ SELECT ((SELECT pregunta = 'Mi mail es [email] y mi celular [número], ¿me llam
 SELECT (asistente.fn_filtrar_datos_personales('Llamame al 1155551234 o a x@y.com') = 'Llamame al [número] o a [email]') AS verificacion;
 
 -- ======================================================================
+-- Q. LISTADOS PARA LAS PANTALLAS (Gestión y Cliente)
+-- ======================================================================
+
+-- @caso sp_turnos_del_periodo.1 | Éxito | Los turnos de todo noviembre (hay muchos: la agenda del mes)
+CALL agenda.sp_turnos_del_periodo('2026-11-03', '2026-11-30');
+SELECT COUNT(*) INTO @n_nov FROM agenda.Turno WHERE fecha_hora_inicio >= '2026-11-03' AND fecha_hora_inicio < '2026-12-01';
+-- @espera verdadero
+SELECT (@n_nov > 20) AS verificacion;
+
+-- @caso sp_turnos_del_periodo.2 | Sin coincidencias | Un rango de 2020: 0 filas
+-- @espera vacio
+CALL agenda.sp_turnos_del_periodo('2020-01-01', '2020-01-31');
+
+-- @caso sp_turnos_del_periodo.3 | Nulos y límites | Fechas NULL o rango invertido: 0 filas
+-- @espera vacio
+CALL agenda.sp_turnos_del_periodo(NULL, NULL);
+-- @espera vacio
+CALL agenda.sp_turnos_del_periodo('2026-11-30', '2026-11-03');
+
+-- @caso sp_turnos_del_periodo.4 | Consistencia | Igual a su SELECT directo (mismas filas y valores)
+-- @espera igual
+CALL agenda.sp_turnos_del_periodo('2026-11-03', '2026-11-30');
+SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_paciente = p.id_paciente ORDER BY tp2.id_telefono_paciente LIMIT 1) AS telefono,
+           CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
+           e.nombre AS estado, o.nombre AS origen,
+           (SELECT GROUP_CONCAT(pt.nombre ORDER BY pt.nombre SEPARATOR ' + ')
+              FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo
+             WHERE tp.id_turno = t.id_turno) AS protocolos,
+           agenda.fn_precio_final(t.id_turno) AS precio_final,
+           agenda.fn_sena(t.id_turno) AS sena,
+           COALESCE(ep.nombre, 'sin seña') AS estado_sena,
+           ps.codigo_operacion,
+           ca.nombre AS recordatorio_canal, es.nombre AS recordatorio_estado, nr.fecha_programada AS recordatorio_programado
+      FROM agenda.Turno t
+      JOIN personas.Paciente p ON p.id_paciente = t.id_paciente
+      JOIN personas.Profesional pr ON pr.id_profesional = t.id_profesional
+      JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
+      JOIN agenda.Origen o ON o.id_origen = t.id_origen
+      LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
+      LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
+      LEFT JOIN notificaciones.Notificacion nr ON nr.id_notificacion =
+            (SELECT n.id_notificacion FROM notificaciones.Notificacion n
+               JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion AND tn.nombre = 'recordatorio de turno'
+              WHERE n.id_turno = t.id_turno ORDER BY n.id_notificacion DESC LIMIT 1)
+      LEFT JOIN notificaciones.CanalNotificacion ca ON ca.id_canal = nr.id_canal
+      LEFT JOIN notificaciones.EstadoNotificacion es ON es.id_estado_notificacion = nr.id_estado_notificacion
+     WHERE t.fecha_hora_inicio >= '2026-11-03' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
+     ORDER BY t.fecha_hora_inicio, t.id_turno;
+
+-- @caso sp_listar_pacientes.1 | Éxito | Trae todas las pacientes (63 con las de prueba: 60 de ejemplo + A, B, C + 2 altas de prueba)
+SELECT COUNT(*) INTO @n_pac FROM personas.Paciente;
+-- @espera verdadero
+SELECT (@n_pac >= 60) AS verificacion;
+CALL personas.sp_listar_pacientes();
+
+-- @caso sp_listar_pacientes.2 | Sin coincidencias | No tiene parámetros: una paciente dada de alta aparece sola (la lista crece en 1)
+SET @antes = (SELECT COUNT(*) FROM personas.Paciente);
+-- @espera ok
+CALL personas.sp_alta_paciente('10000099','Zoe','Listado','1991-03-03',NULL,'1155550099','gestion',1);
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM personas.Paciente) = @antes + 1) AS verificacion;
+
+-- @caso sp_listar_pacientes.3 | Nulos y límites | La paciente sin cuenta y sin email aparece igual, con tiene_cuenta = 0
+-- @espera igual
+CALL personas.sp_listar_pacientes();
+SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email, (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente ORDER BY tp.id_telefono_paciente LIMIT 1) AS telefono, (p.id_usuario IS NOT NULL) AS tiene_cuenta FROM personas.Paciente p ORDER BY p.apellido, p.nombre;
+
+-- @caso sp_listar_pacientes.4 | Consistencia | El orden es por apellido y nombre y no se pierde ninguna fila
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM personas.Paciente) = @antes + 1) AS verificacion;
+
+-- @caso sp_listar_profesionales.1 | Éxito | Trae a los profesionales activos e inactivos
+-- @espera igual
+CALL personas.sp_listar_profesionales();
+SELECT pr.id_profesional, pr.nombre, pr.apellido, pr.matricula, pr.activo FROM personas.Profesional pr ORDER BY pr.apellido, pr.nombre;
+
+-- @caso sp_listar_profesionales.2 | Sin coincidencias | Un profesional dado de baja sigue en la lista, con activo = 0
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM personas.Profesional WHERE activo = 0) >= 1) AS verificacion;
+
+-- @caso sp_listar_profesionales.3 | Nulos y límites | Sin parámetros: no puede fallar
+CALL personas.sp_listar_profesionales();
+
+-- @caso sp_listar_profesionales.4 | Consistencia | Cantidad igual al conteo directo
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM personas.Profesional) >= 21) AS verificacion;
+
+-- @caso sp_listar_profesional_protocolo.1 | Éxito | Un par por cada protocolo que hace cada profesional
+-- @espera igual
+CALL clinica.sp_listar_profesional_protocolo();
+SELECT pp.id_profesional, pp.id_protocolo FROM clinica.ProfesionalProtocolo pp ORDER BY pp.id_profesional, pp.id_protocolo;
+
+-- @caso sp_listar_profesional_protocolo.2 | Sin coincidencias | Un protocolo quitado deja de aparecer
+-- @espera ok
+CALL clinica.sp_asignar_protocolo(@prof, 10, 1, 'gestion', 1);
+-- @espera ok
+CALL clinica.sp_asignar_protocolo(@prof, 10, 0, 'gestion', 1);
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM clinica.ProfesionalProtocolo WHERE id_profesional = @prof AND id_protocolo = 10) = 0) AS verificacion;
+
+-- @caso sp_listar_profesional_protocolo.3 | Nulos y límites | Sin parámetros: no puede fallar
+CALL clinica.sp_listar_profesional_protocolo();
+
+-- @caso sp_listar_profesional_protocolo.4 | Consistencia | Cada par existe en las dos tablas
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM clinica.ProfesionalProtocolo pp LEFT JOIN personas.Profesional pr USING (id_profesional) LEFT JOIN clinica.Protocolo p USING (id_protocolo) WHERE pr.id_profesional IS NULL OR p.id_protocolo IS NULL) = 0) AS verificacion;
+
+-- @caso sp_listar_disponibilidad.1 | Éxito | Las franjas activas desde el 14/12 incluyen las del profesional de prueba
+-- @espera igual
+CALL personas.sp_listar_disponibilidad('2026-12-14');
+SELECT d.id_disponibilidad, d.id_profesional, d.fecha, d.hora_inicio, d.hora_fin FROM personas.Disponibilidad d WHERE d.activa = 1 AND d.fecha >= '2026-12-14' ORDER BY d.id_profesional, d.fecha, d.hora_inicio;
+
+-- @caso sp_listar_disponibilidad.2 | Sin coincidencias | Desde una fecha lejana no hay franjas
+-- @espera vacio
+CALL personas.sp_listar_disponibilidad('2035-01-01');
+
+-- @caso sp_listar_disponibilidad.3 | Nulos y límites | Fecha NULL: 0 filas
+-- @espera vacio
+CALL personas.sp_listar_disponibilidad(NULL);
+
+-- @caso sp_listar_disponibilidad.4 | Consistencia | Una franja dada de baja no aparece
+-- @espera ok
+CALL personas.sp_cargar_disponibilidad(@prof, '2026-12-23', '09:00', '10:00', 'gestion', 1);
+SELECT MAX(id_disponibilidad) INTO @dtmp FROM personas.Disponibilidad;
+-- @espera ok
+CALL personas.sp_baja_disponibilidad(@dtmp, 'gestion', 1);
+CALL personas.sp_listar_disponibilidad('2026-12-23');
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM personas.Disponibilidad WHERE id_disponibilidad = @dtmp AND activa = 0) = 1) AS verificacion;
+
+-- @caso sp_listar_notificaciones.1 | Éxito | Los avisos de noviembre
+-- @espera igual
+CALL notificaciones.sp_listar_notificaciones('2026-11-01', '2026-11-30');
+SELECT n.id_notificacion, n.id_turno, c.nombre AS canal, e.nombre AS estado, tn.nombre AS tipo, n.mensaje,
+           n.fecha_programada, n.fecha_envio, n.intentos, n.detalle_error,
+           CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente ORDER BY tp.id_telefono_paciente LIMIT 1) AS telefono,
+           t.fecha_hora_inicio
+      FROM notificaciones.Notificacion n
+      JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal
+      JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion
+      JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion
+      JOIN personas.Paciente p ON p.id_paciente = n.id_paciente
+      LEFT JOIN agenda.Turno t ON t.id_turno = n.id_turno
+     WHERE n.fecha_programada >= '2026-11-01' AND n.fecha_programada < '2026-11-30' + INTERVAL 1 DAY
+     ORDER BY n.fecha_programada, n.id_notificacion;
+
+-- @caso sp_listar_notificaciones.2 | Sin coincidencias | Un rango sin avisos: 0 filas
+-- @espera vacio
+CALL notificaciones.sp_listar_notificaciones('2020-01-01', '2020-01-31');
+
+-- @caso sp_listar_notificaciones.3 | Nulos y límites | Fechas NULL o invertidas: 0 filas
+-- @espera vacio
+CALL notificaciones.sp_listar_notificaciones(NULL, NULL);
+-- @espera vacio
+CALL notificaciones.sp_listar_notificaciones('2026-11-30', '2026-11-01');
+
+-- @caso sp_listar_notificaciones.4 | Consistencia | Cada aviso trae su turno cuando lo tiene
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM notificaciones.Notificacion n WHERE n.id_turno IS NOT NULL AND NOT EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_turno = n.id_turno)) = 0) AS verificacion;
+
+-- ======================================================================
 -- P. AUDITORÍA (al final: ya hay mucha actividad en el log)
 -- ======================================================================
 

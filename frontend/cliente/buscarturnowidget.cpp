@@ -1,4 +1,5 @@
 #include "buscarturnowidget.h"
+#include "repositorio.h"
 #include "reembolso.h"
 #include "ui_buscarturnowidget.h"
 #include "validaciones.h"
@@ -40,6 +41,33 @@ void BuscarTurnoWidget::inicializarTurnos() {
         "Peeling Químico Médico", fechaManiana.toString("dd/MM/yyyy"), "15:00",
         "Dr. Lucas Benítez", 5400.0, "Pagada", "Confirmado"
     });
+}
+
+void BuscarTurnoWidget::usarBase(Repositorio *repositorio) {
+    m_repo = repositorio;
+    m_turnos.clear();   // los turnos de ejemplo se reemplazan por los de la base
+}
+
+// Con la base: trae los turnos del DNI o teléfono ingresado (sp_buscar_turnos).
+void BuscarTurnoWidget::cargarDeBase(const QString &criterio) {
+    m_turnos.clear();
+    for (const TurnoBD &t : m_repo->buscarTurnos(Validaciones::normalizar(criterio))) {
+        TurnoItem item;
+        item.id = t.id;
+        // la base arma "Apellido, Nombre"; la pantalla muestra "Nombre Apellido"
+        const int coma = t.paciente.indexOf(", ");
+        item.paciente = coma < 0 ? t.paciente : t.paciente.mid(coma + 2) + " " + t.paciente.left(coma);
+        item.dni = t.dni;
+        item.telefono = t.telefono;
+        item.protocolo = t.protocolos;
+        item.fecha = t.inicio.toString("dd/MM/yyyy");
+        item.hora = t.inicio.toString("HH:mm");
+        item.profesional = t.profesional;
+        item.seniaMonto = t.sena;
+        item.seniaEstado = t.estadoSena.left(1).toUpper() + t.estadoSena.mid(1);
+        item.estado = t.estado.left(1).toUpper() + t.estado.mid(1);   // Confirmado, Pendiente, Realizado, Cancelado...
+        m_turnos.append(item);
+    }
 }
 
 void BuscarTurnoWidget::agregarTurnoDesdeFormulario(const QString &paciente, const QString &dni,
@@ -85,6 +113,9 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
         ui->layoutTurnos->addStretch();
         return;
     }
+
+    if (m_repo)
+        cargarDeBase(criterio);
 
     QList<int> encontrados;
     for (int indice = 0; indice < m_turnos.size(); ++indice) {
@@ -152,7 +183,8 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
             vl->addWidget(cardRec);
 
             // Botón de cancelación con validación de 24 horas (RF-12, RF-10)
-            if (t.estado != "Cancelado") {
+            const bool seCancela = t.estado == "Confirmado" || t.estado == "Pendiente" || (!m_repo && t.estado != "Cancelado");
+            if (seCancela) {
                 QHBoxLayout *hlBtn = new QHBoxLayout();
                 hlBtn->addStretch();
 
@@ -191,6 +223,20 @@ void BuscarTurnoWidget::onCancelarTurno() {
 
     if (reply == QMessageBox::Yes) {
         TurnoItem &turno = m_turnos[indice];
+        if (m_repo) {   // la base aplica la regla de las 24 horas y devuelve la seña
+            const Respuesta r = m_repo->cancelarTurno(turno.id, "terminal");
+            if (!r.ok) {
+                QMessageBox::warning(this, "No se pudo cancelar", r.mensaje);
+                return;
+            }
+            emit turnoCancelado(turno.fecha, turno.hora, turno.profesional);
+            QMessageBox::information(this, "Turno Cancelado",
+                                     r.dato == "reembolsada"
+                                         ? "Turno cancelado exitosamente.\nPor cancelarse con más de 24 hs de anticipación, aplica reembolso del 100% de la seña (RF-10)."
+                                         : "Turno cancelado exitosamente.\nQuedan menos de 24 hs para el turno: la seña no se reembolsa (RF-10).");
+            mostrarResultados(ui->txtDniTel->text().trimmed());
+            return;
+        }
         const QDate fecha = QDate::fromString(turno.fecha, "dd/MM/yyyy");
         const QTime hora = QTime::fromString(turno.hora, "HH:mm");
         const bool reembolsable = Reembolso::aTiempo(QDateTime(fecha, hora), QDateTime::currentDateTime());

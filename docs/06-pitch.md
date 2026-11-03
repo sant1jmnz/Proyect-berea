@@ -42,7 +42,11 @@ contingencia** (franja amarilla), guarda el turno en el equipo y avisa. Si
 también falla el programa, mostrar el sitio web (`web/`, `npm run dev`) y los
 reportes ya ejecutados en Workbench (`backend/05_reportes_semana5.sql`).
 **Antes de empezar:** recargar la base (`01` a `07`), poner el reloj en hora
-y probar la conexión.
+y probar la conexión. **Importante:** mientras las pantallas Qt no estén
+conectadas a la base (ver `docs/15-guia-por-semana.md`), los pasos 1 a 4 se
+muestran sobre los datos de prueba del programa y el paso 5 (auditoría) y los
+reportes se muestran ejecutando los stored procedures en Workbench. Si las
+pantallas ya usan `Repositorio`, la demo es toda en el programa.
 
 ## Objeciones y respuestas
 
@@ -81,9 +85,13 @@ superposiciones, ≥70% de consultas resueltas con el buscador. Todavía no hay
 usuarios reales: lo que mostramos es el diseño y la prueba de las reglas, no
 resultados medidos.
 
-**"¿Es realizable con el equipo que son?"** Para el bimestre sí: la base, los
-dos apartados de escritorio y el sitio están hechos; lo que falta (pasarela,
-WhatsApp oficial, Google Calendar) está identificado y presupuestado.
+**"¿Es realizable con el equipo que son?"** Para el bimestre sí. Hecho y
+probado: la base completa (reglas, reportes, auditoría, 198 casos de prueba) y
+la capa que le habla desde Qt (`Repositorio`, probada contra MySQL real). Las
+pantallas de Gestión, Cliente y el sitio funcionan con datos de prueba; conectarlas
+a la base es lo que falta (tarea de la guía por semana). Lo que queda para una
+etapa posterior —pasarela de pagos real, WhatsApp oficial, Google Calendar— está
+identificado y presupuestado.
 
 ## Para el día
 

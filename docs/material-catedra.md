@@ -234,3 +234,52 @@ Nota sobre el método: estos resúmenes salen de leer los cuadros de video, no
 el audio. Se captura todo lo que aparece escrito o dibujado en pantalla,
 diapositivas, diagramas y ejemplos, que en estos videos es prácticamente
 todo el contenido. Lo que el expositor dice sin mostrar no está incluido.
+
+## Laboratorio de Algoritmos y Estructuras de Datos 2026 (zip del release)
+
+Subido al release `material-catedra` el 3 de noviembre de 2026
+(`Laboratorio.de.Algoritmos.y.Estructuras.de.Datos.2026-...zip`, 295 MB). Es la
+carpeta de la materia de la profesora **Milena Lingua Dahan** (4° 1ª CT). **No está en
+el árbol del repositorio** (pesa demasiado y trae trabajos de otros alumnos, que no se copian ni
+se publican); acá va solo lo que sirve para el proyecto.
+
+Qué contiene:
+
+| Carpeta / archivo | Qué es |
+|---|---|
+| `Guía Qt Creator - ...` (10 presentaciones) | Partes 1 a 10: Generador de saludos, Contador de clics, Mini calculadora, Configurador de pedidos, Gestor de tareas, Catálogo de productos, Gestor de inventario, Cotizador de presupuestos, MultiApp y Catálogo dinámico (ScrollArea) |
+| `TrabajoIntegrador_4toBimestre_SistemaGestionComercial.pdf` | Consigna del trabajo integrador de 4° bimestre (punto de venta y stock en Qt, 4 partes, con preguntas de reflexión y lista de verificación) |
+| `Guía de instalación de Git y Conexión con Github.pptx` | Git y GitHub |
+| `Evaluación Diagnóstico`, `Trabajo Integrador 1er y 2do Bimestre` | Ejercicios de C++ y refactorización |
+| `Ejercicios Fundamentos de Java` | Ejercicios de Java |
+| `Trabajo Proyecto I y Bases de Datos` | Presentaciones de otros grupos y el plan de aprendizaje del 4° bimestre (ya transcripto en `plan-4to-bimestre.md`) |
+
+### Convenciones de Qt de la cátedra (lo que se espera ver en el código)
+
+Resumen de las guías y de la lista de verificación del trabajo integrador. El frontend del
+proyecto ya sigue casi todo; lo que falta está marcado.
+
+| Tema | Lo que enseña la cátedra | En el proyecto |
+|---|---|---|
+| Señales y slots | `connect(origen, &señal, destino, &slot)`; slots autogenerados `on_btnX_clicked()` | Sí |
+| Nombres de controles | Descriptivos: `btnRegistrar`, `lblPedido`, no `pushButton_3` | Sí |
+| Validar entradas | `QMessageBox::warning` y `return` si el campo está vacío; `QIntValidator` para números | Sí (`comun/validaciones`) |
+| Conversión de datos | `QString::number()`, `.toInt()`, `.toDouble()`, `isChecked()`; armar texto con `QString("%1").arg()` | Sí |
+| Tablas con buscador | `QStandardItemModel` + `QSortFilterProxyModel`, `setFilterKeyColumn(-1)` y `setFilterFixedString` | Parcial (listas propias) |
+| Botones deshabilitados | Arrancan con `setEnabled(false)` y se activan al seleccionar una fila | Revisar en cada pantalla |
+| Menú contextual | `contextMenuPolicy` = `CustomContextMenu`, `QMenu`, `indexAt(pos).row()` | Pendiente en las tablas |
+| Ventanas | Formularios con `new` + `show()` (conviven con la principal); diálogos críticos con `exec()` en el stack (modales) | Sí |
+| Señal propia | El formulario hace `emit productoCreado(...)` y la principal lo recibe con `connect` | Parcial |
+| Imágenes | Siempre por archivo de recursos `.qrc` (`:/imagenes/...`), con `QPixmap::scaled(..., Qt::KeepAspectRatio)` | Sí (`recursos.qrc`) |
+| Persistencia local | Sobrescribir `closeEvent`, guardar con `QFile` + `QDataStream` y leer en el constructor, validando que el archivo exista | El proyecto usa MySQL y, sin conexión, `contingencia` (JSON) |
+| Estilos | Hojas de estilo QSS en `styleSheet` | Sí (`cliente/styles.qss`) |
+| Memoria | `new` para lo que debe seguir vivo; `deleteLater()` al cerrar un formulario | Sí |
+
+**Lista de verificación de la cátedra para entregar** (aplicable a este proyecto): compila sin
+errores y no se cierra solo; los botones arrancan grises y se encienden al seleccionar; el buscador filtra
+en tiempo real; los formularios cargan todos los controles y la edición los precarga; no se puede vender
+(reservar) más de lo disponible; al cerrar y reabrir se recupera el estado; código indentado, con funciones
+claras y nombres descriptivos.
+
+> **Pendiente para la defensa:** revisar las "preguntas de reflexión" del trabajo integrador (memoria
+> dinámica vs. estática, `exec()` vs. `show()`, modelo-vista) y poder explicarlas con el código propio.

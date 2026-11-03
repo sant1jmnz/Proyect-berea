@@ -49,6 +49,8 @@ set(COMUN
     comun/avisoconexion.h
     comun/conexionapp.cpp    # junta conexión + contingencia + franja de aviso
     comun/conexionapp.h
+    comun/repositorio.cpp    # llamadas a los stored procedures (Semanas 3 y 4 de la base)
+    comun/repositorio.h
     comun/recordatorios.cpp  # recordatorio de turno y registro de avisos (RF-11)
     comun/recordatorios.h
     gestion/recursos.qrc)   # íconos y tipografías
@@ -175,4 +177,17 @@ if(Qt6Test_FOUND)
     con_mysql(prueba_gestion)
     add_test(NAME gestion COMMAND prueba_gestion)
     set_tests_properties(gestion PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+    # Integración con la base real (stored procedures de backend/03 y 04).
+    # Sin variables DERMALIA_DB_* o sin base, la prueba se saltea sin fallar.
+    add_executable(prueba_base
+        pruebas/prueba_base.cpp
+        comun/basedatos.cpp
+        comun/basedatos.h
+        comun/repositorio.cpp
+        comun/repositorio.h)
+    target_include_directories(prueba_base PRIVATE comun)
+    target_link_libraries(prueba_base PRIVATE Qt6::Core Qt6::Test)
+    con_mysql(prueba_base)
+    add_test(NAME base COMMAND prueba_base)
 endif()

@@ -73,6 +73,7 @@ BEGIN
                  COALESCE((SELECT c.porcentaje_descuento FROM beneficios.Cupon c WHERE c.id_turno = p_id_turno), 0) / 100, 2);
 END//
 
+-- Precio final del turno: el precio de lista menos el descuento del cupón.
 DROP FUNCTION IF EXISTS agenda.fn_precio_final//
 CREATE FUNCTION agenda.fn_precio_final(p_id_turno INT) RETURNS DECIMAL(14,2)
     NOT DETERMINISTIC READS SQL DATA
@@ -219,6 +220,8 @@ BEGIN
     END IF;
 END//
 
+-- Cierre de sesión: solo deja el evento 'cierre_sesion' en el log (la app
+-- es quien cierra la ventana). Devuelve error si el usuario no existe.
 DROP PROCEDURE IF EXISTS seguridad.sp_cerrar_sesion//
 CREATE PROCEDURE seguridad.sp_cerrar_sesion(IN p_id_usuario INT, IN p_origen VARCHAR(50), IN p_ip VARCHAR(45))
 BEGIN
@@ -672,6 +675,10 @@ END//
 --  PROTOCOLOS (RF-05, RF-06, RNF-08: la recepción actualiza precios sin ayuda técnica)
 -- =====================================================================
 
+-- Alta de un protocolo en el catálogo (RNF-08: la recepción actualiza
+-- precios y protocolos sin ayuda técnica). Valida categoría, nombre único,
+-- precio mayor a cero y duración entre 1 y 600 minutos.
+-- Devuelve: id = protocolo nuevo, valor = su precio.
 DROP PROCEDURE IF EXISTS clinica.sp_alta_protocolo//
 CREATE PROCEDURE clinica.sp_alta_protocolo(
     IN p_id_categoria INT, IN p_nombre VARCHAR(100), IN p_descripcion VARCHAR(500), IN p_precio DECIMAL(12,2),

@@ -31,6 +31,10 @@ public:
     BaseDatos &base() { return base_; }
     Contingencia &contingencia() { return local; }
 
+signals:
+    /* Se avisa cada vez que se logra conectar (al arrancar o con "Reintentar"). */
+    void conectada();
+
 private:
     AvisoConexion *aviso;
     BaseDatos base_;

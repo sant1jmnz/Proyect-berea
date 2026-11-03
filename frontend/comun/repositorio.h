@@ -108,6 +108,9 @@ public:
                                    const QString &origen, int idUsuario = 0);
     Respuesta bajaDisponibilidad(int idDisponibilidad, const QString &origen, int idUsuario = 0);
     Respuesta asignarProtocolo(int idProfesional, int idProtocolo, bool habilitar, const QString &origen, int idUsuario = 0);
+    /* Una pregunta sin respuesta se registra como derivada al WhatsApp del instituto (RF-07). */
+    Respuesta registrarConsultaAsistente(int idPaciente, const QString &origen, const QString &pregunta,
+                                         const QString &respuesta, bool derivada);
     /* n8n o la recepción informan el resultado de un aviso. */
     Respuesta marcarNotificacion(int idNotificacion, const QString &resultado, const QString &detalle = QString());
 

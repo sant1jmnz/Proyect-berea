@@ -5,6 +5,7 @@
 #include "buscarturnowidget.h"
 #include "avisoconexion.h"
 #include "conexionapp.h"
+#include "repositorio.h"
 #include <QMessageBox>
 #include <QTimer>
 
@@ -41,6 +42,16 @@ MainWindow::MainWindow(QWidget *parent) :
     m_aviso = new AvisoConexion(this);
     ui->mainVerticalLayout->insertWidget(1, m_aviso);   // debajo del encabezado
     m_conexion = new ConexionApp(m_aviso, ConfigBD::desdeEntorno(), QString(), this);
+    // La terminal no pide ingreso: la paciente se identifica con su DNI. Cuando hay conexión,
+    // el catálogo, los horarios y los turnos pasan a salir de los stored procedures de la base.
+    connect(m_conexion, &ConexionApp::conectada, this, [this]() {
+        if (m_repositorio)
+            return;   // ya estaba conectada
+        m_repositorio = new Repositorio(m_conexion->base());
+        m_pasosCargaWidget->usarBase(m_repositorio);
+        m_buscadorWidget->usarBase(m_repositorio);
+        m_buscarTurnoWidget->usarBase(m_repositorio);
+    });
     QTimer::singleShot(0, m_conexion, &ConexionApp::probar);
     connect(m_pasosCargaWidget, &PasosCargaTurnoWidget::turnoConfirmado, this,
             [this](const QString &paciente, const QString &dni, const QString &telefono,

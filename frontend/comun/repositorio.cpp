@@ -272,3 +272,10 @@ Resultado Repositorio::auditoria(const QDate &desde, const QDate &hasta, const Q
         { desde.toString("yyyy-MM-dd"), hasta.toString("yyyy-MM-dd"), textoONulo(tipoEvento), idONulo(idUsuario),
           idONulo(idPaciente), exitoso < 0 ? QVariant() : QVariant(exitoso), textoONulo(origen) });
 }
+
+Respuesta Repositorio::registrarConsultaAsistente(int idPaciente, const QString &origen, const QString &pregunta,
+                                                  const QString &respuesta, bool derivada)
+{
+    return aRespuesta(base.llamar("asistente.sp_registrar_consulta",
+        { idONulo(idPaciente), origen, pregunta, textoONulo(respuesta), derivada ? 1 : 0, QVariant() }));
+}

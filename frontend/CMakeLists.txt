@@ -109,6 +109,8 @@ add_executable(dermalia_cliente_bautista
     comun/avisoconexion.h
     comun/conexionapp.cpp
     comun/conexionapp.h
+    comun/repositorio.cpp
+    comun/repositorio.h
     cliente/main_bautista.cpp
     cliente/mainwindow.cpp
     cliente/mainwindow.h
@@ -136,6 +138,10 @@ if(Qt6Test_FOUND)
         tests/test_cliente.cpp
         comun/validaciones.cpp
         comun/validaciones.h
+        comun/basedatos.cpp
+        comun/basedatos.h
+        comun/repositorio.cpp
+        comun/repositorio.h
         cliente/pasoscargaturnowidget.cpp
         cliente/pasoscargaturnowidget.h
         cliente/pasoscargaturnowidget.ui
@@ -147,6 +153,7 @@ if(Qt6Test_FOUND)
         cliente/buscarturnowidget.ui)
     target_include_directories(dermalia_tests PRIVATE comun cliente)
     target_link_libraries(dermalia_tests PRIVATE Qt6::Widgets Qt6::Test)
+    con_mysql(dermalia_tests)
     enable_testing()
     add_test(NAME cliente COMMAND dermalia_tests)
 
@@ -231,4 +238,38 @@ if(Qt6Test_FOUND)
     con_mysql(prueba_gestion_base)
     add_test(NAME gestion_base COMMAND prueba_gestion_base)
     set_tests_properties(gestion_base PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+    # Terminal del Cliente conectada a la base: catálogo, horarios, reserva y seña.
+    add_executable(prueba_cliente_base
+        pruebas/prueba_cliente_base.cpp
+        comun/validaciones.cpp
+        comun/validaciones.h
+        comun/reembolso.h
+        comun/basedatos.cpp
+        comun/basedatos.h
+        comun/contingencia.cpp
+        comun/contingencia.h
+        comun/avisoconexion.cpp
+        comun/avisoconexion.h
+        comun/conexionapp.cpp
+        comun/conexionapp.h
+        comun/repositorio.cpp
+        comun/repositorio.h
+        cliente/mainwindow.cpp
+        cliente/mainwindow.h
+        cliente/mainwindow.ui
+        cliente/pasoscargaturnowidget.cpp
+        cliente/pasoscargaturnowidget.h
+        cliente/pasoscargaturnowidget.ui
+        cliente/buscadorwidget.cpp
+        cliente/buscadorwidget.h
+        cliente/buscadorwidget.ui
+        cliente/buscarturnowidget.cpp
+        cliente/buscarturnowidget.h
+        cliente/buscarturnowidget.ui)
+    target_include_directories(prueba_cliente_base PRIVATE comun cliente)
+    target_link_libraries(prueba_cliente_base PRIVATE Qt6::Widgets Qt6::Test)
+    con_mysql(prueba_cliente_base)
+    add_test(NAME cliente_base COMMAND prueba_cliente_base)
+    set_tests_properties(cliente_base PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()

@@ -308,14 +308,15 @@ Arrancó con el frontend de escritorio y el diseño de la base de datos:
 
 ## Qué falta
 
-- Diseño de la base de datos: diagrama de Chen con atributos, diseño lógico,
-  implementación, datos, stored procedures y pruebas (ver el plan semanal).
-- Apartado Web: conectarlo a la base; faltan la cuenta, las tarjetas de regalo,
-  el asistente de IA y el número real de WhatsApp (`web/src/js/movimiento/comun.js`).
-- Análisis de competencia, presupuesto y pitch de venta de 5 a 7 minutos.
-- Revisión cruzada (peer review) del maquetado y de los árboles con otro
-  equipo: sigue pendiente. Sin fecha concreta por ahora; se retoma si
-  aparece otro equipo con quien coordinarla.
-- Armar la presentación de Canva ("Proyecto Informático 1"): recorrido
-  semana a semana de lo que se fue haciendo, más los problemas que se
-  encontraron. Es lo último que se arma.
+El trabajo del 4° bimestre está armado en la rama `claude/awesome-hopper-20z4z2`; cada semana se
+trae lo que toca a la rama de cada uno (ver [`docs/15-guia-por-semana.md`](docs/15-guia-por-semana.md)).
+Ya hecho y probado en esa rama: datos de ejemplo, stored procedures, 8 reportes, auditoría, tuning
+medido, 198 casos de prueba, la capa `Repositorio` de Qt, el informe de competencia, el presupuesto,
+el pitch de 5 a 7 minutos y los manuales.
+
+- **Conectar las pantallas Qt a la base** (hoy leen datos de prueba) y el **sitio web** (necesita una API).
+- Envío real de recordatorios con n8n (Telegram / WhatsApp / Google Calendar) y sincronización de la contingencia.
+- Pantallas para cupones, tarjetas de regalo, cirugías y reportes (la base ya las resuelve).
+- Verificar las celdas "a verificar" del análisis de competencia (`docs/07-competencia.md`).
+- Armar las diapositivas del pitch y la presentación de Canva.
+- Revisión cruzada (peer review) del maquetado y de los árboles con otro equipo: sigue pendiente.

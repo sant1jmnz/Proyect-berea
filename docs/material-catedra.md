@@ -254,6 +254,11 @@ Qué contiene:
 | `Ejercicios Fundamentos de Java` | Ejercicios de Java |
 | `Trabajo Proyecto I y Bases de Datos` | Presentaciones de otros grupos y el plan de aprendizaje del 4° bimestre (ya transcripto en `plan-4to-bimestre.md`) |
 
+> **Para qué se subió:** para que el código del proyecto se parezca a **cómo programa el
+> equipo** (estilo de la cátedra), y no a un estilo ajeno que después nadie pueda defender. Por eso
+> el código nuevo de `frontend/` usa nombres en español, estructuras simples, `if` explícitos,
+> `QString::number()` y `.arg()`, y slots `on_btnX_clicked`, sin atajos avanzados.
+
 ### Convenciones de Qt de la cátedra (lo que se espera ver en el código)
 
 Resumen de las guías y de la lista de verificación del trabajo integrador. El frontend del

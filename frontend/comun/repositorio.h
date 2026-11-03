@@ -108,8 +108,10 @@ private:
 
     static Respuesta aRespuesta(const Resultado &r);
     static QString lista(const QVector<int> &ids);
-    static QVariant idONulo(int id) { return id > 0 ? QVariant(id) : QVariant(); }
-    static QVariant textoONulo(const QString &t) { return t.isEmpty() ? QVariant() : QVariant(t); }
+    /* Un id que no se cargó (0) viaja a la base como NULL. */
+    static QVariant idONulo(int id);
+    /* Un texto vacío viaja a la base como NULL. */
+    static QVariant textoONulo(const QString &texto);
 };
 
 #endif

@@ -3,9 +3,8 @@
 #include <QCryptographicHash>
 #include <QStringList>
 
-namespace {
-const char *FORMATO_FECHA_HORA = "yyyy-MM-dd HH:mm:ss";
-}
+/* Formato de fecha y hora que usan los stored procedures. */
+const QString FORMATO_FECHA_HORA = "yyyy-MM-dd HH:mm:ss";
 
 /* SHA-256 en hexadecimal: es lo que esperan sp_login y sp_crear_cuenta_paciente. */
 QString Repositorio::hashClave(const QString &clave)
@@ -19,6 +18,7 @@ Respuesta Repositorio::aRespuesta(const Resultado &r)
 {
     Respuesta resp;
     if (!r.ok) {
+        /* El SP devolvió ERROR: BaseDatos ya dejó el mensaje en español y el código. */
         resp.codigo = r.codigoSql;
         resp.mensaje = r.error;
         return resp;
@@ -33,6 +33,20 @@ Respuesta Repositorio::aRespuesta(const Resultado &r)
         resp.dato = f.value("dato").toString();
     }
     return resp;
+}
+
+QVariant Repositorio::idONulo(int id)
+{
+    if (id > 0)
+        return QVariant(id);
+    return QVariant();
+}
+
+QVariant Repositorio::textoONulo(const QString &texto)
+{
+    if (texto.isEmpty())
+        return QVariant();
+    return QVariant(texto);
 }
 
 /* [3, 7] → "3,7": así reciben los SP una lista de protocolos. */
@@ -66,6 +80,7 @@ QVector<ProtocoloBD> Repositorio::listarProtocolos(const QString &texto, int idC
     QVector<ProtocoloBD> out;
     const Resultado r = base.llamar("clinica.sp_listar_protocolos", { textoONulo(texto), idONulo(idCategoria) });
     error = r.ok ? QString() : r.error;
+    /* Cada fila del resultado es una columna → valor; se pasa a la estructura. */
     for (const QVariantMap &f : r.filas) {
         ProtocoloBD p;
         p.id = f.value("id_protocolo").toInt();

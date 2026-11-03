@@ -10,8 +10,10 @@ ConexionApp::ConexionApp(AvisoConexion *franja, const ConfigBD &config,
 bool ConexionApp::probar()
 {
     const bool conectada = base_.conectar();
-    if (conectada)
+    if (conectada) {
         aviso->mostrarConectado(local.cantidad());
+        emit this->conectada();
+    }
     else
         aviso->mostrarSinConexion(base_.ultimoError(), local.cantidad());
     return conectada;

@@ -1,11 +1,14 @@
 #include "paginaprofesionales.h"
 
+#include "repositorio.h"
+
 #include "validaciones.h"
 
 #include <QDateEdit>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -218,7 +221,34 @@ void PaginaProfesionales::agregarProfesional()
             return;
         }
     }
-    datos->append({ editNombre->text().simplified(), matricula, true, {}, {} });
+    Profesional nuevo = { editNombre->text().simplified(), matricula, true, {}, {} };
+    if (repo) {   /* en la base el profesional necesita cuenta propia: usuario, clave, email y teléfono */
+        bool ok = false;
+        const QString email = QInputDialog::getText(this, "Alta de profesional", "Email:", QLineEdit::Normal, QString(), &ok);
+        if (!ok)
+            return;
+        const QString telefono = QInputDialog::getText(this, "Alta de profesional", "Teléfono (solo números):", QLineEdit::Normal, QString(), &ok);
+        if (!ok)
+            return;
+        const QString usuario = QInputDialog::getText(this, "Alta de profesional", "Usuario (minúsculas, sin espacios):", QLineEdit::Normal, QString(), &ok);
+        if (!ok)
+            return;
+        const QString clave = QInputDialog::getText(this, "Alta de profesional", "Contraseña inicial:", QLineEdit::Password, QString(), &ok);
+        if (!ok)
+            return;
+        const QString texto = editNombre->text().simplified();
+        const int ultimo = texto.lastIndexOf(' ');
+        const Respuesta r = repo->altaProfesional(matricula, ultimo > 0 ? texto.left(ultimo) : texto,
+                                                  ultimo > 0 ? texto.mid(ultimo + 1) : texto, email.trimmed(), telefono.trimmed(),
+                                                  usuario.trimmed(), clave, "gestion", idUsuario);
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo dar de alta", r.mensaje);
+            return;
+        }
+        nuevo.id = r.id;
+        nuevo.email = email.trimmed();
+    }
+    datos->append(nuevo);
     editNombre->clear();
     editMatricula->clear();
     recargarProfesionales(datos->size() - 1);
@@ -229,6 +259,15 @@ void PaginaProfesionales::cambiarEstadoProfesional()
     Profesional *p = actual();
     if (!p)
         return;
+    if (repo) {
+        const int ultimo = p->nombre.lastIndexOf(' ');
+        const Respuesta r = repo->modificarProfesional(p->id, ultimo > 0 ? p->nombre.left(ultimo) : p->nombre,
+                                                       ultimo > 0 ? p->nombre.mid(ultimo + 1) : p->nombre, p->email, !p->activo, "gestion", idUsuario);
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo cambiar el estado", r.mensaje);
+            return;
+        }
+    }
     p->activo = !p->activo;
     recargarProfesionales(lista->currentRow());
 }
@@ -238,6 +277,20 @@ void PaginaProfesionales::marcarProtocolo(QListWidgetItem *item)
     Profesional *p = actual();
     if (cargando || !p)
         return;
+    if (repo) {   /* con la base, la habilitación se guarda con sp_asignar_protocolo */
+        int idProtocolo = 0;
+        for (const Protocolo &protocolo : *protocolos) {
+            if (protocolo.nombre == item->text())
+                idProtocolo = protocolo.id;
+        }
+        const bool habilitar = item->checkState() == Qt::Checked;
+        const Respuesta r = repo->asignarProtocolo(p->id, idProtocolo, habilitar, "gestion", idUsuario);
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo guardar", r.mensaje);
+            recargarDetalle();   /* vuelve a mostrar lo que hay en la base */
+            return;
+        }
+    }
     if (item->checkState() == Qt::Checked) {
         if (!p->protocolos.contains(item->text()))
             p->protocolos << item->text();
@@ -263,7 +316,16 @@ void PaginaProfesionales::agregarFranja()
         QMessageBox::warning(this, "No se pudo agregar la franja", error);
         return;
     }
-    p->franjas.append(nueva);
+    Franja guardada = nueva;
+    if (repo) {   /* la base también revisa que no se pise con otra franja */
+        const Respuesta r = repo->cargarDisponibilidad(p->id, nueva.fecha, nueva.desde, nueva.hasta, "gestion", idUsuario);
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo agregar la franja", r.mensaje);
+            return;
+        }
+        guardada.id = r.id;
+    }
+    p->franjas.append(guardada);
     recargarDetalle();
 }
 
@@ -277,6 +339,13 @@ void PaginaProfesionales::quitarFranja()
     const QTime desde = tablaFranjas->item(fila, 1)->data(Qt::UserRole).toTime();
     for (int i = 0; i < p->franjas.size(); ++i) {
         if (p->franjas[i].fecha == dia && p->franjas[i].desde == desde) {
+            if (repo) {
+                const Respuesta r = repo->bajaDisponibilidad(p->franjas[i].id, "gestion", idUsuario);
+                if (!r.ok) {
+                    QMessageBox::warning(this, "No se pudo quitar la franja", r.mensaje);
+                    return;
+                }
+            }
             p->franjas.removeAt(i);
             break;
         }

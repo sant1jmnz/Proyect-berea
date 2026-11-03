@@ -774,16 +774,18 @@ BEGIN
 END//
 
 -- Catálogo y buscador por palabra clave (RF-05/06). Con texto vacío o NULL
--- devuelve todo el catálogo activo; con p_id_categoria NULL, todas las categorías.
+-- devuelve todo el catálogo; con p_id_categoria NULL, todas las categorías.
+-- p_incluir_bajas = 1 incluye también los protocolos dados de baja (lo usa la
+-- pantalla de administración de protocolos); con 0 o NULL, solo los activos.
 DROP PROCEDURE IF EXISTS clinica.sp_listar_protocolos//
-CREATE PROCEDURE clinica.sp_listar_protocolos(IN p_texto VARCHAR(100), IN p_id_categoria INT)
+CREATE PROCEDURE clinica.sp_listar_protocolos(IN p_texto VARCHAR(100), IN p_id_categoria INT, IN p_incluir_bajas TINYINT)
 BEGIN
     DECLARE v_texto VARCHAR(100) DEFAULT TRIM(COALESCE(p_texto, ''));
-    SELECT p.id_protocolo, p.nombre, p.descripcion, c.nombre AS categoria, p.precio, p.duracion_min,
-           c.porcentaje_sena, ROUND(p.precio * c.porcentaje_sena / 100, 0) AS sena, c.requiere_evaluacion
+    SELECT p.id_protocolo, p.nombre, p.descripcion, c.id_categoria, c.nombre AS categoria, p.precio, p.duracion_min,
+           c.porcentaje_sena, ROUND(p.precio * c.porcentaje_sena / 100, 0) AS sena, c.requiere_evaluacion, p.activo
       FROM clinica.Protocolo p
       JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
-     WHERE p.activo = 1
+     WHERE (p.activo = 1 OR COALESCE(p_incluir_bajas, 0) = 1)
        AND (p_id_categoria IS NULL OR p.id_categoria = p_id_categoria)
        AND (v_texto = '' OR p.nombre LIKE CONCAT('%', v_texto, '%') OR p.descripcion LIKE CONCAT('%', v_texto, '%')
             OR c.nombre LIKE CONCAT('%', v_texto, '%'))
@@ -1124,7 +1126,7 @@ END//
 DROP PROCEDURE IF EXISTS personas.sp_listar_profesionales//
 CREATE PROCEDURE personas.sp_listar_profesionales()
 BEGIN
-    SELECT pr.id_profesional, pr.nombre, pr.apellido, pr.matricula, pr.activo
+    SELECT pr.id_profesional, pr.nombre, pr.apellido, pr.matricula, pr.email, pr.activo
       FROM personas.Profesional pr
      ORDER BY pr.apellido, pr.nombre;
 END//

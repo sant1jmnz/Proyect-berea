@@ -50,6 +50,7 @@ mysql -u root -p < backend/04_sp_semana4.sql                 # seña, cancelaci�
 mysql -u root -p < backend/05_reportes_semana5.sql           # 8 reportes + auditoría
 mysql -u root -p < backend/06_tuning_semana6.sql             # índices y versiones _tuneado
 mysql -u root -p < backend/07_actividad_con_sps.sql          # (opcional) actividad de ejemplo que llena el log
+mysql -u root -p < backend/08_usuarios.sql                   # usuarios de las aplicaciones (solo pueden EJECUTAR los SP); cambiar las contraseñas
 ```
 
 > El primer script **borra** los 9 schemas y los vuelve a crear. No correrlo sobre datos reales.
@@ -66,8 +67,8 @@ restricciones de las tablas) y
 3. Aiven tiene el registro binario activo: por eso las funciones del proyecto declaran
    `NOT DETERMINISTIC`/`NO SQL`/`READS SQL DATA` (sin eso MySQL rechaza `CREATE FUNCTION`
    con el error 1418).
-4. El usuario de las aplicaciones solo necesita `EXECUTE` sobre los schemas (no permisos
-   sobre las tablas). Conviene crear uno para Qt y otro para n8n.
+4. Usar los usuarios de `backend/08_usuarios.sql` (`dermalia_app`, `dermalia_n8n`, `dermalia_reportes`): solo
+   tienen `EXECUTE` sobre los schemas, sin permisos sobre las tablas (se probó: `SELECT` directo da error 1142).
 
 ### Convenciones de los stored procedures
 
@@ -135,30 +136,54 @@ las aplicaciones avisan con una franja amarilla y trabajan en **modo contingenci
 | `conexionapp.*`, `avisoconexion.*`, `contingencia.*` | Aviso "sin conexión" y turnos guardados en el equipo |
 | `validaciones.*`, `sena.h`, `reembolso.h` | Reglas que también valida la base (la pantalla las avisa antes) |
 
-**Estado de la conexión a la base:** la capa `Repositorio` está hecha y probada contra MySQL
-real (`prueba_base`: `DERMALIA_DB_USER=root ./build/prueba_base`). Las pantallas todavía usan
-los datos de prueba de `gestion/datosprueba.cpp`: cambiarlas a `Repositorio` es la tarea
-"conectar Gestión 1-3 y 5 / Cliente 1-3, 5" del plan (ver `15-guia-por-semana.md`). Los nombres
-de los controles siguen la convención de la cátedra (`btnConfirmar`, `lblResumenTexto`...).
+**Cómo funcionan con la base.** Al arrancar, cada aplicación prueba la conexión (`ConexionApp::probar`):
+
+- **Gestión:** si hay conexión pide el **ingreso del personal** (`dialogologin`; para demos y pruebas, las
+  variables `DERMALIA_USUARIO` y `DERMALIA_CLAVE` ingresan sin abrir la ventana) y lee de la base protocolos,
+  pacientes, profesionales con sus franjas, turnos (±60 días) y avisos (`gestion/datosbase.*`). Desde ahí,
+  cargar turno, seña, cancelación, protocolos, pacientes, profesionales, avisos y reportes llaman a los
+  stored procedures, con el usuario que ingresó en el log.
+- **Cliente (terminal):** no pide ingreso (la paciente se identifica con el DNI): el catálogo, los
+  profesionales y los horarios libres salen de la base, y la reserva paga la seña simulada.
+- **Sin conexión:** las dos siguen con los datos de prueba y la franja amarilla. Los turnos que se cargan
+  quedan en `pendientes.json` y, **al volver la conexión, se envían solos** (`ConexionApp::sincronizar`): los
+  que la base no acepta (horario ocupado, paciente que no existe) siguen guardados y se avisa el motivo.
+- Cada pantalla tiene un método `usarBase(Repositorio*)`: con `nullptr` trabaja en memoria como antes.
+
+Pruebas: `DERMALIA_DB_USER=root ctest --test-dir build` (ver `11-pruebas-bbdd.md`). Los nombres de los
+controles y los slots siguen la convención de la cátedra (`btnConfirmar`, `on_btnX_clicked`...).
 
 ## 4. Sitio web
 
-`cd web && npm install && npm run dev` y abrir `http://localhost:5173`. `npm run build` genera la
-versión para publicar. Hoy usa datos fijos (los mismos que los de prueba de Gestión); conectarlo a
-la base exige una capa intermedia (una API) que llame a los SP, porque el navegador no puede
-hablar con MySQL.
+```bash
+cd web && npm install
+DERMALIA_DB_USER=dermalia_app DERMALIA_DB_PASS=... npm run api    # API en http://localhost:3000
+npm run dev                                                         # sitio en http://localhost:5173 (/api va a la API)
+npm run test:api                                                    # prueba de la API contra la base (con DERMALIA_DB_USER)
+```
+
+El navegador no puede hablar con MySQL: `web/api/servidor.js` recibe pedidos HTTP y llama a los stored
+procedures (`/api/protocolos`, `/api/horarios`, `/api/turnos`, `/api/turnos/:id/cancelar`, `/api/consultas`).
+El sitio (`web/src/datos/api.js`) usa la API cuando responde y, si no, los datos fijos del maquetado y el
+`localStorage`. La reserva pide la fecha de nacimiento solo la primera vez (la base la necesita para dar de alta
+a la paciente). `npm run build` genera el sitio estático; en producción la API y el sitio se publican bajo el
+mismo dominio (`/api`).
+
+**Limitación:** el sitio ofrece los 4 protocolos del maquetado (se relacionan con la base por nombre). El
+cupón del formulario se envía a la base, que valida los cupones reales; los códigos de ejemplo del maquetado
+(`BIENVENIDA`...) solo bajan el precio en pantalla.
 
 ## 5. Recordatorios con n8n
 
-n8n corre en una VM gratuita de Google Cloud y hace, cada pocos minutos:
+Las plantillas están en [`n8n/`](../n8n/README.md) (importar en n8n, poner las credenciales de MySQL y de
+Telegram). **No se probaron contra una instancia de n8n.** El flujo hace, cada 5 minutos:
 
 1. `CALL notificaciones.sp_notificaciones_pendientes(50)` → lista de avisos cuya hora llegó.
-2. Envía cada uno por su canal (Telegram, WhatsApp o Google Calendar).
+2. Envía cada uno por su canal (Telegram; WhatsApp y Calendar quedan para la recepción o la API oficial).
 3. `CALL notificaciones.sp_marcar_notificacion(id, 'enviada' | 'fallida', detalle)`.
 
-Un fallo se reintenta hasta 3 veces. Una vez por día corre también:
-`CALL clinica.sp_vencer_evaluaciones('sistema')` (evaluaciones de 6 meses vencidas) y,
-según la regla elegida, `CALL beneficios.sp_emitir_cupones('sistema')`.
+Un fallo se reintenta hasta 3 veces. Una vez por día corre `CALL clinica.sp_vencer_evaluaciones('sistema')` y
+`CALL beneficios.sp_emitir_cupones('sistema')` (`n8n/tareas-diarias.workflow.json`).
 
 ## 6. Respaldos y problemas comunes
 

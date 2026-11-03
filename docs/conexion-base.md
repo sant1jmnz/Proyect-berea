@@ -2,9 +2,9 @@
 
 Cómo se conecta el frontend (C++/Qt) a MySQL, al estilo de la cátedra
 ([`catedra/bbdd-006-conectar-c-con-mysql.md`](catedra/bbdd-006-conectar-c-con-mysql.md)).
-La base y los stored procedures todavía no existen (Bases de Datos arranca
-después): hoy la aplicación trabaja con **datos de prueba** y esta capa deja
-resuelto el resto.
+La base y los stored procedures ya existen (`backend/`). Con conexión, Gestión y la terminal leen y
+escriben por la capa `Repositorio` (`comun/repositorio.*`); sin conexión trabajan con **datos de prueba** y
+el modo contingencia. Catálogo de procedimientos: [`12-contrato-sp.md`](12-contrato-sp.md).
 
 ## Dónde está el código
 
@@ -25,9 +25,8 @@ resuelto el resto.
   de sincronizar* y la franja cuenta cuántos hay.
 - Con *Reintentar* se vuelve a conectar. Si hay pendientes, avisa que faltan
   enviarlos.
-- **Pendiente:** el envío de los turnos guardados a la base se hace cuando
-  existan los stored procedures de alta de turno; hoy solo se guardan y se
-  cuentan.
+- Al volver la conexión, los turnos guardados **se envían solos** (`ConexionApp::sincronizar`, que usa
+  `sp_alta_turno` y `sp_registrar_sena`); los que la base rechaza siguen guardados y se muestra el motivo.
 
 ## Configuración
 

@@ -19,6 +19,9 @@
 #include <QComboBox>
 #include <QDateEdit>
 
+#include "avisoconexion.h"
+#include "conexionapp.h"
+#include "repositorio.h"
 #include "ventanagestion.h"
 
 namespace {
@@ -78,6 +81,52 @@ private slots:
         QVERIFY(w.findChild<QTableWidget *>("tablaAvisos")->rowCount() > 20);
         QVERIFY(w.findChild<QWidget *>("pagProtocolos")->findChild<QTableWidget *>("tablaProtocolos")->rowCount() >= 30);
         QVERIFY(w.findChild<QWidget *>("pagProfesionales")->findChild<QListWidget *>("listaProfesionales")->count() >= 20);
+    }
+
+    // Modo contingencia (RNF-09): un turno guardado sin conexión se envía a la base cuando vuelve.
+    void contingencia_sincronizaAlVolverLaConexion()
+    {
+        BaseDatos base(ConfigBD::desdeEntorno());
+        if (!base.conectar())
+            QSKIP("Sin base de datos (definir DERMALIA_DB_USER, etc.).");
+        Repositorio repo(base);
+
+        // Un horario libre de una limpieza facial (protocolo 1), al menos 2 días adelante.
+        HorarioLibre libre;
+        for (int d = 2; d <= 30 && libre.idProfesional == 0; ++d) {
+            const QVector<HorarioLibre> horarios = repo.horariosLibres(QDate::currentDate().addDays(d), { 1 });
+            if (!horarios.isEmpty())
+                libre = horarios.first();
+        }
+        if (libre.idProfesional == 0)
+            QSKIP("No hay horarios libres en los próximos 30 días.");
+
+        QTemporaryDir carpeta;
+        AvisoConexion franja;
+        ConexionApp conexion(&franja, ConfigBD::desdeEntorno(), carpeta.filePath("pendientes.json"));
+        // María Sosa (30111222) y un protocolo del catálogo, guardados como si no hubiera habido conexión.
+        TurnoPendiente t;
+        t.paciente = "María Sosa";
+        t.dni = "30111222";
+        t.telefono = "1155550102";
+        t.protocolo = "Limpieza facial profunda";
+        t.inicio = libre.inicio;
+        t.sena = 27000;
+        t.senaPagada = true;
+        t.origen = "Gestión";
+        QVERIFY(conexion.guardarEnContingencia(t));
+        QCOMPARE(conexion.contingencia().cantidad(), 1);
+
+        QVERIFY(conexion.probar());   // vuelve la conexión: se sincroniza
+        QCOMPARE(conexion.contingencia().cantidad(), 0);
+        bool encontrado = false;
+        for (const TurnoBD &turno : repo.buscarTurnos("30111222")) {
+            if (turno.inicio == libre.inicio && turno.estado == "confirmado") {
+                encontrado = true;
+                repo.cancelarTurno(turno.id, "gestion");   // limpieza
+            }
+        }
+        QVERIFY(encontrado);
     }
 
     // La pantalla Reportes llama a los stored procedures de reportes y de auditoría.

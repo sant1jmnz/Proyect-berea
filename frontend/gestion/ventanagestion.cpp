@@ -150,6 +150,12 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
     conexion = new ConexionApp(franja, ConfigBD::desdeEntorno(), archivoContingencia, this);
     /* Cuando la conexión se logra (ahora o con "Reintentar"), se pide el ingreso y se leen los datos de la base. */
     connect(conexion, &ConexionApp::conectada, this, &VentanaGestion::conectarBase);
+    connect(conexion, &ConexionApp::pendientesSincronizados, this, [this](int enviados, const QStringList &problemas) {
+        QString texto = QString("Volvió la conexión: se enviaron %1 turnos guardados en este equipo.").arg(enviados);
+        if (!problemas.isEmpty())
+            texto += "\n\nNo se pudieron enviar (siguen guardados):\n• " + problemas.join("\n• ");
+        QMessageBox::information(this, "Turnos sincronizados", texto);
+    });
     QTimer::singleShot(0, conexion, &ConexionApp::probar);
 
     actualizarHorarios();

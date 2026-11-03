@@ -31,6 +31,7 @@ public:
     QVector<TurnoPendiente> pendientes() const;
     int cantidad() const;
     bool vaciar();                               /* tras sincronizar */
+    bool reemplazar(const QVector<TurnoPendiente> &turnos);   /* deja solo los que no se pudieron enviar */
     QString archivo() const { return ruta; }
 
 private:

@@ -28,6 +28,8 @@ SET NAMES utf8mb4;
 DELIMITER //
 
 -- Crea un índice solo si no existe (MySQL no tiene CREATE INDEX IF NOT EXISTS).
+-- Auxiliar del tuning: crea un índice solo si todavía no existe (MySQL no
+-- tiene CREATE INDEX IF NOT EXISTS). Se borra apenas termina de usarse.
 DROP PROCEDURE IF EXISTS auditoria.sp_crear_indice_si_falta//
 CREATE PROCEDURE auditoria.sp_crear_indice_si_falta(IN p_schema VARCHAR(64), IN p_tabla VARCHAR(64), IN p_indice VARCHAR(64), IN p_columnas VARCHAR(300))
 BEGIN

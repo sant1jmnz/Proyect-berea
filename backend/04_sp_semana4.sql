@@ -758,6 +758,9 @@ BEGIN
       FROM pagos.TarjetaRegalo t WHERE t.id_tarjeta = v_id;
 END//
 
+-- Historial de una tarjeta de regalo: cada gasto (monto positivo) y cada
+-- devolución (negativo), con el turno y la paciente. Código inexistente,
+-- NULL o vacío: 0 filas.
 DROP PROCEDURE IF EXISTS pagos.sp_movimientos_tarjeta//
 CREATE PROCEDURE pagos.sp_movimientos_tarjeta(IN p_codigo VARCHAR(50))
 BEGIN

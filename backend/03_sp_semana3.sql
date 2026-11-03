@@ -1033,11 +1033,15 @@ END//
 
 -- Busca turnos por DNI, teléfono, nombre o apellido (RF-12, RF-13, RF-16).
 -- p_solo_vigentes = 1 muestra solo los pendientes o confirmados futuros.
+-- Con texto NULL, vacío o de menos de 3 caracteres no devuelve nada.
+-- Cada fila trae también el teléfono, la seña, el código de operación y el
+-- último recordatorio del turno (canal, estado y cuándo sale).
 DROP PROCEDURE IF EXISTS agenda.sp_buscar_turnos//
 CREATE PROCEDURE agenda.sp_buscar_turnos(IN p_texto VARCHAR(100), IN p_solo_vigentes TINYINT)
 BEGIN
     DECLARE v_texto VARCHAR(100) DEFAULT TRIM(COALESCE(p_texto, ''));
     SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_paciente = p.id_paciente ORDER BY tp2.id_telefono_paciente LIMIT 1) AS telefono,
            CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
            (SELECT GROUP_CONCAT(pt.nombre ORDER BY pt.nombre SEPARATOR ' + ')
@@ -1045,7 +1049,9 @@ BEGIN
              WHERE tp.id_turno = t.id_turno) AS protocolos,
            agenda.fn_precio_final(t.id_turno) AS precio_final,
            agenda.fn_sena(t.id_turno) AS sena,
-           COALESCE(ep.nombre, 'sin seña') AS estado_sena
+           COALESCE(ep.nombre, 'sin seña') AS estado_sena,
+           ps.codigo_operacion,
+           ca.nombre AS recordatorio_canal, es.nombre AS recordatorio_estado, nr.fecha_programada AS recordatorio_programado
       FROM agenda.Turno t
       JOIN personas.Paciente p ON p.id_paciente = t.id_paciente
       JOIN personas.Profesional pr ON pr.id_profesional = t.id_profesional
@@ -1053,13 +1059,110 @@ BEGIN
       JOIN agenda.Origen o ON o.id_origen = t.id_origen
       LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
       LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
+      LEFT JOIN notificaciones.Notificacion nr ON nr.id_notificacion =
+            (SELECT n.id_notificacion FROM notificaciones.Notificacion n
+               JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion AND tn.nombre = 'recordatorio de turno'
+              WHERE n.id_turno = t.id_turno ORDER BY n.id_notificacion DESC LIMIT 1)
+      LEFT JOIN notificaciones.CanalNotificacion ca ON ca.id_canal = nr.id_canal
+      LEFT JOIN notificaciones.EstadoNotificacion es ON es.id_estado_notificacion = nr.id_estado_notificacion
      WHERE CHAR_LENGTH(v_texto) >= 3
        AND (p.dni = v_texto
             OR p.nombre LIKE CONCAT('%', v_texto, '%') OR p.apellido LIKE CONCAT('%', v_texto, '%')
             OR CONCAT(p.nombre, ' ', p.apellido) LIKE CONCAT('%', v_texto, '%')
-            OR EXISTS (SELECT 1 FROM personas.TelefonoPaciente tp2 WHERE tp2.id_paciente = p.id_paciente AND tp2.telefono = v_texto))
+            OR EXISTS (SELECT 1 FROM personas.TelefonoPaciente tp3 WHERE tp3.id_paciente = p.id_paciente AND tp3.telefono = v_texto))
        AND (COALESCE(p_solo_vigentes, 0) = 0 OR (e.nombre IN ('pendiente', 'confirmado') AND t.fecha_hora_inicio > auditoria.fn_ahora()))
      ORDER BY t.fecha_hora_inicio DESC;
+END//
+
+-- Agenda de un período: todos los turnos con fecha de inicio entre p_desde y
+-- p_hasta (inclusive), con las mismas columnas que sp_buscar_turnos. Lo usan la
+-- pantalla de inicio y "Buscar turnos" sin texto. Con fechas NULL o invertidas: 0 filas.
+DROP PROCEDURE IF EXISTS agenda.sp_turnos_del_periodo//
+CREATE PROCEDURE agenda.sp_turnos_del_periodo(IN p_desde DATE, IN p_hasta DATE)
+BEGIN
+    SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_paciente = p.id_paciente ORDER BY tp2.id_telefono_paciente LIMIT 1) AS telefono,
+           CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
+           e.nombre AS estado, o.nombre AS origen,
+           (SELECT GROUP_CONCAT(pt.nombre ORDER BY pt.nombre SEPARATOR ' + ')
+              FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo
+             WHERE tp.id_turno = t.id_turno) AS protocolos,
+           agenda.fn_precio_final(t.id_turno) AS precio_final,
+           agenda.fn_sena(t.id_turno) AS sena,
+           COALESCE(ep.nombre, 'sin seña') AS estado_sena,
+           ps.codigo_operacion,
+           ca.nombre AS recordatorio_canal, es.nombre AS recordatorio_estado, nr.fecha_programada AS recordatorio_programado
+      FROM agenda.Turno t
+      JOIN personas.Paciente p ON p.id_paciente = t.id_paciente
+      JOIN personas.Profesional pr ON pr.id_profesional = t.id_profesional
+      JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
+      JOIN agenda.Origen o ON o.id_origen = t.id_origen
+      LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
+      LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
+      LEFT JOIN notificaciones.Notificacion nr ON nr.id_notificacion =
+            (SELECT n.id_notificacion FROM notificaciones.Notificacion n
+               JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion AND tn.nombre = 'recordatorio de turno'
+              WHERE n.id_turno = t.id_turno ORDER BY n.id_notificacion DESC LIMIT 1)
+      LEFT JOIN notificaciones.CanalNotificacion ca ON ca.id_canal = nr.id_canal
+      LEFT JOIN notificaciones.EstadoNotificacion es ON es.id_estado_notificacion = nr.id_estado_notificacion
+     WHERE t.fecha_hora_inicio >= p_desde AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
+     ORDER BY t.fecha_hora_inicio, t.id_turno;
+END//
+
+-- Todas las pacientes, para la pantalla Pacientes (primer teléfono y si tienen cuenta).
+DROP PROCEDURE IF EXISTS personas.sp_listar_pacientes//
+CREATE PROCEDURE personas.sp_listar_pacientes()
+BEGIN
+    SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email,
+           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente ORDER BY tp.id_telefono_paciente LIMIT 1) AS telefono,
+           (p.id_usuario IS NOT NULL) AS tiene_cuenta
+      FROM personas.Paciente p
+     ORDER BY p.apellido, p.nombre;
+END//
+
+-- Todos los profesionales, para la pantalla Profesionales.
+DROP PROCEDURE IF EXISTS personas.sp_listar_profesionales//
+CREATE PROCEDURE personas.sp_listar_profesionales()
+BEGIN
+    SELECT pr.id_profesional, pr.nombre, pr.apellido, pr.matricula, pr.activo
+      FROM personas.Profesional pr
+     ORDER BY pr.apellido, pr.nombre;
+END//
+
+-- Qué protocolos hace cada profesional (RF-18): un par por fila.
+DROP PROCEDURE IF EXISTS clinica.sp_listar_profesional_protocolo//
+CREATE PROCEDURE clinica.sp_listar_profesional_protocolo()
+BEGIN
+    SELECT pp.id_profesional, pp.id_protocolo FROM clinica.ProfesionalProtocolo pp ORDER BY pp.id_profesional, pp.id_protocolo;
+END//
+
+-- Franjas de atención activas desde p_desde en adelante (RF-03).
+DROP PROCEDURE IF EXISTS personas.sp_listar_disponibilidad//
+CREATE PROCEDURE personas.sp_listar_disponibilidad(IN p_desde DATE)
+BEGIN
+    SELECT d.id_disponibilidad, d.id_profesional, d.fecha, d.hora_inicio, d.hora_fin
+      FROM personas.Disponibilidad d
+     WHERE d.activa = 1 AND d.fecha >= p_desde
+     ORDER BY d.id_profesional, d.fecha, d.hora_inicio;
+END//
+
+-- Avisos (notificaciones) de un período, para la pantalla Avisos.
+DROP PROCEDURE IF EXISTS notificaciones.sp_listar_notificaciones//
+CREATE PROCEDURE notificaciones.sp_listar_notificaciones(IN p_desde DATE, IN p_hasta DATE)
+BEGIN
+    SELECT n.id_notificacion, n.id_turno, c.nombre AS canal, e.nombre AS estado, tn.nombre AS tipo, n.mensaje,
+           n.fecha_programada, n.fecha_envio, n.intentos, n.detalle_error,
+           CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente ORDER BY tp.id_telefono_paciente LIMIT 1) AS telefono,
+           t.fecha_hora_inicio
+      FROM notificaciones.Notificacion n
+      JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal
+      JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion
+      JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion
+      JOIN personas.Paciente p ON p.id_paciente = n.id_paciente
+      LEFT JOIN agenda.Turno t ON t.id_turno = n.id_turno
+     WHERE n.fecha_programada >= p_desde AND n.fecha_programada < p_hasta + INTERVAL 1 DAY
+     ORDER BY n.fecha_programada, n.id_notificacion;
 END//
 
 DELIMITER ;

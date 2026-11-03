@@ -10,6 +10,7 @@
 #include "paginapacientes.h"
 #include "paginaprofesionales.h"
 #include "paginaprotocolos.h"
+#include "paginareportes.h"
 #include "reembolso.h"
 #include "sena.h"
 #include "validaciones.h"
@@ -30,12 +31,12 @@
 /* Orden de las páginas dentro del QStackedWidget `paginas` del .ui. */
 enum Pagina { PagInicio, PagProtocolo, PagHorario, PagConfirmar, PagBuscador, PagBuscarTurnos,
               /* se agregan por código en armarPantallasNuevas() */
-              PagProtocolos, PagProfesionales, PagPacientes, PagAvisos };
+              PagProtocolos, PagProfesionales, PagPacientes, PagAvisos, PagReportes };
 
 /* A qué página lleva cada fila del menú lateral. Los pasos 2 y 3 no están
  * en el menú: se llega con "Continuar". */
 static const int paginaDeMenu[] = { PagInicio, PagProtocolo, PagBuscador, PagBuscarTurnos,
-                                    PagProtocolos, PagProfesionales, PagPacientes, PagAvisos };
+                                    PagProtocolos, PagProfesionales, PagPacientes, PagAvisos, PagReportes };
 enum { MenuCargarTurno = 1, MenuBuscarTurnos = 3, MenuPacientes = 6 };
 /* Columnas de `tablaTurnos`. */
 enum { ColPaciente, ColDni, ColTelefono, ColProtocolo, ColFecha, ColEstado, ColSena };
@@ -165,19 +166,21 @@ VentanaGestion::~VentanaGestion()
  * "sin conexión con la base". */
 void VentanaGestion::armarPantallasNuevas()
 {
-    for (const char *texto : { "Protocolos", "Profesionales", "Pacientes", "Avisos" })
+    for (const char *texto : { "Protocolos", "Profesionales", "Pacientes", "Avisos", "Reportes" })
         ui->menu->addItem(texto);
 
     paginaProtocolos = new PaginaProtocolos(&protocolos);
     paginaProfesionales = new PaginaProfesionales(&profesionales, &protocolos);
     paginaPacientes = new PaginaPacientes(&pacientes);
     paginaAvisos = new PaginaAvisos(&avisos);
+    paginaReportes = new PaginaReportes;
+    paginaReportes->setObjectName("pagReportes");
     paginaProtocolos->setObjectName("pagProtocolos");
     paginaProfesionales->setObjectName("pagProfesionales");
     paginaPacientes->setObjectName("pagPacientes");
     paginaAvisos->setObjectName("pagAvisos");
     for (QWidget *pagina : { static_cast<QWidget *>(paginaProtocolos), static_cast<QWidget *>(paginaProfesionales),
-                             static_cast<QWidget *>(paginaPacientes), static_cast<QWidget *>(paginaAvisos) })
+                             static_cast<QWidget *>(paginaPacientes), static_cast<QWidget *>(paginaAvisos), static_cast<QWidget *>(paginaReportes) })
         ui->paginas->addWidget(pagina);   /* quedan en el orden de Pagina */
 
     connect(paginaProtocolos, &PaginaProtocolos::cambiaron, this, &VentanaGestion::protocolosCambiaron);
@@ -644,6 +647,7 @@ void VentanaGestion::cargarDesdeBase()
     paginaProfesionales->usarBase(repositorio, idUsuario);
     paginaPacientes->usarBase(repositorio, idUsuario);
     paginaAvisos->usarBase(repositorio);
+    paginaReportes->usarBase(repositorio);
 
     cargarProtocolos();
     paginaProtocolos->recargar();

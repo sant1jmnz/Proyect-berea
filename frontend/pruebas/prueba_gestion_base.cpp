@@ -16,6 +16,8 @@
 #include <QTableWidget>
 #include <QTemporaryDir>
 #include <QCalendarWidget>
+#include <QComboBox>
+#include <QDateEdit>
 
 #include "ventanagestion.h"
 
@@ -76,6 +78,34 @@ private slots:
         QVERIFY(w.findChild<QTableWidget *>("tablaAvisos")->rowCount() > 20);
         QVERIFY(w.findChild<QWidget *>("pagProtocolos")->findChild<QTableWidget *>("tablaProtocolos")->rowCount() >= 30);
         QVERIFY(w.findChild<QWidget *>("pagProfesionales")->findChild<QListWidget *>("listaProfesionales")->count() >= 20);
+    }
+
+    // La pantalla Reportes llama a los stored procedures de reportes y de auditoría.
+    void ventana_reportesYAuditoria()
+    {
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        QTest::qWait(1500);
+        if (!w.usaBase())
+            QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
+        auto *pagina = w.findChild<QWidget *>("pagReportes");
+        auto *combo = pagina->findChild<QComboBox *>("comboReporte");
+        auto *tabla = pagina->findChild<QTableWidget *>("tablaReporte");
+        pagina->findChild<QDateEdit *>("editDesdeReporte")->setDate(QDate(2026, 9, 1));
+        pagina->findChild<QDateEdit *>("editHastaReporte")->setDate(QDate(2026, 11, 30));
+        QVERIFY(pagina->findChild<QPushButton *>("btnConsultar")->isEnabled());
+
+        combo->setCurrentIndex(1);   // ingresos por seña
+        pagina->findChild<QPushButton *>("btnConsultar")->click();
+        QVERIFY(tabla->rowCount() > 0);
+        QCOMPARE(tabla->horizontalHeaderItem(0)->text(), QString("periodo"));   // las columnas salen en el orden del SELECT
+        QCOMPARE(tabla->horizontalHeaderItem(1)->text(), QString("medio_pago"));
+
+        combo->setCurrentIndex(8);   // auditoría
+        pagina->findChild<QDateEdit *>("editDesdeReporte")->setDate(QDate::currentDate().addDays(-1));
+        pagina->findChild<QDateEdit *>("editHastaReporte")->setDate(QDate::currentDate().addDays(1));
+        pagina->findChild<QPushButton *>("btnConsultar")->click();
+        QVERIFY(tabla->rowCount() > 0);   // el ingreso de esta prueba ya está en el log
     }
 
     // Cargar un turno de punta a punta: paciente nueva, horario libre de la base, seña, búsqueda y cancelación.

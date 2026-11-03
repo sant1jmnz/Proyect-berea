@@ -188,6 +188,8 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
         if (primero) {
             const unsigned n = mysql_num_fields(res);
             MYSQL_FIELD *campos = mysql_fetch_fields(res);
+            for (unsigned i = 0; i < n; ++i)
+                r.columnas << QString::fromUtf8(campos[i].name);
             while (MYSQL_ROW fila = mysql_fetch_row(res)) {
                 QVariantMap m;
                 for (unsigned i = 0; i < n; ++i)

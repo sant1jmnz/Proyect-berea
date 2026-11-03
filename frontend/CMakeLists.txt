@@ -76,6 +76,8 @@ add_executable(dermalia_gestion
     gestion/paginapacientes.h
     gestion/paginaavisos.cpp
     gestion/paginaavisos.h
+    gestion/paginareportes.cpp
+    gestion/paginareportes.h
     ${COMUN})
 target_include_directories(dermalia_gestion PRIVATE comun)
 target_link_libraries(dermalia_gestion PRIVATE Qt6::Widgets)
@@ -179,6 +181,8 @@ if(Qt6Test_FOUND)
         gestion/paginapacientes.h
         gestion/paginaavisos.cpp
         gestion/paginaavisos.h
+        gestion/paginareportes.cpp
+        gestion/paginareportes.h
         ${COMUN})
     target_include_directories(prueba_gestion PRIVATE comun gestion)
     target_link_libraries(prueba_gestion PRIVATE Qt6::Widgets Qt6::Test)
@@ -219,6 +223,8 @@ if(Qt6Test_FOUND)
         gestion/paginapacientes.h
         gestion/paginaavisos.cpp
         gestion/paginaavisos.h
+        gestion/paginareportes.cpp
+        gestion/paginareportes.h
         ${COMUN})
     target_include_directories(prueba_gestion_base PRIVATE comun gestion)
     target_link_libraries(prueba_gestion_base PRIVATE Qt6::Widgets Qt6::Test)

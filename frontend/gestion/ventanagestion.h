@@ -17,6 +17,7 @@ class AvisoConexion;
 class ConexionApp;
 class PaginaAvisos;
 class PaginaPacientes;
+class PaginaReportes;
 class PaginaProfesionales;
 class PaginaProtocolos;
 class QLineEdit;
@@ -80,6 +81,7 @@ private:
     PaginaProfesionales *paginaProfesionales = nullptr;
     PaginaPacientes *paginaPacientes = nullptr;
     PaginaAvisos *paginaAvisos = nullptr;
+    PaginaReportes *paginaReportes = nullptr;
     Repositorio *repositorio = nullptr;   /* stored procedures de la base */
     bool enModoBase = false;              /* true: los datos vienen de la base; false: datos de prueba */
     int idUsuario = 0;                    /* quién ingresó (va al log de auditoría) */

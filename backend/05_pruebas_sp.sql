@@ -856,26 +856,28 @@ SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE tabla_afectada = 'clinica.Prot
 
 -- @caso sp_listar_protocolos.1 | Éxito | Sin filtros trae todo el catálogo activo (30 de ejemplo + "Otro protocolo")
 -- @espera filas 31
-CALL clinica.sp_listar_protocolos(NULL, NULL);
+CALL clinica.sp_listar_protocolos(NULL, NULL, 0);
 
 -- @caso sp_listar_protocolos.2 | Sin coincidencias | Una palabra que no está en ningún protocolo: 0 filas
 -- @espera vacio
-CALL clinica.sp_listar_protocolos('xyzxyz', NULL);
+CALL clinica.sp_listar_protocolos('xyzxyz', NULL, 0);
 
 -- @caso sp_listar_protocolos.3 | Nulos y límites | Texto vacío trae todo; un protocolo dado de baja no aparece; categoría inexistente trae 0 filas
 -- @espera filas 31
-CALL clinica.sp_listar_protocolos('', NULL);
+CALL clinica.sp_listar_protocolos('', NULL, 0);
 -- @espera vacio
-CALL clinica.sp_listar_protocolos('Protocolo de prueba', NULL);
+CALL clinica.sp_listar_protocolos('Protocolo de prueba', NULL, 0);
 -- @espera vacio
-CALL clinica.sp_listar_protocolos(NULL, 99999999);
+CALL clinica.sp_listar_protocolos(NULL, 99999999, 0);
 
 -- @caso sp_listar_protocolos.4 | Consistencia | La búsqueda "láser" y la categoría Cirugías coinciden con un SELECT directo
 -- @espera igual
-CALL clinica.sp_listar_protocolos('láser', NULL);
-SELECT p.id_protocolo, p.nombre, p.descripcion, c.nombre AS categoria, p.precio, p.duracion_min, c.porcentaje_sena, ROUND(p.precio * c.porcentaje_sena / 100, 0) AS sena, c.requiere_evaluacion FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria WHERE p.activo = 1 AND (p.nombre LIKE '%láser%' OR p.descripcion LIKE '%láser%' OR c.nombre LIKE '%láser%') ORDER BY c.id_categoria, p.nombre;
+CALL clinica.sp_listar_protocolos('láser', NULL, 0);
+SELECT p.id_protocolo, p.nombre, p.descripcion, c.id_categoria, c.nombre AS categoria, p.precio, p.duracion_min, c.porcentaje_sena, ROUND(p.precio * c.porcentaje_sena / 100, 0) AS sena, c.requiere_evaluacion, p.activo FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria WHERE p.activo = 1 AND (p.nombre LIKE '%láser%' OR p.descripcion LIKE '%láser%' OR c.nombre LIKE '%láser%') ORDER BY c.id_categoria, p.nombre;
 -- @espera filas 5
-CALL clinica.sp_listar_protocolos(NULL, 4);
+CALL clinica.sp_listar_protocolos(NULL, 4, 0);
+-- @espera filas 1
+CALL clinica.sp_listar_protocolos('Protocolo de prueba', NULL, 1);
 
 -- ======================================================================
 -- I. AGENDA: horarios libres, alta de turno y búsqueda
@@ -1685,7 +1687,7 @@ SELECT ((SELECT COUNT(*) FROM personas.Paciente) = @antes + 1) AS verificacion;
 -- @caso sp_listar_profesionales.1 | Éxito | Trae a los profesionales activos e inactivos
 -- @espera igual
 CALL personas.sp_listar_profesionales();
-SELECT pr.id_profesional, pr.nombre, pr.apellido, pr.matricula, pr.activo FROM personas.Profesional pr ORDER BY pr.apellido, pr.nombre;
+SELECT pr.id_profesional, pr.nombre, pr.apellido, pr.matricula, pr.email, pr.activo FROM personas.Profesional pr ORDER BY pr.apellido, pr.nombre;
 
 -- @caso sp_listar_profesionales.2 | Sin coincidencias | Un profesional dado de baja sigue en la lista, con activo = 0
 -- @espera verdadero

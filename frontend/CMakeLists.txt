@@ -61,6 +61,10 @@ add_executable(dermalia_gestion
     gestion/main.cpp
     gestion/datosprueba.cpp
     gestion/datosprueba.h
+    gestion/datosbase.cpp
+    gestion/datosbase.h
+    gestion/dialogologin.cpp
+    gestion/dialogologin.h
     gestion/ventanagestion.cpp
     gestion/ventanagestion.h
     gestion/ventanagestion.ui
@@ -160,6 +164,10 @@ if(Qt6Test_FOUND)
         pruebas/prueba_gestion.cpp
         gestion/datosprueba.cpp
         gestion/datosprueba.h
+        gestion/datosbase.cpp
+        gestion/datosbase.h
+        gestion/dialogologin.cpp
+        gestion/dialogologin.h
         gestion/ventanagestion.cpp
         gestion/ventanagestion.h
         gestion/ventanagestion.ui
@@ -190,4 +198,31 @@ if(Qt6Test_FOUND)
     target_link_libraries(prueba_base PRIVATE Qt6::Core Qt6::Test)
     con_mysql(prueba_base)
     add_test(NAME base COMMAND prueba_base)
+
+    # Gestión conectada a la base: ingreso, datos de los SP y recorrido de un turno.
+    add_executable(prueba_gestion_base
+        pruebas/prueba_gestion_base.cpp
+        gestion/datosprueba.cpp
+        gestion/datosprueba.h
+        gestion/datosbase.cpp
+        gestion/datosbase.h
+        gestion/dialogologin.cpp
+        gestion/dialogologin.h
+        gestion/ventanagestion.cpp
+        gestion/ventanagestion.h
+        gestion/ventanagestion.ui
+        gestion/paginaprotocolos.cpp
+        gestion/paginaprotocolos.h
+        gestion/paginaprofesionales.cpp
+        gestion/paginaprofesionales.h
+        gestion/paginapacientes.cpp
+        gestion/paginapacientes.h
+        gestion/paginaavisos.cpp
+        gestion/paginaavisos.h
+        ${COMUN})
+    target_include_directories(prueba_gestion_base PRIVATE comun gestion)
+    target_link_libraries(prueba_gestion_base PRIVATE Qt6::Widgets Qt6::Test)
+    con_mysql(prueba_gestion_base)
+    add_test(NAME gestion_base COMMAND prueba_gestion_base)
+    set_tests_properties(gestion_base PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()

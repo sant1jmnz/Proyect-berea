@@ -18,8 +18,6 @@
 -- Los SP de consulta (listados, búsquedas, reportes) devuelven directamente
 -- el conjunto de filas.
 
-SET NAMES utf8mb4;
-
 DELIMITER //
 
 -- =====================================================================
@@ -160,26 +158,26 @@ END//
 --  SEGURIDAD: login, cierre de sesión y cuenta de la paciente (RF-15, RF-20)
 -- =====================================================================
 
--- Ingreso al sistema. La contraseña llega ya hasheada (SHA-256 en hexadecimal).
+-- Ingreso al sistema. La contrasena se compara tal cual, sin encriptar.
 -- Tras 5 intentos fallidos en 15 minutos la cuenta se bloquea temporalmente;
 -- los intentos se cuentan desde el log (modelo, grupo 4, decisión 6).
 DROP PROCEDURE IF EXISTS seguridad.sp_login//
 CREATE PROCEDURE seguridad.sp_login(
-    IN p_usuario VARCHAR(50), IN p_password_hash VARCHAR(255), IN p_ip VARCHAR(45), IN p_origen VARCHAR(50))
+    IN p_usuario VARCHAR(50), IN p_password VARCHAR(255), IN p_ip VARCHAR(45), IN p_origen VARCHAR(50))
 BEGIN
     DECLARE v_id INT DEFAULT NULL;
-    DECLARE v_hash VARCHAR(255);
+    DECLARE v_password VARCHAR(255);
     DECLARE v_rol VARCHAR(50);
     DECLARE v_fallidos INT DEFAULT 0;
     DECLARE v_paciente INT DEFAULT NULL;
     DECLARE v_profesional INT DEFAULT NULL;
 
-    IF p_usuario IS NULL OR TRIM(p_usuario) = '' OR p_password_hash IS NULL OR p_password_hash = '' THEN
+    IF p_usuario IS NULL OR TRIM(p_usuario) = '' OR p_password IS NULL OR p_password = '' THEN
         SELECT 'ERROR' AS estado, 52010 AS codigo, 'Falta el usuario o la contraseña' AS mensaje,
                NULL AS id, NULL AS valor, NULL AS dato;
     ELSE
-        SELECT u.id_usuario, u.password_hash, r.nombre
-          INTO v_id, v_hash, v_rol
+        SELECT u.id_usuario, u.password, r.nombre
+          INTO v_id, v_password, v_rol
           FROM seguridad.Usuario u JOIN seguridad.Rol r ON r.id_rol = u.id_rol
          WHERE u.nombre_usuario = p_usuario AND u.activo = 1;
 
@@ -203,7 +201,7 @@ BEGIN
                 'Cuenta bloqueada por intentos fallidos', 'seguridad.Usuario', v_id, NULL, NULL, 0, p_ip);
             SELECT 'ERROR' AS estado, 52012 AS codigo, 'Cuenta bloqueada 15 minutos por demasiados intentos' AS mensaje,
                    v_id AS id, NULL AS valor, NULL AS dato;
-        ELSEIF v_hash <> p_password_hash THEN
+        ELSEIF v_password <> p_password THEN
             CALL auditoria.sp_registrar_log('intento_fallido', v_id, NULL, p_origen,
                 'Contraseña incorrecta', 'seguridad.Usuario', v_id, NULL, NULL, 0, p_ip);
             SELECT 'ERROR' AS estado, 52011 AS codigo, 'Usuario o contraseña incorrectos' AS mensaje,
@@ -238,7 +236,7 @@ END//
 DROP PROCEDURE IF EXISTS seguridad.sp_crear_cuenta_paciente//
 CREATE PROCEDURE seguridad.sp_crear_cuenta_paciente(
     IN p_dni VARCHAR(15), IN p_nombre_usuario VARCHAR(50), IN p_email VARCHAR(100),
-    IN p_password_hash VARCHAR(255), IN p_origen VARCHAR(50))
+    IN p_password VARCHAR(255), IN p_origen VARCHAR(50))
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
@@ -267,16 +265,16 @@ BEGIN
     IF p_email IS NULL OR p_email NOT REGEXP '^[^@ ]+@[^@ ]+[.][^@ ]+$' THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52023, MESSAGE_TEXT = 'El email no es válido';
     END IF;
-    IF p_password_hash IS NULL OR p_password_hash NOT REGEXP '^[0-9a-f]{64}$' THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52024, MESSAGE_TEXT = 'La contraseña debe llegar como hash SHA-256';
+    IF p_password IS NULL OR TRIM(p_password) = '' THEN
+        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52024, MESSAGE_TEXT = 'La contrasena no puede estar vacia';
     END IF;
     IF EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email) THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52025, MESSAGE_TEXT = 'Ese usuario o email ya está en uso';
     END IF;
 
     START TRANSACTION;
-    INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password_hash)
-    VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'paciente'), p_nombre_usuario, p_email, p_password_hash);
+    INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
+    VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'paciente'), p_nombre_usuario, p_email, p_password);
     SET v_usuario = LAST_INSERT_ID();
     UPDATE personas.Paciente SET id_usuario = v_usuario WHERE id_paciente = v_paciente;
     CALL auditoria.sp_registrar_log('cuenta_creada', v_usuario, v_paciente, p_origen, 'Cuenta de paciente creada',
@@ -415,7 +413,7 @@ END//
 DROP PROCEDURE IF EXISTS personas.sp_alta_profesional//
 CREATE PROCEDURE personas.sp_alta_profesional(
     IN p_matricula VARCHAR(30), IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_email VARCHAR(100),
-    IN p_telefono VARCHAR(30), IN p_nombre_usuario VARCHAR(50), IN p_password_hash VARCHAR(255),
+    IN p_telefono VARCHAR(30), IN p_nombre_usuario VARCHAR(50), IN p_password VARCHAR(255),
     IN p_origen VARCHAR(50), IN p_id_usuario INT)
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
@@ -446,8 +444,8 @@ BEGIN
     IF p_nombre_usuario IS NULL OR NOT REGEXP_LIKE(p_nombre_usuario, '^[a-z0-9._-]{4,50}$', 'c') THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52022, MESSAGE_TEXT = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
     END IF;
-    IF p_password_hash IS NULL OR p_password_hash NOT REGEXP '^[0-9a-f]{64}$' THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52024, MESSAGE_TEXT = 'La contraseña debe llegar como hash SHA-256';
+    IF p_password IS NULL OR TRIM(p_password) = '' THEN
+        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52024, MESSAGE_TEXT = 'La contrasena no puede estar vacia';
     END IF;
     IF EXISTS (SELECT 1 FROM personas.Profesional WHERE matricula = p_matricula) THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52041, MESSAGE_TEXT = 'Ya existe un profesional con esa matrícula';
@@ -457,8 +455,8 @@ BEGIN
     END IF;
 
     START TRANSACTION;
-    INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password_hash)
-    VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'profesional'), p_nombre_usuario, p_email, p_password_hash);
+    INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
+    VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'profesional'), p_nombre_usuario, p_email, p_password);
     SET v_usuario = LAST_INSERT_ID();
     INSERT INTO personas.Profesional (id_usuario, matricula, nombre, apellido, email)
     VALUES (v_usuario, TRIM(p_matricula), TRIM(p_nombre), TRIM(p_apellido), p_email);

@@ -3,9 +3,6 @@
 -- una base de datos: las tablas se nombran schema.Tabla y las FK cruzan
 -- schemas sin problema. Cambios de la revisión explicados en backend/REVISION.md.
 
--- La conexión en utf8mb4, así los textos con tildes llegan bien.
-SET NAMES utf8mb4;
-
 -- Borrado: con la FK circular Turno <-> EvaluacionPrevia no hay un orden de
 -- DROP TABLE que funcione, así que se apagan los chequeos y se borran los schemas.
 SET FOREIGN_KEY_CHECKS = 0;
@@ -20,16 +17,15 @@ DROP DATABASE IF EXISTS personas;
 DROP DATABASE IF EXISTS seguridad;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- utf8mb4 para que se guarden bien tildes y eñes.
-CREATE DATABASE seguridad CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE personas CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE clinica CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE agenda CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE pagos CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE beneficios CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE notificaciones CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE auditoria CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE asistente CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE DATABASE seguridad;
+CREATE DATABASE personas;
+CREATE DATABASE clinica;
+CREATE DATABASE agenda;
+CREATE DATABASE pagos;
+CREATE DATABASE beneficios;
+CREATE DATABASE notificaciones;
+CREATE DATABASE auditoria;
+CREATE DATABASE asistente;
 
 
 -- ===== seguridad =====
@@ -44,7 +40,7 @@ CREATE TABLE seguridad.Usuario (
     id_rol INT NOT NULL,
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     activo TINYINT NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT FK_Usuario_Rol FOREIGN KEY (id_rol) REFERENCES seguridad.Rol(id_rol)

@@ -7,9 +7,6 @@
 -- tablas quedan vacías como estaban. Solo queda el schema "pruebas" con el
 -- resultado, que se borra al final.
 
--- La conexión en utf8mb4, así los textos con tildes llegan bien.
-SET NAMES utf8mb4;
-
 DROP DATABASE IF EXISTS pruebas;
 CREATE DATABASE pruebas;
 
@@ -47,7 +44,7 @@ START TRANSACTION;
 -- ---------- Datos válidos mínimos (tienen que pasar) ----------
 
 CALL pruebas.probar('Rol', "INSERT INTO seguridad.Rol (id_rol, nombre) VALUES (1, 'paciente'), (2, 'profesional')", 0);
-CALL pruebas.probar('Usuarios', "INSERT INTO seguridad.Usuario (id_usuario, id_rol, nombre_usuario, email, password_hash) VALUES (1, 1, 'msosa', 'msosa@mail.com', 'x'), (2, 2, 'dra.ruiz', 'ruiz@dermalia.com', 'x'), (3, 1, 'cgomez', 'cgomez@mail.com', 'x')", 0);
+CALL pruebas.probar('Usuarios', "INSERT INTO seguridad.Usuario (id_usuario, id_rol, nombre_usuario, email, password) VALUES (1, 1, 'msosa', 'msosa@mail.com', 'x'), (2, 2, 'dra.ruiz', 'ruiz@dermalia.com', 'x'), (3, 1, 'cgomez', 'cgomez@mail.com', 'x')", 0);
 CALL pruebas.probar('Paciente con tildes y fecha DATE', "INSERT INTO personas.Paciente (id_paciente, id_usuario, dni, nombre, apellido, fecha_nacimiento) VALUES (1, 1, '30111222', 'María', 'Peñalba Núñez', '1990-05-14')", 0);
 CALL pruebas.probar('Paciente sin cuenta', "INSERT INTO personas.Paciente (id_paciente, dni, nombre, apellido, fecha_nacimiento) VALUES (2, '33222111', 'Carla', 'Gómez', '1995-01-20')", 0);
 CALL pruebas.probar('Profesional', "INSERT INTO personas.Profesional (id_profesional, id_usuario, matricula, nombre, apellido) VALUES (1, 2, 'MN-1234', 'Laura', 'Ruiz')", 0);
@@ -94,7 +91,7 @@ CALL pruebas.probar('Turno que termina antes de empezar', "INSERT INTO agenda.Tu
 CALL pruebas.probar('Turno con una paciente que no existe', "INSERT INTO agenda.Turno (id_paciente, id_profesional, id_estado_turno, id_origen, fecha_hora_inicio, fecha_hora_fin) VALUES (999, 1, 1, 1, '2026-11-03 09:00', '2026-11-03 10:00')", 1);
 
 -- Las tildes y la eñe vuelven tal cual se guardaron (se compara en binario,
--- porque la intercalación utf8mb4_0900_ai_ci no distingue "n" de "ñ").
+-- porque la intercalación por defecto de MySQL 8 no distingue "n" de "ñ").
 INSERT INTO pruebas.Resultado (caso, esperado, obtenido)
 SELECT 'Tildes y eñe se leen igual', 'pasa',
        IF(CAST(apellido AS BINARY) = CAST('Peñalba Núñez' AS BINARY), 'pasa', 'falla')

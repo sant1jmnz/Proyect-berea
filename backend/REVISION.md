@@ -26,7 +26,7 @@ puede correr dos veces seguidas sin errores.
 |---|---|---|
 | 1 | **9 schemas reales** (`seguridad`, `personas`, `clinica`, `agenda`, `pagos`, `beneficios`, `notificaciones`, `auditoria`, `asistente`) en vez de una base `Proyecto1` con prefijos. Las tablas pasan de `agenda_Turno` a `agenda.Turno`. | La consigna (3c) pide el modelo dividido en schemas. En MySQL un schema es una base: `CREATE SCHEMA` y `CREATE DATABASE` son lo mismo, y las FK cruzan schemas sin problema. |
 | 2 | El borrado inicial pasó a `DROP DATABASE` con `FOREIGN_KEY_CHECKS = 0`. | La segunda vez que se corría fallaba (error 3730): por la FK circular no hay orden de `DROP TABLE` que funcione. |
-| 3 | `SET NAMES utf8mb4` y schemas en `utf8mb4`. | Para que tildes y eñes se guarden y se lean bien desde cualquier cliente. |
+| 3 | Sin `SET NAMES` ni charset en los schemas: se usa el que trae MySQL 8 por defecto. | El trabajo no usa tildes en los datos. |
 | 4 | `UNIQUE` en `pagos.PagoSena.id_turno`. | El modelo dice un pago de seña por turno. |
 | 5 | `UNIQUE` en `beneficios.Cupon.id_turno`. | Cupón (0,1) — Turno (0,1): un turno no puede usar dos cupones. |
 | 6 | `UNIQUE` en `clinica.EvaluacionPrevia.id_turno`. | Un turno de consulta genera a lo sumo una evaluación. |

@@ -229,7 +229,7 @@ salen del turno de la consulta.
    renueva cada 5 minutos, como una segunda capa de seguridad contra robo o
    reuso de una captura. El token **no se guarda**: se calcula a partir de un
    `secreto` propio de cada cupón y de la ventana de tiempo actual (por
-   ejemplo, un hash del secreto y del tiempo dividido en tramos de 5 minutos).
+   ejemplo, una cuenta simple con el secreto y el tiempo dividido en tramos de 5 minutos).
    Al validar, el stored procedure lo recalcula y acepta el tramo actual y el
    anterior (margen por diferencias de reloj). El `codigo` queda como
    identificador público y no sirve solo. Ver "Qué hace el token" más abajo.
@@ -258,9 +258,9 @@ salen del turno de la consulta.
 - Se pide al sistema con un stored procedure (por ejemplo,
   `generar_token_cupon`) y se valida con otro (`validar_cupon`), que además
   deja registrado en el log cada validación aceptada o rechazada.
-- MySQL no trae un HMAC formal; para el trabajo alcanza con un hash con
-  clave (`SHA2` sobre el secreto y el tramo de tiempo). Se aclara en la
-  defensa.
+- MySQL no trae un HMAC formal; para el trabajo alcanza con una cuenta simple
+  (`CRC32` sobre el secreto y el tramo de tiempo), sin encriptación. Se aclara
+  en la defensa.
 
 ### Relaciones y cardinalidades (mín,máx)
 - Regla de beneficio (1,1) **es de tipo** (0,N) Tipo de regla
@@ -291,7 +291,7 @@ salen del turno de la consulta.
    contraseña cifrada; los nombres reales ya están en `Paciente` y
    `Profesional`, y no se duplican (3FN). El personal de recepción y
    administración se identifica por su nombre de usuario. La contraseña
-   **nunca** se guarda en claro, solo su hash.
+   se guarda tal cual, sin encriptar (decisión del equipo para este trabajo).
 6. **El último acceso y los intentos fallidos no se guardan en `Usuario`**: se
    calculan desde el log.
 7. **El log guarda quién, qué, cuándo, desde dónde y sobre quién.** Para
@@ -313,7 +313,7 @@ salen del turno de la consulta.
 | **Notificación** | id_notificacion (PK), mensaje, fecha_programada, intentos, fecha_envio *(opc)*, detalle_error *(opc)* |
 | **Consulta al asistente** | id_consulta (PK), pregunta, fecha_hora, derivada *(sí/no: se derivó a una persona)*, respuesta *(opc)* |
 | **Rol** | id_rol (PK), nombre *(paciente, recepción, profesional, administrador)* |
-| **Usuario** | id_usuario (PK), nombre_usuario (único), email (único), password_hash, activo, fecha_creacion |
+| **Usuario** | id_usuario (PK), nombre_usuario (único), email (único), password, activo, fecha_creacion |
 | **Tipo de evento** | id_tipo_evento (PK), nombre, descripcion |
 | **Log** | id_log (PK), fecha_hora, descripcion *(opc)*, ip_origen *(opc)*, tabla_afectada *(opc)*, id_registro_afectado *(opc)*, valor_anterior *(opc)*, valor_nuevo *(opc)*, exitoso |
 

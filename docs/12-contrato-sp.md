@@ -38,7 +38,7 @@ devuelven 0 filas y no dan error.
 - `p_origen`: desde dónde se hace la acción: `'terminal'`, `'web'`, `'gestion'` o `'sistema'`.
 - `p_id_usuario`: quién lo hace (`NULL` para una paciente sin cuenta o el sistema). Va al log.
 - Una lista de protocolos se pasa como texto separado por comas: `'3,7'`.
-- Las contraseñas llegan **ya hasheadas** (SHA-256 en hexadecimal), nunca en claro.
+- Las contraseñas se guardan y se comparan tal cual, sin encriptar (decisión del equipo para este trabajo).
 - Fechas `'AAAA-MM-DD'`; fecha y hora `'AAAA-MM-DD HH:MM:SS'`.
 - Reloj de pruebas: `SET @ahora_simulado = '2026-11-03 09:00:00';` hace que los SP usen esa hora (sin esto usan `NOW()`).
 
@@ -68,7 +68,7 @@ devuelven 0 filas y no dan error.
 | `notificaciones.sp_listar_notificaciones` (SP) | `p_desde DATE, p_hasta DATE` | Avisos (notificaciones) de un período, para la pantalla Avisos. |
 | `pagos.sp_aplicar_reembolso` (SP) | `p_id_pago INT, p_monto_reembolsado DECIMAL(12,2), p_estado VARCHAR(50), p_motivo VARCHAR(200), p_id_usuario INT, p_origen VARCHAR(50)` | Cambia el estado de un pago de seña y, si se pagó con tarjeta de regalo, devuelve el saldo (movimiento negativo). Lo usan la cancelación, las inasistencias y las evaluaciones. No devuelve filas: es interno. p_estado: 'reembolsada', 'reembolsada parcial' o 'retenida'. |
 | `personas.sp_alta_paciente` (SP) | `p_dni VARCHAR(15), p_nombre VARCHAR(50), p_apellido VARCHAR(50), p_fecha_nacimiento DATE, p_email VARCHAR(100), p_telefono VARCHAR(30), p_origen VARCHAR(50), p_id_usuario INT` | Alta de paciente. Mismas validaciones que el frontend (frontend/comun/validaciones): DNI de 7 u 8 dígitos, teléfono de 10 a 13 dígitos, nombre y apellido de 2 a 60 letras. |
-| `personas.sp_alta_profesional` (SP) | `p_matricula VARCHAR(30), p_nombre VARCHAR(50), p_apellido VARCHAR(50), p_email VARCHAR(100), p_telefono VARCHAR(30), p_nombre_usuario VARCHAR(50), p_password_hash VARCHAR(255), p_origen VARCHAR(50), p_id_usuario INT` | Alta de profesional: crea su cuenta propia (rol profesional), que es obligatoria. |
+| `personas.sp_alta_profesional` (SP) | `p_matricula VARCHAR(30), p_nombre VARCHAR(50), p_apellido VARCHAR(50), p_email VARCHAR(100), p_telefono VARCHAR(30), p_nombre_usuario VARCHAR(50), p_password VARCHAR(255), p_origen VARCHAR(50), p_id_usuario INT` | Alta de profesional: crea su cuenta propia (rol profesional), que es obligatoria. |
 | `personas.sp_baja_disponibilidad` (SP) | `p_id_disponibilidad INT, p_origen VARCHAR(50), p_id_usuario INT` | Baja (lógica) de una franja. No se puede si hay turnos activos dentro de ella. |
 | `personas.sp_buscar_paciente` (SP) | `p_texto VARCHAR(100)` | Búsqueda por nombre, apellido, DNI o teléfono (RF-13). Con texto vacío o de menos de 3 caracteres no devuelve nada. |
 | `personas.sp_cargar_disponibilidad` (SP) | `p_id_profesional INT, p_fecha DATE, p_hora_inicio TIME, p_hora_fin TIME, p_origen VARCHAR(50), p_id_usuario INT` | Carga una franja de disponibilidad. No puede superponerse con otra franja activa del mismo profesional ese día. |
@@ -79,8 +79,8 @@ devuelven 0 filas y no dan error.
 | `personas.sp_modificar_profesional` (SP) | `p_id_profesional INT, p_nombre VARCHAR(50), p_apellido VARCHAR(50), p_email VARCHAR(100), p_activo TINYINT, p_origen VARCHAR(50), p_id_usuario INT` | Modifica los datos del profesional o lo da de baja (p_activo = 0). No se puede dar de baja a quien tiene turnos futuros sin cancelar. |
 | `personas.sp_profesionales_para_protocolos` (SP) | `p_protocolos_csv VARCHAR(200)` | Profesionales activos habilitados para TODOS los protocolos pedidos (RF-18). p_protocolos_csv: ids separados por coma, por ejemplo '3,7'. |
 | `seguridad.sp_cerrar_sesion` (SP) | `p_id_usuario INT, p_origen VARCHAR(50), p_ip VARCHAR(45)` | Cierre de sesión: solo deja el evento 'cierre_sesion' en el log (la app es quien cierra la ventana). Devuelve error si el usuario no existe. |
-| `seguridad.sp_crear_cuenta_paciente` (SP) | `p_dni VARCHAR(15), p_nombre_usuario VARCHAR(50), p_email VARCHAR(100), p_password_hash VARCHAR(255), p_origen VARCHAR(50)` | Cuenta opcional de una paciente (RF-15): se vincula con su DNI. |
-| `seguridad.sp_login` (SP) | `p_usuario VARCHAR(50), p_password_hash VARCHAR(255), p_ip VARCHAR(45), p_origen VARCHAR(50)` | Ingreso al sistema. La contraseña llega ya hasheada (SHA-256 en hexadecimal). Tras 5 intentos fallidos en 15 minutos la cuenta se bloquea temporalmente; los intentos se cuentan desde el log (modelo, grupo 4, decisión 6). |
+| `seguridad.sp_crear_cuenta_paciente` (SP) | `p_dni VARCHAR(15), p_nombre_usuario VARCHAR(50), p_email VARCHAR(100), p_password VARCHAR(255), p_origen VARCHAR(50)` | Cuenta opcional de una paciente (RF-15): se vincula con su DNI. |
+| `seguridad.sp_login` (SP) | `p_usuario VARCHAR(50), p_password VARCHAR(255), p_ip VARCHAR(45), p_origen VARCHAR(50)` | Ingreso al sistema. La contraseña llega ya hasheada (SHA-256 en hexadecimal). Tras 5 intentos fallidos en 15 minutos la cuenta se bloquea temporalmente; los intentos se cuentan desde el log (modelo, grupo 4, decisión 6). |
 
 ### Semana 4 (`backend/04_sp_semana4.sql`): seña, cancelación, cirugías, cupones, tarjetas, avisos, asistente
 
@@ -90,7 +90,7 @@ devuelven 0 filas y no dan error.
 | `agenda.sp_marcar_turno` (SP) | `p_id_turno INT, p_estado VARCHAR(20), p_id_usuario INT, p_origen VARCHAR(50)` | Marca un turno confirmado como 'realizado' o 'ausente' una vez que empezó. La inasistencia retiene la seña. |
 | `asistente.fn_filtrar_datos_personales` (función) | `p_texto LONGTEXT` | Saca emails y números largos (teléfonos, DNI, tarjetas) antes de guardar o de mandar el texto a la IA: al asistente no se le envían datos personales. |
 | `asistente.sp_registrar_consulta` (SP) | `p_id_paciente INT, p_origen VARCHAR(50), p_pregunta LONGTEXT, p_respuesta LONGTEXT, p_derivada TINYINT, p_id_usuario INT` | Registra una pregunta al asistente y su respuesta. p_derivada = 1 cuando no supo responder y se derivó al WhatsApp del instituto. |
-| `beneficios.fn_token_cupon` (función) | `p_secreto VARCHAR(255), p_tramo BIGINT` | Token rotativo del cupón: se renueva cada 5 minutos y no se guarda; sale de un hash (SHA-256) del secreto del cupón y del tramo de 5 minutos actual (RNF-14; no es un HMAC formal, se aclara en la defensa). |
+| `beneficios.fn_token_cupon` (función) | `p_secreto VARCHAR(255), p_tramo BIGINT` | Token rotativo del cupón: se renueva cada 5 minutos y no se guarda; sale de una cuenta simple (CRC32) con el secreto del cupón y el tramo de 5 minutos actual (RNF-14; no es encriptación, se aclara en la defensa). |
 | `beneficios.sp_aplicar_cupon_a_turno` (SP) | `p_id_turno INT, p_codigo VARCHAR(50), p_token VARCHAR(20), p_id_usuario INT, p_origen VARCHAR(50)` | Aplica un cupón a un turno pendiente escaneando su QR antes del pago (RF-22). |
 | `beneficios.sp_emitir_cupones` (SP) | `p_origen VARCHAR(50)` | Emite los cupones que corresponden según las reglas activas, solo a pacientes con cuenta (RF-24). Lo corre el sistema periódicamente. Devuelve la cantidad emitida. frecuencia: visitas 'realizadas' dentro de la ventana >= umbral (y sin otro cupón de esa regla en la ventana) gasto acumulado: cada vez que el gasto total supera otro múltiplo del umbral promoción general: una sola vez por paciente |
 | `beneficios.sp_generar_token_cupon` (SP) | `p_codigo VARCHAR(50), p_id_paciente INT` | Pide el token vigente de un cupón (lo muestra la app o el QR de la paciente). Devuelve: dato = token, valor = segundos que le quedan. |
@@ -142,7 +142,7 @@ Son los números que devuelve la columna `codigo` cuando `estado = 'ERROR'`. Los
 | 52021 | Esa paciente ya tiene cuenta |
 | 52022 | El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo |
 | 52023 | El email no es válido |
-| 52024 | La contraseña debe llegar como hash SHA-256 |
+| 52024 | La contrasena no puede estar vacia |
 | 52025 | Ese usuario o email ya está en uso |
 | 52030 | El DNI debe tener 7 u 8 dígitos |
 | 52031 | Nombre y apellido deben tener al menos 2 letras |

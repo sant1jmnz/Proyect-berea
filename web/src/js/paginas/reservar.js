@@ -2,6 +2,7 @@ import { iniciarComun } from '../movimiento/comun.js';
 import { gsap, movimientoReducido } from '../movimiento/gsap.js';
 import { protocolos, categoriaDe } from '../../datos/protocolos.js';
 import { proximosDias, horariosDe, guardarReserva } from '../../datos/reservas.js';
+import { horariosDeBase, reservarEnBase } from '../../datos/api.js';
 import { calcularSena, pesos } from '../sena.js';
 
 iniciarComun();
@@ -9,7 +10,7 @@ iniciarComun();
 /* Cupones de ejemplo (RF-17, RF-23) hasta que existan en la base. */
 const CUPONES = { BIENVENIDA: { descuento: 10, texto: '10 % de descuento en tu primer turno' } };
 
-const estado = { elegidos: new Set(), dia: null, hora: null, cupon: null, paso: 1 };
+const estado = { elegidos: new Set(), dia: null, hora: null, cupon: null, paso: 1, profesionales: null };
 const $ = (s) => document.querySelector(s);
 const fechaLarga = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 const diaCorto = new Intl.DateTimeFormat('es-AR', { weekday: 'short' });
@@ -108,12 +109,22 @@ contDias.innerHTML = dias.map((d, i) => `
     <span>${mesCorto.format(d).replace('.', '')}</span>
   </button>`).join('');
 
-function pintarHoras() {
+/* Con la API, los horarios libres salen de la base (con el profesional de cada uno);
+ * sin API se usan los del maquetado. */
+async function pintarHoras() {
   if (!estado.dia) {
     contHoras.innerHTML = '<p class="nota">Elegí un día para ver los horarios.</p>';
     return;
   }
-  contHoras.innerHTML = horariosDe(estado.dia).map(({ hora, libre }) => `
+  const dia = estado.dia;
+  const deBase = await horariosDeBase(dia, [...estado.elegidos]);
+  if (dia !== estado.dia) return;   // mientras tanto eligió otro día
+  estado.profesionales = deBase ? new Map(deBase.map((h) => [h.hora, h.profesional])) : null;
+  if (deBase && deBase.length === 0) {
+    contHoras.innerHTML = '<p class="nota">No quedan horarios libres ese día. Probá con otro.</p>';
+    return;
+  }
+  contHoras.innerHTML = (deBase ?? horariosDe(dia)).map(({ hora, libre }) => `
     <button type="button" class="hora numero" data-hora="${hora}" aria-pressed="${hora === estado.hora}" ${libre ? '' : 'disabled aria-label="' + hora + ', ocupado"'}>${hora}</button>`).join('');
   if (!reducido) gsap.from(contHoras.children, { y: 14, autoAlpha: 0, stagger: 0.03, duration: 0.5 });
 }
@@ -307,13 +318,25 @@ function enlaceCalendar(inicio, duracionMin, titulo) {
   return `https://calendar.google.com/calendar/render?${datos}`;
 }
 
-function confirmar() {
+async function confirmar() {
   const c = cuentas();
   const [h, m] = estado.hora.split(':');
   const inicio = new Date(estado.dia);
   inicio.setHours(+h, +m, 0, 0);
   const nombres = c.lista.map((p) => p.nombre).join(' + ');
-  guardarReserva({
+  // Con la API el turno y la seña se guardan en la base, que aplica las reglas (horario libre, seña, cupón).
+  const enBase = estado.profesionales
+    ? await reservarEnBase({ nombre: formulario.nombre.value.trim(), dni: formulario.dni.value.trim(),
+        telefono: formulario.telefono.value.replace(/\D/g, ''), nacimiento: formulario.nacimiento.value,
+        idsWeb: [...estado.elegidos], profesional: estado.profesionales.get(estado.hora), inicio, cupon: formulario.cupon.value.trim() })
+    : null;
+  if (enBase && !enBase.ok) {
+    irA(3);
+    error.textContent = enBase.cuerpo.error;
+    if (enBase.cuerpo.necesitaNacimiento) formulario.nacimiento.focus();
+    return;
+  }
+  if (!enBase) guardarReserva({
     id: `web-${Date.now()}`,
     nombre: formulario.nombre.value.trim(),
     dni: formulario.dni.value.trim(),
@@ -324,7 +347,7 @@ function confirmar() {
     senaPagada: true,
     estado: 'confirmado',
   });
-  $('[data-listo-detalle]').textContent = `${nombres}, el ${fechaLarga.format(inicio)} a las ${estado.hora} h. Pagaste ${pesos(c.sena)} de seña (simulada). Te vamos a mandar un recordatorio antes del turno.`;
+  $('[data-listo-detalle]').textContent = `${nombres}, el ${fechaLarga.format(inicio)} a las ${estado.hora} h. Pagaste ${pesos(enBase ? enBase.cuerpo.sena : c.sena)} de seña (simulada). Te vamos a mandar un recordatorio antes del turno.`;
   $('[data-calendar]').href = enlaceCalendar(inicio, c.duracion, nombres);
   document.querySelector('[data-resumen]').hidden = true;
   irA('listo');

@@ -3,6 +3,7 @@ import { gsap, movimientoReducido } from '../movimiento/gsap.js';
 import { categoriaDe } from '../../datos/protocolos.js';
 import { leerReservas, cancelarReserva, turnoDeEjemplo, protocoloPorId } from '../../datos/reservas.js';
 import { calcularSena, montoReembolso, cancelaATiempo, pesos } from '../sena.js';
+import { turnosDeBase, cancelarEnBase } from '../../datos/api.js';
 
 iniciarComun();
 
@@ -39,7 +40,7 @@ const limite = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric
 
 function tarjeta(t) {
   const inicio = new Date(t.inicio);
-  const nombres = t.protocolos.map((id) => protocoloPorId(id).nombre).join(' + ');
+  const nombres = t.nombres ?? t.protocolos.map((id) => protocoloPorId(id).nombre).join(' + ');
   const sena = senaDe(t);
   const cancelado = t.estado === 'cancelado' || canceladosAhora.has(t.id);
   const aTiempo = cancelaATiempo(inicio);
@@ -69,7 +70,10 @@ function tarjeta(t) {
     </article>`;
 }
 
-function buscar(clave) {
+/* Con la API los turnos salen de la base; sin ella, del maquetado y del navegador. */
+async function buscar(clave) {
+  const deBase = await turnosDeBase(clave);
+  if (deBase) return deBase.sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
   const todos = [turnoDeEjemplo(), ...leerReservas()];
   return todos
     .filter((t) => t.dni === clave || t.telefono === clave)
@@ -89,7 +93,7 @@ function pintar(turnos) {
 }
 
 let ultima = '';
-formulario.addEventListener('submit', (e) => {
+formulario.addEventListener('submit', async (e) => {
   e.preventDefault();
   const clave = formulario.clave.value.replace(/\D/g, '');
   if (!clave) {
@@ -98,10 +102,10 @@ formulario.addEventListener('submit', (e) => {
     return;
   }
   ultima = clave;
-  pintar(buscar(clave));
+  pintar(await buscar(clave));
 });
 
-resultado.addEventListener('click', (e) => {
+resultado.addEventListener('click', async (e) => {
   const boton = e.target.closest('[data-cancelar]');
   if (!boton) return;
   const id = boton.dataset.cancelar;
@@ -112,9 +116,15 @@ resultado.addEventListener('click', (e) => {
     return;
   }
   if (id === 'ejemplo') canceladosAhora.add(id);
-  else cancelarReserva(id);
+  else if (id.startsWith('bd-')) {
+    const r = await cancelarEnBase(id);   // la base decide si devuelve la seña (24 h)
+    if (!r?.ok) {
+      boton.textContent = r?.cuerpo?.error ?? 'No pudimos cancelar. Probá de nuevo.';
+      return;
+    }
+  } else cancelarReserva(id);
   const articulo = boton.closest('[data-turno]');
-  const repintar = () => pintar(buscar(ultima));
+  const repintar = async () => pintar(await buscar(ultima));
   if (movimientoReducido()) repintar();
   else gsap.to(articulo, { rotateX: 12, y: -10, autoAlpha: 0.4, duration: 0.4, transformPerspective: 900, onComplete: repintar });
 });

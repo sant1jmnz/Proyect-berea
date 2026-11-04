@@ -64,7 +64,7 @@ recién se vuelven tabla intermedia en el diseño lógico.
 | Entidad | Atributos |
 |---|---|
 | **Rol** | id_rol (PK), nombre |
-| **Usuario** | id_usuario (PK), nombre_usuario (único), email (único), password_hash, activo, fecha_creacion |
+| **Usuario** | id_usuario (PK), nombre_usuario (único), email (único), password, activo, fecha_creacion |
 | **Tipo de evento** | id_tipo_evento (PK), nombre, descripcion |
 | **Log** | id_log (PK), fecha_hora, descripcion *(opc)*, ip_origen *(opc)*, tabla_afectada *(opc)*, id_registro_afectado *(opc)*, valor_anterior *(opc)*, valor_nuevo *(opc)*, exitoso |
 

@@ -91,7 +91,7 @@ CALL pruebas.probar('Turno que termina antes de empezar', "INSERT INTO agenda.Tu
 CALL pruebas.probar('Turno con una paciente que no existe', "INSERT INTO agenda.Turno (id_paciente, id_profesional, id_estado_turno, id_origen, fecha_hora_inicio, fecha_hora_fin) VALUES (999, 1, 1, 1, '2026-11-03 09:00', '2026-11-03 10:00')", 1);
 
 -- Las tildes y la eñe vuelven tal cual se guardaron (se compara en binario,
--- porque la intercalación utf8mb4_0900_ai_ci no distingue "n" de "ñ").
+-- porque la intercalación por defecto de MySQL 8 no distingue "n" de "ñ").
 INSERT INTO pruebas.Resultado (caso, esperado, obtenido)
 SELECT 'Tildes y eñe se leen igual', 'pasa',
        IF(CAST(apellido AS BINARY) = CAST('Peñalba Núñez' AS BINARY), 'pasa', 'falla')

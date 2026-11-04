@@ -18,14 +18,13 @@
 -- tiene que pasar; el corredor automático las verifica solo.
 -- Un reloj simulado (@ahora_simulado) permite probar vencimientos y plazos de 24 horas.
 
-SET NAMES utf8mb4;
 SET @ahora_simulado = '2026-11-03 09:00:00';
 
 -- ======================================================================
 -- C. DATOS DE PRUEBA PROPIOS (un profesional y tres pacientes nuevos, así no dependen de los datos de ejemplo)
 -- ======================================================================
 -- Se crean con los mismos SP que se prueban abajo.
-CALL personas.sp_alta_profesional('MN-T001','Prueba','Profesional','prueba.prof@test.example','1155550001','t.prof1',SHA2('clave',256),'gestion',1);
+CALL personas.sp_alta_profesional('MN-T001','Prueba','Profesional','prueba.prof@test.example','1155550001','t.prof1','clave','gestion',1);
 SELECT MAX(id_profesional) INTO @prof FROM personas.Profesional;
 SELECT id_usuario INTO @uprof FROM personas.Profesional WHERE id_profesional = @prof;
 CALL personas.sp_alta_paciente('10000001','Paula','Prueba','1990-01-01','paula@test.example','1155550002','gestion',2);
@@ -100,15 +99,15 @@ SELECT (auditoria.fn_ahora() = '2026-11-03 09:00:00') AS verificacion;
 
 -- @caso sp_login.1 | Éxito | Ingreso correcto del administrador: devuelve id, rol y deja el inicio de sesión en el log
 -- @espera ok
-CALL seguridad.sp_login('admin', SHA2('dermalia2026', 256), '10.0.0.5', 'gestion');
+CALL seguridad.sp_login('admin', 'dermalia2026', '10.0.0.5', 'gestion');
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'inicio_sesion' AND l.id_usuario = 1 AND l.ip_origen = '10.0.0.5' AND l.exitoso = 1) = 1) AS verificacion;
 
 -- @caso sp_login.2 | Sin coincidencias | Usuario inexistente y contraseña mal: error 52011 y los dos intentos quedan en el log
 -- @espera error 52011
-CALL seguridad.sp_login('nadie', SHA2('x', 256), '10.0.0.6', 'web');
+CALL seguridad.sp_login('nadie', 'x', '10.0.0.6', 'web');
 -- @espera error 52011
-CALL seguridad.sp_login('recepcion1', SHA2('mal', 256), '10.0.0.6', 'web');
+CALL seguridad.sp_login('recepcion1', 'mal', '10.0.0.6', 'web');
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'intento_fallido' AND l.ip_origen = '10.0.0.6' AND l.exitoso = 0) = 2) AS verificacion;
 
@@ -118,24 +117,24 @@ CALL seguridad.sp_login(NULL, NULL, NULL, 'web');
 -- @espera error 52010
 CALL seguridad.sp_login('admin', '', NULL, 'web');
 -- @espera error 52010
-CALL seguridad.sp_login('  ', SHA2('x', 256), NULL, 'web');
+CALL seguridad.sp_login('  ', 'x', NULL, 'web');
 
 -- @caso sp_login.4 | Consistencia | Tras 5 intentos fallidos la cuenta se bloquea (52012), aunque la clave sea la correcta; los intentos se cuentan desde el log
 -- @espera error 52011
-CALL seguridad.sp_login('recepcion2', SHA2('mal', 256), '10.0.0.7', 'gestion');
+CALL seguridad.sp_login('recepcion2', 'mal', '10.0.0.7', 'gestion');
 -- @espera error 52011
-CALL seguridad.sp_login('recepcion2', SHA2('mal', 256), '10.0.0.7', 'gestion');
+CALL seguridad.sp_login('recepcion2', 'mal', '10.0.0.7', 'gestion');
 -- @espera error 52011
-CALL seguridad.sp_login('recepcion2', SHA2('mal', 256), '10.0.0.7', 'gestion');
+CALL seguridad.sp_login('recepcion2', 'mal', '10.0.0.7', 'gestion');
 -- @espera error 52011
-CALL seguridad.sp_login('recepcion2', SHA2('mal', 256), '10.0.0.7', 'gestion');
+CALL seguridad.sp_login('recepcion2', 'mal', '10.0.0.7', 'gestion');
 -- @espera error 52011
-CALL seguridad.sp_login('recepcion2', SHA2('mal', 256), '10.0.0.7', 'gestion');
+CALL seguridad.sp_login('recepcion2', 'mal', '10.0.0.7', 'gestion');
 -- @espera error 52012
-CALL seguridad.sp_login('recepcion2', SHA2('dermalia2026', 256), '10.0.0.7', 'gestion');
+CALL seguridad.sp_login('recepcion2', 'dermalia2026', '10.0.0.7', 'gestion');
 SET @ahora_simulado = '2026-11-03 09:16:00';
 -- @espera ok
-CALL seguridad.sp_login('recepcion2', SHA2('dermalia2026', 256), '10.0.0.7', 'gestion');
+CALL seguridad.sp_login('recepcion2', 'dermalia2026', '10.0.0.7', 'gestion');
 SET @ahora_simulado = '2026-11-03 09:00:00';
 
 -- @caso sp_cerrar_sesion.1 | Éxito | Cierra la sesión de un usuario existente y queda en el log
@@ -158,29 +157,29 @@ SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.i
 
 -- @caso sp_crear_cuenta_paciente.1 | Éxito | Una paciente sin cuenta crea la suya con su DNI
 -- @espera ok
-CALL seguridad.sp_crear_cuenta_paciente('10000001', 'paula.prueba', 'paula.cuenta@test.example', SHA2('clave1', 256), 'web');
+CALL seguridad.sp_crear_cuenta_paciente('10000001', 'paula.prueba', 'paula.cuenta@test.example', 'clave1', 'web');
 -- @espera verdadero
 SELECT ((SELECT id_usuario FROM personas.Paciente WHERE id_paciente = @pacA) IS NOT NULL) AS verificacion;
 
 -- @caso sp_crear_cuenta_paciente.2 | Sin coincidencias | DNI inexistente (52020), cuenta ya creada (52021), usuario o email repetidos (52025)
 -- @espera error 52020
-CALL seguridad.sp_crear_cuenta_paciente('99999999', 'nadie.nadie', 'n@test.example', SHA2('c', 256), 'web');
+CALL seguridad.sp_crear_cuenta_paciente('99999999', 'nadie.nadie', 'n@test.example', 'c', 'web');
 -- @espera error 52021
-CALL seguridad.sp_crear_cuenta_paciente('10000001', 'otra.cuenta', 'otra@test.example', SHA2('c', 256), 'web');
+CALL seguridad.sp_crear_cuenta_paciente('10000001', 'otra.cuenta', 'otra@test.example', 'c', 'web');
 -- @espera error 52025
-CALL seguridad.sp_crear_cuenta_paciente('10000002', 'paula.prueba', 'berta.cuenta@test.example', SHA2('c', 256), 'web');
+CALL seguridad.sp_crear_cuenta_paciente('10000002', 'paula.prueba', 'berta.cuenta@test.example', 'c', 'web');
 
--- @caso sp_crear_cuenta_paciente.3 | Nulos y límites | DNI NULL, usuario corto o con mayúsculas, email mal escrito y contraseña que no es un hash
+-- @caso sp_crear_cuenta_paciente.3 | Nulos y límites | DNI NULL, usuario corto o con mayúsculas, email mal escrito y contraseña vacía
 -- @espera error 52020
-CALL seguridad.sp_crear_cuenta_paciente(NULL, 'abcd', 'a@b.com', SHA2('c', 256), 'web');
+CALL seguridad.sp_crear_cuenta_paciente(NULL, 'abcd', 'a@b.com', 'c', 'web');
 -- @espera error 52022
-CALL seguridad.sp_crear_cuenta_paciente('10000002', 'abc', 'a@b.com', SHA2('c', 256), 'web');
+CALL seguridad.sp_crear_cuenta_paciente('10000002', 'abc', 'a@b.com', 'c', 'web');
 -- @espera error 52022
-CALL seguridad.sp_crear_cuenta_paciente('10000002', 'Berta.Prueba', 'a@b.com', SHA2('c', 256), 'web');
+CALL seguridad.sp_crear_cuenta_paciente('10000002', 'Berta.Prueba', 'a@b.com', 'c', 'web');
 -- @espera error 52023
-CALL seguridad.sp_crear_cuenta_paciente('10000002', 'berta.prueba', 'sin-arroba', SHA2('c', 256), 'web');
+CALL seguridad.sp_crear_cuenta_paciente('10000002', 'berta.prueba', 'sin-arroba', 'c', 'web');
 -- @espera error 52024
-CALL seguridad.sp_crear_cuenta_paciente('10000002', 'berta.prueba', 'berta.cuenta@test.example', 'clave-en-claro', 'web');
+CALL seguridad.sp_crear_cuenta_paciente('10000002', 'berta.prueba', 'berta.cuenta@test.example', '', 'web');
 
 -- @caso sp_crear_cuenta_paciente.4 | Consistencia | El usuario nuevo tiene rol paciente, la paciente quedó vinculada y el alta está en el log
 -- @espera verdadero
@@ -285,29 +284,29 @@ SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email, 
 
 -- @caso sp_alta_profesional.1 | Éxito | Alta con cuenta propia (rol profesional) y teléfono
 -- @espera ok
-CALL personas.sp_alta_profesional('MN-T002','Segundo','Profesional','segundo.prof@test.example','1155550020','t.prof2',SHA2('clave',256),'gestion',1);
+CALL personas.sp_alta_profesional('MN-T002','Segundo','Profesional','segundo.prof@test.example','1155550020','t.prof2','clave','gestion',1);
 -- @espera verdadero
 SELECT ((SELECT r.nombre FROM personas.Profesional p JOIN seguridad.Usuario u ON u.id_usuario = p.id_usuario JOIN seguridad.Rol r ON r.id_rol = u.id_rol WHERE p.matricula = 'MN-T002') = 'profesional') AS verificacion;
 
 -- @caso sp_alta_profesional.2 | Sin coincidencias | Matrícula repetida (52041) y usuario o email repetidos (52025)
 -- @espera error 52041
-CALL personas.sp_alta_profesional('MN-T002','Otro','Profesional','otro.prof@test.example','1155550021','t.prof3',SHA2('clave',256),'gestion',1);
+CALL personas.sp_alta_profesional('MN-T002','Otro','Profesional','otro.prof@test.example','1155550021','t.prof3','clave','gestion',1);
 -- @espera error 52025
-CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','otro.prof@test.example','1155550021','t.prof2',SHA2('clave',256),'gestion',1);
+CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','otro.prof@test.example','1155550021','t.prof2','clave','gestion',1);
 
 -- @caso sp_alta_profesional.3 | Nulos y límites | Matrícula vacía, nombre corto, email, teléfono, usuario y contraseña inválidos
 -- @espera error 52040
-CALL personas.sp_alta_profesional(NULL,'Otro','Profesional','o@test.example','1155550021','t.prof3',SHA2('c',256),'gestion',1);
+CALL personas.sp_alta_profesional(NULL,'Otro','Profesional','o@test.example','1155550021','t.prof3','c','gestion',1);
 -- @espera error 52031
-CALL personas.sp_alta_profesional('MN-T003','O','Profesional','o@test.example','1155550021','t.prof3',SHA2('c',256),'gestion',1);
+CALL personas.sp_alta_profesional('MN-T003','O','Profesional','o@test.example','1155550021','t.prof3','c','gestion',1);
 -- @espera error 52034
-CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','mal','1155550021','t.prof3',SHA2('c',256),'gestion',1);
+CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','mal','1155550021','t.prof3','c','gestion',1);
 -- @espera error 52032
-CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','o@test.example','12','t.prof3',SHA2('c',256),'gestion',1);
+CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','o@test.example','12','t.prof3','c','gestion',1);
 -- @espera error 52022
-CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','o@test.example','1155550021','T',SHA2('c',256),'gestion',1);
+CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','o@test.example','1155550021','T','c','gestion',1);
 -- @espera error 52024
-CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','o@test.example','1155550021','t.prof3','texto','gestion',1);
+CALL personas.sp_alta_profesional('MN-T003','Otro','Profesional','o@test.example','1155550021','t.prof3','','gestion',1);
 
 -- @caso sp_alta_profesional.4 | Consistencia | Los intentos fallidos no dejaron usuarios huérfanos y quedaron en el log
 -- @espera verdadero

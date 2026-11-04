@@ -5,11 +5,9 @@
 -- demás tablas, salvo los catálogos cerrados (roles, estados, canales...), que
 -- tienen los valores que define el negocio. El modelo de LOGS queda VACÍO a
 -- propósito: se llena solo ejecutando los stored procedures (ver 07_actividad_con_sps.sql).
--- Contraseña de todos los usuarios de ejemplo: dermalia2026 (guardada como SHA-256).
+-- Contraseña de todos los usuarios de ejemplo: dermalia2026 (se guarda tal cual, sin encriptar).
 -- "Ahora" de los datos de ejemplo: 3 de noviembre de 2026.
 -- Los datos se generaron de forma determinista y este archivo es la fuente: para cambiarlos se edita acá.
-
-SET NAMES utf8mb4;
 
 -- Roles
 INSERT INTO seguridad.Rol (id_rol, nombre) VALUES
@@ -19,52 +17,52 @@ INSERT INTO seguridad.Rol (id_rol, nombre) VALUES
   (4, 'administrador');
 
 -- Usuarios (staff y pacientes con cuenta)
-INSERT INTO seguridad.Usuario (id_usuario, id_rol, nombre_usuario, email, password_hash, activo, fecha_creacion) VALUES
-  (1, 4, 'admin', 'admin@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 10:07:00'),
-  (2, 2, 'recepcion1', 'recepcion1@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 10:14:00'),
-  (3, 2, 'recepcion2', 'recepcion2@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 10:21:00'),
-  (4, 3, 'dr.marino', 'julieta.marino@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 10:28:00'),
-  (5, 3, 'dr.quiroga', 'andres.quiroga@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 10:35:00'),
-  (6, 3, 'dr.ibanez', 'marcela.ibanez@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 10:42:00'),
-  (7, 3, 'dr.paz', 'ricardo.paz@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 10:49:00'),
-  (8, 3, 'dr.beltran', 'ana.beltran@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 10:56:00'),
-  (9, 3, 'dr.caceres', 'hernan.caceres@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 11:03:00'),
-  (10, 3, 'dr.vidal', 'lorena.vidal@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 11:10:00'),
-  (11, 3, 'dr.roldan', 'gustavo.roldan@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 11:17:00'),
-  (12, 3, 'dr.lemos', 'patricia.lemos@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 11:24:00'),
-  (13, 3, 'dr.maidana', 'esteban.maidana@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 11:31:00'),
-  (14, 3, 'dr.bustos', 'cecilia.bustos@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 11:38:00'),
-  (15, 3, 'dr.arce', 'federico.arce@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 11:45:00'),
-  (16, 3, 'dr.ferrari', 'monica.ferrari@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 11:52:00'),
-  (17, 3, 'dr.salas', 'joaquin.salas@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 11:59:00'),
-  (18, 3, 'dr.montes', 'valeria.montes@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 12:06:00'),
-  (19, 3, 'dr.ojeda', 'rodrigo.ojeda@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 12:13:00'),
-  (20, 3, 'dr.palacios', 'silvia.palacios@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 12:20:00'),
-  (21, 3, 'dr.escobar', 'tomas.escobar@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 12:27:00'),
-  (22, 3, 'dr.quiroz', 'elena.quiroz@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 12:34:00'),
-  (23, 3, 'dr.funes', 'damian.funes@dermalia.example', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 12:41:00'),
-  (24, 1, 'maria.sosa', 'maria.sosa@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 12:48:00'),
-  (25, 1, 'lucia.fernandez', 'lucia.f@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 12:55:00'),
-  (26, 1, 'martina.molina', 'martina.molina@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 13:02:00'),
-  (27, 1, 'natalia.ledesma', 'natalia.ledesma@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 13:09:00'),
-  (28, 1, 'nicolas.bravo', 'nicolas.bravo@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 13:16:00'),
-  (29, 1, 'julia.rios', 'julia.rios@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 13:23:00'),
-  (30, 1, 'veronica.ortiz', 'veronica.ortiz@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 13:30:00'),
-  (31, 1, 'federico.ramirez', 'federico.ramirez@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 13:37:00'),
-  (32, 1, 'diego.gimenez', 'diego.gimenez@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 13:44:00'),
-  (33, 1, 'sebastian.blanco', 'sebastian.blanco@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 13:51:00'),
-  (34, 1, 'pablo.dominguez', 'pablo.dominguez@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 13:58:00'),
-  (35, 1, 'santiago.sanchez', 'santiago.sanchez@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 14:05:00'),
-  (36, 1, 'matias.perez', 'matias.perez@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 14:12:00'),
-  (37, 1, 'martina.vega', 'martina.vega@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 14:19:00'),
-  (38, 1, 'antonella.blanco', 'antonella.blanco@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 14:26:00'),
-  (39, 1, 'milagros.ruiz', 'milagros.ruiz@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 14:33:00'),
-  (40, 1, 'pablo.vega', 'pablo.vega@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 14:40:00'),
-  (41, 1, 'pilar.morales', 'pilar.morales@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 14:47:00'),
-  (42, 1, 'rocio.molina', 'rocio.molina@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 14:54:00'),
-  (43, 1, 'belen.rios', 'belen.rios@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 15:01:00'),
-  (44, 1, 'victoria.dominguez', 'victoria.dominguez@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 15:08:00'),
-  (45, 1, 'julieta.sosa', 'julieta.sosa@example.com', '7f1c39be44d50c3e79d2c3a619e8eaf11756f4e7b73c2d33393ba183ffa308d8', 1, '2026-08-20 15:15:00');
+INSERT INTO seguridad.Usuario (id_usuario, id_rol, nombre_usuario, email, password, activo, fecha_creacion) VALUES
+  (1, 4, 'admin', 'admin@dermalia.example', 'dermalia2026', 1, '2026-08-20 10:07:00'),
+  (2, 2, 'recepcion1', 'recepcion1@dermalia.example', 'dermalia2026', 1, '2026-08-20 10:14:00'),
+  (3, 2, 'recepcion2', 'recepcion2@dermalia.example', 'dermalia2026', 1, '2026-08-20 10:21:00'),
+  (4, 3, 'dr.marino', 'julieta.marino@dermalia.example', 'dermalia2026', 1, '2026-08-20 10:28:00'),
+  (5, 3, 'dr.quiroga', 'andres.quiroga@dermalia.example', 'dermalia2026', 1, '2026-08-20 10:35:00'),
+  (6, 3, 'dr.ibanez', 'marcela.ibanez@dermalia.example', 'dermalia2026', 1, '2026-08-20 10:42:00'),
+  (7, 3, 'dr.paz', 'ricardo.paz@dermalia.example', 'dermalia2026', 1, '2026-08-20 10:49:00'),
+  (8, 3, 'dr.beltran', 'ana.beltran@dermalia.example', 'dermalia2026', 1, '2026-08-20 10:56:00'),
+  (9, 3, 'dr.caceres', 'hernan.caceres@dermalia.example', 'dermalia2026', 1, '2026-08-20 11:03:00'),
+  (10, 3, 'dr.vidal', 'lorena.vidal@dermalia.example', 'dermalia2026', 1, '2026-08-20 11:10:00'),
+  (11, 3, 'dr.roldan', 'gustavo.roldan@dermalia.example', 'dermalia2026', 1, '2026-08-20 11:17:00'),
+  (12, 3, 'dr.lemos', 'patricia.lemos@dermalia.example', 'dermalia2026', 1, '2026-08-20 11:24:00'),
+  (13, 3, 'dr.maidana', 'esteban.maidana@dermalia.example', 'dermalia2026', 1, '2026-08-20 11:31:00'),
+  (14, 3, 'dr.bustos', 'cecilia.bustos@dermalia.example', 'dermalia2026', 1, '2026-08-20 11:38:00'),
+  (15, 3, 'dr.arce', 'federico.arce@dermalia.example', 'dermalia2026', 1, '2026-08-20 11:45:00'),
+  (16, 3, 'dr.ferrari', 'monica.ferrari@dermalia.example', 'dermalia2026', 1, '2026-08-20 11:52:00'),
+  (17, 3, 'dr.salas', 'joaquin.salas@dermalia.example', 'dermalia2026', 1, '2026-08-20 11:59:00'),
+  (18, 3, 'dr.montes', 'valeria.montes@dermalia.example', 'dermalia2026', 1, '2026-08-20 12:06:00'),
+  (19, 3, 'dr.ojeda', 'rodrigo.ojeda@dermalia.example', 'dermalia2026', 1, '2026-08-20 12:13:00'),
+  (20, 3, 'dr.palacios', 'silvia.palacios@dermalia.example', 'dermalia2026', 1, '2026-08-20 12:20:00'),
+  (21, 3, 'dr.escobar', 'tomas.escobar@dermalia.example', 'dermalia2026', 1, '2026-08-20 12:27:00'),
+  (22, 3, 'dr.quiroz', 'elena.quiroz@dermalia.example', 'dermalia2026', 1, '2026-08-20 12:34:00'),
+  (23, 3, 'dr.funes', 'damian.funes@dermalia.example', 'dermalia2026', 1, '2026-08-20 12:41:00'),
+  (24, 1, 'maria.sosa', 'maria.sosa@example.com', 'dermalia2026', 1, '2026-08-20 12:48:00'),
+  (25, 1, 'lucia.fernandez', 'lucia.f@example.com', 'dermalia2026', 1, '2026-08-20 12:55:00'),
+  (26, 1, 'martina.molina', 'martina.molina@example.com', 'dermalia2026', 1, '2026-08-20 13:02:00'),
+  (27, 1, 'natalia.ledesma', 'natalia.ledesma@example.com', 'dermalia2026', 1, '2026-08-20 13:09:00'),
+  (28, 1, 'nicolas.bravo', 'nicolas.bravo@example.com', 'dermalia2026', 1, '2026-08-20 13:16:00'),
+  (29, 1, 'julia.rios', 'julia.rios@example.com', 'dermalia2026', 1, '2026-08-20 13:23:00'),
+  (30, 1, 'veronica.ortiz', 'veronica.ortiz@example.com', 'dermalia2026', 1, '2026-08-20 13:30:00'),
+  (31, 1, 'federico.ramirez', 'federico.ramirez@example.com', 'dermalia2026', 1, '2026-08-20 13:37:00'),
+  (32, 1, 'diego.gimenez', 'diego.gimenez@example.com', 'dermalia2026', 1, '2026-08-20 13:44:00'),
+  (33, 1, 'sebastian.blanco', 'sebastian.blanco@example.com', 'dermalia2026', 1, '2026-08-20 13:51:00'),
+  (34, 1, 'pablo.dominguez', 'pablo.dominguez@example.com', 'dermalia2026', 1, '2026-08-20 13:58:00'),
+  (35, 1, 'santiago.sanchez', 'santiago.sanchez@example.com', 'dermalia2026', 1, '2026-08-20 14:05:00'),
+  (36, 1, 'matias.perez', 'matias.perez@example.com', 'dermalia2026', 1, '2026-08-20 14:12:00'),
+  (37, 1, 'martina.vega', 'martina.vega@example.com', 'dermalia2026', 1, '2026-08-20 14:19:00'),
+  (38, 1, 'antonella.blanco', 'antonella.blanco@example.com', 'dermalia2026', 1, '2026-08-20 14:26:00'),
+  (39, 1, 'milagros.ruiz', 'milagros.ruiz@example.com', 'dermalia2026', 1, '2026-08-20 14:33:00'),
+  (40, 1, 'pablo.vega', 'pablo.vega@example.com', 'dermalia2026', 1, '2026-08-20 14:40:00'),
+  (41, 1, 'pilar.morales', 'pilar.morales@example.com', 'dermalia2026', 1, '2026-08-20 14:47:00'),
+  (42, 1, 'rocio.molina', 'rocio.molina@example.com', 'dermalia2026', 1, '2026-08-20 14:54:00'),
+  (43, 1, 'belen.rios', 'belen.rios@example.com', 'dermalia2026', 1, '2026-08-20 15:01:00'),
+  (44, 1, 'victoria.dominguez', 'victoria.dominguez@example.com', 'dermalia2026', 1, '2026-08-20 15:08:00'),
+  (45, 1, 'julieta.sosa', 'julieta.sosa@example.com', 'dermalia2026', 1, '2026-08-20 15:15:00');
 
 -- Pacientes
 INSERT INTO personas.Paciente (id_paciente, id_usuario, dni, nombre, apellido, fecha_nacimiento, fecha_alta, email, telegram_chat_id) VALUES

@@ -8,8 +8,6 @@
 -- Misma convención que la Semana 3: 6 columnas de respuesta
 -- (estado, codigo, mensaje, id, valor, dato) y error con EXIT HANDLER.
 
-SET NAMES utf8mb4;
-
 DELIMITER //
 
 -- =====================================================================
@@ -482,8 +480,8 @@ BEGIN
     INSERT INTO beneficios.Cupon (id_regla, id_paciente, codigo, secreto, porcentaje_descuento, fecha_emision, fecha_vencimiento)
     WITH RECURSIVE nums AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM nums WHERE n < 30)
     SELECT cand.id_regla, cand.id_paciente,
-           CONCAT('DER-', UPPER(LEFT(SHA2(CONCAT(UUID(), RAND()), 256), 8))),
-           SHA2(CONCAT(UUID(), RAND()), 256),
+           CONCAT('DER-', UPPER(LEFT(REPLACE(UUID(), '-', ''), 8))),
+           UUID(),
            cand.pct, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL cand.vig WEEK
       FROM (
             -- frecuencia de visitas
@@ -542,13 +540,13 @@ BEGIN
 END//
 
 -- Token rotativo del cupón: se renueva cada 5 minutos y no se guarda; sale de
--- un hash (SHA-256) del secreto del cupón y del tramo de 5 minutos actual
--- (RNF-14; no es un HMAC formal, se aclara en la defensa).
+-- una cuenta simple (CRC32) con el secreto del cupón y el tramo de 5 minutos actual
+-- (RNF-14; no es encriptación ni un HMAC, se aclara en la defensa).
 DROP FUNCTION IF EXISTS beneficios.fn_token_cupon//
 CREATE FUNCTION beneficios.fn_token_cupon(p_secreto VARCHAR(255), p_tramo BIGINT) RETURNS VARCHAR(8)
     DETERMINISTIC NO SQL
 BEGIN
-    RETURN UPPER(LEFT(SHA2(CONCAT(p_secreto, ':', p_tramo), 256), 8));
+    RETURN UPPER(LPAD(CONV(CRC32(CONCAT(p_secreto, ':', p_tramo)), 10, 16), 8, '0'));
 END//
 
 -- Pide el token vigente de un cupón (lo muestra la app o el QR de la paciente).
@@ -730,7 +728,7 @@ BEGIN
     END IF;
 
     START TRANSACTION;
-    SET v_codigo = CONCAT('GC-', UPPER(LEFT(SHA2(CONCAT(UUID(), RAND()), 256), 24)));
+    SET v_codigo = CONCAT('GC-', UPPER(LEFT(REPLACE(UUID(), '-', ''), 24)));
     INSERT INTO pagos.TarjetaRegalo (id_medio_pago, codigo, monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono)
     VALUES (v_medio, v_codigo, p_monto, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL 12 MONTH, TRIM(p_comprador_nombre), NULLIF(p_comprador_telefono, ''));
     SET v_id = LAST_INSERT_ID();

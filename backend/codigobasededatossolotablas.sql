@@ -17,16 +17,15 @@ DROP DATABASE IF EXISTS personas;
 DROP DATABASE IF EXISTS seguridad;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- utf8mb4 para que se guarden bien tildes y eñes.
-CREATE DATABASE seguridad CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE personas CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE clinica CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE agenda CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE pagos CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE beneficios CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE notificaciones CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE auditoria CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE asistente CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE DATABASE seguridad;
+CREATE DATABASE personas;
+CREATE DATABASE clinica;
+CREATE DATABASE agenda;
+CREATE DATABASE pagos;
+CREATE DATABASE beneficios;
+CREATE DATABASE notificaciones;
+CREATE DATABASE auditoria;
+CREATE DATABASE asistente;
 
 
 -- ===== seguridad =====

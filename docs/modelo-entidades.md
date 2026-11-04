@@ -340,6 +340,11 @@ disponibilidad, y envío de notificación.
 ## Pendiente de definir
 
 - Atributos de **Disponibilidad**: definidos en `diagramas/README.md` (fecha, hora de inicio y fin, activa).
+- En la implementación (`backend/codigobasededatossolotablas.sql`) el
+  **teléfono** de paciente y profesional quedó como tabla aparte
+  (`personas.TelefonoPaciente`, `personas.TelefonoProfesional`), porque puede
+  haber más de uno (multivaluado, consigna 1b). Las tablas van en 9 schemas;
+  ver `backend/REVISION.md`.
 - Revisar el modelo completo (grupos 1 a 4) y cerrar las preguntas abiertas
   del grupo 3.
 - Hacer el diagrama de Peter Chen en draw.io (jueves).

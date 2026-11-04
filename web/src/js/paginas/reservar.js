@@ -2,6 +2,7 @@ import { iniciarComun } from '../movimiento/comun.js';
 import { gsap, movimientoReducido } from '../movimiento/gsap.js';
 import { protocolos, categoriaDe } from '../../datos/protocolos.js';
 import { proximosDias, horariosDe, guardarReserva } from '../../datos/reservas.js';
+import { horariosDeBase, reservarEnBase } from '../../datos/api.js';
 import { calcularSena, pesos } from '../sena.js';
 
 iniciarComun();
@@ -9,7 +10,7 @@ iniciarComun();
 /* Cupones de ejemplo (RF-17, RF-23) hasta que existan en la base. */
 const CUPONES = { BIENVENIDA: { descuento: 10, texto: '10 % de descuento en tu primer turno' } };
 
-const estado = { elegidos: new Set(), dia: null, hora: null, cupon: null, paso: 1 };
+const estado = { elegidos: new Set(), dia: null, hora: null, cupon: null, paso: 1, profesionales: null };
 const $ = (s) => document.querySelector(s);
 const fechaLarga = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 const diaCorto = new Intl.DateTimeFormat('es-AR', { weekday: 'short' });
@@ -92,6 +93,7 @@ opciones.addEventListener('click', (e) => {
     if (elegido) gsap.from(boton.querySelector('.opcion__marca path'), { drawSVG: 0, duration: 0.5, ease: 'power2.out' });
   }
   $('[data-siguiente="2"]').disabled = estado.elegidos.size === 0;
+  pintarReloj();
   pintarResumen();
 });
 
@@ -107,12 +109,22 @@ contDias.innerHTML = dias.map((d, i) => `
     <span>${mesCorto.format(d).replace('.', '')}</span>
   </button>`).join('');
 
-function pintarHoras() {
+/* Con la API, los horarios libres salen de la base (con el profesional de cada uno);
+ * sin API se usan los del maquetado. */
+async function pintarHoras() {
   if (!estado.dia) {
     contHoras.innerHTML = '<p class="nota">Elegí un día para ver los horarios.</p>';
     return;
   }
-  contHoras.innerHTML = horariosDe(estado.dia).map(({ hora, libre }) => `
+  const dia = estado.dia;
+  const deBase = await horariosDeBase(dia, [...estado.elegidos]);
+  if (dia !== estado.dia) return;   // mientras tanto eligió otro día
+  estado.profesionales = deBase ? new Map(deBase.map((h) => [h.hora, h.profesional])) : null;
+  if (deBase && deBase.length === 0) {
+    contHoras.innerHTML = '<p class="nota">No quedan horarios libres ese día. Probá con otro.</p>';
+    return;
+  }
+  contHoras.innerHTML = (deBase ?? horariosDe(dia)).map(({ hora, libre }) => `
     <button type="button" class="hora numero" data-hora="${hora}" aria-pressed="${hora === estado.hora}" ${libre ? '' : 'disabled aria-label="' + hora + ', ocupado"'}>${hora}</button>`).join('');
   if (!reducido) gsap.from(contHoras.children, { y: 14, autoAlpha: 0, stagger: 0.03, duration: 0.5 });
 }
@@ -125,6 +137,7 @@ contDias.addEventListener('click', (e) => {
   contDias.querySelectorAll('.dia').forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
   $('[data-siguiente="3"]').disabled = true;
   pintarHoras();
+  pintarReloj();
   pintarResumen();
 });
 
@@ -135,9 +148,45 @@ contHoras.addEventListener('click', (e) => {
   contHoras.querySelectorAll('.hora').forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
   if (!reducido) gsap.fromTo(boton, { scale: 0.85 }, { scale: 1, duration: 0.7, ease: 'elastic.out(1.1, 0.35)' });
   $('[data-siguiente="3"]').disabled = false;
+  pintarReloj();
   pintarResumen();
 });
 pintarHoras();
+
+/* Reloj del paso 2: agujas en la hora elegida y un arco con la duración total. */
+const reloj = {
+  arco: $('[data-reloj-arco]'),
+  hora: $('[data-reloj-hora]'),
+  minuto: $('[data-reloj-minuto]'),
+  texto: $('[data-reloj-texto]'),
+};
+$('[data-reloj-marcas]').innerHTML = Array.from({ length: 12 }, (_, i) => {
+  const a = (i / 12) * Math.PI * 2;
+  const r1 = i % 3 ? 66 : 62;
+  return `<line x1="${80 + Math.sin(a) * r1}" y1="${80 - Math.cos(a) * r1}" x2="${80 + Math.sin(a) * 70}" y2="${80 - Math.cos(a) * 70}"/>`;
+}).join('');
+gsap.set(reloj.arco, { drawSVG: '0% 0%' });
+gsap.set([reloj.hora, reloj.minuto], { svgOrigin: '80 80' });
+
+const duracionTexto = (min) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ''}` : `${min} min`);
+
+function pintarReloj() {
+  if (!estado.hora) {
+    reloj.texto.textContent = 'Elegí un horario y acá vas a ver cuánto dura tu turno.';
+    gsap.to(reloj.arco, { drawSVG: '0% 0%', duration: reducido ? 0 : 0.5 });
+    return;
+  }
+  const [h, m] = estado.hora.split(':').map(Number);
+  const { duracion } = cuentas();
+  const inicio = ((h % 12) + m / 60) / 12;
+  const fin = inicio + duracion / 60 / 12;
+  const finHora = new Date(2000, 0, 1, h, m + duracion);
+  reloj.texto.textContent = `De ${estado.hora} a ${String(finHora.getHours()).padStart(2, '0')}:${String(finHora.getMinutes()).padStart(2, '0')} h · ${duracionTexto(duracion)}`;
+  const d = reducido ? 0 : 1.1;
+  gsap.to(reloj.hora, { rotation: ((h % 12) + m / 60) * 30, duration: d, ease: 'elastic.out(1, 0.6)' });
+  gsap.to(reloj.minuto, { rotation: 360 + m * 6, duration: d, ease: 'elastic.out(1, 0.6)' });
+  gsap.to(reloj.arco, { drawSVG: `${inicio * 100}% ${Math.min(fin, 1) * 100}%`, duration: d, ease: 'power3.inOut' });
+}
 
 /* ---------- Navegación entre pasos ---------- */
 
@@ -269,13 +318,25 @@ function enlaceCalendar(inicio, duracionMin, titulo) {
   return `https://calendar.google.com/calendar/render?${datos}`;
 }
 
-function confirmar() {
+async function confirmar() {
   const c = cuentas();
   const [h, m] = estado.hora.split(':');
   const inicio = new Date(estado.dia);
   inicio.setHours(+h, +m, 0, 0);
   const nombres = c.lista.map((p) => p.nombre).join(' + ');
-  guardarReserva({
+  // Con la API el turno y la seña se guardan en la base, que aplica las reglas (horario libre, seña, cupón).
+  const enBase = estado.profesionales
+    ? await reservarEnBase({ nombre: formulario.nombre.value.trim(), dni: formulario.dni.value.trim(),
+        telefono: formulario.telefono.value.replace(/\D/g, ''), nacimiento: formulario.nacimiento.value,
+        idsWeb: [...estado.elegidos], profesional: estado.profesionales.get(estado.hora), inicio, cupon: formulario.cupon.value.trim() })
+    : null;
+  if (enBase && !enBase.ok) {
+    irA(3);
+    error.textContent = enBase.cuerpo.error;
+    if (enBase.cuerpo.necesitaNacimiento) formulario.nacimiento.focus();
+    return;
+  }
+  if (!enBase) guardarReserva({
     id: `web-${Date.now()}`,
     nombre: formulario.nombre.value.trim(),
     dni: formulario.dni.value.trim(),
@@ -286,7 +347,7 @@ function confirmar() {
     senaPagada: true,
     estado: 'confirmado',
   });
-  $('[data-listo-detalle]').textContent = `${nombres}, el ${fechaLarga.format(inicio)} a las ${estado.hora} h. Pagaste ${pesos(c.sena)} de seña (simulada). Te vamos a mandar un recordatorio antes del turno.`;
+  $('[data-listo-detalle]').textContent = `${nombres}, el ${fechaLarga.format(inicio)} a las ${estado.hora} h. Pagaste ${pesos(enBase ? enBase.cuerpo.sena : c.sena)} de seña (simulada). Te vamos a mandar un recordatorio antes del turno.`;
   $('[data-calendar]').href = enlaceCalendar(inicio, c.duracion, nombres);
   document.querySelector('[data-resumen]').hidden = true;
   irA('listo');
@@ -314,6 +375,14 @@ function celebrar() {
     });
     gsap.to(p, { autoAlpha: 0, duration: 0.6, delay: 1.8 });
   }
+}
+
+// Si llegaste desde una ficha del inicio (?protocolo=...), ya viene elegido.
+const preelegido = new URLSearchParams(location.search).get('protocolo');
+if (protocolos.some((p) => p.id === preelegido)) {
+  estado.elegidos.add(preelegido);
+  $(`[data-protocolo="${preelegido}"]`).setAttribute('aria-pressed', 'true');
+  $('[data-siguiente="2"]').disabled = false;
 }
 
 pintarResumen();

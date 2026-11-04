@@ -6,7 +6,18 @@ import { gsap, movimientoReducido } from './gsap.js';
 const GOTA = 'M46 20c10 13 19 22 19 33a19 19 0 0 1-38 0c0-11 9-20 19-33Z';
 const CLAVE = 'dermalia:visto';
 
-const avisar = () => document.dispatchEvent(new CustomEvent('dermalia:listo'));
+let listo = false;
+const avisar = () => {
+  listo = true;
+  document.dispatchEvent(new CustomEvent('dermalia:listo'));
+};
+
+/* Corre fn cuando termina el loader, o ya mismo si terminó antes (los módulos
+ * 3D se cargan aparte y pueden llegar tarde). */
+export function alEstarListo(fn) {
+  if (listo) fn();
+  else document.addEventListener('dermalia:listo', fn, { once: true });
+}
 
 function yaVisto() {
   try {

@@ -148,10 +148,20 @@ resultado real, estado (aprobado o falló) y severidad. La consigna pide cuatro 
 | `EXCEPT` | no existe en MySQL 5.7; en 8.0.31 o posterior sí |
 | `schema.tabla` | `base.tabla` (cada schema es una base de datos) |
 
-## 9. Qué usa el backend de Dermalia que el material no enseña
+## 9. Qué puede usar el backend de Dermalia
 
-`SIGNAL`, transacciones (`START TRANSACTION` / `ROLLBACK`), `SELECT ... FOR UPDATE`,
-restricciones `CHECK`, usuarios con permisos mínimos (`GRANT`), índices y `EXPLAIN`, SQL
-dinámico (`PREPARE`), funciones propias, cursores, funciones de ventana, `JSON`, `UUID` y
-`CRC32`. Son los temas más probables de preguntas en la defensa técnica y hay que poder
-explicarlos con el código propio.
+Regla del equipo: solo lo que está en las clases (presentaciones con sus imágenes, scripts de la cátedra
+y los scripts propios de profundización 02) y lo que pide la consigna. El libro *Fundamentos de SQL* de la
+carpeta no se usó en clase, así que **no cuenta**. Se aceptan además:
+
+- **`CHECK`, `UNIQUE` y `DATE`**, que el equipo ya usó en sus trabajos.
+- **El equivalente en MySQL de algo que está en las clases** (que son de SQL Server): `SIGNAL` por
+  `RAISERROR`, `CONCAT` por unir textos con `+`, `LIMIT` por `TOP`, `NOW()` por `GETDATE()`,
+  `CHAR_LENGTH` por `LEN`, `IFNULL` por `ISNULL`, `ROW_COUNT()` por `@@ROWCOUNT`, `CREATE TEMPORARY TABLE`
+  por `#tabla`, `DIV` por la división entera de SQL Server, `START TRANSACTION`/`COMMIT`/`ROLLBACK`.
+- **Funciones de fecha** (`INTERVAL`, `EXTRACT`, `DATE_FORMAT`): la consigna pide "gestión de fechas".
+
+Por eso el backend **no usa** `IF`, `CASE`, `WHILE`, `LOOP`, cursores, `LEAVE`, `FOR UPDATE`,
+`CREATE FUNCTION` ni funciones de texto (salvo `CHAR_LENGTH`). Cómo se reemplazó cada cosa está en
+[`12-contrato-sp.md`](12-contrato-sp.md): las validaciones se escriben con `COALESCE` y subconsultas, los
+cambios llevan `WHERE ... AND v_codigo IS NULL` y la respuesta se arma con `UNION ALL`.

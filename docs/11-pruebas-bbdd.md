@@ -45,22 +45,27 @@ Para los reportes, el caso 4 compara el SP con su consulta `SELECT` directa; par
 ## Resultados medidos del tuning (consigna 5e)
 
 Dos reportes con versión `_tuneado` (`backend/06_tuning_semana6.sql`), medidos con
-`backend/medir_tuning.sql` sobre **300.000 turnos y 240.000 pagos** (un mes de datos, 2025-03):
+`backend/medir_tuning.sql` sobre **300.150 turnos y 240.145 pagos** (un mes de datos, 2025-03).
+La técnica es la de la cátedra (PPT 004, "Caracol" contra "Cheetah A"): el original junta las
+tablas completas y filtra al final; el tuneado filtra y proyecta cada tabla **antes** de juntarlas
+(selección y proyección conmutativas) usando tablas temporales (N1, N2…). Se mide cuántas filas
+llegan a cada paso, no los milisegundos:
 
-| Reporte | Original, sin índice | Solo reescritura (sin índice) | Reescritura + índice |
-|---|---|---|---|
-| 1. Turnos por período y profesional | 700 ms | 239 ms | **35 ms** |
-| 2. Ingresos por seña | 594 ms | 98 ms | **15 ms** |
+| Paso | Original (Caracol) | Tuneado (Cheetah A) |
+|---|---|---|
+| Reporte 1: filas de `Turno` que entran a la reunión | 300.150 | **6.377** (N1, ya filtrado por fechas) |
+| Reporte 1: filas de `TurnoProtocolo` que entran a la reunión | 300.172 | **6.377** (N4, solo los turnos de N1) |
+| Reporte 2: filas de `PagoSena` que entran a la reunión | 240.145 | **5.101** (N1, ya filtrado por fechas) |
 
-- El **índice solo no alcanza**: con el índice creado, el reporte 1 original tardó lo mismo
-  (≈ 690 ms), porque `DATE(columna) BETWEEN ...` impide usarlo. Hace falta reescribir la consulta.
-- Mejora total: reporte 1 unas **20 veces**, reporte 2 unas **40 veces**.
-- Cambios: (1) `DATE(col) BETWEEN` → rango `col >= desde AND col < hasta + 1 día`; (2) subconsulta
-  correlacionada por fila → `JOIN`/agregación hecha una vez; (3) comparar `id_estado` en lugar de
-  hacer `JOIN` a la tabla maestra por el nombre; (4) índices que cubren el filtro y las columnas
-  (`IX_Turno_inicio_profesional_estado`, `IX_PagoSena_fecha_medio_estado`).
-- Tiempos de `EXPLAIN ANALYZE` (milisegundos totales) en una PC de laboratorio virtual: sirven por
-  la **proporción**, no por el valor absoluto.
+- Los dos pares devuelven **exactamente las mismas filas** (20 filas el reporte 1, 2 filas el 2):
+  se comprobó comparando el resultado del original con el del tuneado.
+- Mejora: las reuniones reciben unas **47 veces menos filas** (300.150 contra 6.377) en el reporte 1
+  y unas **47 veces menos** (240.145 contra 5.101) en el reporte 2.
+- Cambios: (1) la selección por fechas y por profesional se aplica sobre la tabla de origen;
+  (2) cada tabla aporta solo las columnas que se usan; (3) la subconsulta correlacionada por fila
+  pasa a una agregación hecha una sola vez (N4); (4) el agrupamiento va al final.
+- Cada tabla temporal se usa una sola vez por consulta (MySQL no deja usar dos veces la misma
+  tabla temporal en una sentencia).
 
 ## Datos de ejemplo (consigna punto 4)
 

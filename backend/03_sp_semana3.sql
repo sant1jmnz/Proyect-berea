@@ -12,7 +12,7 @@
 --   * toda respuesta tiene las mismas 6 columnas:
 --       estado ('OK' o 'ERROR'), codigo (0 o el número de error), mensaje,
 --       id (lo que se creó o modificó), valor (un monto) y dato (un texto).
---   * las reglas de negocio se avisan con SIGNAL y un código propio (52xxx);
+--   * las reglas de negocio se avisan con una fila 'ERROR' y un código propio (52xxx), y el SP termina con LEAVE;
 --     el catálogo de códigos está en docs/11-pruebas-bbdd.md.
 --   * toda acción relevante escribe en auditoria.Log SOLO desde acá.
 -- Los SP de consulta (listados, búsquedas, reportes) devuelven directamente
@@ -179,7 +179,7 @@ DROP PROCEDURE IF EXISTS pagos.sp_aplicar_reembolso//
 CREATE PROCEDURE pagos.sp_aplicar_reembolso(
     IN p_id_pago INT, IN p_monto_reembolsado DECIMAL(12,2), IN p_estado VARCHAR(50),
     IN p_motivo VARCHAR(200), IN p_id_usuario INT, IN p_origen VARCHAR(50))
-BEGIN
+cuerpo: BEGIN
     DECLARE v_monto DECIMAL(12,2);
     DECLARE v_estado VARCHAR(50);
     DECLARE v_medio VARCHAR(50);
@@ -196,18 +196,22 @@ BEGIN
      WHERE ps.id_pago = p_id_pago FOR UPDATE;
 
     IF v_monto IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52100, MESSAGE_TEXT = 'El pago de seña no existe';
+        SELECT 'ERROR' AS estado, 52100 AS codigo, 'El pago de seña no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     -- Solo se resuelve una seña 'pagada'. Única excepción: una seña retenida al vencer
     -- una evaluación puede pasar a 'reembolsada parcial' si la paciente reclama.
     IF v_estado <> 'pagada' AND NOT (v_estado = 'retenida' AND p_estado = 'reembolsada parcial') THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52101, MESSAGE_TEXT = 'La seña ya fue resuelta (reembolsada o retenida)';
+        SELECT 'ERROR' AS estado, 52101 AS codigo, 'La seña ya fue resuelta (reembolsada o retenida)' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_monto_reembolsado IS NULL OR p_monto_reembolsado < 0 OR p_monto_reembolsado > v_monto THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52102, MESSAGE_TEXT = 'El monto a reembolsar no es válido';
+        SELECT 'ERROR' AS estado, 52102 AS codigo, 'El monto a reembolsar no es válido' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_estado NOT IN ('reembolsada', 'reembolsada parcial', 'retenida') THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52103, MESSAGE_TEXT = 'Estado de pago inválido';
+        SELECT 'ERROR' AS estado, 52103 AS codigo, 'Estado de pago inválido' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     SET v_anterior = CAST(v_estado AS CHAR);
@@ -315,7 +319,7 @@ DROP PROCEDURE IF EXISTS seguridad.sp_crear_cuenta_paciente//
 CREATE PROCEDURE seguridad.sp_crear_cuenta_paciente(
     IN p_dni VARCHAR(15), IN p_nombre_usuario VARCHAR(50), IN p_email VARCHAR(100),
     IN p_password VARCHAR(255), IN p_origen VARCHAR(50))
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_paciente INT DEFAULT NULL;
@@ -332,22 +336,46 @@ BEGIN
 
     SELECT id_paciente, id_usuario INTO v_paciente, v_cuenta FROM personas.Paciente WHERE dni = p_dni;
     IF v_paciente IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52020, MESSAGE_TEXT = 'No hay una paciente con ese DNI';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, 'No hay una paciente con ese DNI',
+                                                'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52020 AS codigo, 'No hay una paciente con ese DNI' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF v_cuenta IS NOT NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52021, MESSAGE_TEXT = 'Esa paciente ya tiene cuenta';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, 'Esa paciente ya tiene cuenta',
+                                                'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52021 AS codigo, 'Esa paciente ya tiene cuenta' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_nombre_usuario IS NULL OR personas.fn_es_usuario(p_nombre_usuario) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52022, MESSAGE_TEXT = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo',
+                                                'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52022 AS codigo, 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_email IS NULL OR personas.fn_es_email(p_email) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52023, MESSAGE_TEXT = 'El email no es válido';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, 'El email no es válido',
+                                                'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52023 AS codigo, 'El email no es válido' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_password IS NULL OR TRIM(p_password) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52024, MESSAGE_TEXT = 'La contrasena no puede estar vacia';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, 'La contrasena no puede estar vacia',
+                                                'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52024 AS codigo, 'La contrasena no puede estar vacia' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52025, MESSAGE_TEXT = 'Ese usuario o email ya está en uso';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, 'Ese usuario o email ya está en uso',
+                                                'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52025 AS codigo, 'Ese usuario o email ya está en uso' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     START TRANSACTION;
@@ -372,7 +400,7 @@ DROP PROCEDURE IF EXISTS personas.sp_alta_paciente//
 CREATE PROCEDURE personas.sp_alta_paciente(
     IN p_dni VARCHAR(15), IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_fecha_nacimiento DATE,
     IN p_email VARCHAR(100), IN p_telefono VARCHAR(30), IN p_origen VARCHAR(50), IN p_id_usuario INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_id INT;
@@ -386,22 +414,46 @@ BEGIN
     END;
 
     IF p_dni IS NULL OR personas.fn_es_dni(p_dni) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52030, MESSAGE_TEXT = 'El DNI debe tener 7 u 8 dígitos';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, 'El DNI debe tener 7 u 8 dígitos',
+                                                'personas.Paciente', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52030 AS codigo, 'El DNI debe tener 7 u 8 dígitos' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(TRIM(p_apellido)) < 2 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52031, MESSAGE_TEXT = 'Nombre y apellido deben tener al menos 2 letras';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, 'Nombre y apellido deben tener al menos 2 letras',
+                                                'personas.Paciente', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52031 AS codigo, 'Nombre y apellido deben tener al menos 2 letras' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_telefono IS NULL OR personas.fn_es_telefono(p_telefono) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52032, MESSAGE_TEXT = 'El teléfono debe tener de 10 a 13 dígitos';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, 'El teléfono debe tener de 10 a 13 dígitos',
+                                                'personas.Paciente', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52032 AS codigo, 'El teléfono debe tener de 10 a 13 dígitos' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_fecha_nacimiento IS NULL OR p_fecha_nacimiento >= CURRENT_DATE THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52033, MESSAGE_TEXT = 'La fecha de nacimiento no es válida';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, 'La fecha de nacimiento no es válida',
+                                                'personas.Paciente', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52033 AS codigo, 'La fecha de nacimiento no es válida' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_email IS NOT NULL AND p_email <> '' AND personas.fn_es_email(p_email) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52034, MESSAGE_TEXT = 'El email no es válido';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, 'El email no es válido',
+                                                'personas.Paciente', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52034 AS codigo, 'El email no es válido' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM personas.Paciente WHERE dni = p_dni) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52035, MESSAGE_TEXT = 'Ya existe una paciente con ese DNI';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, 'Ya existe una paciente con ese DNI',
+                                                'personas.Paciente', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52035 AS codigo, 'Ya existe una paciente con ese DNI' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     START TRANSACTION;
@@ -420,7 +472,7 @@ DROP PROCEDURE IF EXISTS personas.sp_modificar_paciente//
 CREATE PROCEDURE personas.sp_modificar_paciente(
     IN p_id_paciente INT, IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_email VARCHAR(100),
     IN p_telefono_nuevo VARCHAR(30), IN p_origen VARCHAR(50), IN p_id_usuario INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_antes VARCHAR(400);
@@ -436,16 +488,32 @@ BEGIN
     SELECT nombre INTO v_antes
       FROM personas.Paciente WHERE id_paciente = p_id_paciente;
     IF v_antes IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52036, MESSAGE_TEXT = 'La paciente no existe';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, 'La paciente no existe',
+                                                'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52036 AS codigo, 'La paciente no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(TRIM(p_apellido)) < 2 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52031, MESSAGE_TEXT = 'Nombre y apellido deben tener al menos 2 letras';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, 'Nombre y apellido deben tener al menos 2 letras',
+                                                'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52031 AS codigo, 'Nombre y apellido deben tener al menos 2 letras' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_email IS NOT NULL AND p_email <> '' AND personas.fn_es_email(p_email) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52034, MESSAGE_TEXT = 'El email no es válido';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, 'El email no es válido',
+                                                'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52034 AS codigo, 'El email no es válido' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_telefono_nuevo IS NOT NULL AND p_telefono_nuevo <> '' AND personas.fn_es_telefono(p_telefono_nuevo) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52032, MESSAGE_TEXT = 'El teléfono debe tener de 10 a 13 dígitos';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, 'El teléfono debe tener de 10 a 13 dígitos',
+                                                'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52032 AS codigo, 'El teléfono debe tener de 10 a 13 dígitos' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     START TRANSACTION;
@@ -494,7 +562,7 @@ CREATE PROCEDURE personas.sp_alta_profesional(
     IN p_matricula VARCHAR(30), IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_email VARCHAR(100),
     IN p_telefono VARCHAR(30), IN p_nombre_usuario VARCHAR(50), IN p_password VARCHAR(255),
     IN p_origen VARCHAR(50), IN p_id_usuario INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_usuario INT;
@@ -509,28 +577,60 @@ BEGIN
     END;
 
     IF p_matricula IS NULL OR TRIM(p_matricula) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52040, MESSAGE_TEXT = 'Falta la matrícula';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, 'Falta la matrícula',
+                                                'personas.Profesional', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52040 AS codigo, 'Falta la matrícula' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(TRIM(p_apellido)) < 2 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52031, MESSAGE_TEXT = 'Nombre y apellido deben tener al menos 2 letras';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, 'Nombre y apellido deben tener al menos 2 letras',
+                                                'personas.Profesional', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52031 AS codigo, 'Nombre y apellido deben tener al menos 2 letras' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_email IS NULL OR personas.fn_es_email(p_email) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52034, MESSAGE_TEXT = 'El email no es válido';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, 'El email no es válido',
+                                                'personas.Profesional', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52034 AS codigo, 'El email no es válido' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_telefono IS NULL OR personas.fn_es_telefono(p_telefono) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52032, MESSAGE_TEXT = 'El teléfono debe tener de 10 a 13 dígitos';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, 'El teléfono debe tener de 10 a 13 dígitos',
+                                                'personas.Profesional', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52032 AS codigo, 'El teléfono debe tener de 10 a 13 dígitos' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_nombre_usuario IS NULL OR personas.fn_es_usuario(p_nombre_usuario) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52022, MESSAGE_TEXT = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo',
+                                                'personas.Profesional', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52022 AS codigo, 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_password IS NULL OR TRIM(p_password) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52024, MESSAGE_TEXT = 'La contrasena no puede estar vacia';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, 'La contrasena no puede estar vacia',
+                                                'personas.Profesional', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52024 AS codigo, 'La contrasena no puede estar vacia' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM personas.Profesional WHERE matricula = p_matricula) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52041, MESSAGE_TEXT = 'Ya existe un profesional con esa matrícula';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, 'Ya existe un profesional con esa matrícula',
+                                                'personas.Profesional', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52041 AS codigo, 'Ya existe un profesional con esa matrícula' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52025, MESSAGE_TEXT = 'Ese usuario o email ya está en uso';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, 'Ese usuario o email ya está en uso',
+                                                'personas.Profesional', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52025 AS codigo, 'Ese usuario o email ya está en uso' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     START TRANSACTION;
@@ -554,7 +654,7 @@ DROP PROCEDURE IF EXISTS personas.sp_modificar_profesional//
 CREATE PROCEDURE personas.sp_modificar_profesional(
     IN p_id_profesional INT, IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_email VARCHAR(100),
     IN p_activo SMALLINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_antes VARCHAR(400);
@@ -570,22 +670,42 @@ BEGIN
     SELECT apellido INTO v_antes
       FROM personas.Profesional WHERE id_profesional = p_id_profesional;
     IF v_antes IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52042, MESSAGE_TEXT = 'El profesional no existe';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, 'El profesional no existe',
+                                                'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52042 AS codigo, 'El profesional no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(TRIM(p_apellido)) < 2 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52031, MESSAGE_TEXT = 'Nombre y apellido deben tener al menos 2 letras';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, 'Nombre y apellido deben tener al menos 2 letras',
+                                                'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52031 AS codigo, 'Nombre y apellido deben tener al menos 2 letras' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_email IS NULL OR personas.fn_es_email(p_email) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52034, MESSAGE_TEXT = 'El email no es válido';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, 'El email no es válido',
+                                                'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52034 AS codigo, 'El email no es válido' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_activo IS NULL OR p_activo NOT IN (0, 1) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52043, MESSAGE_TEXT = 'El estado activo debe ser 0 o 1';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, 'El estado activo debe ser 0 o 1',
+                                                'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52043 AS codigo, 'El estado activo debe ser 0 o 1' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_activo = 0 AND EXISTS (
             SELECT 1 FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
              WHERE t.id_profesional = p_id_profesional AND t.fecha_hora_inicio > auditoria.fn_ahora()
                AND e.nombre IN ('pendiente', 'confirmado')) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52044, MESSAGE_TEXT = 'No se puede dar de baja: tiene turnos futuros sin cancelar';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, 'No se puede dar de baja: tiene turnos futuros sin cancelar',
+                                                'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52044 AS codigo, 'No se puede dar de baja: tiene turnos futuros sin cancelar' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     START TRANSACTION;
@@ -605,7 +725,7 @@ DROP PROCEDURE IF EXISTS personas.sp_cargar_disponibilidad//
 CREATE PROCEDURE personas.sp_cargar_disponibilidad(
     IN p_id_profesional INT, IN p_fecha DATE, IN p_hora_inicio TIME, IN p_hora_fin TIME,
     IN p_origen VARCHAR(50), IN p_id_usuario INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_id INT;
@@ -619,21 +739,41 @@ BEGIN
     END;
 
     IF NOT EXISTS (SELECT 1 FROM personas.Profesional WHERE id_profesional = p_id_profesional AND activo = 1) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52045, MESSAGE_TEXT = 'El profesional no existe o está dado de baja';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, 'El profesional no existe o está dado de baja',
+                                                'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52045 AS codigo, 'El profesional no existe o está dado de baja' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_fecha IS NULL OR p_hora_inicio IS NULL OR p_hora_fin IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52046, MESSAGE_TEXT = 'Faltan la fecha o las horas';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, 'Faltan la fecha o las horas',
+                                                'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52046 AS codigo, 'Faltan la fecha o las horas' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_hora_fin <= p_hora_inicio THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52047, MESSAGE_TEXT = 'La hora de fin debe ser posterior a la de inicio';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, 'La hora de fin debe ser posterior a la de inicio',
+                                                'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52047 AS codigo, 'La hora de fin debe ser posterior a la de inicio' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_fecha < DATE(auditoria.fn_ahora()) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52048, MESSAGE_TEXT = 'No se puede cargar disponibilidad en el pasado';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, 'No se puede cargar disponibilidad en el pasado',
+                                                'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52048 AS codigo, 'No se puede cargar disponibilidad en el pasado' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM personas.Disponibilidad d
                 WHERE d.id_profesional = p_id_profesional AND d.fecha = p_fecha AND d.activa = 1
                   AND d.hora_inicio < p_hora_fin AND d.hora_fin > p_hora_inicio) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52049, MESSAGE_TEXT = 'La franja se superpone con otra ya cargada';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, 'La franja se superpone con otra ya cargada',
+                                                'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52049 AS codigo, 'La franja se superpone con otra ya cargada' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     START TRANSACTION;
@@ -650,7 +790,7 @@ END//
 -- Baja (lógica) de una franja. No se puede si hay turnos activos dentro de ella.
 DROP PROCEDURE IF EXISTS personas.sp_baja_disponibilidad//
 CREATE PROCEDURE personas.sp_baja_disponibilidad(IN p_id_disponibilidad INT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_prof INT DEFAULT NULL;
@@ -671,15 +811,27 @@ BEGIN
     SELECT id_profesional, fecha, hora_inicio, hora_fin, activa INTO v_prof, v_fecha, v_ini, v_fin, v_activa
       FROM personas.Disponibilidad WHERE id_disponibilidad = p_id_disponibilidad FOR UPDATE;
     IF v_prof IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52050, MESSAGE_TEXT = 'La franja no existe';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, 'La franja no existe',
+                                                'personas.Disponibilidad', p_id_disponibilidad, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52050 AS codigo, 'La franja no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF v_activa = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52051, MESSAGE_TEXT = 'La franja ya estaba dada de baja';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, 'La franja ya estaba dada de baja',
+                                                'personas.Disponibilidad', p_id_disponibilidad, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52051 AS codigo, 'La franja ya estaba dada de baja' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
                 WHERE t.id_profesional = v_prof AND e.nombre IN ('pendiente', 'confirmado')
                   AND t.fecha_hora_inicio < TIMESTAMP(v_fecha, v_fin) AND t.fecha_hora_fin > TIMESTAMP(v_fecha, v_ini)) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52052, MESSAGE_TEXT = 'Hay turnos sin cancelar dentro de esa franja';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, 'Hay turnos sin cancelar dentro de esa franja',
+                                                'personas.Disponibilidad', p_id_disponibilidad, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52052 AS codigo, 'Hay turnos sin cancelar dentro de esa franja' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     UPDATE personas.Disponibilidad SET activa = 0 WHERE id_disponibilidad = p_id_disponibilidad;
@@ -694,7 +846,7 @@ END//
 DROP PROCEDURE IF EXISTS clinica.sp_asignar_protocolo//
 CREATE PROCEDURE clinica.sp_asignar_protocolo(
     IN p_id_profesional INT, IN p_id_protocolo INT, IN p_habilitar SMALLINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -707,13 +859,25 @@ BEGIN
     END;
 
     IF NOT EXISTS (SELECT 1 FROM personas.Profesional WHERE id_profesional = p_id_profesional) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52042, MESSAGE_TEXT = 'El profesional no existe';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen, 'El profesional no existe',
+                                                'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52042 AS codigo, 'El profesional no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM clinica.Protocolo WHERE id_protocolo = p_id_protocolo) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52060, MESSAGE_TEXT = 'El protocolo no existe';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen, 'El protocolo no existe',
+                                                'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52060 AS codigo, 'El protocolo no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_habilitar IS NULL OR p_habilitar NOT IN (0, 1) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52043, MESSAGE_TEXT = 'El parámetro habilitar debe ser 0 o 1';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen, 'El parámetro habilitar debe ser 0 o 1',
+                                                'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52043 AS codigo, 'El parámetro habilitar debe ser 0 o 1' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     START TRANSACTION;
@@ -764,7 +928,7 @@ DROP PROCEDURE IF EXISTS clinica.sp_alta_protocolo//
 CREATE PROCEDURE clinica.sp_alta_protocolo(
     IN p_id_categoria INT, IN p_nombre VARCHAR(100), IN p_descripcion VARCHAR(500), IN p_precio DECIMAL(12,2),
     IN p_duracion_min INT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_id INT;
@@ -778,19 +942,39 @@ BEGIN
     END;
 
     IF NOT EXISTS (SELECT 1 FROM clinica.CategoriaProtocolo WHERE id_categoria = p_id_categoria) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52061, MESSAGE_TEXT = 'La categoría no existe';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'La categoría no existe',
+                                                'clinica.Protocolo', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52061 AS codigo, 'La categoría no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 3 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52062, MESSAGE_TEXT = 'El nombre debe tener al menos 3 caracteres';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'El nombre debe tener al menos 3 caracteres',
+                                                'clinica.Protocolo', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52062 AS codigo, 'El nombre debe tener al menos 3 caracteres' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_precio IS NULL OR p_precio <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52063, MESSAGE_TEXT = 'El precio debe ser mayor a cero';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'El precio debe ser mayor a cero',
+                                                'clinica.Protocolo', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52063 AS codigo, 'El precio debe ser mayor a cero' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_duracion_min IS NULL OR p_duracion_min <= 0 OR p_duracion_min > 600 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52064, MESSAGE_TEXT = 'La duración debe estar entre 1 y 600 minutos';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'La duración debe estar entre 1 y 600 minutos',
+                                                'clinica.Protocolo', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52064 AS codigo, 'La duración debe estar entre 1 y 600 minutos' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM clinica.Protocolo WHERE nombre = TRIM(p_nombre)) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52065, MESSAGE_TEXT = 'Ya existe un protocolo con ese nombre';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'Ya existe un protocolo con ese nombre',
+                                                'clinica.Protocolo', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52065 AS codigo, 'Ya existe un protocolo con ese nombre' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     START TRANSACTION;
@@ -809,7 +993,7 @@ DROP PROCEDURE IF EXISTS clinica.sp_modificar_protocolo//
 CREATE PROCEDURE clinica.sp_modificar_protocolo(
     IN p_id_protocolo INT, IN p_nombre VARCHAR(100), IN p_descripcion VARCHAR(500), IN p_precio DECIMAL(12,2),
     IN p_duracion_min INT, IN p_activo SMALLINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_antes VARCHAR(400);
@@ -825,22 +1009,46 @@ BEGIN
     SELECT CAST(precio AS CHAR) INTO v_antes
       FROM clinica.Protocolo WHERE id_protocolo = p_id_protocolo;
     IF v_antes IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52060, MESSAGE_TEXT = 'El protocolo no existe';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'El protocolo no existe',
+                                                'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52060 AS codigo, 'El protocolo no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 3 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52062, MESSAGE_TEXT = 'El nombre debe tener al menos 3 caracteres';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'El nombre debe tener al menos 3 caracteres',
+                                                'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52062 AS codigo, 'El nombre debe tener al menos 3 caracteres' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_precio IS NULL OR p_precio <= 0 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52063, MESSAGE_TEXT = 'El precio debe ser mayor a cero';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'El precio debe ser mayor a cero',
+                                                'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52063 AS codigo, 'El precio debe ser mayor a cero' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_duracion_min IS NULL OR p_duracion_min <= 0 OR p_duracion_min > 600 THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52064, MESSAGE_TEXT = 'La duración debe estar entre 1 y 600 minutos';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'La duración debe estar entre 1 y 600 minutos',
+                                                'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52064 AS codigo, 'La duración debe estar entre 1 y 600 minutos' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_activo IS NULL OR p_activo NOT IN (0, 1) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52043, MESSAGE_TEXT = 'El estado activo debe ser 0 o 1';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'El estado activo debe ser 0 o 1',
+                                                'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52043 AS codigo, 'El estado activo debe ser 0 o 1' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM clinica.Protocolo WHERE nombre = TRIM(p_nombre) AND id_protocolo <> p_id_protocolo) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52065, MESSAGE_TEXT = 'Ya existe un protocolo con ese nombre';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'Ya existe un protocolo con ese nombre',
+                                                'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52065 AS codigo, 'Ya existe un protocolo con ese nombre' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     START TRANSACTION;
@@ -944,7 +1152,7 @@ DROP PROCEDURE IF EXISTS agenda.sp_alta_turno//
 CREATE PROCEDURE agenda.sp_alta_turno(
     IN p_id_paciente INT, IN p_id_profesional INT, IN p_inicio DATETIME, IN p_protocolos_csv VARCHAR(200),
     IN p_origen VARCHAR(50), IN p_id_usuario INT, IN p_codigo_cupon VARCHAR(50), IN p_id_cirugia_consulta INT)
-BEGIN
+cuerpo: BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_pedidos INT DEFAULT 0;
@@ -976,22 +1184,42 @@ BEGIN
     START TRANSACTION;
     SELECT id_origen INTO v_id_origen FROM agenda.Origen WHERE nombre = p_origen;
     IF v_id_origen IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52070, MESSAGE_TEXT = 'Origen inválido (terminal, web, gestion o sistema)';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'Origen inválido (terminal, web, gestion o sistema)', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52070 AS codigo, 'Origen inválido (terminal, web, gestion o sistema)' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM personas.Paciente WHERE id_paciente = p_id_paciente) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52071, MESSAGE_TEXT = 'La paciente no existe';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'La paciente no existe', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52071 AS codigo, 'La paciente no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_protocolos_csv IS NULL OR TRIM(p_protocolos_csv) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52072, MESSAGE_TEXT = 'El turno necesita al menos un protocolo';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'El turno necesita al menos un protocolo', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52072 AS codigo, 'El turno necesita al menos un protocolo' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_inicio IS NULL OR p_inicio <= auditoria.fn_ahora() THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52073, MESSAGE_TEXT = 'El turno debe ser en el futuro';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'El turno debe ser en el futuro', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52073 AS codigo, 'El turno debe ser en el futuro' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     -- Se bloquea al profesional: dos reservas simultáneas del mismo horario se atienden de a una.
     SELECT id_profesional INTO v_n FROM personas.Profesional WHERE id_profesional = p_id_profesional AND activo = 1 FOR UPDATE;
     IF v_n = 0 OR v_n IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52074, MESSAGE_TEXT = 'El profesional no existe o está dado de baja';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'El profesional no existe o está dado de baja', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52074 AS codigo, 'El profesional no existe o está dado de baja' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     CALL agenda.sp_cargar_protocolos(p_protocolos_csv);
@@ -1003,23 +1231,43 @@ BEGIN
      WHERE p.activo = 1
        AND p.id_protocolo IN (SELECT DISTINCT jt.id FROM agenda.tmp_protocolos_pedidos jt);
     IF v_pedidos = 0 OR v_n <> v_pedidos THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52075, MESSAGE_TEXT = 'Algún protocolo no existe o está dado de baja';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'Algún protocolo no existe o está dado de baja', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52075 AS codigo, 'Algún protocolo no existe o está dado de baja' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM agenda.tmp_protocolos_pedidos jt
                 WHERE NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
                                    WHERE pp.id_profesional = p_id_profesional AND pp.id_protocolo = jt.id)) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52076, MESSAGE_TEXT = 'El profesional no realiza alguno de los protocolos pedidos';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'El profesional no realiza alguno de los protocolos pedidos', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52076 AS codigo, 'El profesional no realiza alguno de los protocolos pedidos' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF v_cirugias > 1 OR (v_cirugias = 1 AND v_n > 1) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52077, MESSAGE_TEXT = 'Una cirugía se agenda sola, sin otros protocolos';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'Una cirugía se agenda sola, sin otros protocolos', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52077 AS codigo, 'Una cirugía se agenda sola, sin otros protocolos' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF p_id_cirugia_consulta IS NOT NULL THEN
         IF v_cirugias > 0 THEN
-            SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52078, MESSAGE_TEXT = 'La consulta previa no puede incluir una cirugía';
+            ROLLBACK;
+            CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                        'La consulta previa no puede incluir una cirugía', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+            SELECT 'ERROR' AS estado, 52078 AS codigo, 'La consulta previa no puede incluir una cirugía' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+            LEAVE cuerpo;
         END IF;
         IF NOT EXISTS (SELECT 1 FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
                         WHERE p.id_protocolo = p_id_cirugia_consulta AND p.activo = 1 AND c.requiere_evaluacion = 1) THEN
-            SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52079, MESSAGE_TEXT = 'La consulta previa debe ser para una cirugía existente';
+            ROLLBACK;
+            CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                        'La consulta previa debe ser para una cirugía existente', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+            SELECT 'ERROR' AS estado, 52079 AS codigo, 'La consulta previa debe ser para una cirugía existente' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+            LEAVE cuerpo;
         END IF;
     END IF;
 
@@ -1030,15 +1278,27 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM personas.Disponibilidad d
                     WHERE d.id_profesional = p_id_profesional AND d.activa = 1 AND d.fecha = DATE(p_inicio)
                       AND DATE(v_fin) = DATE(p_inicio) AND d.hora_inicio <= TIME(p_inicio) AND d.hora_fin >= TIME(v_fin)) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52080, MESSAGE_TEXT = 'El horario está fuera de la disponibilidad del profesional';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'El horario está fuera de la disponibilidad del profesional', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52080 AS codigo, 'El horario está fuera de la disponibilidad del profesional' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_profesional = p_id_profesional AND t.id_estado_turno <> v_cancelado
                   AND t.fecha_hora_inicio < v_fin AND t.fecha_hora_fin > p_inicio) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52081, MESSAGE_TEXT = 'El profesional ya tiene un turno en ese horario';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'El profesional ya tiene un turno en ese horario', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52081 AS codigo, 'El profesional ya tiene un turno en ese horario' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
     IF EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_paciente = p_id_paciente AND t.id_estado_turno <> v_cancelado
                   AND t.fecha_hora_inicio < v_fin AND t.fecha_hora_fin > p_inicio) THEN
-        SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52082, MESSAGE_TEXT = 'La paciente ya tiene un turno en ese horario';
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                    'La paciente ya tiene un turno en ese horario', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, 52082 AS codigo, 'La paciente ya tiene un turno en ese horario' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        LEAVE cuerpo;
     END IF;
 
     -- Cirugía: hace falta una evaluación apta, de menos de 6 meses y sin usar.
@@ -1051,7 +1311,11 @@ BEGIN
            AND ev.fecha_resultado + INTERVAL 6 MONTH >= auditoria.fn_ahora()
            AND NOT EXISTS (SELECT 1 FROM agenda.Turno t2 WHERE t2.id_evaluacion_previa = ev.id_evaluacion AND t2.id_estado_turno <> v_cancelado);
         IF v_eval IS NULL THEN
-            SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52083, MESSAGE_TEXT = 'La cirugía necesita una consulta previa con resultado apto de menos de 6 meses';
+            ROLLBACK;
+            CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                        'La cirugía necesita una consulta previa con resultado apto de menos de 6 meses', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+            SELECT 'ERROR' AS estado, 52083 AS codigo, 'La cirugía necesita una consulta previa con resultado apto de menos de 6 meses' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+            LEAVE cuerpo;
         END IF;
     END IF;
 
@@ -1060,16 +1324,32 @@ BEGIN
         SELECT id_cupon, id_paciente, id_turno, fecha_vencimiento INTO v_cupon, v_cupon_pac, v_cupon_turno, v_cupon_venc
           FROM beneficios.Cupon WHERE codigo = TRIM(p_codigo_cupon) FOR UPDATE;
         IF v_cupon IS NULL THEN
-            SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52084, MESSAGE_TEXT = 'El cupón no existe';
+            ROLLBACK;
+            CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                        'El cupón no existe', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+            SELECT 'ERROR' AS estado, 52084 AS codigo, 'El cupón no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+            LEAVE cuerpo;
         END IF;
         IF v_cupon_pac <> p_id_paciente THEN
-            SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52085, MESSAGE_TEXT = 'El cupón es de otra paciente';
+            ROLLBACK;
+            CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                        'El cupón es de otra paciente', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+            SELECT 'ERROR' AS estado, 52085 AS codigo, 'El cupón es de otra paciente' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+            LEAVE cuerpo;
         END IF;
         IF v_cupon_turno IS NOT NULL THEN
-            SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52086, MESSAGE_TEXT = 'El cupón ya fue usado';
+            ROLLBACK;
+            CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                        'El cupón ya fue usado', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+            SELECT 'ERROR' AS estado, 52086 AS codigo, 'El cupón ya fue usado' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+            LEAVE cuerpo;
         END IF;
         IF v_cupon_venc <= auditoria.fn_ahora() THEN
-            SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52087, MESSAGE_TEXT = 'El cupón está vencido';
+            ROLLBACK;
+            CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                        'El cupón está vencido', 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+            SELECT 'ERROR' AS estado, 52087 AS codigo, 'El cupón está vencido' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+            LEAVE cuerpo;
         END IF;
     END IF;
 

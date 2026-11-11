@@ -19,11 +19,23 @@ import { randomInt } from 'node:crypto';
 import mysql from 'mysql2/promise';
 
 /* Llama a un stored procedure y devuelve las filas de su primer conjunto de resultados. */
+/* Los SP devuelven el apellido en `paciente` o `profesional` y el nombre en `paciente_nombre` o
+ * `profesional_nombre` (el material de la cátedra no enseña CONCAT): acá se arma "Apellido, Nombre". */
+function unirNombres(fila) {
+  for (const clave of ['paciente', 'profesional', 'destinatario']) {
+    if (fila[`${clave}_nombre`] !== undefined) {
+      fila[clave] = `${fila[clave]}, ${fila[`${clave}_nombre`]}`;
+      delete fila[`${clave}_nombre`];
+    }
+  }
+  return fila;
+}
+
 async function llamar(pool, sp, parametros = []) {
   const marcas = parametros.map(() => '?').join(', ');
   const [resultado] = await pool.query(`CALL ${sp}(${marcas})`, parametros);
   const conjuntos = Array.isArray(resultado) ? resultado : [];
-  return Array.isArray(conjuntos[0]) ? conjuntos[0] : [];
+  return Array.isArray(conjuntos[0]) ? conjuntos[0].map(unirNombres) : [];
 }
 
 /* Los SP que escriben devuelven una fila {estado, codigo, mensaje, id, valor, dato}. */

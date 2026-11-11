@@ -65,7 +65,7 @@ END//
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_cancelaciones_inasistencias//
 CREATE PROCEDURE agenda.sp_reporte_cancelaciones_inasistencias(IN p_desde DATE, IN p_hasta DATE, IN p_agrupar VARCHAR(10))
 BEGIN
-    DECLARE v_semana TINYINT DEFAULT (p_agrupar = 'semana');
+    DECLARE v_semana SMALLINT DEFAULT (p_agrupar = 'semana');
     SELECT x.periodo, x.origen,
            COUNT(*) AS turnos,
            SUM(x.estado = 'cancelado') AS cancelados,
@@ -171,7 +171,7 @@ BEGIN
            COALESCE(o.turnos, 0) AS turnos,
            ROUND(100 * COALESCE(o.horas, 0) / NULLIF(d.horas, 0), 1) AS ocupacion_pct
       FROM personas.Profesional pr
-      LEFT JOIN (SELECT dd.id_profesional, SUM(TIME_TO_SEC(TIMEDIFF(dd.hora_fin, dd.hora_inicio))) / 3600 AS horas
+      LEFT JOIN (SELECT dd.id_profesional, SUM((EXTRACT(HOUR FROM dd.hora_fin) - EXTRACT(HOUR FROM dd.hora_inicio)) * 60 + EXTRACT(MINUTE FROM dd.hora_fin) - EXTRACT(MINUTE FROM dd.hora_inicio)) / 60 AS horas
                    FROM personas.Disponibilidad dd
                   WHERE dd.activa = 1 AND dd.fecha BETWEEN p_desde AND p_hasta
                   GROUP BY dd.id_profesional) d ON d.id_profesional = pr.id_profesional
@@ -212,7 +212,7 @@ END//
 DROP PROCEDURE IF EXISTS pagos.sp_reporte_tarjetas_regalo//
 CREATE PROCEDURE pagos.sp_reporte_tarjetas_regalo(IN p_desde DATE, IN p_hasta DATE)
 BEGIN
-    SELECT t.id_tarjeta, CONCAT(LEFT(t.codigo, 7), '…') AS codigo, t.comprador_nombre, mp.nombre AS medio_compra,
+    SELECT t.id_tarjeta, CONCAT(SUBSTRING(t.codigo FROM 1 FOR 7), '…') AS codigo, t.comprador_nombre, mp.nombre AS medio_compra,
            DATE(t.fecha_compra) AS fecha_compra, DATE(t.fecha_vencimiento) AS vence,
            t.monto_inicial,
            COALESCE(SUM(CASE WHEN m.monto > 0 THEN m.monto END), 0) AS gastado,
@@ -243,7 +243,7 @@ END//
 DROP PROCEDURE IF EXISTS auditoria.sp_reporte_auditoria//
 CREATE PROCEDURE auditoria.sp_reporte_auditoria(
     IN p_desde DATE, IN p_hasta DATE, IN p_tipo_evento VARCHAR(50), IN p_id_usuario INT,
-    IN p_id_paciente INT, IN p_exitoso TINYINT, IN p_origen VARCHAR(50))
+    IN p_id_paciente INT, IN p_exitoso SMALLINT, IN p_origen VARCHAR(50))
 BEGIN
     SELECT l.id_log, l.fecha_hora, te.nombre AS evento, COALESCE(u.nombre_usuario, '(sin usuario)') AS usuario,
            r.nombre AS rol, CONCAT(p.apellido, ', ', p.nombre) AS paciente, o.nombre AS origen,

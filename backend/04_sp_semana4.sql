@@ -110,7 +110,7 @@ BEGIN
             (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'confirmación'), v_paciente, p_id_turno,
             CONCAT('Tu turno quedó confirmado: ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), '.'),
             auditoria.fn_ahora());
-    SET v_programada = GREATEST(v_inicio - INTERVAL 24 HOUR, auditoria.fn_ahora());
+    SET v_programada = CASE WHEN v_inicio - INTERVAL 24 HOUR > auditoria.fn_ahora() THEN v_inicio - INTERVAL 24 HOUR ELSE auditoria.fn_ahora() END;
     INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, id_turno, mensaje, fecha_programada)
     VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
             (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'recordatorio de turno'), v_paciente, p_id_turno,
@@ -139,7 +139,7 @@ BEGIN
     DECLARE v_pago INT DEFAULT NULL;
     DECLARE v_monto DECIMAL(12,2) DEFAULT 0;
     DECLARE v_estado_pago VARCHAR(50);
-    DECLARE v_total TINYINT;
+    DECLARE v_total SMALLINT;
     DECLARE v_reembolsado DECIMAL(12,2) DEFAULT 0;
     DECLARE v_resultado VARCHAR(50) DEFAULT 'sin seña';
     DECLARE v_canal INT;
@@ -338,7 +338,7 @@ CREATE PROCEDURE clinica.sp_vencer_evaluaciones(IN p_origen VARCHAR(50))
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
-    DECLARE v_fin TINYINT DEFAULT 0;
+    DECLARE v_fin SMALLINT DEFAULT 0;
     DECLARE v_eval INT;
     DECLARE v_pago INT;
     DECLARE v_cuenta INT DEFAULT 0;
@@ -456,7 +456,7 @@ BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_max_antes INT DEFAULT 0;
-    DECLARE v_fin TINYINT DEFAULT 0;
+    DECLARE v_fin SMALLINT DEFAULT 0;
     DECLARE v_id INT;
     DECLARE v_pac INT;
     DECLARE v_pct DECIMAL(5,2);
@@ -480,7 +480,7 @@ BEGIN
     INSERT INTO beneficios.Cupon (id_regla, id_paciente, codigo, secreto, porcentaje_descuento, fecha_emision, fecha_vencimiento)
     WITH RECURSIVE nums AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM nums WHERE n < 30)
     SELECT cand.id_regla, cand.id_paciente,
-           CONCAT('DER-', UPPER(LEFT(REPLACE(UUID(), '-', ''), 8))),
+           CONCAT('DER-', UPPER(SUBSTRING(REPLACE(UUID(), '-', '') FROM 1 FOR 8))),
            UUID(),
            cand.pct, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL cand.vig WEEK
       FROM (
@@ -728,7 +728,7 @@ BEGIN
     END IF;
 
     START TRANSACTION;
-    SET v_codigo = CONCAT('GC-', UPPER(LEFT(REPLACE(UUID(), '-', ''), 24)));
+    SET v_codigo = CONCAT('GC-', UPPER(SUBSTRING(REPLACE(UUID(), '-', '') FROM 1 FOR 24)));
     INSERT INTO pagos.TarjetaRegalo (id_medio_pago, codigo, monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono)
     VALUES (v_medio, v_codigo, p_monto, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL 12 MONTH, TRIM(p_comprador_nombre), NULLIF(p_comprador_telefono, ''));
     SET v_id = LAST_INSERT_ID();
@@ -825,7 +825,7 @@ BEGIN
            SET id_estado_notificacion = (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = v_nuevo),
                intentos = intentos + 1,
                fecha_envio = IF(p_resultado = 'enviada', auditoria.fn_ahora(), fecha_envio),
-               detalle_error = IF(p_resultado = 'fallida', LEFT(p_detalle, 500), NULL)
+               detalle_error = IF(p_resultado = 'fallida', SUBSTRING(p_detalle FROM 1 FOR 500), NULL)
          WHERE id_notificacion = p_id_notificacion;
         CALL auditoria.sp_registrar_log('notificacion_enviada', NULL, v_paciente, 'sistema',
             CONCAT('Notificación ', p_id_notificacion, ': ', p_resultado, ' (intento ', v_intentos + 1, ')'),
@@ -842,7 +842,7 @@ END//
 -- Saca emails y números largos (teléfonos, DNI, tarjetas) antes de guardar o
 -- de mandar el texto a la IA: al asistente no se le envían datos personales.
 DROP FUNCTION IF EXISTS asistente.fn_filtrar_datos_personales//
-CREATE FUNCTION asistente.fn_filtrar_datos_personales(p_texto LONGTEXT) RETURNS LONGTEXT
+CREATE FUNCTION asistente.fn_filtrar_datos_personales(p_texto TEXT) RETURNS TEXT
     DETERMINISTIC NO SQL
 BEGIN
     RETURN REGEXP_REPLACE(REGEXP_REPLACE(p_texto, '[^@ ]+@[^@ ]+[.][^@ ]+', '[email]'),
@@ -853,8 +853,8 @@ END//
 -- supo responder y se derivó al WhatsApp del instituto.
 DROP PROCEDURE IF EXISTS asistente.sp_registrar_consulta//
 CREATE PROCEDURE asistente.sp_registrar_consulta(
-    IN p_id_paciente INT, IN p_origen VARCHAR(50), IN p_pregunta LONGTEXT, IN p_respuesta LONGTEXT,
-    IN p_derivada TINYINT, IN p_id_usuario INT)
+    IN p_id_paciente INT, IN p_origen VARCHAR(50), IN p_pregunta TEXT, IN p_respuesta TEXT,
+    IN p_derivada SMALLINT, IN p_id_usuario INT)
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';

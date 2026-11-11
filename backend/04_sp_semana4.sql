@@ -21,7 +21,7 @@ DELIMITER //
 DROP PROCEDURE IF EXISTS pagos.sp_registrar_sena//
 CREATE PROCEDURE pagos.sp_registrar_sena(
     IN p_id_turno INT, IN p_medio_pago VARCHAR(50), IN p_codigo_tarjeta VARCHAR(50),
-    IN p_id_usuario INT, IN p_origen VARCHAR(50))
+    IN p_id_usuario INT, IN p_origen VARCHAR(50), IN p_codigo_operacion VARCHAR(50))
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
@@ -86,8 +86,10 @@ BEGIN
         END IF;
     END IF;
 
-    -- Código de operación: la fecha (AAAAMMDD) y el número de turno, todo junto como número.
-    SET v_codigo = CAST(CAST(DATE_FORMAT(auditoria.fn_ahora(), '%Y%m%d') AS UNSIGNED) * 100000 + p_id_turno AS CHAR);
+    -- El código lo genera la aplicación (escritorio o web) y llega en p_codigo_operacion. Si no llega,
+    -- se arma con la fecha (AAAAMMDD) y el número de turno, todo junto como número.
+    SET v_codigo = COALESCE(NULLIF(TRIM(p_codigo_operacion), ''),
+                            CAST(CAST(DATE_FORMAT(auditoria.fn_ahora(), '%Y%m%d') AS UNSIGNED) * 100000 + p_id_turno AS CHAR));
     INSERT INTO pagos.PagoSena (id_turno, id_estado_pago, id_medio_pago, monto, fecha_pago, codigo_operacion)
     VALUES (p_id_turno, (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 'pagada'), v_medio, v_monto,
             auditoria.fn_ahora(), v_codigo);
@@ -720,7 +722,7 @@ END//
 DROP PROCEDURE IF EXISTS pagos.sp_comprar_tarjeta//
 CREATE PROCEDURE pagos.sp_comprar_tarjeta(
     IN p_monto DECIMAL(12,2), IN p_medio_pago VARCHAR(50), IN p_comprador_nombre VARCHAR(100),
-    IN p_comprador_telefono VARCHAR(30), IN p_id_usuario INT, IN p_origen VARCHAR(50))
+    IN p_comprador_telefono VARCHAR(30), IN p_id_usuario INT, IN p_origen VARCHAR(50), IN p_codigo VARCHAR(50))
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
@@ -751,7 +753,8 @@ BEGIN
     END IF;
 
     START TRANSACTION;
-    SELECT CAST(1000000 + COALESCE(MAX(id_tarjeta), 0) + 1 AS CHAR) INTO v_codigo FROM pagos.TarjetaRegalo;
+    -- El código lo genera la aplicación y llega en p_codigo. Si no llega, se numera.
+    SELECT COALESCE(NULLIF(TRIM(p_codigo), ''), CAST(1000000 + COALESCE(MAX(id_tarjeta), 0) + 1 AS CHAR)) INTO v_codigo FROM pagos.TarjetaRegalo;
     INSERT INTO pagos.TarjetaRegalo (id_medio_pago, codigo, monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono)
     VALUES (v_medio, v_codigo, p_monto, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL 12 MONTH, TRIM(p_comprador_nombre), NULLIF(p_comprador_telefono, ''));
     SELECT MAX(id_tarjeta) INTO v_id FROM pagos.TarjetaRegalo WHERE codigo = v_codigo;

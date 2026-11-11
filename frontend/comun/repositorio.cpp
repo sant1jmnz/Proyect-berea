@@ -1,15 +1,16 @@
+#include <QRandomGenerator>
 #include "repositorio.h"
 
-#include <QCryptographicHash>
 #include <QStringList>
 
 /* Formato de fecha y hora que usan los stored procedures. */
 const QString FORMATO_FECHA_HORA = "yyyy-MM-dd HH:mm:ss";
 
-/* SHA-256 en hexadecimal: es lo que esperan sp_login y sp_crear_cuenta_paciente. */
+/* La base guarda y compara las contraseñas tal cual (sin hash ni encriptación, decisión del
+ * equipo), así que la clave se manda sin transformar. */
 QString Repositorio::hashClave(const QString &clave)
 {
-    return QString::fromLatin1(QCryptographicHash::hash(clave.toUtf8(), QCryptographicHash::Sha256).toHex());
+    return clave;
 }
 
 /* Resume lo que devolvió `BaseDatos::llamar` de un SP que escribe. Si el SP
@@ -203,7 +204,9 @@ Respuesta Repositorio::altaTurno(int idPaciente, int idProfesional, const QDateT
 Respuesta Repositorio::registrarSena(int idTurno, const QString &medioPago, const QString &codigoTarjeta,
                                      const QString &origen, int idUsuario)
 {
-    return aRespuesta(base.llamar("pagos.sp_registrar_sena", { idTurno, medioPago, textoONulo(codigoTarjeta), idONulo(idUsuario), origen }));
+    /* El código de operación lo genera la aplicación (la base solo lo guarda). */
+    const QString codigoOperacion = QString("SIM-%1").arg(QRandomGenerator::global()->bounded(100000, 1000000));
+    return aRespuesta(base.llamar("pagos.sp_registrar_sena", { idTurno, medioPago, textoONulo(codigoTarjeta), idONulo(idUsuario), origen, codigoOperacion }));
 }
 
 Respuesta Repositorio::cancelarTurno(int idTurno, const QString &origen, int idUsuario)

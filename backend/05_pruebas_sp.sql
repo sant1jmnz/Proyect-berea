@@ -667,11 +667,11 @@ SELECT ((SELECT COUNT(*) FROM agenda.Turno t JOIN personas.Paciente p ON p.id_pa
 -- J. SEÑA, CANCELACIÓN Y ASISTENCIA
 -- ======================================================================
 
--- @caso sp_registrar_sena.1 | Éxito | Seña del turno 1 en efectivo: $27.000, turno confirmado, código de operación, confirmación y recordatorio programados
+-- @caso sp_registrar_sena.1 | Éxito | Seña del turno 1 en efectivo: $27.000, turno confirmado, se guarda el código de operación que genera la aplicación, confirmación y recordatorio programados
 -- @espera ok
-CALL pagos.sp_registrar_sena(@t1, 'efectivo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t1, 'efectivo', NULL, 1, 'gestion', 'SIM-123456');
 -- @espera verdadero
-SELECT ((SELECT ps.monto = 27000 AND ps.codigo_operacion IS NOT NULL AND ep.nombre = 'pagada' FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_turno = @t1)) AS verificacion;
+SELECT ((SELECT ps.monto = 27000 AND ps.codigo_operacion = 'SIM-123456' AND ep.nombre = 'pagada' FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_turno = @t1)) AS verificacion;
 -- @espera verdadero
 SELECT ((SELECT e.nombre FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno WHERE t.id_turno = @t1) = 'confirmado') AS verificacion;
 -- @espera verdadero
@@ -679,21 +679,21 @@ SELECT ((SELECT COUNT(*) FROM notificaciones.Notificacion WHERE id_turno = @t1) 
 
 -- @caso sp_registrar_sena.2 | Sin coincidencias | Turno inexistente (52110), ya pagado (52111), medio de pago inexistente (52114), tarjeta inexistente (52117)
 -- @espera error 52110
-CALL pagos.sp_registrar_sena(99999999, 'efectivo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(99999999, 'efectivo', NULL, 1, 'gestion', NULL);
 -- @espera error 52111
-CALL pagos.sp_registrar_sena(@t1, 'efectivo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t1, 'efectivo', NULL, 1, 'gestion', NULL);
 -- @espera error 52114
-CALL pagos.sp_registrar_sena(@t2, 'bitcoin', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t2, 'bitcoin', NULL, 1, 'gestion', NULL);
 -- @espera error 52117
-CALL pagos.sp_registrar_sena(@t2, 'tarjeta de regalo', 'GC-NOEXISTE', 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t2, 'tarjeta de regalo', 'GC-NOEXISTE', 1, 'gestion', NULL);
 
 -- @caso sp_registrar_sena.3 | Nulos y límites | Turno NULL, medio NULL y tarjeta de regalo sin código
 -- @espera error 52110
-CALL pagos.sp_registrar_sena(NULL, 'efectivo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(NULL, 'efectivo', NULL, 1, 'gestion', NULL);
 -- @espera error 52114
-CALL pagos.sp_registrar_sena(@t2, NULL, NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t2, NULL, NULL, 1, 'gestion', NULL);
 -- @espera error 52117
-CALL pagos.sp_registrar_sena(@t2, 'tarjeta de regalo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t2, 'tarjeta de regalo', NULL, 1, 'gestion', NULL);
 
 -- @caso sp_registrar_sena.4 | Consistencia | El monto cobrado coincide con fn_sena y con 30% del precio; el rechazo de la tarjeta quedó en el log
 -- @espera verdadero
@@ -722,7 +722,7 @@ CALL agenda.sp_cancelar_turno(NULL, 1, 'gestion');
 CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-16 09:00:00', '1', 'web', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @t4 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera ok
-CALL pagos.sp_registrar_sena(@t4, 'transferencia', NULL, NULL, 'web');
+CALL pagos.sp_registrar_sena(@t4, 'transferencia', NULL, NULL, 'web', NULL);
 SET @ahora_simulado = '2026-12-15 09:00:00';
 -- @espera ok
 CALL agenda.sp_cancelar_turno(@t4, NULL, 'web');
@@ -745,7 +745,7 @@ SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.i
 CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-16 09:00:00', '1', 'gestion', 1, NULL, NULL);
 SELECT MAX(id_turno) INTO @t5 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera ok
-CALL pagos.sp_registrar_sena(@t5, 'efectivo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t5, 'efectivo', NULL, 1, 'gestion', NULL);
 -- @espera error 52127
 CALL agenda.sp_marcar_turno(@t5, 'realizado', 1, 'gestion');
 SET @ahora_simulado = '2026-12-16 10:30:00';
@@ -770,7 +770,7 @@ SET @ahora_simulado = '2026-11-03 09:00:00';
 CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-17 09:00:00', '1', 'gestion', 1, NULL, NULL);
 SELECT MAX(id_turno) INTO @t6 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera ok
-CALL pagos.sp_registrar_sena(@t6, 'efectivo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t6, 'efectivo', NULL, 1, 'gestion', NULL);
 -- @espera error 52127
 CALL agenda.sp_marcar_turno(@t6, 'ausente', 1, 'gestion');
 
@@ -813,34 +813,34 @@ SELECT ((SELECT monto_reembolsado FROM pagos.PagoSena WHERE id_pago = @pago5) = 
 -- K. TARJETAS DE REGALO
 -- ======================================================================
 
--- @caso sp_comprar_tarjeta.1 | Éxito | Venta de una tarjeta de $300.000 en efectivo: código numérico de 7 cifras, vigencia de 12 meses
+-- @caso sp_comprar_tarjeta.1 | Éxito | Venta de una tarjeta de $300.000 en efectivo: se guarda el código que genera la aplicación, vigencia de 12 meses
 -- @espera ok
-CALL pagos.sp_comprar_tarjeta(300000, 'efectivo', 'Comprador Prueba', '1155550030', 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(300000, 'efectivo', 'Comprador Prueba', '1155550030', 1, 'gestion', 'GC-PRUEBA01');
 SELECT codigo INTO @gc FROM pagos.TarjetaRegalo WHERE comprador_nombre = 'Comprador Prueba';
 -- @espera verdadero
-SELECT ((SELECT CHAR_LENGTH(codigo) = 7 AND fecha_vencimiento = fecha_compra + INTERVAL 12 MONTH FROM pagos.TarjetaRegalo WHERE codigo = @gc)) AS verificacion;
+SELECT ((SELECT codigo = 'GC-PRUEBA01' AND fecha_vencimiento = fecha_compra + INTERVAL 12 MONTH FROM pagos.TarjetaRegalo WHERE codigo = @gc)) AS verificacion;
 
 -- @caso sp_comprar_tarjeta.2 | Sin coincidencias | Medio de pago inexistente o "tarjeta de regalo" (52151)
 -- @espera error 52151
-CALL pagos.sp_comprar_tarjeta(300000, 'cheque', 'Alguien', NULL, 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(300000, 'cheque', 'Alguien', NULL, 1, 'gestion', NULL);
 -- @espera error 52151
-CALL pagos.sp_comprar_tarjeta(300000, 'tarjeta de regalo', 'Alguien', NULL, 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(300000, 'tarjeta de regalo', 'Alguien', NULL, 1, 'gestion', NULL);
 
 -- @caso sp_comprar_tarjeta.3 | Nulos y límites | Monto 19.999 y 5.000.001 se rechazan, 20.000 y 5.000.000 se aceptan; nombre vacío; teléfono inválido
 -- @espera error 52150
-CALL pagos.sp_comprar_tarjeta(19999, 'efectivo', 'Alguien', NULL, 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(19999, 'efectivo', 'Alguien', NULL, 1, 'gestion', NULL);
 -- @espera error 52150
-CALL pagos.sp_comprar_tarjeta(5000001, 'efectivo', 'Alguien', NULL, 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(5000001, 'efectivo', 'Alguien', NULL, 1, 'gestion', NULL);
 -- @espera error 52150
-CALL pagos.sp_comprar_tarjeta(NULL, 'efectivo', 'Alguien', NULL, 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(NULL, 'efectivo', 'Alguien', NULL, 1, 'gestion', NULL);
 -- @espera ok
-CALL pagos.sp_comprar_tarjeta(20000, 'efectivo', 'Minimo Prueba', NULL, 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(20000, 'efectivo', 'Minimo Prueba', NULL, 1, 'gestion', NULL);
 -- @espera ok
-CALL pagos.sp_comprar_tarjeta(5000000, 'transferencia', 'Maximo Prueba', '', 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(5000000, 'transferencia', 'Maximo Prueba', '', 1, 'gestion', NULL);
 -- @espera error 52152
-CALL pagos.sp_comprar_tarjeta(100000, 'efectivo', '', NULL, 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(100000, 'efectivo', '', NULL, 1, 'gestion', NULL);
 -- @espera error 52032
-CALL pagos.sp_comprar_tarjeta(100000, 'efectivo', 'Alguien', '123', 1, 'gestion');
+CALL pagos.sp_comprar_tarjeta(100000, 'efectivo', 'Alguien', '123', 1, 'gestion', NULL);
 
 -- @caso sp_comprar_tarjeta.4 | Consistencia | Las tres tarjetas válidas existen y las rechazadas no; las compras están en el log
 -- @espera verdadero
@@ -879,9 +879,9 @@ CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-18 09:00:00', '1', 'web', NULL,
 SELECT MAX(id_turno) INTO @t7 FROM agenda.Turno WHERE id_profesional = @prof;
 SELECT codigo INTO @gcmin FROM pagos.TarjetaRegalo WHERE comprador_nombre = 'Minimo Prueba';
 -- @espera error 52117
-CALL pagos.sp_registrar_sena(@t7, 'tarjeta de regalo', @gcmin, NULL, 'web');
+CALL pagos.sp_registrar_sena(@t7, 'tarjeta de regalo', @gcmin, NULL, 'web', NULL);
 -- @espera ok
-CALL pagos.sp_registrar_sena(@t7, 'tarjeta de regalo', @gc, NULL, 'web');
+CALL pagos.sp_registrar_sena(@t7, 'tarjeta de regalo', @gc, NULL, 'web', NULL);
 -- @espera verdadero
 SELECT (pagos.fn_saldo_tarjeta((SELECT id_tarjeta FROM pagos.TarjetaRegalo WHERE codigo = @gc)) = 273000) AS verificacion;
 
@@ -1041,11 +1041,11 @@ CALL beneficios.sp_aplicar_cupon_a_turno(@t9, @cup, @tok, 1, 'gestion');
 -- @espera error 52120
 CALL beneficios.sp_aplicar_cupon_a_turno(NULL, @cup, @tok, 1, 'gestion');
 -- @espera ok
-CALL pagos.sp_registrar_sena(@t9, 'efectivo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t9, 'efectivo', NULL, 1, 'gestion', NULL);
 -- @espera error 52145
 CALL beneficios.sp_aplicar_cupon_a_turno(@t9, @cup, @tok, 1, 'gestion');
 -- @espera error 52116
-CALL pagos.sp_registrar_sena(@t8, 'tarjeta de regalo', @gc, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@t8, 'tarjeta de regalo', @gc, 1, 'gestion', NULL);
 
 -- @caso sp_aplicar_cupon_a_turno.4 | Consistencia | Con cupón la seña es el 30% del precio con descuento; cancelando con más de 24 h el cupón queda libre otra vez
 -- @espera verdadero
@@ -1064,13 +1064,13 @@ CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 10:00:00', '25', 'gestion', 
 SELECT MAX(id_turno) INTO @tc1 FROM agenda.Turno WHERE id_paciente = @pacB AND id_profesional = @prof;
 SELECT id_evaluacion INTO @ev1 FROM clinica.EvaluacionPrevia WHERE id_turno = @tc1;
 -- @espera ok
-CALL pagos.sp_registrar_sena(@tc1, 'efectivo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@tc1, 'efectivo', NULL, 1, 'gestion', NULL);
 -- @espera ok
 CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-14 11:00:00', '25', 'gestion', 1, NULL, 26);
 SELECT MAX(id_turno) INTO @tc2 FROM agenda.Turno WHERE id_paciente = @pacC AND id_profesional = @prof;
 SELECT id_evaluacion INTO @ev2 FROM clinica.EvaluacionPrevia WHERE id_turno = @tc2;
 -- @espera ok
-CALL pagos.sp_registrar_sena(@tc2, 'efectivo', NULL, 1, 'gestion');
+CALL pagos.sp_registrar_sena(@tc2, 'efectivo', NULL, 1, 'gestion', NULL);
 
 -- @caso sp_resolver_evaluacion.1 | Éxito | Después de la consulta, el profesional carga "apto"
 -- @espera error 52133

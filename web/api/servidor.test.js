@@ -45,7 +45,7 @@ test('reserva de punta a punta por HTTP', { skip: !hayBase && 'definir DERMALIA_
     assert.equal(turno.estado, 201, JSON.stringify(turno.cuerpo));
     assert.ok(turno.cuerpo.turno > 0);
     assert.equal(turno.cuerpo.senaRegistrada, true);
-    assert.match(turno.cuerpo.codigoOperacion, /^[0-9]+$/);
+    assert.match(turno.cuerpo.codigoOperacion, /^SIM-/);
 
     // el mismo horario ocupado: la regla de la base lo rechaza
     const pisado = await pedir('/api/turnos', { method: 'POST', body: JSON.stringify({ ...datos, nacimiento: '1990-05-05' }) });

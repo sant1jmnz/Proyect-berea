@@ -21,7 +21,7 @@ CREATE PROCEDURE agenda.sp_reporte_turnos_por_periodo_profesional(
 BEGIN
     SELECT DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m') AS periodo,
            pr.id_profesional,
-           CONCAT(pr.apellido, ', ', pr.nombre) AS profesional,
+           pr.apellido AS profesional, pr.nombre AS profesional_nombre,
            COUNT(*) AS turnos,
            SUM(e.nombre = 'realizado') AS realizados,
            SUM(e.nombre = 'cancelado') AS cancelados,
@@ -37,7 +37,7 @@ BEGIN
      WHERE DATE(t.fecha_hora_inicio) BETWEEN p_desde AND p_hasta
        AND (p_id_profesional IS NULL OR t.id_profesional = p_id_profesional)
      GROUP BY DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m'), pr.id_profesional, pr.apellido, pr.nombre
-     ORDER BY periodo, profesional;
+     ORDER BY periodo, profesional, profesional_nombre;
 END//
 
 -- Reporte 2: ingresos por seña, reembolsos y retenciones, por mes y medio de pago.
@@ -164,7 +164,7 @@ END//
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_ocupacion_profesional//
 CREATE PROCEDURE agenda.sp_reporte_ocupacion_profesional(IN p_desde DATE, IN p_hasta DATE)
 BEGIN
-    SELECT pr.id_profesional, CONCAT(pr.apellido, ', ', pr.nombre) AS profesional,
+    SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre,
            ROUND(COALESCE(d.horas, 0), 1) AS horas_disponibles,
            ROUND(COALESCE(o.horas, 0), 1) AS horas_ocupadas,
            COALESCE(o.turnos, 0) AS turnos,
@@ -211,7 +211,7 @@ END//
 DROP PROCEDURE IF EXISTS pagos.sp_reporte_tarjetas_regalo//
 CREATE PROCEDURE pagos.sp_reporte_tarjetas_regalo(IN p_desde DATE, IN p_hasta DATE)
 BEGIN
-    SELECT t.id_tarjeta, CONCAT(SUBSTRING(t.codigo FROM 1 FOR 7), '…') AS codigo, t.comprador_nombre, mp.nombre AS medio_compra,
+    SELECT t.id_tarjeta, SUBSTRING(t.codigo FROM 1 FOR 7) AS codigo, t.comprador_nombre, mp.nombre AS medio_compra,
            DATE(t.fecha_compra) AS fecha_compra, DATE(t.fecha_vencimiento) AS vence,
            t.monto_inicial,
            COALESCE(SUM(CASE WHEN m.monto > 0 THEN m.monto END), 0) AS gastado,
@@ -245,7 +245,7 @@ CREATE PROCEDURE auditoria.sp_reporte_auditoria(
     IN p_id_paciente INT, IN p_exitoso SMALLINT, IN p_origen VARCHAR(50))
 BEGIN
     SELECT l.id_log, l.fecha_hora, te.nombre AS evento, COALESCE(u.nombre_usuario, '(sin usuario)') AS usuario,
-           r.nombre AS rol, CONCAT(p.apellido, ', ', p.nombre) AS paciente, o.nombre AS origen,
+           r.nombre AS rol, p.apellido AS paciente, p.nombre AS paciente_nombre, o.nombre AS origen,
            l.exitoso, l.descripcion, l.tabla_afectada, l.id_registro_afectado, l.valor_anterior, l.valor_nuevo, l.ip_origen
       FROM auditoria.Log l
       JOIN auditoria.TipoEvento te ON te.id_tipo_evento = l.id_tipo_evento

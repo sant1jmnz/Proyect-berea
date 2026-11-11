@@ -70,7 +70,7 @@ SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN agenda.Origen o ON o.id_orige
 
 -- @caso sp_registrar_log.4 | Consistencia | La descripción se recorta a 500 caracteres y exitoso=0 se conserva
 -- @espera nada
-CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, 'web', CONCAT('prueba log 4 ', REPEAT('x', 600)), NULL, NULL, NULL, NULL, 0, NULL);
+CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, 'web', 'prueba log 4 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', NULL, NULL, NULL, NULL, 0, NULL);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion LIKE 'prueba log 4 %' AND CHAR_LENGTH(descripcion) = 500 AND exitoso = 0) = 1) AS verificacion;
 
@@ -253,7 +253,7 @@ SELECT ((SELECT COUNT(*) FROM personas.TelefonoPaciente WHERE id_paciente = @pac
 
 -- @caso sp_modificar_paciente.4 | Consistencia | El log guarda el valor anterior y el nuevo
 -- @espera verdadero
-SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE tabla_afectada = 'personas.Paciente' AND id_registro_afectado = @pacB AND exitoso = 1 AND valor_anterior LIKE 'Prueba, Berta%' AND valor_nuevo LIKE 'Prueba, Berta María%') >= 1) AS verificacion;
+SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE tabla_afectada = 'personas.Paciente' AND id_registro_afectado = @pacB AND exitoso = 1 AND valor_anterior = 'Berta' AND valor_nuevo = 'Berta María') >= 1) AS verificacion;
 
 -- @caso sp_buscar_paciente.1 | Éxito | Busca por DNI exacto: una fila con sus teléfonos
 -- @espera filas 1
@@ -451,7 +451,7 @@ CALL personas.sp_profesionales_para_protocolos('abc');
 -- @caso sp_profesionales_para_protocolos.4 | Consistencia | Con dos protocolos solo salen quienes hacen los dos; igual a un SELECT directo
 -- @espera igual
 CALL personas.sp_profesionales_para_protocolos('1,2');
-SELECT pr.id_profesional, CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, pr.matricula FROM personas.Profesional pr WHERE pr.activo = 1 AND (SELECT COUNT(*) FROM clinica.ProfesionalProtocolo pp WHERE pp.id_profesional = pr.id_profesional AND pp.id_protocolo IN (1, 2)) = 2 ORDER BY pr.apellido, pr.nombre;
+SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre, pr.matricula FROM personas.Profesional pr WHERE pr.activo = 1 AND (SELECT COUNT(*) FROM clinica.ProfesionalProtocolo pp WHERE pp.id_profesional = pr.id_profesional AND pp.id_protocolo IN (1, 2)) = 2 ORDER BY pr.apellido, pr.nombre;
 
 -- ======================================================================
 -- H. PROTOCOLOS
@@ -518,7 +518,7 @@ SELECT ((SELECT COUNT(*) FROM agenda.TurnoProtocolo tp WHERE tp.id_protocolo = 1
 -- @espera ok
 CALL clinica.sp_modificar_protocolo(@protprueba, 'Protocolo de prueba', 'Solo para pruebas', 65000, 40, 0, 'gestion', 1);
 -- @espera verdadero
-SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE tabla_afectada = 'clinica.Protocolo' AND id_registro_afectado = @protprueba AND valor_anterior LIKE '%precio=50000%' AND valor_nuevo LIKE '%precio=65000%') = 1) AS verificacion;
+SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE tabla_afectada = 'clinica.Protocolo' AND id_registro_afectado = @protprueba AND valor_anterior = '50000.00' AND valor_nuevo = '65000.00') = 1) AS verificacion;
 
 -- @caso sp_listar_protocolos.1 | Éxito | Sin filtros trae todo el catálogo activo (30 de ejemplo + "Otro protocolo")
 -- @espera filas 31
@@ -576,7 +576,7 @@ CALL agenda.sp_horarios_libres('2026-12-14', '26', @prof);
 -- @caso sp_horarios_libres.4 | Consistencia | Igual a una grilla armada a mano: 09:00 a 12:00 cada 30 minutos
 -- @espera igual
 CALL agenda.sp_horarios_libres('2026-12-15', '1', @prof);
-SELECT pr.id_profesional, CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, CAST('2026-12-15' AS DATE) + INTERVAL (540 + 30 * n.n) MINUTE AS inicio, CAST('2026-12-15' AS DATE) + INTERVAL (540 + 30 * n.n + 60) MINUTE AS fin FROM agenda.Numero n JOIN personas.Profesional pr ON pr.id_profesional = @prof WHERE n.n BETWEEN 0 AND 6 ORDER BY n.n;
+SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre, CAST('2026-12-15' AS DATE) + INTERVAL (540 + 30 * n.n) MINUTE AS inicio, CAST('2026-12-15' AS DATE) + INTERVAL (540 + 30 * n.n + 60) MINUTE AS fin FROM agenda.Numero n JOIN personas.Profesional pr ON pr.id_profesional = @prof WHERE n.n BETWEEN 0 AND 6 ORDER BY n.n;
 
 -- @caso sp_alta_turno.1 | Éxito | Limpieza facial del lunes 14/12 a las 9: queda pendiente, termina a las 10 y la seña es el 30%
 -- @espera ok
@@ -1304,9 +1304,9 @@ CALL agenda.sp_turnos_del_periodo('2026-11-30', '2026-11-03');
 -- @caso sp_turnos_del_periodo.4 | Consistencia | Igual a su SELECT directo (mismas filas y valores)
 -- @espera igual
 CALL agenda.sp_turnos_del_periodo('2026-11-03', '2026-11-30');
-SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+SELECT t.id_turno, p.id_paciente, p.apellido AS paciente, p.nombre AS paciente_nombre, p.dni,
            (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
-           CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
+           pr.apellido AS profesional, pr.nombre AS profesional_nombre, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
            (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo WHERE tp.id_turno = t.id_turno) AS protocolos,
            agenda.fn_precio_final(t.id_turno) AS precio_final,
@@ -1416,7 +1416,7 @@ SELECT ((SELECT COUNT(*) FROM personas.Disponibilidad WHERE id_disponibilidad = 
 CALL notificaciones.sp_listar_notificaciones('2026-11-01', '2026-11-30');
 SELECT n.id_notificacion, n.id_turno, c.nombre AS canal, e.nombre AS estado, tn.nombre AS tipo, n.mensaje,
            n.fecha_programada, n.fecha_envio, n.intentos, n.detalle_error,
-           CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+           p.apellido AS paciente, p.nombre AS paciente_nombre, p.dni,
            (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefono,
            t.fecha_hora_inicio
       FROM notificaciones.Notificacion n

@@ -23,11 +23,21 @@ devuelven **una fila con 6 columnas**:
 | `valor` | Un monto (la seña a pagar, lo reembolsado...) |
 | `dato` | Un texto (código de operación, rol, token, código de tarjeta...) |
 
-Si las reglas del negocio lo impiden, **no hay excepción**: vuelve la fila
-`ERROR` con su código y la operación se deshace sola (`EXIT HANDLER`, como en el
-PPT 006 de la cátedra). Además, el intento fallido queda en el log.
-Los SP internos (`pagos.sp_aplicar_reembolso`, `auditoria.sp_registrar_log`) no
-devuelven filas: los usan otros SP.
+Si las reglas del negocio lo impiden, **no hay excepción**: el SP hace `ROLLBACK`, deja el
+intento fallido en el log, devuelve la fila `ERROR` con su código y termina (`IF` y `LEAVE`).
+Los errores del motor los atrapa un `EXIT HANDLER`, como en el PPT 006 de la cátedra.
+Los SP internos (`pagos.sp_aplicar_reembolso`, `auditoria.sp_registrar_log`) los usan otros SP;
+`sp_aplicar_reembolso` devuelve una fila `ERROR` solo si le llegan datos inválidos.
+
+**Nombres en dos columnas.** El material de la cátedra no enseña `CONCAT`, así que las consultas
+devuelven el apellido en `profesional`, `paciente` o `destinatario` y el nombre en
+`profesional_nombre`, `paciente_nombre` o `destinatario_nombre`. Las aplicaciones los unen
+("Apellido, Nombre"): el escritorio en `frontend/comun/repositorio.cpp` y la web en `web/api/servidor.js`.
+
+**Auxiliares** (los usan otros SP): la tabla `agenda.Numero` (0 a 47, reemplaza a las consultas
+recursivas), `agenda.sp_cargar_protocolos` (convierte `'3,7'` en una tabla temporal con `WHILE`),
+`agenda.fn_minutos`, `beneficios.fn_tramo` y `beneficios.fn_segundos_del_tramo`, y las funciones
+`personas.fn_es_dni`, `fn_es_telefono`, `fn_es_email` y `fn_es_usuario`.
 
 **Los SP de consulta** (listados, búsquedas, reportes) devuelven directamente
 las filas de la consulta. Con parámetros `NULL`, vacíos o sin coincidencias
@@ -125,7 +135,6 @@ devuelven 0 filas y no dan error.
 | SP / función | Parámetros | Qué hace |
 |---|---|---|
 | `agenda.sp_reporte_turnos_por_periodo_profesional_tuneado` (SP) | `p_desde DATE, p_hasta DATE, p_id_profesional INT` | Reporte 1 tuneado. Devuelve exactamente lo mismo que el original. |
-| `auditoria.sp_crear_indice_si_falta` (SP) | `p_schema VARCHAR(64), p_tabla VARCHAR(64), p_indice VARCHAR(64), p_columnas VARCHAR(300)` | Crea un índice solo si no existe (MySQL no tiene CREATE INDEX IF NOT EXISTS). Auxiliar del tuning: crea un índice solo si todavía no existe (MySQL no tiene CREATE INDEX IF NOT EXISTS). Se borra apenas termina de usarse. |
 | `pagos.sp_reporte_ingresos_sena_tuneado` (SP) | `p_desde DATE, p_hasta DATE` | Reporte 2 tuneado. Devuelve exactamente lo mismo que el original. |
 
 ## Códigos de error

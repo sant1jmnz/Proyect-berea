@@ -48,7 +48,7 @@ mysql -u root -p < backend/02_datos.sql                      # catálogos y dato
 mysql -u root -p < backend/03_sp_semana3.sql                 # login, ABM, horarios, alta de turno
 mysql -u root -p < backend/04_sp_semana4.sql                 # seña, cancelación, cirugías, cupones, tarjetas, avisos
 mysql -u root -p < backend/05_reportes_semana5.sql           # 8 reportes + auditoría
-mysql -u root -p < backend/06_tuning_semana6.sql             # índices y versiones _tuneado
+mysql -u root -p < backend/06_tuning_semana6.sql             # versiones _tuneado
 mysql -u root -p < backend/07_actividad_con_sps.sql          # (opcional) actividad de ejemplo que llena el log
 mysql -u root -p < backend/08_usuarios.sql                   # usuarios de las aplicaciones (solo pueden EJECUTAR los SP); cambiar las contraseñas
 ```
@@ -72,9 +72,10 @@ restricciones de las tablas) y
 
 ### Convenciones de los stored procedures
 
-- Los que **escriben** abren una transacción, validan con `SIGNAL` (códigos `52xxx`),
-  y tienen un `EXIT HANDLER FOR SQLEXCEPTION` que hace `ROLLBACK`, deja el fallo en el log y
-  devuelve una fila `ERROR` (así lo muestra el PPT 006 de la cátedra).
+- Los que **escriben** abren una transacción y validan con `IF`: si una regla no se cumple, hacen
+  `ROLLBACK`, dejan el fallo en el log, devuelven una fila `ERROR` con su código propio (`52xxx`)
+  y terminan con `LEAVE`. Además tienen un `EXIT HANDLER FOR SQLEXCEPTION` que hace lo mismo con
+  los errores del motor (así lo muestra el PPT 006 de la cátedra).
 - Todos devuelven 6 columnas: `estado, codigo, mensaje, id, valor, dato`.
 - **El log solo se escribe desde los SP** (`auditoria.sp_registrar_log`); nunca con `INSERT` a mano.
 - **Los estados y saldos no se guardan, se calculan** (`fn_sena`, `fn_saldo_tarjeta`,

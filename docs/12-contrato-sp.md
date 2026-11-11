@@ -80,7 +80,7 @@ devuelven 0 filas y no dan error.
 | `personas.sp_profesionales_para_protocolos` (SP) | `p_protocolos_csv VARCHAR(200)` | Profesionales activos habilitados para TODOS los protocolos pedidos (RF-18). p_protocolos_csv: ids separados por coma, por ejemplo '3,7'. |
 | `seguridad.sp_cerrar_sesion` (SP) | `p_id_usuario INT, p_origen VARCHAR(50), p_ip VARCHAR(45)` | Cierre de sesión: solo deja el evento 'cierre_sesion' en el log (la app es quien cierra la ventana). Devuelve error si el usuario no existe. |
 | `seguridad.sp_crear_cuenta_paciente` (SP) | `p_dni VARCHAR(15), p_nombre_usuario VARCHAR(50), p_email VARCHAR(100), p_password VARCHAR(255), p_origen VARCHAR(50)` | Cuenta opcional de una paciente (RF-15): se vincula con su DNI. |
-| `seguridad.sp_login` (SP) | `p_usuario VARCHAR(50), p_password VARCHAR(255), p_ip VARCHAR(45), p_origen VARCHAR(50)` | Ingreso al sistema. La contraseña llega ya hasheada (SHA-256 en hexadecimal). Tras 5 intentos fallidos en 15 minutos la cuenta se bloquea temporalmente; los intentos se cuentan desde el log (modelo, grupo 4, decisión 6). |
+| `seguridad.sp_login` (SP) | `p_usuario VARCHAR(50), p_password VARCHAR(255), p_ip VARCHAR(45), p_origen VARCHAR(50)` | Ingreso al sistema. La contraseña se compara tal cual. Tras 5 intentos fallidos en 15 minutos la cuenta se bloquea temporalmente; los intentos se cuentan desde el log (modelo, grupo 4, decisión 6). |
 
 ### Semana 4 (`backend/04_sp_semana4.sql`): seña, cancelación, cirugías, cupones, tarjetas, avisos, asistente
 

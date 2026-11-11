@@ -479,7 +479,7 @@ BEGIN
     SELECT COALESCE(MAX(id_cupon), 0) INTO v_max_antes FROM beneficios.Cupon;
     START TRANSACTION;
     -- Primero se arma la lista de cupones a emitir con un número de orden (n); el código y el
-    -- secreto salen de ese número (el material no enseña UUID ni funciones de hash).
+    -- secreto salen de ese número (el material no enseña UUID).
     DROP TEMPORARY TABLE IF EXISTS tmp_cupones_nuevos;
     CREATE TEMPORARY TABLE tmp_cupones_nuevos (
         n INT AUTO_INCREMENT PRIMARY KEY, id_regla INT, id_paciente INT, pct DECIMAL(5,2), vig INT);
@@ -550,7 +550,7 @@ END//
 
 -- Token rotativo del cupón: se renueva cada 5 minutos y no se guarda; sale de
 -- una cuenta simple (suma y resto) con el secreto del cupón y el tramo de 5 minutos
--- actual (RNF-14; no es encriptación ni un HMAC, se aclara en la defensa).
+-- actual (RNF-14; es una cuenta simple, se aclara en la defensa).
 DROP FUNCTION IF EXISTS beneficios.fn_token_cupon//
 CREATE FUNCTION beneficios.fn_token_cupon(p_secreto VARCHAR(255), p_tramo BIGINT) RETURNS VARCHAR(8)
     DETERMINISTIC NO SQL

@@ -6,13 +6,6 @@
 /* Formato de fecha y hora que usan los stored procedures. */
 const QString FORMATO_FECHA_HORA = "yyyy-MM-dd HH:mm:ss";
 
-/* La base guarda y compara las contraseñas tal cual (sin hash ni encriptación, decisión del
- * equipo), así que la clave se manda sin transformar. */
-QString Repositorio::hashClave(const QString &clave)
-{
-    return clave;
-}
-
 /* Resume lo que devolvió `BaseDatos::llamar` de un SP que escribe. Si el SP
  * devolvió ERROR, `llamar` ya dejó el mensaje en español y el código. */
 Respuesta Repositorio::aRespuesta(const Resultado &r)
@@ -61,7 +54,7 @@ QString Repositorio::lista(const QVector<int> &ids)
 
 Respuesta Repositorio::login(const QString &usuario, const QString &clave, const QString &ip, const QString &origen)
 {
-    return aRespuesta(base.llamar("seguridad.sp_login", { usuario, hashClave(clave), textoONulo(ip), origen }));
+    return aRespuesta(base.llamar("seguridad.sp_login", { usuario, clave, textoONulo(ip), origen }));
 }
 
 Respuesta Repositorio::altaPaciente(const QString &dni, const QString &nombre, const QString &apellido, const QDate &nacimiento,
@@ -140,7 +133,7 @@ Respuesta Repositorio::altaProfesional(const QString &matricula, const QString &
                                        const QString &origen, int idUsuario)
 {
     return aRespuesta(base.llamar("personas.sp_alta_profesional",
-        { matricula, nombre, apellido, email, telefono, usuario, hashClave(clave), origen, idONulo(idUsuario) }));
+        { matricula, nombre, apellido, email, telefono, usuario, clave, origen, idONulo(idUsuario) }));
 }
 
 Respuesta Repositorio::modificarProfesional(int idProfesional, const QString &nombre, const QString &apellido, const QString &email,

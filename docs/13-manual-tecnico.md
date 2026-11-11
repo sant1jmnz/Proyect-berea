@@ -91,13 +91,11 @@ restricciones de las tablas) y
 
 ### Seguridad
 
-- Las contraseñas se guardan como **SHA-256** sin sal: alcanza para el proyecto, pero en
-  producción hay que pasar a un algoritmo lento con sal (bcrypt/argon2) en la aplicación.
+- Las contraseñas se guardan y se comparan tal cual, sin encriptar (decisión del equipo para este trabajo).
 - La seña es un mock: no se guardan datos de tarjetas (RNF-05).
-- Al asistente de IA no se le mandan datos personales: `asistente.fn_filtrar_datos_personales`
-  tacha emails y números largos antes de guardar.
-- Los códigos de cupón rotan cada 5 minutos (hash SHA-256 del secreto y del tramo de tiempo;
-  no es un HMAC formal). La tarjeta de regalo tiene un código largo y fijo.
+- La pregunta al asistente de IA se guarda tal cual: `asistente.fn_filtrar_datos_personales` ya no tacha datos personales (el material no enseña expresiones regulares).
+- Los códigos de cupón rotan cada 5 minutos (una cuenta simple de suma y resto con el secreto y el tramo
+  de tiempo). Los códigos de seña y de tarjeta de regalo los genera la aplicación y la base solo los guarda.
 
 ### Usuarios de ejemplo
 

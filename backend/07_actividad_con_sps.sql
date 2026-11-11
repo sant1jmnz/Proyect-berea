@@ -13,7 +13,7 @@
 
 -- Un profesional más para la demo, con su agenda de las próximas dos semanas
 SET @ahora_simulado = '2026-10-26 08:30:00';
-CALL personas.sp_alta_profesional('MN 900001', 'Camila', 'Demo', 'camila.demo@dermalia.example', '1155550900', 'dr.demo', SHA2('dermalia2026', 256), 'gestion', 1);
+CALL personas.sp_alta_profesional('MN 900001', 'Camila', 'Demo', 'camila.demo@dermalia.example', '1155550900', 'dr.demo', 'dermalia2026', 'gestion', 1);
 SELECT id_profesional INTO @demo FROM personas.Profesional WHERE matricula = 'MN 900001';
 
 CALL personas.sp_cargar_disponibilidad(@demo, '2026-11-09', '09:00', '13:00', 'gestion', 1);
@@ -34,8 +34,8 @@ CALL clinica.sp_asignar_protocolo(@demo, 22, 1, 'gestion', 1);
 
 -- ===== Lunes 2026-10-26 =====
 SET @ahora_simulado = '2026-10-26 08:45:00';
-CALL seguridad.sp_login('recepcion1', SHA2('dermalia2026', 256), '192.168.0.11', 'gestion');
-CALL seguridad.sp_login('admin', SHA2('dermalia2026', 256), '192.168.0.2', 'gestion');
+CALL seguridad.sp_login('recepcion1', 'dermalia2026', '192.168.0.11', 'gestion');
+CALL seguridad.sp_login('admin', 'dermalia2026', '192.168.0.2', 'gestion');
 SET @ahora_simulado = '2026-10-26 10:00:00';
 CALL agenda.sp_alta_turno(5, @demo, '2026-11-09 09:00:00', '1', 'gestion', 2, NULL, NULL);
 SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;
@@ -49,9 +49,9 @@ CALL seguridad.sp_cerrar_sesion(1, 'gestion', '192.168.0.2');
 
 -- ===== Martes 2026-10-27 =====
 SET @ahora_simulado = '2026-10-27 08:45:00';
-CALL seguridad.sp_login('recepcion1', SHA2('dermalia2026', 256), '192.168.0.11', 'gestion');
-CALL seguridad.sp_login('admin', SHA2('dermalia2026', 256), '192.168.0.2', 'gestion');
-CALL seguridad.sp_login('recepcion2', SHA2('clave-equivocada', 256), '192.168.0.12', 'gestion');   -- intento fallido
+CALL seguridad.sp_login('recepcion1', 'dermalia2026', '192.168.0.11', 'gestion');
+CALL seguridad.sp_login('admin', 'dermalia2026', '192.168.0.2', 'gestion');
+CALL seguridad.sp_login('recepcion2', 'clave-equivocada', '192.168.0.12', 'gestion');   -- intento fallido
 SET @ahora_simulado = '2026-10-27 10:00:00';
 CALL agenda.sp_alta_turno(14, @demo, '2026-11-10 11:00:00', '10', 'web', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;
@@ -61,15 +61,15 @@ SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;
 CALL pagos.sp_registrar_sena(@tdemo, 'tarjeta simulada', NULL, 2, 'gestion');
 CALL agenda.sp_cancelar_turno(@tdemo, 2, 'gestion');
 CALL personas.sp_alta_paciente('41222111', 'Renata', 'Giménez', '1998-04-17', 'renata.gimenez@example.com', '1155550701', 'terminal', NULL);
-CALL seguridad.sp_crear_cuenta_paciente('41222111', 'renata.gimenez', 'renata.gimenez@example.com', SHA2('dermalia2026', 256), 'web');
+CALL seguridad.sp_crear_cuenta_paciente('41222111', 'renata.gimenez', 'renata.gimenez@example.com', 'dermalia2026', 'web');
 SET @ahora_simulado = '2026-10-27 19:30:00';
 CALL seguridad.sp_cerrar_sesion(2, 'gestion', '192.168.0.11');
 CALL seguridad.sp_cerrar_sesion(1, 'gestion', '192.168.0.2');
 
 -- ===== Miércoles 2026-10-28 =====
 SET @ahora_simulado = '2026-10-28 08:45:00';
-CALL seguridad.sp_login('recepcion1', SHA2('dermalia2026', 256), '192.168.0.11', 'gestion');
-CALL seguridad.sp_login('admin', SHA2('dermalia2026', 256), '192.168.0.2', 'gestion');
+CALL seguridad.sp_login('recepcion1', 'dermalia2026', '192.168.0.11', 'gestion');
+CALL seguridad.sp_login('admin', 'dermalia2026', '192.168.0.2', 'gestion');
 SET @ahora_simulado = '2026-10-28 10:00:00';
 CALL agenda.sp_alta_turno(26, @demo, '2026-11-11 09:00:00', '2', 'terminal', 3, NULL, NULL);
 SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;
@@ -84,12 +84,12 @@ CALL seguridad.sp_cerrar_sesion(1, 'gestion', '192.168.0.2');
 
 -- ===== Jueves 2026-10-29 =====
 SET @ahora_simulado = '2026-10-29 08:45:00';
-CALL seguridad.sp_login('recepcion1', SHA2('dermalia2026', 256), '192.168.0.11', 'gestion');
-CALL seguridad.sp_login('admin', SHA2('dermalia2026', 256), '192.168.0.2', 'gestion');
-CALL seguridad.sp_login('nadie', SHA2('x', 256), '181.44.20.7', 'web');   -- intentos de afuera
-CALL seguridad.sp_login('nadie', SHA2('x', 256), '181.44.20.7', 'web');   -- intentos de afuera
-CALL seguridad.sp_login('nadie', SHA2('x', 256), '181.44.20.7', 'web');   -- intentos de afuera
-CALL seguridad.sp_login('nadie', SHA2('x', 256), '181.44.20.7', 'web');   -- intentos de afuera
+CALL seguridad.sp_login('recepcion1', 'dermalia2026', '192.168.0.11', 'gestion');
+CALL seguridad.sp_login('admin', 'dermalia2026', '192.168.0.2', 'gestion');
+CALL seguridad.sp_login('nadie', 'x', '181.44.20.7', 'web');   -- intentos de afuera
+CALL seguridad.sp_login('nadie', 'x', '181.44.20.7', 'web');   -- intentos de afuera
+CALL seguridad.sp_login('nadie', 'x', '181.44.20.7', 'web');   -- intentos de afuera
+CALL seguridad.sp_login('nadie', 'x', '181.44.20.7', 'web');   -- intentos de afuera
 SET @ahora_simulado = '2026-10-29 10:00:00';
 CALL agenda.sp_alta_turno(36, @demo, '2026-11-12 11:00:00', '1', 'gestion', 2, NULL, NULL);
 SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;
@@ -104,9 +104,9 @@ CALL seguridad.sp_cerrar_sesion(1, 'gestion', '192.168.0.2');
 
 -- ===== Viernes 2026-10-30 =====
 SET @ahora_simulado = '2026-10-30 08:45:00';
-CALL seguridad.sp_login('recepcion1', SHA2('dermalia2026', 256), '192.168.0.11', 'gestion');
-CALL seguridad.sp_login('admin', SHA2('dermalia2026', 256), '192.168.0.2', 'gestion');
-CALL seguridad.sp_login('recepcion2', SHA2('clave-equivocada', 256), '192.168.0.12', 'gestion');   -- intento fallido
+CALL seguridad.sp_login('recepcion1', 'dermalia2026', '192.168.0.11', 'gestion');
+CALL seguridad.sp_login('admin', 'dermalia2026', '192.168.0.2', 'gestion');
+CALL seguridad.sp_login('recepcion2', 'clave-equivocada', '192.168.0.12', 'gestion');   -- intento fallido
 SET @ahora_simulado = '2026-10-30 10:00:00';
 CALL agenda.sp_alta_turno(47, @demo, '2026-11-13 09:00:00', '10', 'web', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;
@@ -122,8 +122,8 @@ CALL seguridad.sp_cerrar_sesion(1, 'gestion', '192.168.0.2');
 
 -- ===== Sábado 2026-10-31 =====
 SET @ahora_simulado = '2026-10-31 08:45:00';
-CALL seguridad.sp_login('recepcion1', SHA2('dermalia2026', 256), '192.168.0.11', 'gestion');
-CALL seguridad.sp_login('admin', SHA2('dermalia2026', 256), '192.168.0.2', 'gestion');
+CALL seguridad.sp_login('recepcion1', 'dermalia2026', '192.168.0.11', 'gestion');
+CALL seguridad.sp_login('admin', 'dermalia2026', '192.168.0.2', 'gestion');
 SET @ahora_simulado = '2026-10-31 10:00:00';
 CALL agenda.sp_alta_turno(57, @demo, '2026-11-16 11:00:00', '2', 'terminal', 3, NULL, NULL);
 SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;
@@ -139,8 +139,8 @@ CALL seguridad.sp_cerrar_sesion(1, 'gestion', '192.168.0.2');
 
 -- ===== Lunes 2026-11-02 =====
 SET @ahora_simulado = '2026-11-02 08:45:00';
-CALL seguridad.sp_login('recepcion1', SHA2('dermalia2026', 256), '192.168.0.11', 'gestion');
-CALL seguridad.sp_login('admin', SHA2('dermalia2026', 256), '192.168.0.2', 'gestion');
+CALL seguridad.sp_login('recepcion1', 'dermalia2026', '192.168.0.11', 'gestion');
+CALL seguridad.sp_login('admin', 'dermalia2026', '192.168.0.2', 'gestion');
 SET @ahora_simulado = '2026-11-02 10:00:00';
 CALL agenda.sp_alta_turno(18, @demo, '2026-11-17 09:00:00', '1', 'gestion', 2, NULL, NULL);
 SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;
@@ -156,8 +156,8 @@ CALL seguridad.sp_cerrar_sesion(1, 'gestion', '192.168.0.2');
 
 -- ===== Martes 2026-11-03 =====
 SET @ahora_simulado = '2026-11-03 08:45:00';
-CALL seguridad.sp_login('recepcion1', SHA2('dermalia2026', 256), '192.168.0.11', 'gestion');
-CALL seguridad.sp_login('admin', SHA2('dermalia2026', 256), '192.168.0.2', 'gestion');
+CALL seguridad.sp_login('recepcion1', 'dermalia2026', '192.168.0.11', 'gestion');
+CALL seguridad.sp_login('admin', 'dermalia2026', '192.168.0.2', 'gestion');
 SET @ahora_simulado = '2026-11-03 10:00:00';
 CALL agenda.sp_alta_turno(29, @demo, '2026-11-18 11:00:00', '10', 'web', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;

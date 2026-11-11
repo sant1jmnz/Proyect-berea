@@ -195,7 +195,7 @@ BEGIN
            AND m.id_movimiento = (SELECT MIN(m2.id_movimiento) FROM pagos.MovimientoTarjeta m2 WHERE m2.id_turno = v_turno AND m2.monto > 0);
     END IF;
 
-    CALL auditoria.sp_registrar_log(IF(p_monto_reembolsado > 0, 'reembolso', 'retencion'), p_id_usuario, v_paciente, p_origen,
+    CALL auditoria.sp_registrar_log(CASE WHEN p_monto_reembolsado > 0 THEN 'reembolso' ELSE 'retencion' END, p_id_usuario, v_paciente, p_origen,
         CONCAT(p_motivo, ': reembolsado $', p_monto_reembolsado, ' de $', v_monto, ' (', p_estado, ')'),
         'pagos.PagoSena', p_id_pago, v_anterior,
         CONCAT('estado=', p_estado, ';reembolsado=', p_monto_reembolsado), 1, NULL);
@@ -563,7 +563,7 @@ BEGIN
     UPDATE personas.Profesional SET nombre = TRIM(p_nombre), apellido = TRIM(p_apellido), email = p_email, activo = p_activo
      WHERE id_profesional = p_id_profesional;
     CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen,
-        IF(p_activo = 0, 'Baja del profesional', 'Datos del profesional modificados'),
+        CASE WHEN p_activo = 0 THEN 'Baja del profesional' ELSE 'Datos del profesional modificados' END,
         'personas.Profesional', p_id_profesional, v_antes,
         CONCAT(TRIM(p_apellido), ', ', TRIM(p_nombre), ' <', p_email, '> activo=', p_activo), 1, NULL);
     COMMIT;
@@ -696,7 +696,7 @@ BEGIN
         DELETE FROM clinica.ProfesionalProtocolo WHERE id_profesional = p_id_profesional AND id_protocolo = p_id_protocolo;
     END IF;
     CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen,
-        CONCAT(IF(p_habilitar = 1, 'Se habilita', 'Se quita'), ' el protocolo ', p_id_protocolo, ' al profesional ', p_id_profesional),
+        CONCAT(CASE WHEN p_habilitar = 1 THEN 'Se habilita' ELSE 'Se quita' END, ' el protocolo ', p_id_protocolo, ' al profesional ', p_id_profesional),
         'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Asignación actualizada' AS mensaje, p_id_profesional AS id, NULL AS valor, NULL AS dato;
@@ -818,7 +818,7 @@ BEGIN
        SET nombre = TRIM(p_nombre), descripcion = p_descripcion, precio = p_precio, duracion_min = p_duracion_min, activo = p_activo
      WHERE id_protocolo = p_id_protocolo;
     CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen,
-        IF(p_activo = 0, 'Baja del protocolo', 'Protocolo modificado'), 'clinica.Protocolo', p_id_protocolo, v_antes,
+        CASE WHEN p_activo = 0 THEN 'Baja del protocolo' ELSE 'Protocolo modificado' END, 'clinica.Protocolo', p_id_protocolo, v_antes,
         CONCAT('nombre=', TRIM(p_nombre), ';precio=', p_precio, ';duracion=', p_duracion_min, ';activo=', p_activo), 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Protocolo modificado' AS mensaje, p_id_protocolo AS id, p_precio AS valor, NULL AS dato;

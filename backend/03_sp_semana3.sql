@@ -103,6 +103,36 @@ BEGIN
                 ELSE 1 END;
 END//
 
+-- Minutos entre dos horas del mismo día (reemplaza a TIMESTAMPDIFF, que el material no enseña).
+DROP FUNCTION IF EXISTS agenda.fn_minutos//
+CREATE FUNCTION agenda.fn_minutos(p_inicio DATETIME, p_fin DATETIME) RETURNS INT
+    DETERMINISTIC NO SQL
+BEGIN
+    RETURN (EXTRACT(HOUR FROM p_fin) - EXTRACT(HOUR FROM p_inicio)) * 60 + EXTRACT(MINUTE FROM p_fin) - EXTRACT(MINUTE FROM p_inicio);
+END//
+
+-- Carga en una tabla temporal los ids de una lista separada por comas ('3,7').
+-- Reemplaza a JSON_TABLE: recorre el texto con WHILE, POSITION y SUBSTRING.
+DROP PROCEDURE IF EXISTS agenda.sp_cargar_protocolos//
+CREATE PROCEDURE agenda.sp_cargar_protocolos(IN p_csv VARCHAR(200))
+BEGIN
+    DECLARE v_resto VARCHAR(200);
+    DECLARE v_pos INT;
+    DROP TEMPORARY TABLE IF EXISTS agenda.tmp_protocolos_pedidos;
+    CREATE TEMPORARY TABLE agenda.tmp_protocolos_pedidos (id INT);
+    SET v_resto = COALESCE(p_csv, '');
+    WHILE CHAR_LENGTH(v_resto) > 0 DO
+        SET v_pos = POSITION(',' IN v_resto);
+        IF v_pos = 0 THEN
+            INSERT INTO agenda.tmp_protocolos_pedidos (id) VALUES (CAST(v_resto AS UNSIGNED));
+            SET v_resto = '';
+        ELSE
+            INSERT INTO agenda.tmp_protocolos_pedidos (id) VALUES (CAST(SUBSTRING(v_resto FROM 1 FOR v_pos - 1) AS UNSIGNED));
+            SET v_resto = SUBSTRING(v_resto FROM v_pos + 1);
+        END IF;
+    END WHILE;
+END//
+
 DROP FUNCTION IF EXISTS agenda.fn_precio_total//
 CREATE FUNCTION agenda.fn_precio_total(p_id_turno INT) RETURNS DECIMAL(14,2)
     NOT DETERMINISTIC READS SQL DATA
@@ -440,8 +470,8 @@ CREATE PROCEDURE personas.sp_buscar_paciente(IN p_texto VARCHAR(100))
 BEGIN
     DECLARE v_texto VARCHAR(100) DEFAULT TRIM(COALESCE(p_texto, ''));
     SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email,
-           (SELECT GROUP_CONCAT(tp.telefono ORDER BY tp.id_telefono_paciente SEPARATOR ', ')
-              FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente) AS telefonos,
+           (SELECT tp.telefono FROM personas.TelefonoPaciente tp
+             WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefonos,
            (p.id_usuario IS NOT NULL) AS tiene_cuenta
       FROM personas.Paciente p
      WHERE CHAR_LENGTH(v_texto) >= 3
@@ -711,10 +741,11 @@ BEGIN
     IF p_protocolos_csv IS NULL OR TRIM(p_protocolos_csv) = '' THEN
         SELECT NULL AS id_profesional, NULL AS profesional, NULL AS matricula FROM DUAL WHERE 1 = 0;
     ELSE
+        CALL agenda.sp_cargar_protocolos(p_protocolos_csv);
         SELECT pr.id_profesional, CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, pr.matricula
           FROM personas.Profesional pr
          WHERE pr.activo = 1
-           AND NOT EXISTS (SELECT 1 FROM JSON_TABLE(CONCAT('[', p_protocolos_csv, ']'), '$[*]' COLUMNS (id INT PATH '$')) jt
+           AND NOT EXISTS (SELECT 1 FROM agenda.tmp_protocolos_pedidos jt
                             WHERE NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
                                                WHERE pp.id_profesional = pr.id_profesional AND pp.id_protocolo = jt.id))
          ORDER BY pr.apellido, pr.nombre;
@@ -862,37 +893,37 @@ BEGIN
     DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET v_pedidos = -1;
 
     IF p_fecha IS NOT NULL AND p_protocolos_csv IS NOT NULL AND TRIM(p_protocolos_csv) <> '' THEN
+        CALL agenda.sp_cargar_protocolos(p_protocolos_csv);
         SELECT COUNT(DISTINCT jt.id) INTO v_pedidos
-          FROM JSON_TABLE(CONCAT('[', p_protocolos_csv, ']'), '$[*]' COLUMNS (id INT PATH '$')) jt;
+          FROM agenda.tmp_protocolos_pedidos jt;
         SELECT COUNT(*), COALESCE(SUM(p.duracion_min), 0) INTO v_n, v_dur
           FROM clinica.Protocolo p
          WHERE p.activo = 1
-           AND p.id_protocolo IN (SELECT DISTINCT jt.id FROM JSON_TABLE(CONCAT('[', p_protocolos_csv, ']'), '$[*]' COLUMNS (id INT PATH '$')) jt);
+           AND p.id_protocolo IN (SELECT DISTINCT jt.id FROM agenda.tmp_protocolos_pedidos jt);
     END IF;
     SELECT id_estado_turno INTO v_cancelado FROM agenda.EstadoTurno WHERE nombre = 'cancelado';
 
     IF v_pedidos <= 0 OR v_n <> v_pedidos OR v_dur <= 0 THEN
         SELECT NULL AS id_profesional, NULL AS profesional, NULL AS inicio, NULL AS fin FROM DUAL WHERE 1 = 0;
     ELSE
-        WITH RECURSIVE slots AS (
-            SELECT d.id_profesional, TIMESTAMP(d.fecha, d.hora_inicio) AS inicio, TIMESTAMP(d.fecha, d.hora_fin) AS fin_franja
-              FROM personas.Disponibilidad d
-             WHERE d.fecha = p_fecha AND d.activa = 1 AND (p_id_profesional IS NULL OR d.id_profesional = p_id_profesional)
-            UNION ALL
-            SELECT s.id_profesional, s.inicio + INTERVAL 30 MINUTE, s.fin_franja
-              FROM slots s
-             WHERE s.inicio + INTERVAL 30 MINUTE < s.fin_franja
-        )
+        -- Cada franja se parte en turnos de 30 minutos con la tabla de números.
         SELECT s.id_profesional, CONCAT(pr.apellido, ', ', pr.nombre) AS profesional,
                s.inicio, s.inicio + INTERVAL v_dur MINUTE AS fin
-          FROM slots s
+          FROM (SELECT d.id_profesional,
+                       d.fecha + INTERVAL (EXTRACT(HOUR FROM d.hora_inicio) * 60 + EXTRACT(MINUTE FROM d.hora_inicio) + 30 * nm.n) MINUTE AS inicio,
+                       d.fecha + INTERVAL (EXTRACT(HOUR FROM d.hora_fin) * 60 + EXTRACT(MINUTE FROM d.hora_fin)) MINUTE AS fin_franja
+                  FROM personas.Disponibilidad d
+                  JOIN agenda.Numero nm
+                    ON EXTRACT(HOUR FROM d.hora_inicio) * 60 + EXTRACT(MINUTE FROM d.hora_inicio) + 30 * nm.n
+                       < EXTRACT(HOUR FROM d.hora_fin) * 60 + EXTRACT(MINUTE FROM d.hora_fin)
+                 WHERE d.fecha = p_fecha AND d.activa = 1 AND (p_id_profesional IS NULL OR d.id_profesional = p_id_profesional)) s
           JOIN personas.Profesional pr ON pr.id_profesional = s.id_profesional AND pr.activo = 1
          WHERE s.inicio + INTERVAL v_dur MINUTE <= s.fin_franja
            AND s.inicio > auditoria.fn_ahora()
            AND NOT EXISTS (SELECT 1 FROM agenda.Turno t
                             WHERE t.id_profesional = s.id_profesional AND t.id_estado_turno <> v_cancelado
                               AND t.fecha_hora_inicio < s.inicio + INTERVAL v_dur MINUTE AND t.fecha_hora_fin > s.inicio)
-           AND NOT EXISTS (SELECT 1 FROM JSON_TABLE(CONCAT('[', p_protocolos_csv, ']'), '$[*]' COLUMNS (id INT PATH '$')) jt
+           AND NOT EXISTS (SELECT 1 FROM agenda.tmp_protocolos_pedidos jt
                             WHERE NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
                                                WHERE pp.id_profesional = s.id_profesional AND pp.id_protocolo = jt.id))
          ORDER BY s.inicio, pr.apellido;
@@ -964,17 +995,18 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52074, MESSAGE_TEXT = 'El profesional no existe o está dado de baja';
     END IF;
 
+    CALL agenda.sp_cargar_protocolos(p_protocolos_csv);
     SELECT COUNT(DISTINCT jt.id) INTO v_pedidos
-      FROM JSON_TABLE(CONCAT('[', p_protocolos_csv, ']'), '$[*]' COLUMNS (id INT PATH '$')) jt;
+      FROM agenda.tmp_protocolos_pedidos jt;
     SELECT COUNT(*), COALESCE(SUM(p.duracion_min), 0), COALESCE(SUM(c.requiere_evaluacion), 0), MIN(CASE WHEN c.requiere_evaluacion = 1 THEN p.id_protocolo END)
       INTO v_n, v_dur, v_cirugias, v_cirugia
       FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
      WHERE p.activo = 1
-       AND p.id_protocolo IN (SELECT DISTINCT jt.id FROM JSON_TABLE(CONCAT('[', p_protocolos_csv, ']'), '$[*]' COLUMNS (id INT PATH '$')) jt);
+       AND p.id_protocolo IN (SELECT DISTINCT jt.id FROM agenda.tmp_protocolos_pedidos jt);
     IF v_pedidos = 0 OR v_n <> v_pedidos THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52075, MESSAGE_TEXT = 'Algún protocolo no existe o está dado de baja';
     END IF;
-    IF EXISTS (SELECT 1 FROM JSON_TABLE(CONCAT('[', p_protocolos_csv, ']'), '$[*]' COLUMNS (id INT PATH '$')) jt
+    IF EXISTS (SELECT 1 FROM agenda.tmp_protocolos_pedidos jt
                 WHERE NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
                                    WHERE pp.id_profesional = p_id_profesional AND pp.id_protocolo = jt.id)) THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52076, MESSAGE_TEXT = 'El profesional no realiza alguno de los protocolos pedidos';
@@ -1051,7 +1083,7 @@ BEGIN
     INSERT INTO agenda.TurnoProtocolo (id_turno, id_protocolo, precio_aplicado)
     SELECT v_id_turno, p.id_protocolo, p.precio
       FROM clinica.Protocolo p
-     WHERE p.id_protocolo IN (SELECT DISTINCT jt.id FROM JSON_TABLE(CONCAT('[', p_protocolos_csv, ']'), '$[*]' COLUMNS (id INT PATH '$')) jt);
+     WHERE p.id_protocolo IN (SELECT DISTINCT jt.id FROM agenda.tmp_protocolos_pedidos jt);
 
     IF v_cupon IS NOT NULL THEN
         UPDATE beneficios.Cupon SET id_turno = v_id_turno WHERE id_cupon = v_cupon;
@@ -1097,9 +1129,7 @@ BEGIN
            (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
            CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
-           (SELECT GROUP_CONCAT(pt.nombre ORDER BY pt.nombre SEPARATOR ' + ')
-              FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo
-             WHERE tp.id_turno = t.id_turno) AS protocolos,
+           (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo WHERE tp.id_turno = t.id_turno) AS protocolos,
            agenda.fn_precio_final(t.id_turno) AS precio_final,
            agenda.fn_sena(t.id_turno) AS sena,
            COALESCE(ep.nombre, 'sin seña') AS estado_sena,
@@ -1137,9 +1167,7 @@ BEGIN
            (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
            CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
-           (SELECT GROUP_CONCAT(pt.nombre ORDER BY pt.nombre SEPARATOR ' + ')
-              FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo
-             WHERE tp.id_turno = t.id_turno) AS protocolos,
+           (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo WHERE tp.id_turno = t.id_turno) AS protocolos,
            agenda.fn_precio_final(t.id_turno) AS precio_final,
            agenda.fn_sena(t.id_turno) AS sena,
            COALESCE(ep.nombre, 'sin seña') AS estado_sena,

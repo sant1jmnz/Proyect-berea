@@ -27,7 +27,7 @@ BEGIN
            SUM(e.nombre = 'cancelado') AS cancelados,
            SUM(e.nombre = 'ausente') AS ausentes,
            SUM(e.nombre IN ('pendiente', 'confirmado')) AS vigentes,
-           ROUND(SUM(TIMESTAMPDIFF(MINUTE, t.fecha_hora_inicio, t.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
+           ROUND(SUM(agenda.fn_minutos(t.fecha_hora_inicio, t.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
            SUM(CASE WHEN e.nombre = 'realizado'
                     THEN (SELECT SUM(tp.precio_aplicado) FROM agenda.TurnoProtocolo tp WHERE tp.id_turno = t.id_turno)
                     ELSE 0 END) AS facturado
@@ -100,7 +100,6 @@ BEGIN
            COUNT(*) AS evaluaciones,
            COUNT(tc.id_turno) AS con_cirugia_agendada,
            SUM(r.nombre = 'apto' AND tc.id_turno IS NULL AND ev.fecha_resultado + INTERVAL 6 MONTH < auditoria.fn_ahora()) AS vencidas_sin_cirugia,
-           ROUND(AVG(TIMESTAMPDIFF(DAY, ev.fecha_resultado, tc.fecha_creacion)), 1) AS dias_promedio_hasta_agendar,
            SUM(ev.fecha_reclamo IS NOT NULL) AS reclamos,
            COALESCE(SUM(CASE WHEN ep.nombre IN ('retenida', 'reembolsada parcial') THEN ps.monto - COALESCE(ps.monto_reembolsado, 0) END), 0) AS consulta_retenida
       FROM clinica.EvaluacionPrevia ev
@@ -175,7 +174,7 @@ BEGIN
                    FROM personas.Disponibilidad dd
                   WHERE dd.activa = 1 AND dd.fecha BETWEEN p_desde AND p_hasta
                   GROUP BY dd.id_profesional) d ON d.id_profesional = pr.id_profesional
-      LEFT JOIN (SELECT t.id_profesional, COUNT(*) AS turnos, SUM(TIMESTAMPDIFF(MINUTE, t.fecha_hora_inicio, t.fecha_hora_fin)) / 60 AS horas
+      LEFT JOIN (SELECT t.id_profesional, COUNT(*) AS turnos, SUM(agenda.fn_minutos(t.fecha_hora_inicio, t.fecha_hora_fin)) / 60 AS horas
                    FROM agenda.Turno t
                    JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre <> 'cancelado'
                   WHERE t.fecha_hora_inicio >= p_desde AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY

@@ -259,7 +259,7 @@ salen del turno de la consulta.
   `generar_token_cupon`) y se valida con otro (`validar_cupon`), que además
   deja registrado en el log cada validación aceptada o rechazada.
 - MySQL no trae un HMAC formal; para el trabajo alcanza con una cuenta simple
-  (`CRC32` sobre el secreto y el tramo de tiempo), sin encriptación. Se aclara
+  (una cuenta con suma y resto sobre el secreto y el tramo de tiempo), sin encriptación. Se aclara
   en la defensa.
 
 ### Relaciones y cardinalidades (mín,máx)

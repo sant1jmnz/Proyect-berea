@@ -32,7 +32,7 @@ ejemplo de la base (`backend/02_datos.sql`): paciente **Carla Gómez, DNI
 | # | Tiempo | Dónde | Qué se hace | Qué se cuenta |
 |---|---|---|---|---|
 | 1 | 0:35 | Terminal (Cliente) | La paciente elige **Peeling químico + Mesoterapia**, el sistema ofrece solo los horarios libres de profesionales que hacen **los dos**, confirma | "Solo muestra lo realmente disponible (RF-04): cero superposiciones" |
-| 2 | 0:25 | Terminal | Paga la seña **simulada**: mostrar monto (30%) y el código `SIM-…` | "No mueve dinero real (RNF-05); calcula el 30%, 40% en cirugías" |
+| 2 | 0:25 | Terminal | Paga la seña **simulada**: mostrar monto (30%) y el código de operación | "No mueve dinero real (RNF-05); calcula el 30%, 40% en cirugías" |
 | 3 | 0:30 | Gestión (recepción) | Buscar a Carla por DNI, ver el turno **confirmado**, intentar cargar otro turno en el mismo horario → mensaje de error | "La regla vive en la base: ni la recepción puede pisar un horario" |
 | 4 | 0:25 | Gestión | **Cancelar** el turno con más de 24 h → seña **reembolsada**; mostrar que con menos de 24 h queda retenida | "Reglas de seña y reembolso (RF-10), automáticas" |
 | 5 | 0:35 | Gestión → Auditoría | Abrir el reporte de **auditoría** del día: aparecen el alta, el pago y la cancelación con usuario, hora y origen | "Cada acción queda registrada solo por los stored procedures (RF-20)" |
@@ -50,7 +50,7 @@ de prueba y lo avisan). Para el paso 5 se abre la pantalla **Reportes** (auditor
 Responden los dos. Todos tienen que saberlas.
 
 **"¿La seña es de verdad?"** No. Es un **mock** que imita un pago (estado,
-monto, código `SIM-…`): el sistema no maneja dinero ni datos de tarjeta (RNF-05).
+monto, código de operación): el sistema no maneja dinero ni datos de tarjeta (RNF-05).
 Pasarse a una pasarela real es una etapa posterior y no cambia las reglas.
 
 **"¿Qué pasa con los datos de salud y personales?"** Quedan en una base

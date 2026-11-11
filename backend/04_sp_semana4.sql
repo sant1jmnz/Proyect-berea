@@ -86,7 +86,8 @@ BEGIN
         END IF;
     END IF;
 
-    SET v_codigo = CONCAT('SIM-', DATE_FORMAT(auditoria.fn_ahora(), '%Y%m%d'), '-', LPAD(p_id_turno, 5, '0'));
+    -- Código de operación: la fecha (AAAAMMDD) y el número de turno, todo junto como número.
+    SET v_codigo = CAST(CAST(DATE_FORMAT(auditoria.fn_ahora(), '%Y%m%d') AS UNSIGNED) * 100000 + p_id_turno AS CHAR);
     INSERT INTO pagos.PagoSena (id_turno, id_estado_pago, id_medio_pago, monto, fecha_pago, codigo_operacion)
     VALUES (p_id_turno, (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 'pagada'), v_medio, v_monto,
             auditoria.fn_ahora(), v_codigo);
@@ -165,7 +166,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52122, MESSAGE_TEXT = 'El turno ya empezó o pasó';
     END IF;
 
-    SET v_total = (TIMESTAMPDIFF(MINUTE, auditoria.fn_ahora(), v_inicio) > 24 * 60);
+    SET v_total = (v_inicio > auditoria.fn_ahora() + INTERVAL 24 HOUR);
 
     SELECT ps.id_pago, ps.monto, ep.nombre INTO v_pago, v_monto, v_estado_pago
       FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
@@ -200,7 +201,7 @@ BEGIN
             auditoria.fn_ahora());
 
     CALL auditoria.sp_registrar_log('cancelacion_turno', p_id_usuario, v_paciente, p_origen,
-        CONCAT('Turno ', p_id_turno, ' cancelado con ', TIMESTAMPDIFF(HOUR, auditoria.fn_ahora(), v_inicio), ' h de anticipación; seña: ', v_resultado),
+        CONCAT('Turno ', p_id_turno, ' cancelado; seña: ', v_resultado),
         'agenda.Turno', p_id_turno, v_estado, 'cancelado', 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Turno cancelado' AS mensaje, p_id_turno AS id, v_reembolsado AS valor, v_resultado AS dato;
@@ -475,12 +476,13 @@ BEGIN
 
     SELECT COALESCE(MAX(id_cupon), 0) INTO v_max_antes FROM beneficios.Cupon;
     START TRANSACTION;
-    INSERT INTO beneficios.Cupon (id_regla, id_paciente, codigo, secreto, porcentaje_descuento, fecha_emision, fecha_vencimiento)
-    WITH RECURSIVE nums AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM nums WHERE n < 30)
-    SELECT cand.id_regla, cand.id_paciente,
-           CONCAT('DER-', UPPER(SUBSTRING(REPLACE(UUID(), '-', '') FROM 1 FOR 8))),
-           UUID(),
-           cand.pct, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL cand.vig WEEK
+    -- Primero se arma la lista de cupones a emitir con un número de orden (n); el código y el
+    -- secreto salen de ese número (el material no enseña UUID ni funciones de hash).
+    DROP TEMPORARY TABLE IF EXISTS tmp_cupones_nuevos;
+    CREATE TEMPORARY TABLE tmp_cupones_nuevos (
+        n INT AUTO_INCREMENT PRIMARY KEY, id_regla INT, id_paciente INT, pct DECIMAL(5,2), vig INT);
+    INSERT INTO tmp_cupones_nuevos (id_regla, id_paciente, pct, vig)
+    SELECT cand.id_regla, cand.id_paciente, cand.pct, cand.vig
       FROM (
             -- frecuencia de visitas
             SELECT r.id_regla, p.id_paciente, r.porcentaje_descuento AS pct, r.vigencia_semanas AS vig
@@ -496,7 +498,7 @@ BEGIN
             UNION ALL
             -- gasto acumulado
             SELECT r.id_regla, g.id_paciente, r.porcentaje_descuento, r.vigencia_semanas
-              FROM nums
+              FROM agenda.Numero nums
               JOIN beneficios.ReglaBeneficio r ON TRUE
               JOIN beneficios.TipoRegla tr ON tr.id_tipo_regla = r.id_tipo_regla AND tr.nombre = 'gasto acumulado'
               JOIN (SELECT t.id_paciente, SUM(agenda.fn_precio_final(t.id_turno)) AS gasto
@@ -504,6 +506,7 @@ BEGIN
                      GROUP BY t.id_paciente) g ON TRUE
               JOIN personas.Paciente p ON p.id_paciente = g.id_paciente AND p.id_usuario IS NOT NULL
              WHERE r.activa = 1
+               AND nums.n BETWEEN 1 AND 30
                -- un cupón por cada múltiplo del umbral que la paciente ya superó y todavía no tiene
                AND nums.n > (SELECT COUNT(*) FROM beneficios.Cupon c WHERE c.id_regla = r.id_regla AND c.id_paciente = p.id_paciente)
                AND nums.n <= FLOOR(g.gasto / r.umbral)
@@ -516,6 +519,12 @@ BEGIN
              WHERE r.activa = 1
                AND NOT EXISTS (SELECT 1 FROM beneficios.Cupon c WHERE c.id_regla = r.id_regla AND c.id_paciente = p.id_paciente)
            ) cand;
+
+    INSERT INTO beneficios.Cupon (id_regla, id_paciente, codigo, secreto, porcentaje_descuento, fecha_emision, fecha_vencimiento)
+    SELECT id_regla, id_paciente, CAST(100000 + v_max_antes + n AS CHAR), CAST((v_max_antes + n) * 7919 + id_regla * 104729 AS CHAR),
+           pct, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL vig WEEK
+      FROM tmp_cupones_nuevos
+     ORDER BY n;
 
     SELECT id_canal INTO v_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'WhatsApp asistido';
     OPEN cur;
@@ -538,13 +547,30 @@ BEGIN
 END//
 
 -- Token rotativo del cupón: se renueva cada 5 minutos y no se guarda; sale de
--- una cuenta simple (CRC32) con el secreto del cupón y el tramo de 5 minutos actual
--- (RNF-14; no es encriptación ni un HMAC, se aclara en la defensa).
+-- una cuenta simple (suma y resto) con el secreto del cupón y el tramo de 5 minutos
+-- actual (RNF-14; no es encriptación ni un HMAC, se aclara en la defensa).
 DROP FUNCTION IF EXISTS beneficios.fn_token_cupon//
 CREATE FUNCTION beneficios.fn_token_cupon(p_secreto VARCHAR(255), p_tramo BIGINT) RETURNS VARCHAR(8)
     DETERMINISTIC NO SQL
 BEGIN
-    RETURN UPPER(LPAD(CONV(CRC32(CONCAT(p_secreto, ':', p_tramo)), 10, 16), 8, '0'));
+    RETURN CAST(MOD(CAST(p_secreto AS UNSIGNED) + p_tramo * 104729, 1000003) AS CHAR);
+END//
+
+-- Tramo de 5 minutos de una fecha: horas desde el comienzo del día de la fecha por 12,
+-- más el tramo dentro de la hora (0 a 11). Cambia cada 5 minutos.
+DROP FUNCTION IF EXISTS beneficios.fn_tramo//
+CREATE FUNCTION beneficios.fn_tramo(p_fecha DATETIME) RETURNS BIGINT
+    DETERMINISTIC NO SQL
+BEGIN
+    RETURN CAST(DATE_FORMAT(p_fecha, '%Y%m%d%H') AS UNSIGNED) * 12 + FLOOR(EXTRACT(MINUTE FROM p_fecha) / 5);
+END//
+
+-- Segundos que le quedan al tramo de 5 minutos de una fecha.
+DROP FUNCTION IF EXISTS beneficios.fn_segundos_del_tramo//
+CREATE FUNCTION beneficios.fn_segundos_del_tramo(p_fecha DATETIME) RETURNS INT
+    DETERMINISTIC NO SQL
+BEGIN
+    RETURN 300 - (MOD(EXTRACT(MINUTE FROM p_fecha), 5) * 60 + EXTRACT(SECOND FROM p_fecha));
 END//
 
 -- Pide el token vigente de un cupón (lo muestra la app o el QR de la paciente).
@@ -557,7 +583,6 @@ BEGIN
     DECLARE v_pac INT;
     DECLARE v_turno INT;
     DECLARE v_venc DATETIME;
-    DECLARE v_seg BIGINT DEFAULT TIMESTAMPDIFF(SECOND, '1970-01-01 00:00:00', auditoria.fn_ahora());
 
     SELECT id_cupon, secreto, id_paciente, id_turno, fecha_vencimiento INTO v_id, v_secreto, v_pac, v_turno, v_venc
       FROM beneficios.Cupon WHERE codigo = p_codigo;
@@ -571,7 +596,7 @@ BEGIN
         SELECT 'ERROR' AS estado, 52143 AS codigo, 'El cupón está vencido' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
     ELSE
         SELECT 'OK' AS estado, 0 AS codigo, 'Token vigente por menos de 5 minutos' AS mensaje, v_id AS id,
-               300 - (v_seg MOD 300) AS valor, beneficios.fn_token_cupon(v_secreto, v_seg DIV 300) AS dato;
+               beneficios.fn_segundos_del_tramo(auditoria.fn_ahora()) AS valor, beneficios.fn_token_cupon(v_secreto, beneficios.fn_tramo(auditoria.fn_ahora())) AS dato;
     END IF;
 END//
 
@@ -588,7 +613,7 @@ BEGIN
     DECLARE v_turno INT;
     DECLARE v_venc DATETIME;
     DECLARE v_pct DECIMAL(5,2);
-    DECLARE v_tramo BIGINT DEFAULT TIMESTAMPDIFF(SECOND, '1970-01-01 00:00:00', auditoria.fn_ahora()) DIV 300;
+    DECLARE v_tramo BIGINT DEFAULT beneficios.fn_tramo(auditoria.fn_ahora());
     DECLARE v_motivo VARCHAR(100) DEFAULT NULL;
     DECLARE v_cod INT DEFAULT 0;
 
@@ -627,7 +652,7 @@ BEGIN
     DECLARE v_pac_cupon INT;
     DECLARE v_turno_cupon INT;
     DECLARE v_venc DATETIME;
-    DECLARE v_tramo BIGINT DEFAULT TIMESTAMPDIFF(SECOND, '1970-01-01 00:00:00', auditoria.fn_ahora()) DIV 300;
+    DECLARE v_tramo BIGINT DEFAULT beneficios.fn_tramo(auditoria.fn_ahora());
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
@@ -726,7 +751,7 @@ BEGIN
     END IF;
 
     START TRANSACTION;
-    SET v_codigo = CONCAT('GC-', UPPER(SUBSTRING(REPLACE(UUID(), '-', '') FROM 1 FOR 24)));
+    SELECT CAST(1000000 + COALESCE(MAX(id_tarjeta), 0) + 1 AS CHAR) INTO v_codigo FROM pagos.TarjetaRegalo;
     INSERT INTO pagos.TarjetaRegalo (id_medio_pago, codigo, monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono)
     VALUES (v_medio, v_codigo, p_monto, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL 12 MONTH, TRIM(p_comprador_nombre), NULLIF(p_comprador_telefono, ''));
     SELECT MAX(id_tarjeta) INTO v_id FROM pagos.TarjetaRegalo WHERE codigo = v_codigo;

@@ -82,7 +82,7 @@ SELECT (auditoria.fn_ahora() = '2026-11-03 09:00:00') AS verificacion;
 SET @guardado = @ahora_simulado;
 SET @ahora_simulado = NULL;
 -- @espera verdadero
-SELECT (ABS(TIMESTAMPDIFF(SECOND, auditoria.fn_ahora(), CURRENT_TIMESTAMP)) <= 2) AS verificacion;
+SELECT (auditoria.fn_ahora() BETWEEN CURRENT_TIMESTAMP - INTERVAL 2 SECOND AND CURRENT_TIMESTAMP + INTERVAL 2 SECOND) AS verificacion;
 
 -- @caso fn_ahora.3 | Nulos y límites | Un valor vacío del reloj también cae a CURRENT_TIMESTAMP
 -- @espera verdadero
@@ -276,7 +276,7 @@ CALL personas.sp_buscar_paciente('Pr');
 -- @caso sp_buscar_paciente.4 | Consistencia | Por apellido trae las tres pacientes "Prueba" + Ana y Carla; igual a un SELECT directo
 -- @espera igual
 CALL personas.sp_buscar_paciente('Prueba');
-SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email, (SELECT GROUP_CONCAT(tp.telefono ORDER BY tp.id_telefono_paciente SEPARATOR ', ') FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente) AS telefonos, (p.id_usuario IS NOT NULL) AS tiene_cuenta FROM personas.Paciente p WHERE p.apellido LIKE '%Prueba%' OR p.nombre LIKE '%Prueba%' ORDER BY p.apellido, p.nombre;
+SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email, (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefonos, (p.id_usuario IS NOT NULL) AS tiene_cuenta FROM personas.Paciente p WHERE p.apellido LIKE '%Prueba%' OR p.nombre LIKE '%Prueba%' ORDER BY p.apellido, p.nombre;
 
 -- ======================================================================
 -- G. PROFESIONALES Y DISPONIBILIDAD
@@ -576,7 +576,7 @@ CALL agenda.sp_horarios_libres('2026-12-14', '26', @prof);
 -- @caso sp_horarios_libres.4 | Consistencia | Igual a una grilla armada a mano: 09:00 a 12:00 cada 30 minutos
 -- @espera igual
 CALL agenda.sp_horarios_libres('2026-12-15', '1', @prof);
-WITH RECURSIVE n AS (SELECT 0 AS k UNION ALL SELECT k + 1 FROM n WHERE k < 6) SELECT pr.id_profesional, CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, TIMESTAMP('2026-12-15', '09:00:00') + INTERVAL (30 * n.k) MINUTE AS inicio, TIMESTAMP('2026-12-15', '09:00:00') + INTERVAL (30 * n.k + 60) MINUTE AS fin FROM n JOIN personas.Profesional pr ON pr.id_profesional = @prof ORDER BY n.k;
+SELECT pr.id_profesional, CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, CAST('2026-12-15' AS DATE) + INTERVAL (540 + 30 * n.n) MINUTE AS inicio, CAST('2026-12-15' AS DATE) + INTERVAL (540 + 30 * n.n + 60) MINUTE AS fin FROM agenda.Numero n JOIN personas.Profesional pr ON pr.id_profesional = @prof WHERE n.n BETWEEN 0 AND 6 ORDER BY n.n;
 
 -- @caso sp_alta_turno.1 | Éxito | Limpieza facial del lunes 14/12 a las 9: queda pendiente, termina a las 10 y la seña es el 30%
 -- @espera ok
@@ -631,7 +631,7 @@ CALL agenda.sp_horarios_libres('2026-12-14', '1', @prof);
 CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-15 09:00:00', '2,10', 'terminal', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @t3 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera verdadero
-SELECT ((SELECT TIMESTAMPDIFF(MINUTE, fecha_hora_inicio, fecha_hora_fin) = 75 FROM agenda.Turno WHERE id_turno = @t3) AND agenda.fn_precio_total(@t3) = 240000) AS verificacion;
+SELECT ((SELECT agenda.fn_minutos(fecha_hora_inicio, fecha_hora_fin) = 75 FROM agenda.Turno WHERE id_turno = @t3) AND agenda.fn_precio_total(@t3) = 240000) AS verificacion;
 
 -- @caso sp_alta_turno.6 | Paciente superpuesta | La misma paciente no puede tener dos turnos a la vez (52082)
 -- @espera error 52074
@@ -667,11 +667,11 @@ SELECT ((SELECT COUNT(*) FROM agenda.Turno t JOIN personas.Paciente p ON p.id_pa
 -- J. SEÑA, CANCELACIÓN Y ASISTENCIA
 -- ======================================================================
 
--- @caso sp_registrar_sena.1 | Éxito | Seña del turno 1 en efectivo: $27.000, turno confirmado, código SIM-, confirmación y recordatorio programados
+-- @caso sp_registrar_sena.1 | Éxito | Seña del turno 1 en efectivo: $27.000, turno confirmado, código de operación, confirmación y recordatorio programados
 -- @espera ok
 CALL pagos.sp_registrar_sena(@t1, 'efectivo', NULL, 1, 'gestion');
 -- @espera verdadero
-SELECT ((SELECT ps.monto = 27000 AND ps.codigo_operacion LIKE 'SIM-%' AND ep.nombre = 'pagada' FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_turno = @t1)) AS verificacion;
+SELECT ((SELECT ps.monto = 27000 AND ps.codigo_operacion IS NOT NULL AND ep.nombre = 'pagada' FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_turno = @t1)) AS verificacion;
 -- @espera verdadero
 SELECT ((SELECT e.nombre FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno WHERE t.id_turno = @t1) = 'confirmado') AS verificacion;
 -- @espera verdadero
@@ -813,12 +813,12 @@ SELECT ((SELECT monto_reembolsado FROM pagos.PagoSena WHERE id_pago = @pago5) = 
 -- K. TARJETAS DE REGALO
 -- ======================================================================
 
--- @caso sp_comprar_tarjeta.1 | Éxito | Venta de una tarjeta de $300.000 en efectivo: código GC- de 27 caracteres, vigencia de 12 meses
+-- @caso sp_comprar_tarjeta.1 | Éxito | Venta de una tarjeta de $300.000 en efectivo: código numérico de 7 cifras, vigencia de 12 meses
 -- @espera ok
 CALL pagos.sp_comprar_tarjeta(300000, 'efectivo', 'Comprador Prueba', '1155550030', 1, 'gestion');
 SELECT codigo INTO @gc FROM pagos.TarjetaRegalo WHERE comprador_nombre = 'Comprador Prueba';
 -- @espera verdadero
-SELECT ((SELECT CHAR_LENGTH(codigo) = 27 AND codigo LIKE 'GC-%' AND fecha_vencimiento = fecha_compra + INTERVAL 12 MONTH FROM pagos.TarjetaRegalo WHERE codigo = @gc)) AS verificacion;
+SELECT ((SELECT CHAR_LENGTH(codigo) = 7 AND fecha_vencimiento = fecha_compra + INTERVAL 12 MONTH FROM pagos.TarjetaRegalo WHERE codigo = @gc)) AS verificacion;
 
 -- @caso sp_comprar_tarjeta.2 | Sin coincidencias | Medio de pago inexistente o "tarjeta de regalo" (52151)
 -- @espera error 52151
@@ -946,13 +946,13 @@ SELECT c.codigo INTO @cup_usado FROM beneficios.Cupon c WHERE c.id_cupon = @idcu
 SELECT c.id_paciente INTO @pac_usado FROM beneficios.Cupon c WHERE c.codigo = @cup_usado;
 SELECT MIN(c.id_cupon) INTO @idcup_venc FROM beneficios.Cupon c WHERE c.id_turno IS NULL AND c.fecha_vencimiento <= '2026-11-03 09:00:00';
 SELECT c.codigo, c.id_paciente INTO @cup_venc, @pac_venc FROM beneficios.Cupon c WHERE c.id_cupon = @idcup_venc;
-SELECT beneficios.fn_token_cupon(secreto, TIMESTAMPDIFF(SECOND, '1970-01-01 00:00:00', @ahora_simulado) DIV 300) INTO @tok FROM beneficios.Cupon WHERE codigo = @cup;
+SELECT beneficios.fn_token_cupon(secreto, beneficios.fn_tramo(@ahora_simulado)) INTO @tok FROM beneficios.Cupon WHERE codigo = @cup;
 
--- @caso sp_generar_token_cupon.1 | Éxito | Devuelve un token de 8 caracteres que dura 300 segundos desde el inicio del tramo
+-- @caso sp_generar_token_cupon.1 | Éxito | Devuelve un token numérico (hasta 7 cifras) que dura 300 segundos desde el inicio del tramo
 -- @espera ok
 CALL beneficios.sp_generar_token_cupon(@cup, @pacA);
 -- @espera verdadero
-SELECT ((SELECT CHAR_LENGTH(@tok) = 8)) AS verificacion;
+SELECT ((SELECT CHAR_LENGTH(@tok) BETWEEN 1 AND 7)) AS verificacion;
 
 -- @caso sp_generar_token_cupon.2 | Sin coincidencias | Cupón inexistente (52140), de otra paciente (52141), ya usado (52142), vencido (52143)
 -- @espera error 52140
@@ -971,14 +971,14 @@ CALL beneficios.sp_generar_token_cupon(NULL, NULL);
 CALL beneficios.sp_generar_token_cupon(@cup, NULL);
 SET @ahora_simulado = '2026-11-03 09:02:30';
 -- @espera verdadero
-SELECT ((SELECT 300 - (TIMESTAMPDIFF(SECOND, '1970-01-01 00:00:00', @ahora_simulado) MOD 300)) = 150) AS verificacion;
+SELECT (beneficios.fn_segundos_del_tramo(@ahora_simulado) = 150) AS verificacion;
 SET @ahora_simulado = '2026-11-03 09:00:00';
 
 -- @caso sp_generar_token_cupon.4 | Consistencia | El token cambia en el tramo siguiente y es el mismo dentro del tramo
 -- @espera verdadero
 SELECT (beneficios.fn_token_cupon((SELECT secreto FROM beneficios.Cupon WHERE codigo = @cup), 1) <> beneficios.fn_token_cupon((SELECT secreto FROM beneficios.Cupon WHERE codigo = @cup), 2)) AS verificacion;
 -- @espera verdadero
-SELECT (beneficios.fn_token_cupon('s', 7) = beneficios.fn_token_cupon('s', 7)) AS verificacion;
+SELECT (beneficios.fn_token_cupon('5', 7) = beneficios.fn_token_cupon('5', 7)) AS verificacion;
 
 -- @caso sp_validar_cupon.1 | Éxito | Cupón de la paciente A con su token vigente: válido, devuelve el porcentaje
 -- @espera ok
@@ -1308,9 +1308,7 @@ SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente
            (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
            CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
-           (SELECT GROUP_CONCAT(pt.nombre ORDER BY pt.nombre SEPARATOR ' + ')
-              FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo
-             WHERE tp.id_turno = t.id_turno) AS protocolos,
+           (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo WHERE tp.id_turno = t.id_turno) AS protocolos,
            agenda.fn_precio_final(t.id_turno) AS precio_final,
            agenda.fn_sena(t.id_turno) AS sena,
            COALESCE(ep.nombre, 'sin seña') AS estado_sena,

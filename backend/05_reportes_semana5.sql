@@ -75,7 +75,7 @@ BEGIN
            ROUND(100 * SUM(x.estado IN ('cancelado', 'ausente')) / COUNT(*), 1) AS tasa_perdida_pct,
            COALESCE(SUM(CASE WHEN x.estado IN ('cancelado', 'ausente') AND x.estado_sena IN ('retenida', 'reembolsada parcial')
                              THEN x.monto - COALESCE(x.reembolsado, 0) END), 0) AS sena_retenida
-      FROM (SELECT IF(v_semana, DATE_FORMAT(t.fecha_hora_inicio, '%x-S%v'), DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m')) AS periodo,
+      FROM (SELECT CASE WHEN v_semana THEN DATE_FORMAT(t.fecha_hora_inicio, '%x-S%v') ELSE DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m') END AS periodo,
                    o.nombre AS origen, e.nombre AS estado, ep.nombre AS estado_sena, ps.monto, ps.monto_reembolsado AS reembolsado
               FROM agenda.Turno t
               JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno

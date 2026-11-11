@@ -81,7 +81,7 @@ BEGIN
           FROM pagos.TarjetaRegalo WHERE codigo = p_codigo_tarjeta FOR UPDATE;
         IF v_tarjeta IS NULL OR v_venc <= auditoria.fn_ahora() OR pagos.fn_saldo_tarjeta(v_tarjeta) < v_monto THEN
             SET v_tipo_log = 'tarjeta_rechazada',
-                v_desc_log = IF(v_tarjeta IS NULL, 'Código de tarjeta inexistente', IF(v_venc <= auditoria.fn_ahora(), 'Tarjeta vencida', 'Saldo insuficiente'));
+                v_desc_log = CASE WHEN v_tarjeta IS NULL THEN 'Código de tarjeta inexistente' ELSE CASE WHEN v_venc <= auditoria.fn_ahora() THEN 'Tarjeta vencida' ELSE 'Saldo insuficiente' END END;
             SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52117, MESSAGE_TEXT = 'La tarjeta de regalo no existe, está vencida o no tiene saldo suficiente';
         END IF;
     END IF;
@@ -102,8 +102,7 @@ BEGIN
     END IF;
 
     -- Avisos: confirmación ahora y recordatorio 24 horas antes (Telegram si la paciente lo vinculó).
-    SELECT IF(telegram_chat_id IS NOT NULL, (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'Telegram'),
-              (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'WhatsApp asistido'))
+    SELECT CASE WHEN telegram_chat_id IS NOT NULL THEN (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'Telegram') ELSE (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'WhatsApp asistido') END
       INTO v_canal FROM personas.Paciente WHERE id_paciente = v_paciente;
     INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, id_turno, mensaje, fecha_programada)
     VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
@@ -192,8 +191,7 @@ BEGIN
 
     UPDATE notificaciones.Notificacion SET id_estado_notificacion = (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'cancelada')
      WHERE id_turno = p_id_turno AND id_estado_notificacion = (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente');
-    SELECT IF(telegram_chat_id IS NOT NULL, (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'Telegram'),
-              (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'WhatsApp asistido'))
+    SELECT CASE WHEN telegram_chat_id IS NOT NULL THEN (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'Telegram') ELSE (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'WhatsApp asistido') END
       INTO v_canal FROM personas.Paciente WHERE id_paciente = v_paciente;
     INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, id_turno, mensaje, fecha_programada)
     VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
@@ -762,7 +760,7 @@ END//
 DROP PROCEDURE IF EXISTS pagos.sp_movimientos_tarjeta//
 CREATE PROCEDURE pagos.sp_movimientos_tarjeta(IN p_codigo VARCHAR(50))
 BEGIN
-    SELECT m.id_movimiento, m.fecha_movimiento, m.monto, IF(m.monto > 0, 'gasto', 'devolución') AS tipo,
+    SELECT m.id_movimiento, m.fecha_movimiento, m.monto, CASE WHEN m.monto > 0 THEN 'gasto' ELSE 'devolución' END AS tipo,
            m.id_turno, CONCAT(p.apellido, ', ', p.nombre) AS paciente
       FROM pagos.MovimientoTarjeta m
       JOIN pagos.TarjetaRegalo t ON t.id_tarjeta = m.id_tarjeta
@@ -818,16 +816,16 @@ BEGIN
     ELSEIF p_resultado NOT IN ('enviada', 'fallida') OR p_resultado IS NULL THEN
         SELECT 'ERROR' AS estado, 52162 AS codigo, 'El resultado debe ser enviada o fallida' AS mensaje, p_id_notificacion AS id, NULL AS valor, NULL AS dato;
     ELSE
-        SET v_nuevo = IF(p_resultado = 'enviada', 'enviada', IF(v_intentos + 1 >= 3, 'fallida', 'pendiente'));
+        SET v_nuevo = CASE WHEN p_resultado = 'enviada' THEN 'enviada' ELSE CASE WHEN v_intentos + 1 >= 3 THEN 'fallida' ELSE 'pendiente' END END;
         UPDATE notificaciones.Notificacion
            SET id_estado_notificacion = (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = v_nuevo),
                intentos = intentos + 1,
-               fecha_envio = IF(p_resultado = 'enviada', auditoria.fn_ahora(), fecha_envio),
-               detalle_error = IF(p_resultado = 'fallida', SUBSTRING(p_detalle FROM 1 FOR 500), NULL)
+               fecha_envio = CASE WHEN p_resultado = 'enviada' THEN auditoria.fn_ahora() ELSE fecha_envio END,
+               detalle_error = CASE WHEN p_resultado = 'fallida' THEN SUBSTRING(p_detalle FROM 1 FOR 500) ELSE NULL END
          WHERE id_notificacion = p_id_notificacion;
         CALL auditoria.sp_registrar_log('notificacion_enviada', NULL, v_paciente, 'sistema',
             CONCAT('Notificación ', p_id_notificacion, ': ', p_resultado, ' (intento ', v_intentos + 1, ')'),
-            'notificaciones.Notificacion', p_id_notificacion, v_estado, v_nuevo, IF(p_resultado = 'enviada', 1, 0), NULL);
+            'notificaciones.Notificacion', p_id_notificacion, v_estado, v_nuevo, CASE WHEN p_resultado = 'enviada' THEN 1 ELSE 0 END, NULL);
         SELECT 'OK' AS estado, 0 AS codigo, CONCAT('Notificación ', v_nuevo) AS mensaje, p_id_notificacion AS id, v_intentos + 1 AS valor, v_nuevo AS dato;
     END IF;
 END//
@@ -884,7 +882,7 @@ BEGIN
             COALESCE(p_derivada, 0), asistente.fn_filtrar_datos_personales(p_respuesta));
     SELECT MAX(id_consulta) INTO v_id FROM asistente.ConsultaAsistente;
     CALL auditoria.sp_registrar_log('consulta_asistente', p_id_usuario, p_id_paciente, p_origen,
-        IF(COALESCE(p_derivada, 0) = 1, 'Consulta derivada al WhatsApp del instituto', 'Consulta respondida por el asistente'),
+        CASE WHEN COALESCE(p_derivada, 0) = 1 THEN 'Consulta derivada al WhatsApp del instituto' ELSE 'Consulta respondida por el asistente' END,
         'asistente.ConsultaAsistente', v_id, NULL, NULL, 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Consulta registrada' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;

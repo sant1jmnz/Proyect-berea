@@ -21,6 +21,354 @@
 SET @ahora_simulado = '2026-11-03 09:00:00';
 
 -- ======================================================================
+-- A. REPORTES (solo leen: se prueban primero, sobre los datos de ejemplo)
+-- ======================================================================
+
+-- @caso sp_reporte_turnos_por_periodo_profesional.1 | Éxito | Reporte 1 con un rango que tiene datos: devuelve 53 filas
+-- @espera filas 53
+CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-09-01', '2026-11-30', NULL);
+
+-- @caso sp_reporte_turnos_por_periodo_profesional.2 | Sin coincidencias | Rango de enero de 2020: no hay datos y no da error
+-- @espera vacio
+CALL agenda.sp_reporte_turnos_por_periodo_profesional('2020-01-01', '2020-01-31', NULL);
+
+-- @caso sp_reporte_turnos_por_periodo_profesional.3 | Nulos y límites | Fechas NULL y rango invertido (desde > hasta): 0 filas, sin error
+-- @espera vacio
+CALL agenda.sp_reporte_turnos_por_periodo_profesional(NULL, NULL, NULL);
+-- @espera vacio
+CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-11-30', '2026-09-01', NULL);
+
+-- @caso sp_reporte_turnos_por_periodo_profesional.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
+-- @espera igual
+CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-09-01', '2026-11-30', NULL);
+SELECT DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m') AS periodo,
+           pr.id_profesional,
+           pr.apellido AS profesional, pr.nombre AS profesional_nombre,
+           COUNT(*) AS turnos,
+           SUM(e.nombre = 'realizado') AS realizados,
+           SUM(e.nombre = 'cancelado') AS cancelados,
+           SUM(e.nombre = 'ausente') AS ausentes,
+           SUM(e.nombre IN ('pendiente', 'confirmado')) AS vigentes,
+           ROUND(SUM(agenda.fn_minutos(t.fecha_hora_inicio, t.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
+           SUM(CASE WHEN e.nombre = 'realizado'
+                    THEN (SELECT SUM(tp.precio_aplicado) FROM agenda.TurnoProtocolo tp WHERE tp.id_turno = t.id_turno)
+                    ELSE 0 END) AS facturado
+      FROM agenda.Turno t
+      JOIN personas.Profesional pr ON pr.id_profesional = t.id_profesional
+      JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
+     WHERE DATE(t.fecha_hora_inicio) BETWEEN '2026-09-01' AND '2026-11-30'
+       AND (NULL IS NULL OR t.id_profesional = NULL)
+     GROUP BY DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m'), pr.id_profesional, pr.apellido, pr.nombre
+     ORDER BY periodo, profesional, profesional_nombre;
+
+-- @caso sp_reporte_ingresos_sena.1 | Éxito | Reporte 2 con un rango que tiene datos: devuelve 12 filas
+-- @espera filas 12
+CALL pagos.sp_reporte_ingresos_sena('2026-09-01', '2026-11-30');
+
+-- @caso sp_reporte_ingresos_sena.2 | Sin coincidencias | Rango de enero de 2020: no hay datos y no da error
+-- @espera vacio
+CALL pagos.sp_reporte_ingresos_sena('2020-01-01', '2020-01-31');
+
+-- @caso sp_reporte_ingresos_sena.3 | Nulos y límites | Fechas NULL y rango invertido (desde > hasta): 0 filas, sin error
+-- @espera vacio
+CALL pagos.sp_reporte_ingresos_sena(NULL, NULL);
+-- @espera vacio
+CALL pagos.sp_reporte_ingresos_sena('2026-11-30', '2026-09-01');
+
+-- @caso sp_reporte_ingresos_sena.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
+-- @espera igual
+CALL pagos.sp_reporte_ingresos_sena('2026-09-01', '2026-11-30');
+SELECT DATE_FORMAT(ps.fecha_pago, '%Y-%m') AS periodo,
+           (SELECT mp.nombre FROM pagos.MedioPago mp WHERE mp.id_medio_pago = ps.id_medio_pago) AS medio_pago,
+           COUNT(*) AS pagos,
+           SUM(ps.monto) AS cobrado,
+           SUM(COALESCE(ps.monto_reembolsado, 0)) AS reembolsado,
+           SUM(CASE WHEN ep.nombre IN ('retenida', 'reembolsada parcial') THEN ps.monto - COALESCE(ps.monto_reembolsado, 0) ELSE 0 END) AS retenido,
+           SUM(ps.monto - COALESCE(ps.monto_reembolsado, 0)) AS neto
+      FROM pagos.PagoSena ps
+      JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
+     WHERE DATE(ps.fecha_pago) BETWEEN '2026-09-01' AND '2026-11-30'
+     GROUP BY DATE_FORMAT(ps.fecha_pago, '%Y-%m'), ps.id_medio_pago
+     ORDER BY periodo, medio_pago;
+
+-- @caso sp_reporte_cancelaciones_inasistencias.1 | Éxito | Reporte 3 con un rango que tiene datos: devuelve 9 filas
+-- @espera filas 9
+CALL agenda.sp_reporte_cancelaciones_inasistencias('2026-09-01', '2026-11-30', 'mes');
+
+-- @caso sp_reporte_cancelaciones_inasistencias.2 | Sin coincidencias | Rango de enero de 2020: no hay datos y no da error
+-- @espera vacio
+CALL agenda.sp_reporte_cancelaciones_inasistencias('2020-01-01', '2020-01-31', 'mes');
+
+-- @caso sp_reporte_cancelaciones_inasistencias.3 | Nulos y límites | Fechas NULL y rango invertido (desde > hasta): 0 filas, sin error
+-- @espera vacio
+CALL agenda.sp_reporte_cancelaciones_inasistencias(NULL, NULL, 'mes');
+-- @espera vacio
+CALL agenda.sp_reporte_cancelaciones_inasistencias('2026-11-30', '2026-09-01', 'mes');
+
+-- @caso sp_reporte_cancelaciones_inasistencias.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
+-- @espera igual
+CALL agenda.sp_reporte_cancelaciones_inasistencias('2026-09-01', '2026-11-30', 'mes');
+SELECT x.periodo, x.origen,
+           COUNT(*) AS turnos,
+           SUM(x.estado = 'cancelado') AS cancelados,
+           SUM(x.estado = 'cancelado' AND x.estado_sena = 'reembolsada') AS cancelados_con_aviso,
+           SUM(x.estado = 'cancelado' AND x.estado_sena = 'retenida') AS cancelados_tarde,
+           SUM(x.estado = 'ausente') AS ausentes,
+           ROUND(100 * SUM(x.estado IN ('cancelado', 'ausente')) / COUNT(*), 1) AS tasa_perdida_pct,
+           COALESCE(SUM(CASE WHEN x.estado IN ('cancelado', 'ausente') AND x.estado_sena IN ('retenida', 'reembolsada parcial')
+                             THEN x.monto - COALESCE(x.reembolsado, 0) END), 0) AS sena_retenida
+      FROM (SELECT CASE WHEN 0 THEN DATE_FORMAT(t.fecha_hora_inicio, '%x-S%v') ELSE DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m') END AS periodo,
+                   o.nombre AS origen, e.nombre AS estado, ep.nombre AS estado_sena, ps.monto, ps.monto_reembolsado AS reembolsado
+              FROM agenda.Turno t
+              JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
+              JOIN agenda.Origen o ON o.id_origen = t.id_origen
+              LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
+              LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
+             WHERE t.fecha_hora_inicio >= '2026-09-01' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY) x
+     GROUP BY x.periodo, x.origen
+     ORDER BY x.periodo, x.origen;
+
+-- @caso sp_reporte_evaluaciones_cirugias.1 | Éxito | Reporte 4 con un rango que tiene datos: devuelve 13 filas
+-- @espera filas 13
+CALL clinica.sp_reporte_evaluaciones_cirugias('2026-01-01', '2026-12-31');
+
+-- @caso sp_reporte_evaluaciones_cirugias.2 | Sin coincidencias | Rango de enero de 2020: no hay datos y no da error
+-- @espera vacio
+CALL clinica.sp_reporte_evaluaciones_cirugias('2020-01-01', '2020-01-31');
+
+-- @caso sp_reporte_evaluaciones_cirugias.3 | Nulos y límites | Fechas NULL y rango invertido (desde > hasta): 0 filas, sin error
+-- @espera vacio
+CALL clinica.sp_reporte_evaluaciones_cirugias(NULL, NULL);
+-- @espera vacio
+CALL clinica.sp_reporte_evaluaciones_cirugias('2026-12-31', '2026-01-01');
+
+-- @caso sp_reporte_evaluaciones_cirugias.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
+-- @espera igual
+CALL clinica.sp_reporte_evaluaciones_cirugias('2026-01-01', '2026-12-31');
+SELECT cir.nombre AS cirugia,
+           r.nombre AS resultado,
+           COUNT(*) AS evaluaciones,
+           COUNT(tc.id_turno) AS con_cirugia_agendada,
+           SUM(r.nombre = 'apto' AND tc.id_turno IS NULL AND ev.fecha_resultado + INTERVAL 6 MONTH < auditoria.fn_ahora()) AS vencidas_sin_cirugia,
+           SUM(ev.fecha_reclamo IS NOT NULL) AS reclamos,
+           COALESCE(SUM(CASE WHEN ep.nombre IN ('retenida', 'reembolsada parcial') THEN ps.monto - COALESCE(ps.monto_reembolsado, 0) END), 0) AS consulta_retenida
+      FROM clinica.EvaluacionPrevia ev
+      JOIN clinica.Protocolo cir ON cir.id_protocolo = ev.id_protocolo
+      JOIN clinica.ResultadoEvaluacion r ON r.id_resultado = ev.id_resultado
+      JOIN agenda.Turno t ON t.id_turno = ev.id_turno
+      LEFT JOIN agenda.Turno tc ON tc.id_evaluacion_previa = ev.id_evaluacion
+      LEFT JOIN pagos.PagoSena ps ON ps.id_turno = ev.id_turno
+      LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
+     WHERE t.fecha_hora_inicio >= '2026-01-01' AND t.fecha_hora_inicio < '2026-12-31' + INTERVAL 1 DAY
+     GROUP BY cir.id_protocolo, cir.nombre, r.id_resultado, r.nombre
+     ORDER BY cirugia, resultado;
+
+-- @caso sp_reporte_protocolos_mas_pedidos.1 | Éxito | Reporte 5 con un rango que tiene datos: devuelve 5 filas
+-- @espera filas 5
+CALL clinica.sp_reporte_protocolos_mas_pedidos('2026-09-01', '2026-11-30', 5);
+
+-- @caso sp_reporte_protocolos_mas_pedidos.2 | Sin coincidencias | Rango de enero de 2020: no hay datos y no da error
+-- @espera vacio
+CALL clinica.sp_reporte_protocolos_mas_pedidos('2020-01-01', '2020-01-31', 5);
+
+-- @caso sp_reporte_protocolos_mas_pedidos.3 | Nulos y límites | Fechas NULL y rango invertido (desde > hasta): 0 filas, sin error
+-- @espera vacio
+CALL clinica.sp_reporte_protocolos_mas_pedidos(NULL, NULL, 5);
+-- @espera vacio
+CALL clinica.sp_reporte_protocolos_mas_pedidos('2026-11-30', '2026-09-01', 5);
+
+-- @caso sp_reporte_protocolos_mas_pedidos.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
+-- @espera igual
+CALL clinica.sp_reporte_protocolos_mas_pedidos('2026-09-01', '2026-11-30', 5);
+SELECT x.puesto, x.protocolo, x.categoria, x.pedidos, x.ingresos_lista,
+           ROUND(100 * x.pedidos / x.total_pedidos, 1) AS porcentaje
+      FROM (
+            SELECT 1 + (SELECT COUNT(*) FROM (SELECT p.id_protocolo, p.nombre AS protocolo, c.nombre AS categoria, COUNT(*) AS pedidos, SUM(tp.precio_aplicado) AS ingresos_lista
+              FROM agenda.TurnoProtocolo tp
+              JOIN agenda.Turno t ON t.id_turno = tp.id_turno
+              JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre <> 'cancelado'
+              JOIN clinica.Protocolo p ON p.id_protocolo = tp.id_protocolo
+              JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
+             WHERE t.fecha_hora_inicio >= '2026-09-01' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
+             GROUP BY p.id_protocolo, p.nombre, c.nombre) m
+                         WHERE m.pedidos > a.pedidos OR (m.pedidos = a.pedidos AND m.protocolo < a.protocolo)) AS puesto,
+                   a.protocolo, a.categoria, a.pedidos, a.ingresos_lista,
+                   (SELECT SUM(z.pedidos) FROM (SELECT p.id_protocolo, p.nombre AS protocolo, c.nombre AS categoria, COUNT(*) AS pedidos, SUM(tp.precio_aplicado) AS ingresos_lista
+              FROM agenda.TurnoProtocolo tp
+              JOIN agenda.Turno t ON t.id_turno = tp.id_turno
+              JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre <> 'cancelado'
+              JOIN clinica.Protocolo p ON p.id_protocolo = tp.id_protocolo
+              JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
+             WHERE t.fecha_hora_inicio >= '2026-09-01' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
+             GROUP BY p.id_protocolo, p.nombre, c.nombre) z) AS total_pedidos
+              FROM (SELECT p.id_protocolo, p.nombre AS protocolo, c.nombre AS categoria, COUNT(*) AS pedidos, SUM(tp.precio_aplicado) AS ingresos_lista
+              FROM agenda.TurnoProtocolo tp
+              JOIN agenda.Turno t ON t.id_turno = tp.id_turno
+              JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre <> 'cancelado'
+              JOIN clinica.Protocolo p ON p.id_protocolo = tp.id_protocolo
+              JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
+             WHERE t.fecha_hora_inicio >= '2026-09-01' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
+             GROUP BY p.id_protocolo, p.nombre, c.nombre) a
+           ) x
+     WHERE x.puesto <= COALESCE(5, 10)
+     ORDER BY x.puesto, x.protocolo;
+
+-- @caso sp_reporte_ocupacion_profesional.1 | Éxito | Reporte 6 con un rango que tiene datos: devuelve 19 filas
+-- @espera filas 19
+CALL agenda.sp_reporte_ocupacion_profesional('2026-09-01', '2026-11-30');
+
+-- @caso sp_reporte_ocupacion_profesional.2 | Sin coincidencias | Rango de enero de 2020: no hay datos y no da error
+-- @espera vacio
+CALL agenda.sp_reporte_ocupacion_profesional('2020-01-01', '2020-01-31');
+
+-- @caso sp_reporte_ocupacion_profesional.3 | Nulos y límites | Fechas NULL y rango invertido (desde > hasta): 0 filas, sin error
+-- @espera vacio
+CALL agenda.sp_reporte_ocupacion_profesional(NULL, NULL);
+-- @espera vacio
+CALL agenda.sp_reporte_ocupacion_profesional('2026-11-30', '2026-09-01');
+
+-- @caso sp_reporte_ocupacion_profesional.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
+-- @espera igual
+CALL agenda.sp_reporte_ocupacion_profesional('2026-09-01', '2026-11-30');
+SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre,
+           ROUND(COALESCE(d.horas, 0), 1) AS horas_disponibles,
+           ROUND(COALESCE(o.horas, 0), 1) AS horas_ocupadas,
+           COALESCE(o.turnos, 0) AS turnos,
+           ROUND(100 * COALESCE(o.horas, 0) / NULLIF(d.horas, 0), 1) AS ocupacion_pct
+      FROM personas.Profesional pr
+      LEFT JOIN (SELECT dd.id_profesional, SUM((EXTRACT(HOUR FROM dd.hora_fin) - EXTRACT(HOUR FROM dd.hora_inicio)) * 60 + EXTRACT(MINUTE FROM dd.hora_fin) - EXTRACT(MINUTE FROM dd.hora_inicio)) / 60 AS horas
+                   FROM personas.Disponibilidad dd
+                  WHERE dd.activa = 1 AND dd.fecha BETWEEN '2026-09-01' AND '2026-11-30'
+                  GROUP BY dd.id_profesional) d ON d.id_profesional = pr.id_profesional
+      LEFT JOIN (SELECT t.id_profesional, COUNT(*) AS turnos, SUM(agenda.fn_minutos(t.fecha_hora_inicio, t.fecha_hora_fin)) / 60 AS horas
+                   FROM agenda.Turno t
+                   JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre <> 'cancelado'
+                  WHERE t.fecha_hora_inicio >= '2026-09-01' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
+                  GROUP BY t.id_profesional) o ON o.id_profesional = pr.id_profesional
+     WHERE '2026-09-01' IS NOT NULL AND '2026-11-30' IS NOT NULL AND '2026-09-01' <= '2026-11-30'
+       AND (d.horas IS NOT NULL OR o.horas IS NOT NULL)
+     ORDER BY ocupacion_pct DESC, profesional;
+
+-- @caso sp_reporte_cupones.1 | Éxito | Reporte 7 con un rango que tiene datos: devuelve 14 filas
+-- @espera filas 14
+CALL beneficios.sp_reporte_cupones('2026-01-01', '2026-12-31');
+
+-- @caso sp_reporte_cupones.2 | Sin coincidencias | Rango de enero de 2020: no hay datos y no da error
+-- @espera vacio
+CALL beneficios.sp_reporte_cupones('2020-01-01', '2020-01-31');
+
+-- @caso sp_reporte_cupones.3 | Nulos y límites | Fechas NULL y rango invertido (desde > hasta): 0 filas, sin error
+-- @espera vacio
+CALL beneficios.sp_reporte_cupones(NULL, NULL);
+-- @espera vacio
+CALL beneficios.sp_reporte_cupones('2026-12-31', '2026-01-01');
+
+-- @caso sp_reporte_cupones.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
+-- @espera igual
+CALL beneficios.sp_reporte_cupones('2026-01-01', '2026-12-31');
+SELECT r.id_regla, r.nombre AS regla, tr.nombre AS tipo, r.porcentaje_descuento AS descuento_pct,
+           COUNT(*) AS emitidos,
+           SUM(c.id_turno IS NOT NULL) AS usados,
+           SUM(c.id_turno IS NULL AND c.fecha_vencimiento <= auditoria.fn_ahora()) AS vencidos_sin_usar,
+           SUM(c.id_turno IS NULL AND c.fecha_vencimiento > auditoria.fn_ahora()) AS vigentes,
+           ROUND(100 * SUM(c.id_turno IS NOT NULL) / COUNT(*), 1) AS tasa_uso_pct,
+           COALESCE(SUM(pt.total * c.porcentaje_descuento / 100), 0) AS descuento_otorgado
+      FROM beneficios.Cupon c
+      JOIN beneficios.ReglaBeneficio r ON r.id_regla = c.id_regla
+      JOIN beneficios.TipoRegla tr ON tr.id_tipo_regla = r.id_tipo_regla
+      LEFT JOIN (SELECT tp.id_turno, SUM(tp.precio_aplicado) AS total FROM agenda.TurnoProtocolo tp GROUP BY tp.id_turno) pt ON pt.id_turno = c.id_turno
+     WHERE c.fecha_emision >= '2026-01-01' AND c.fecha_emision < '2026-12-31' + INTERVAL 1 DAY
+     GROUP BY r.id_regla, r.nombre, tr.nombre, r.porcentaje_descuento
+     ORDER BY emitidos DESC, regla;
+
+-- @caso sp_reporte_tarjetas_regalo.1 | Éxito | Reporte 8 con un rango que tiene datos: devuelve 22 filas
+-- @espera filas 22
+CALL pagos.sp_reporte_tarjetas_regalo('2026-01-01', '2026-12-31');
+
+-- @caso sp_reporte_tarjetas_regalo.2 | Sin coincidencias | Rango de enero de 2020: no hay datos y no da error
+-- @espera vacio
+CALL pagos.sp_reporte_tarjetas_regalo('2020-01-01', '2020-01-31');
+
+-- @caso sp_reporte_tarjetas_regalo.3 | Nulos y límites | Fechas NULL y rango invertido (desde > hasta): 0 filas, sin error
+-- @espera vacio
+CALL pagos.sp_reporte_tarjetas_regalo(NULL, NULL);
+-- @espera vacio
+CALL pagos.sp_reporte_tarjetas_regalo('2026-12-31', '2026-01-01');
+
+-- @caso sp_reporte_tarjetas_regalo.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
+-- @espera igual
+CALL pagos.sp_reporte_tarjetas_regalo('2026-01-01', '2026-12-31');
+SELECT t.id_tarjeta, SUBSTRING(t.codigo FROM 1 FOR 7) AS codigo, t.comprador_nombre, mp.nombre AS medio_compra,
+           DATE(t.fecha_compra) AS fecha_compra, DATE(t.fecha_vencimiento) AS vence,
+           t.monto_inicial,
+           COALESCE(SUM(CASE WHEN m.monto > 0 THEN m.monto END), 0) AS gastado,
+           COALESCE(-SUM(CASE WHEN m.monto < 0 THEN m.monto END), 0) AS devuelto,
+           t.monto_inicial - COALESCE(SUM(m.monto), 0) AS saldo,
+           COUNT(m.id_movimiento) AS movimientos,
+           MAX(m.fecha_movimiento) AS ultimo_uso,
+           CASE WHEN t.fecha_vencimiento <= auditoria.fn_ahora() THEN 'vencida'
+                WHEN t.monto_inicial - COALESCE(SUM(m.monto), 0) <= 0 THEN 'agotada'
+                WHEN COUNT(m.id_movimiento) = 0 THEN 'sin uso'
+                ELSE 'en uso' END AS situacion
+      FROM pagos.TarjetaRegalo t
+      JOIN pagos.MedioPago mp ON mp.id_medio_pago = t.id_medio_pago
+      LEFT JOIN pagos.MovimientoTarjeta m ON m.id_tarjeta = t.id_tarjeta
+     WHERE t.fecha_compra >= '2026-01-01' AND t.fecha_compra < '2026-12-31' + INTERVAL 1 DAY
+     GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
+     ORDER BY t.fecha_compra, t.id_tarjeta;
+CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-09-01', '2026-11-30', 1);
+
+-- ======================================================================
+-- B. REPORTES TUNEADOS (tienen que devolver exactamente lo mismo que el original)
+-- ======================================================================
+
+-- @caso sp_reporte_turnos_por_periodo_profesional_tuneado.1 | Éxito | Con un rango con datos devuelve 53 filas
+-- @espera filas 53
+CALL agenda.sp_reporte_turnos_por_periodo_profesional_tuneado('2026-09-01', '2026-11-30', NULL);
+
+-- @caso sp_reporte_turnos_por_periodo_profesional_tuneado.2 | Sin coincidencias | Rango sin datos: 0 filas
+-- @espera vacio
+CALL agenda.sp_reporte_turnos_por_periodo_profesional_tuneado('2020-01-01', '2020-01-31', NULL);
+
+-- @caso sp_reporte_turnos_por_periodo_profesional_tuneado.3 | Nulos y límites | Fechas NULL y rango invertido: 0 filas
+-- @espera vacio
+CALL agenda.sp_reporte_turnos_por_periodo_profesional_tuneado(NULL, NULL, NULL);
+-- @espera vacio
+CALL agenda.sp_reporte_turnos_por_periodo_profesional_tuneado('2026-11-30', '2026-09-01', NULL);
+
+-- @caso sp_reporte_turnos_por_periodo_profesional_tuneado.4 | Consistencia | Tuneado y original devuelven filas y valores idénticos (todo el rango y un recorte)
+-- @espera igual
+CALL agenda.sp_reporte_turnos_por_periodo_profesional_tuneado('2026-09-01', '2026-11-30', NULL);
+CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-09-01', '2026-11-30', NULL);
+-- @espera igual
+CALL agenda.sp_reporte_turnos_por_periodo_profesional_tuneado('2026-09-01', '2026-11-30', 1);
+CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-09-01', '2026-11-30', 1);
+
+-- @caso sp_reporte_ingresos_sena_tuneado.1 | Éxito | Con un rango con datos devuelve 12 filas
+-- @espera filas 12
+CALL pagos.sp_reporte_ingresos_sena_tuneado('2026-09-01', '2026-11-30');
+
+-- @caso sp_reporte_ingresos_sena_tuneado.2 | Sin coincidencias | Rango sin datos: 0 filas
+-- @espera vacio
+CALL pagos.sp_reporte_ingresos_sena_tuneado('2020-01-01', '2020-01-31');
+
+-- @caso sp_reporte_ingresos_sena_tuneado.3 | Nulos y límites | Fechas NULL y rango invertido: 0 filas
+-- @espera vacio
+CALL pagos.sp_reporte_ingresos_sena_tuneado(NULL, NULL);
+-- @espera vacio
+CALL pagos.sp_reporte_ingresos_sena_tuneado('2026-11-30', '2026-09-01');
+
+-- @caso sp_reporte_ingresos_sena_tuneado.4 | Consistencia | Tuneado y original devuelven filas y valores idénticos (todo el rango y un recorte)
+-- @espera igual
+CALL pagos.sp_reporte_ingresos_sena_tuneado('2026-09-01', '2026-11-30');
+CALL pagos.sp_reporte_ingresos_sena('2026-09-01', '2026-11-30');
+-- @espera igual
+CALL pagos.sp_reporte_ingresos_sena_tuneado('2026-10-01', '2026-10-31');
+CALL pagos.sp_reporte_ingresos_sena('2026-10-01', '2026-10-31');
+
+-- ======================================================================
+
+-- ======================================================================
 -- C. DATOS DE PRUEBA PROPIOS (un profesional y tres pacientes nuevos, así no dependen de los datos de ejemplo)
 -- ======================================================================
 -- Se crean con los mismos SP que se prueban abajo.
@@ -786,11 +1134,11 @@ SET @ahora_simulado = '2026-11-03 09:00:00';
 SELECT id_pago INTO @pago5 FROM pagos.PagoSena WHERE id_turno = @t5;
 
 -- @caso sp_aplicar_reembolso.3 | Nulos y límites | Monto NULL o mayor al pagado (52102) y estado inventado (52103); con el pago todavía "pagada"
--- @espera excepcion 52102
+-- @espera error 52102
 CALL pagos.sp_aplicar_reembolso(@pago5, NULL, 'retenida', 'prueba', 1, 'gestion');
--- @espera excepcion 52102
+-- @espera error 52102
 CALL pagos.sp_aplicar_reembolso(@pago5, 99999999, 'retenida', 'prueba', 1, 'gestion');
--- @espera excepcion 52103
+-- @espera error 52103
 CALL pagos.sp_aplicar_reembolso(@pago5, 100, 'inventado', 'prueba', 1, 'gestion');
 
 -- @caso sp_aplicar_reembolso.1 | Éxito | Reembolso parcial de la seña del turno 5 (interno: lo usan otros SP)
@@ -800,11 +1148,11 @@ CALL pagos.sp_aplicar_reembolso(@pago5, 10000, 'reembolsada parcial', 'prueba', 
 SELECT ((SELECT ep.nombre = 'reembolsada parcial' AND ps.monto_reembolsado = 10000 FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_pago = @pago5)) AS verificacion;
 
 -- @caso sp_aplicar_reembolso.2 | Sin coincidencias | Pago inexistente: excepción 52100
--- @espera excepcion 52100
+-- @espera error 52100
 CALL pagos.sp_aplicar_reembolso(99999999, 1, 'retenida', 'prueba', 1, 'gestion');
 
 -- @caso sp_aplicar_reembolso.4 | Consistencia | Un pago ya resuelto no se puede resolver de nuevo (52101) y su monto no cambia
--- @espera excepcion 52101
+-- @espera error 52101
 CALL pagos.sp_aplicar_reembolso(@pago5, 5000, 'retenida', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT ((SELECT monto_reembolsado FROM pagos.PagoSena WHERE id_pago = @pago5) = 10000) AS verificacion;
@@ -1441,4 +1789,34 @@ CALL notificaciones.sp_listar_notificaciones('2026-11-30', '2026-11-01');
 -- @caso sp_listar_notificaciones.4 | Consistencia | Cada aviso trae su turno cuando lo tiene
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM notificaciones.Notificacion n WHERE n.id_turno IS NOT NULL AND NOT EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_turno = n.id_turno)) = 0) AS verificacion;
+
+-- ======================================================================
+-- P. AUDITORÍA (al final: ya hay mucha actividad en el log)
+-- ======================================================================
+
+-- @caso sp_reporte_auditoria.1 | Éxito | Los inicios de sesión del día (2 reales y 2 que escribió la prueba del log)
+CALL auditoria.sp_reporte_auditoria('2026-11-03', '2026-11-03', 'inicio_sesion', NULL, NULL, NULL, NULL);
+SELECT COUNT(*) INTO @n_ini FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'inicio_sesion' AND DATE(l.fecha_hora) = '2026-11-03';
+-- @espera filas 4
+CALL auditoria.sp_reporte_auditoria('2026-11-03', '2026-11-03', 'inicio_sesion', NULL, NULL, NULL, NULL);
+-- @espera verdadero
+SELECT (@n_ini = 4) AS verificacion;
+
+-- @caso sp_reporte_auditoria.2 | Sin coincidencias | Un rango en el pasado y un usuario inexistente: 0 filas
+-- @espera vacio
+CALL auditoria.sp_reporte_auditoria('2020-01-01', '2020-12-31', NULL, NULL, NULL, NULL, NULL);
+-- @espera vacio
+CALL auditoria.sp_reporte_auditoria('2026-11-03', '2026-11-03', NULL, 99999999, NULL, NULL, NULL);
+
+-- @caso sp_reporte_auditoria.3 | Nulos y límites | Fechas NULL o rango invertido: 0 filas; el último día se incluye completo
+-- @espera vacio
+CALL auditoria.sp_reporte_auditoria(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+-- @espera vacio
+CALL auditoria.sp_reporte_auditoria('2026-11-04', '2026-11-03', NULL, NULL, NULL, NULL, NULL);
+CALL auditoria.sp_reporte_auditoria('2026-10-01', '2026-11-03', 'intento_fallido', NULL, NULL, 0, 'web');
+
+-- @caso sp_reporte_auditoria.4 | Consistencia | Los filtros coinciden con un SELECT directo: solo fallos del tipo "intento_fallido" desde la web
+-- @espera igual
+CALL auditoria.sp_reporte_auditoria('2026-11-03', '2026-11-03', 'intento_fallido', NULL, NULL, 0, 'web');
+SELECT l.id_log, l.fecha_hora, te.nombre AS evento, COALESCE(u.nombre_usuario, '(sin usuario)') AS usuario, r.nombre AS rol, p.apellido AS paciente, p.nombre AS paciente_nombre, o.nombre AS origen, l.exitoso, l.descripcion, l.tabla_afectada, l.id_registro_afectado, l.valor_anterior, l.valor_nuevo, l.ip_origen FROM auditoria.Log l JOIN auditoria.TipoEvento te ON te.id_tipo_evento = l.id_tipo_evento JOIN agenda.Origen o ON o.id_origen = l.id_origen LEFT JOIN seguridad.Usuario u ON u.id_usuario = l.id_usuario LEFT JOIN seguridad.Rol r ON r.id_rol = u.id_rol LEFT JOIN personas.Paciente p ON p.id_paciente = l.id_paciente WHERE DATE(l.fecha_hora) = '2026-11-03' AND te.nombre = 'intento_fallido' AND l.exitoso = 0 AND o.nombre = 'web' ORDER BY l.fecha_hora, l.id_log;
 

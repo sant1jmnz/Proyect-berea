@@ -3,6 +3,15 @@
 
 #include <QStringList>
 
+/* Los stored procedures devuelven el apellido en la columna `clave` y el nombre en `clave_nombre`
+ * (el material de la cátedra no enseña CONCAT): acá se arma "Apellido, Nombre". */
+static QString nombreCompleto(const QVariantMap &fila, const QString &clave)
+{
+    const QString apellido = fila.value(clave).toString();
+    const QString nombre = fila.value(clave + "_nombre").toString();
+    return nombre.isEmpty() ? apellido : apellido + ", " + nombre;
+}
+
 /* Formato de fecha y hora que usan los stored procedures. */
 const QString FORMATO_FECHA_HORA = "yyyy-MM-dd HH:mm:ss";
 
@@ -178,7 +187,7 @@ QVector<HorarioLibre> Repositorio::horariosLibres(const QDate &fecha, const QVec
     for (const QVariantMap &f : r.filas) {
         HorarioLibre h;
         h.idProfesional = f.value("id_profesional").toInt();
-        h.profesional = f.value("profesional").toString();
+        h.profesional = nombreCompleto(f, "profesional");
         h.inicio = QDateTime::fromString(f.value("inicio").toString(), FORMATO_FECHA_HORA);
         h.fin = QDateTime::fromString(f.value("fin").toString(), FORMATO_FECHA_HORA);
         out.append(h);
@@ -213,10 +222,10 @@ TurnoBD Repositorio::aTurno(const QVariantMap &f)
     TurnoBD t;
     t.id = f.value("id_turno").toInt();
     t.idPaciente = f.value("id_paciente").toInt();
-    t.paciente = f.value("paciente").toString();
+    t.paciente = nombreCompleto(f, "paciente");
     t.dni = f.value("dni").toString();
     t.telefono = f.value("telefono").toString();
-    t.profesional = f.value("profesional").toString();
+    t.profesional = nombreCompleto(f, "profesional");
     t.inicio = QDateTime::fromString(f.value("fecha_hora_inicio").toString(), FORMATO_FECHA_HORA);
     t.fin = QDateTime::fromString(f.value("fecha_hora_fin").toString(), FORMATO_FECHA_HORA);
     t.estado = f.value("estado").toString();

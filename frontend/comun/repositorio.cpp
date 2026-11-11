@@ -52,13 +52,12 @@ QVariant Repositorio::textoONulo(const QString &texto)
     return QVariant(texto);
 }
 
-/* [3, 7] → "3,7": así reciben los SP una lista de protocolos. */
-QString Repositorio::lista(const QVector<int> &ids)
+/* Los SP reciben hasta 3 protocolos en parámetros separados: el que no se usa va en NULL. */
+QVariant Repositorio::protocolo(const QVector<int> &ids, int posicion)
 {
-    QStringList partes;
-    for (int id : ids)
-        partes << QString::number(id);
-    return partes.join(',');
+    if (posicion < ids.size())
+        return QVariant(ids.at(posicion));
+    return QVariant();
 }
 
 Respuesta Repositorio::login(const QString &usuario, const QString &clave, const QString &ip, const QString &origen)
@@ -176,13 +175,14 @@ Respuesta Repositorio::marcarNotificacion(int idNotificacion, const QString &res
 
 Resultado Repositorio::profesionalesParaProtocolos(const QVector<int> &idsProtocolo)
 {
-    return base.llamar("personas.sp_profesionales_para_protocolos", { lista(idsProtocolo) });
+    return base.llamar("personas.sp_profesionales_para_protocolos",
+                       { protocolo(idsProtocolo, 0), protocolo(idsProtocolo, 1), protocolo(idsProtocolo, 2) });
 }
 
 QVector<HorarioLibre> Repositorio::horariosLibres(const QDate &fecha, const QVector<int> &idsProtocolo, int idProfesional)
 {
     QVector<HorarioLibre> out;
-    const Resultado r = base.llamar("agenda.sp_horarios_libres", { fecha.toString("yyyy-MM-dd"), lista(idsProtocolo), idONulo(idProfesional) });
+    const Resultado r = base.llamar("agenda.sp_horarios_libres", { fecha.toString("yyyy-MM-dd"), protocolo(idsProtocolo, 0), protocolo(idsProtocolo, 1), protocolo(idsProtocolo, 2), idONulo(idProfesional) });
     error = r.ok ? QString() : r.error;
     for (const QVariantMap &f : r.filas) {
         HorarioLibre h;
@@ -199,7 +199,8 @@ Respuesta Repositorio::altaTurno(int idPaciente, int idProfesional, const QDateT
                                  const QString &origen, int idUsuario, const QString &codigoCupon)
 {
     return aRespuesta(base.llamar("agenda.sp_alta_turno",
-        { idPaciente, idProfesional, inicio.toString(FORMATO_FECHA_HORA), lista(idsProtocolo), origen,
+        { idPaciente, idProfesional, inicio.toString(FORMATO_FECHA_HORA),
+          protocolo(idsProtocolo, 0), protocolo(idsProtocolo, 1), protocolo(idsProtocolo, 2), origen,
           idONulo(idUsuario), textoONulo(codigoCupon), QVariant() }));
 }
 

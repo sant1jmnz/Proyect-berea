@@ -66,8 +66,8 @@ BEGIN
            SUM(e.nombre = 'cancelado') AS cancelados,
            SUM(e.nombre = 'ausente') AS ausentes,
            SUM(e.nombre IN ('pendiente', 'confirmado')) AS vigentes,
-           ROUND(SUM(agenda.fn_minutos(a.fecha_hora_inicio, a.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
-           SUM(CASE WHEN e.nombre = 'realizado' THEN f.total ELSE 0 END) AS facturado
+           ROUND(SUM(((EXTRACT(HOUR FROM a.fecha_hora_fin) - EXTRACT(HOUR FROM a.fecha_hora_inicio)) * 60 + EXTRACT(MINUTE FROM a.fecha_hora_fin) - EXTRACT(MINUTE FROM a.fecha_hora_inicio))) / 60, 1) AS horas_agendadas,
+           SUM((e.nombre = 'realizado') * COALESCE(f.total, 0)) AS facturado
       FROM tmp_r1_n1 a
       JOIN tmp_r1_n3 p ON p.id_profesional = a.id_profesional
       JOIN tmp_r1_n2 e ON e.id_estado_turno = a.id_estado_turno
@@ -111,7 +111,7 @@ BEGIN
            COUNT(*) AS pagos,
            SUM(a.monto) AS cobrado,
            SUM(COALESCE(a.monto_reembolsado, 0)) AS reembolsado,
-           SUM(CASE WHEN e.nombre IN ('retenida', 'reembolsada parcial') THEN a.monto - COALESCE(a.monto_reembolsado, 0) ELSE 0 END) AS retenido,
+           SUM(COALESCE((SELECT a.monto - COALESCE(a.monto_reembolsado, 0) FROM DUAL WHERE e.nombre IN ('retenida', 'reembolsada parcial')), 0)) AS retenido,
            SUM(a.monto - COALESCE(a.monto_reembolsado, 0)) AS neto
       FROM tmp_r2_n1 a
       JOIN tmp_r2_n2 e ON e.id_estado_pago = a.id_estado_pago

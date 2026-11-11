@@ -147,7 +147,7 @@ private:
 
     static Respuesta aRespuesta(const Resultado &r);
     static TurnoBD aTurno(const QVariantMap &fila);
-    static QString lista(const QVector<int> &ids);
+    static QVariant protocolo(const QVector<int> &ids, int posicion);
     /* Un id que no se cargó (0) viaja a la base como NULL. */
     static QVariant idONulo(int id);
     /* Un texto vacío viaja a la base como NULL. */

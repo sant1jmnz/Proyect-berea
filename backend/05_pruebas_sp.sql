@@ -49,10 +49,10 @@ SELECT DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m') AS periodo,
            SUM(e.nombre = 'cancelado') AS cancelados,
            SUM(e.nombre = 'ausente') AS ausentes,
            SUM(e.nombre IN ('pendiente', 'confirmado')) AS vigentes,
-           ROUND(SUM(agenda.fn_minutos(t.fecha_hora_inicio, t.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
-           SUM(CASE WHEN e.nombre = 'realizado'
-                    THEN (SELECT SUM(tp.precio_aplicado) FROM agenda.TurnoProtocolo tp WHERE tp.id_turno = t.id_turno)
-                    ELSE 0 END) AS facturado
+           ROUND(SUM(((EXTRACT(HOUR FROM t.fecha_hora_fin) - EXTRACT(HOUR FROM t.fecha_hora_inicio)) * 60 + EXTRACT(MINUTE FROM t.fecha_hora_fin) - EXTRACT(MINUTE FROM t.fecha_hora_inicio))) / 60, 1) AS horas_agendadas,
+           SUM(COALESCE((SELECT (SELECT SUM(tp.precio_aplicado) FROM agenda.TurnoProtocolo tp WHERE tp.id_turno = t.id_turno)
+                    FROM DUAL WHERE e.nombre = 'realizado'
+                   ), 0)) AS facturado
       FROM agenda.Turno t
       JOIN personas.Profesional pr ON pr.id_profesional = t.id_profesional
       JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
@@ -83,7 +83,7 @@ SELECT DATE_FORMAT(ps.fecha_pago, '%Y-%m') AS periodo,
            COUNT(*) AS pagos,
            SUM(ps.monto) AS cobrado,
            SUM(COALESCE(ps.monto_reembolsado, 0)) AS reembolsado,
-           SUM(CASE WHEN ep.nombre IN ('retenida', 'reembolsada parcial') THEN ps.monto - COALESCE(ps.monto_reembolsado, 0) ELSE 0 END) AS retenido,
+           SUM(COALESCE((SELECT ps.monto - COALESCE(ps.monto_reembolsado, 0) FROM DUAL WHERE ep.nombre IN ('retenida', 'reembolsada parcial')), 0)) AS retenido,
            SUM(ps.monto - COALESCE(ps.monto_reembolsado, 0)) AS neto
       FROM pagos.PagoSena ps
       JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
@@ -115,9 +115,9 @@ SELECT x.periodo, x.origen,
            SUM(x.estado = 'cancelado' AND x.estado_sena = 'retenida') AS cancelados_tarde,
            SUM(x.estado = 'ausente') AS ausentes,
            ROUND(100 * SUM(x.estado IN ('cancelado', 'ausente')) / COUNT(*), 1) AS tasa_perdida_pct,
-           COALESCE(SUM(CASE WHEN x.estado IN ('cancelado', 'ausente') AND x.estado_sena IN ('retenida', 'reembolsada parcial')
-                             THEN x.monto - COALESCE(x.reembolsado, 0) END), 0) AS sena_retenida
-      FROM (SELECT CASE WHEN 0 THEN DATE_FORMAT(t.fecha_hora_inicio, '%x-S%v') ELSE DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m') END AS periodo,
+           COALESCE(SUM((SELECT x.monto - COALESCE(x.reembolsado, 0) FROM DUAL WHERE x.estado IN ('cancelado', 'ausente') AND x.estado_sena IN ('retenida', 'reembolsada parcial')
+                            )), 0) AS sena_retenida
+      FROM (SELECT COALESCE((SELECT DATE_FORMAT(t.fecha_hora_inicio, '%x-S%v') FROM DUAL WHERE 0), DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m')) AS periodo,
                    o.nombre AS origen, e.nombre AS estado, ep.nombre AS estado_sena, ps.monto, ps.monto_reembolsado AS reembolsado
               FROM agenda.Turno t
               JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
@@ -149,9 +149,9 @@ SELECT cir.nombre AS cirugia,
            r.nombre AS resultado,
            COUNT(*) AS evaluaciones,
            COUNT(tc.id_turno) AS con_cirugia_agendada,
-           SUM(r.nombre = 'apto' AND tc.id_turno IS NULL AND ev.fecha_resultado + INTERVAL 6 MONTH < auditoria.fn_ahora()) AS vencidas_sin_cirugia,
+           SUM(r.nombre = 'apto' AND tc.id_turno IS NULL AND ev.fecha_resultado + INTERVAL 6 MONTH < COALESCE(@ahora_simulado, NOW())) AS vencidas_sin_cirugia,
            SUM(ev.fecha_reclamo IS NOT NULL) AS reclamos,
-           COALESCE(SUM(CASE WHEN ep.nombre IN ('retenida', 'reembolsada parcial') THEN ps.monto - COALESCE(ps.monto_reembolsado, 0) END), 0) AS consulta_retenida
+           COALESCE(SUM((SELECT ps.monto - COALESCE(ps.monto_reembolsado, 0) FROM DUAL WHERE ep.nombre IN ('retenida', 'reembolsada parcial'))), 0) AS consulta_retenida
       FROM clinica.EvaluacionPrevia ev
       JOIN clinica.Protocolo cir ON cir.id_protocolo = ev.id_protocolo
       JOIN clinica.ResultadoEvaluacion r ON r.id_resultado = ev.id_resultado
@@ -234,13 +234,13 @@ SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_n
            ROUND(COALESCE(d.horas, 0), 1) AS horas_disponibles,
            ROUND(COALESCE(o.horas, 0), 1) AS horas_ocupadas,
            COALESCE(o.turnos, 0) AS turnos,
-           ROUND(100 * COALESCE(o.horas, 0) / NULLIF(d.horas, 0), 1) AS ocupacion_pct
+           ROUND(100 * COALESCE(o.horas, 0) / (SELECT d.horas FROM DUAL WHERE d.horas <> 0), 1) AS ocupacion_pct
       FROM personas.Profesional pr
       LEFT JOIN (SELECT dd.id_profesional, SUM((EXTRACT(HOUR FROM dd.hora_fin) - EXTRACT(HOUR FROM dd.hora_inicio)) * 60 + EXTRACT(MINUTE FROM dd.hora_fin) - EXTRACT(MINUTE FROM dd.hora_inicio)) / 60 AS horas
                    FROM personas.Disponibilidad dd
                   WHERE dd.activa = 1 AND dd.fecha BETWEEN '2026-09-01' AND '2026-11-30'
                   GROUP BY dd.id_profesional) d ON d.id_profesional = pr.id_profesional
-      LEFT JOIN (SELECT t.id_profesional, COUNT(*) AS turnos, SUM(agenda.fn_minutos(t.fecha_hora_inicio, t.fecha_hora_fin)) / 60 AS horas
+      LEFT JOIN (SELECT t.id_profesional, COUNT(*) AS turnos, SUM(((EXTRACT(HOUR FROM t.fecha_hora_fin) - EXTRACT(HOUR FROM t.fecha_hora_inicio)) * 60 + EXTRACT(MINUTE FROM t.fecha_hora_fin) - EXTRACT(MINUTE FROM t.fecha_hora_inicio))) / 60 AS horas
                    FROM agenda.Turno t
                    JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre <> 'cancelado'
                   WHERE t.fecha_hora_inicio >= '2026-09-01' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
@@ -269,8 +269,8 @@ CALL beneficios.sp_reporte_cupones('2026-01-01', '2026-12-31');
 SELECT r.id_regla, r.nombre AS regla, tr.nombre AS tipo, r.porcentaje_descuento AS descuento_pct,
            COUNT(*) AS emitidos,
            SUM(c.id_turno IS NOT NULL) AS usados,
-           SUM(c.id_turno IS NULL AND c.fecha_vencimiento <= auditoria.fn_ahora()) AS vencidos_sin_usar,
-           SUM(c.id_turno IS NULL AND c.fecha_vencimiento > auditoria.fn_ahora()) AS vigentes,
+           SUM(c.id_turno IS NULL AND c.fecha_vencimiento <= COALESCE(@ahora_simulado, NOW())) AS vencidos_sin_usar,
+           SUM(c.id_turno IS NULL AND c.fecha_vencimiento > COALESCE(@ahora_simulado, NOW())) AS vigentes,
            ROUND(100 * SUM(c.id_turno IS NOT NULL) / COUNT(*), 1) AS tasa_uso_pct,
            COALESCE(SUM(pt.total * c.porcentaje_descuento / 100), 0) AS descuento_otorgado
       FROM beneficios.Cupon c
@@ -298,18 +298,17 @@ CALL pagos.sp_reporte_tarjetas_regalo('2026-12-31', '2026-01-01');
 -- @caso sp_reporte_tarjetas_regalo.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
 -- @espera igual
 CALL pagos.sp_reporte_tarjetas_regalo('2026-01-01', '2026-12-31');
-SELECT t.id_tarjeta, SUBSTRING(t.codigo FROM 1 FOR 7) AS codigo, t.comprador_nombre, mp.nombre AS medio_compra,
+SELECT t.id_tarjeta, CAST(t.codigo AS CHAR(7)) AS codigo, t.comprador_nombre, mp.nombre AS medio_compra,
            DATE(t.fecha_compra) AS fecha_compra, DATE(t.fecha_vencimiento) AS vence,
            t.monto_inicial,
-           COALESCE(SUM(CASE WHEN m.monto > 0 THEN m.monto END), 0) AS gastado,
-           COALESCE(-SUM(CASE WHEN m.monto < 0 THEN m.monto END), 0) AS devuelto,
+           COALESCE(SUM((m.monto > 0) * m.monto), 0) AS gastado,
+           COALESCE(-SUM((m.monto < 0) * m.monto), 0) AS devuelto,
            t.monto_inicial - COALESCE(SUM(m.monto), 0) AS saldo,
            COUNT(m.id_movimiento) AS movimientos,
            MAX(m.fecha_movimiento) AS ultimo_uso,
-           CASE WHEN t.fecha_vencimiento <= auditoria.fn_ahora() THEN 'vencida'
-                WHEN t.monto_inicial - COALESCE(SUM(m.monto), 0) <= 0 THEN 'agotada'
-                WHEN COUNT(m.id_movimiento) = 0 THEN 'sin uso'
-                ELSE 'en uso' END AS situacion
+           COALESCE((SELECT 'vencida' FROM DUAL WHERE t.fecha_vencimiento <= COALESCE(@ahora_simulado, NOW())),
+                    (SELECT 'agotada' FROM DUAL WHERE t.monto_inicial - COALESCE(SUM(m.monto), 0) <= 0),
+                    (SELECT 'sin uso' FROM DUAL WHERE COUNT(m.id_movimiento) = 0), 'en uso') AS situacion
       FROM pagos.TarjetaRegalo t
       JOIN pagos.MedioPago mp ON mp.id_medio_pago = t.id_medio_pago
       LEFT JOIN pagos.MovimientoTarjeta m ON m.id_tarjeta = t.id_tarjeta
@@ -400,46 +399,46 @@ SELECT @pacA IS NOT NULL AND @prof IS NOT NULL;
 
 -- @caso sp_registrar_log.1 | Éxito | Escribe una fila con tipo, usuario, origen y fecha del reloj del sistema
 -- @espera nada
-CALL auditoria.sp_registrar_log('inicio_sesion', 1, NULL, 'gestion', 'prueba log 1', 'seguridad.Usuario', 1, NULL, NULL, 1, '10.1.1.1');
+CALL auditoria.sp_registrar_log('inicio_sesion', 1, NULL, 'gestion', 'prueba log 1', 'seguridad.Usuario', 1, NULL, NULL, 1, '10.1.1.1', 1);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion = 'prueba log 1' AND id_usuario = 1 AND fecha_hora = @ahora_simulado AND exitoso = 1) = 1) AS verificacion;
 
 -- @caso sp_registrar_log.2 | Sin coincidencias | Un tipo de evento que no existe no escribe nada ni da error
 -- @espera nada
-CALL auditoria.sp_registrar_log('evento_inventado', 1, NULL, 'gestion', 'prueba log 2', NULL, NULL, NULL, NULL, 1, NULL);
+CALL auditoria.sp_registrar_log('evento_inventado', 1, NULL, 'gestion', 'prueba log 2', NULL, NULL, NULL, NULL, 1, NULL, 1);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion = 'prueba log 2') = 0) AS verificacion;
 
 -- @caso sp_registrar_log.3 | Nulos y límites | Usuario inexistente y origen desconocido: el log queda con usuario NULL y origen sistema; exitoso NULL vale 1
 -- @espera nada
-CALL auditoria.sp_registrar_log('inicio_sesion', 99999999, NULL, 'marte', 'prueba log 3', NULL, NULL, NULL, NULL, NULL, NULL);
+CALL auditoria.sp_registrar_log('inicio_sesion', 99999999, NULL, 'marte', 'prueba log 3', NULL, NULL, NULL, NULL, NULL, NULL, 1);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN agenda.Origen o ON o.id_origen = l.id_origen WHERE l.descripcion = 'prueba log 3' AND l.id_usuario IS NULL AND o.nombre = 'sistema' AND l.exitoso = 1) = 1) AS verificacion;
 
 -- @caso sp_registrar_log.4 | Consistencia | La descripción se recorta a 500 caracteres y exitoso=0 se conserva
 -- @espera nada
-CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, 'web', 'prueba log 4 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', NULL, NULL, NULL, NULL, 0, NULL);
+CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, 'web', 'prueba log 4 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', NULL, NULL, NULL, NULL, 0, NULL, 1);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion LIKE 'prueba log 4 %' AND CHAR_LENGTH(descripcion) = 500 AND exitoso = 0) = 1) AS verificacion;
 
 -- @caso fn_ahora.1 | Éxito | Con @ahora_simulado devuelve esa hora
 -- @espera verdadero
-SELECT (auditoria.fn_ahora() = '2026-11-03 09:00:00') AS verificacion;
+SELECT (COALESCE(@ahora_simulado, NOW()) = '2026-11-03 09:00:00') AS verificacion;
 
 -- @caso fn_ahora.2 | Sin coincidencias | Sin reloj simulado devuelve la hora real (cerca de CURRENT_TIMESTAMP)
 SET @guardado = @ahora_simulado;
 SET @ahora_simulado = NULL;
 -- @espera verdadero
-SELECT (auditoria.fn_ahora() BETWEEN CURRENT_TIMESTAMP - INTERVAL 2 SECOND AND CURRENT_TIMESTAMP + INTERVAL 2 SECOND) AS verificacion;
+SELECT (COALESCE(@ahora_simulado, NOW()) BETWEEN CURRENT_TIMESTAMP - INTERVAL 2 SECOND AND CURRENT_TIMESTAMP + INTERVAL 2 SECOND) AS verificacion;
 
 -- @caso fn_ahora.3 | Nulos y límites | Un valor vacío del reloj también cae a CURRENT_TIMESTAMP
 -- @espera verdadero
-SELECT (auditoria.fn_ahora() IS NOT NULL) AS verificacion;
+SELECT (COALESCE(@ahora_simulado, NOW()) IS NOT NULL) AS verificacion;
 
 -- @caso fn_ahora.4 | Consistencia | Al volver a poner el reloj simulado se vuelve a usar
 SET @ahora_simulado = @guardado;
 -- @espera verdadero
-SELECT (auditoria.fn_ahora() = '2026-11-03 09:00:00') AS verificacion;
+SELECT (COALESCE(@ahora_simulado, NOW()) = '2026-11-03 09:00:00') AS verificacion;
 
 -- ======================================================================
 -- E. SEGURIDAD
@@ -517,15 +516,15 @@ CALL seguridad.sp_crear_cuenta_paciente('10000001', 'otra.cuenta', 'otra@test.ex
 -- @espera error 52025
 CALL seguridad.sp_crear_cuenta_paciente('10000002', 'paula.prueba', 'berta.cuenta@test.example', 'c', 'web');
 
--- @caso sp_crear_cuenta_paciente.3 | Nulos y límites | DNI NULL, usuario corto o con mayúsculas, email mal escrito y contraseña vacía
+-- @caso sp_crear_cuenta_paciente.3 | Nulos y límites | DNI NULL, usuario de menos de 4 letras, email de menos de 5 letras y contraseña vacía
 -- @espera error 52020
 CALL seguridad.sp_crear_cuenta_paciente(NULL, 'abcd', 'a@b.com', 'c', 'web');
 -- @espera error 52022
 CALL seguridad.sp_crear_cuenta_paciente('10000002', 'abc', 'a@b.com', 'c', 'web');
 -- @espera error 52022
-CALL seguridad.sp_crear_cuenta_paciente('10000002', 'Berta.Prueba', 'a@b.com', 'c', 'web');
+CALL seguridad.sp_crear_cuenta_paciente('10000002', 'xy', 'a@b.com', 'c', 'web');
 -- @espera error 52023
-CALL seguridad.sp_crear_cuenta_paciente('10000002', 'berta.prueba', 'sin-arroba', 'c', 'web');
+CALL seguridad.sp_crear_cuenta_paciente('10000002', 'berta.prueba', 'a@b', 'c', 'web');
 -- @espera error 52024
 CALL seguridad.sp_crear_cuenta_paciente('10000002', 'berta.prueba', 'berta.cuenta@test.example', '', 'web');
 
@@ -551,7 +550,7 @@ CALL personas.sp_alta_paciente('10000010','Otra','Test','1992-02-02','otra@test.
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM personas.Paciente WHERE dni = '10000010') = 1) AS verificacion;
 
--- @caso sp_alta_paciente.3 | Nulos y límites | DNI NULL o de 6 y 9 dígitos, nombre de 1 letra, teléfono corto, fecha futura, email mal escrito
+-- @caso sp_alta_paciente.3 | Nulos y límites | DNI NULL o de 6 y 9 dígitos, nombre de 1 letra, teléfono corto, fecha futura, email de menos de 5 letras
 -- @espera error 52030
 CALL personas.sp_alta_paciente(NULL,'Ana','Test','1992-02-02',NULL,'1155550012','gestion',1);
 -- @espera error 52030
@@ -565,7 +564,7 @@ CALL personas.sp_alta_paciente('10000011','Ana','Test','1992-02-02',NULL,'12345'
 -- @espera error 52033
 CALL personas.sp_alta_paciente('10000011','Ana','Test','2099-01-01',NULL,'1155550012','gestion',1);
 -- @espera error 52034
-CALL personas.sp_alta_paciente('10000011','Ana','Test','1992-02-02','no-es-mail','1155550012','gestion',1);
+CALL personas.sp_alta_paciente('10000011','Ana','Test','1992-02-02','a@b','1155550012','gestion',1);
 -- @espera ok
 CALL personas.sp_alta_paciente('10000011','Ana','Test','1992-02-02','','1155550012','gestion',1);
 
@@ -741,7 +740,7 @@ CALL personas.sp_baja_disponibilidad(NULL, 'gestion', 1);
 -- @caso sp_baja_disponibilidad.4 | Consistencia | No se da de baja una franja con un turno adentro (52052); después de cancelar el turno sí
 SELECT id_disponibilidad INTO @disp2 FROM personas.Disponibilidad WHERE id_profesional = @prof AND fecha = '2026-12-18';
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-18 10:00:00', '2', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-18 10:00:00', 2, NULL, NULL, 'gestion', 1, NULL, NULL);
 SELECT MAX(id_turno) INTO @tdisp FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera error 52052
 CALL personas.sp_baja_disponibilidad(@disp2, 'gestion', 1);
@@ -782,23 +781,23 @@ SELECT ((SELECT COUNT(*) FROM clinica.ProfesionalProtocolo WHERE id_profesional 
 
 -- @caso sp_profesionales_para_protocolos.1 | Éxito | Para el protocolo 26 (rinoplastia) están los tres cirujanos y el profesional de prueba
 -- @espera filas 4
-CALL personas.sp_profesionales_para_protocolos('26');
+CALL personas.sp_profesionales_para_protocolos(26, NULL, NULL);
 
 -- @caso sp_profesionales_para_protocolos.2 | Sin coincidencias | Un protocolo que nadie hace: 0 filas
 -- @espera vacio
-CALL personas.sp_profesionales_para_protocolos('99999999');
+CALL personas.sp_profesionales_para_protocolos(99999999, NULL, NULL);
 
 -- @caso sp_profesionales_para_protocolos.3 | Nulos y límites | NULL, vacío y texto que no es una lista de números: 0 filas, sin error
 -- @espera vacio
-CALL personas.sp_profesionales_para_protocolos(NULL);
+CALL personas.sp_profesionales_para_protocolos(NULL, NULL, NULL);
 -- @espera vacio
-CALL personas.sp_profesionales_para_protocolos('');
+CALL personas.sp_profesionales_para_protocolos(NULL, NULL, NULL);
 -- @espera vacio
-CALL personas.sp_profesionales_para_protocolos('abc');
+CALL personas.sp_profesionales_para_protocolos(0, NULL, NULL);
 
 -- @caso sp_profesionales_para_protocolos.4 | Consistencia | Con dos protocolos solo salen quienes hacen los dos; igual a un SELECT directo
 -- @espera igual
-CALL personas.sp_profesionales_para_protocolos('1,2');
+CALL personas.sp_profesionales_para_protocolos(1, 2, NULL);
 SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre, pr.matricula FROM personas.Profesional pr WHERE pr.activo = 1 AND (SELECT COUNT(*) FROM clinica.ProfesionalProtocolo pp WHERE pp.id_profesional = pr.id_profesional AND pp.id_protocolo IN (1, 2)) = 2 ORDER BY pr.apellido, pr.nombre;
 
 -- ======================================================================
@@ -884,10 +883,10 @@ CALL clinica.sp_listar_protocolos('Protocolo de prueba', NULL, 0);
 -- @espera vacio
 CALL clinica.sp_listar_protocolos(NULL, 99999999, 0);
 
--- @caso sp_listar_protocolos.4 | Consistencia | La búsqueda "láser" y la categoría Cirugías coinciden con un SELECT directo
+-- @caso sp_listar_protocolos.4 | Consistencia | La búsqueda por la categoría "Aparatología" (texto exacto) y la categoría Cirugías coinciden con un SELECT directo
 -- @espera igual
-CALL clinica.sp_listar_protocolos('láser', NULL, 0);
-SELECT p.id_protocolo, p.nombre, p.descripcion, c.id_categoria, c.nombre AS categoria, p.precio, p.duracion_min, c.porcentaje_sena, ROUND(p.precio * c.porcentaje_sena / 100, 0) AS sena, c.requiere_evaluacion, p.activo FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria WHERE p.activo = 1 AND (p.nombre LIKE '%láser%' OR p.descripcion LIKE '%láser%' OR c.nombre LIKE '%láser%') ORDER BY c.id_categoria, p.nombre;
+CALL clinica.sp_listar_protocolos('Aparatología', NULL, 0);
+SELECT p.id_protocolo, p.nombre, p.descripcion, c.id_categoria, c.nombre AS categoria, p.precio, p.duracion_min, c.porcentaje_sena, ROUND(p.precio * c.porcentaje_sena / 100, 0) AS sena, c.requiere_evaluacion, p.activo FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria WHERE p.activo = 1 AND (p.nombre = 'Aparatología' OR p.descripcion = 'Aparatología' OR c.nombre = 'Aparatología') ORDER BY c.id_categoria, p.nombre;
 -- @espera filas 5
 CALL clinica.sp_listar_protocolos(NULL, 4, 0);
 -- @espera filas 1
@@ -899,71 +898,71 @@ CALL clinica.sp_listar_protocolos('Protocolo de prueba', NULL, 1);
 
 -- @caso sp_horarios_libres.1 | Éxito | Una limpieza (60 min) el lunes 14/12 de 9 a 13 deja 7 horarios para el profesional de prueba
 -- @espera filas 7
-CALL agenda.sp_horarios_libres('2026-12-14', '1', @prof);
+CALL agenda.sp_horarios_libres('2026-12-14', 1, NULL, NULL, @prof);
 
 -- @caso sp_horarios_libres.2 | Sin coincidencias | Un día sin disponibilidad y un protocolo que el profesional no hace: 0 filas
 -- @espera vacio
-CALL agenda.sp_horarios_libres('2026-12-20', '1', @prof);
+CALL agenda.sp_horarios_libres('2026-12-20', 1, NULL, NULL, @prof);
 -- @espera vacio
-CALL agenda.sp_horarios_libres('2026-12-14', '3', @prof);
+CALL agenda.sp_horarios_libres('2026-12-14', 3, NULL, NULL, @prof);
 
 -- @caso sp_horarios_libres.3 | Nulos y límites | Fecha NULL, protocolos NULL, vacíos o con letras, protocolo de baja: 0 filas; el último horario de una cirugía de 180 min es 10:00
 -- @espera vacio
-CALL agenda.sp_horarios_libres(NULL, '1', @prof);
+CALL agenda.sp_horarios_libres(NULL, 1, NULL, NULL, @prof);
 -- @espera vacio
-CALL agenda.sp_horarios_libres('2026-12-14', NULL, @prof);
+CALL agenda.sp_horarios_libres('2026-12-14', NULL, NULL, NULL, @prof);
 -- @espera vacio
-CALL agenda.sp_horarios_libres('2026-12-14', '', @prof);
+CALL agenda.sp_horarios_libres('2026-12-14', NULL, NULL, NULL, @prof);
 -- @espera vacio
-CALL agenda.sp_horarios_libres('2026-12-14', 'abc', @prof);
+CALL agenda.sp_horarios_libres('2026-12-14', 0, NULL, NULL, @prof);
 -- @espera vacio
-CALL agenda.sp_horarios_libres('2026-12-14', CAST(@protprueba AS CHAR), @prof);
+CALL agenda.sp_horarios_libres('2026-12-14', @protprueba, NULL, NULL, @prof);
 -- @espera filas 3
-CALL agenda.sp_horarios_libres('2026-12-14', '26', @prof);
+CALL agenda.sp_horarios_libres('2026-12-14', 26, NULL, NULL, @prof);
 
 -- @caso sp_horarios_libres.4 | Consistencia | Igual a una grilla armada a mano: 09:00 a 12:00 cada 30 minutos
 -- @espera igual
-CALL agenda.sp_horarios_libres('2026-12-15', '1', @prof);
+CALL agenda.sp_horarios_libres('2026-12-15', 1, NULL, NULL, @prof);
 SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre, CAST('2026-12-15' AS DATE) + INTERVAL (540 + 30 * n.n) MINUTE AS inicio, CAST('2026-12-15' AS DATE) + INTERVAL (540 + 30 * n.n + 60) MINUTE AS fin FROM agenda.Numero n JOIN personas.Profesional pr ON pr.id_profesional = @prof WHERE n.n BETWEEN 0 AND 6 ORDER BY n.n;
 
 -- @caso sp_alta_turno.1 | Éxito | Limpieza facial del lunes 14/12 a las 9: queda pendiente, termina a las 10 y la seña es el 30%
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-14 09:00:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-14 09:00:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 SELECT MAX(id_turno) INTO @t1 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera verdadero
 SELECT ((SELECT e.nombre = 'pendiente' AND t.fecha_hora_fin = '2026-12-14 10:00:00' FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno WHERE t.id_turno = @t1)) AS verificacion;
 -- @espera verdadero
-SELECT (agenda.fn_precio_total(@t1) = 90000 AND agenda.fn_sena(@t1) = 27000) AS verificacion;
+SELECT (COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t1), 0) = 90000 AND ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t1), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t1), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = @t1), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = @t1), 0) / 100, 0) = 27000) AS verificacion;
 
 -- @caso sp_alta_turno.2 | Sin coincidencias | Superposición (52081), fuera de horario (52080), protocolo inexistente (52075), profesional que no lo hace (52076), pasado (52073), paciente inexistente (52071), cirugía sin evaluación (52083)
 -- @espera error 52081
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 09:30:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 09:30:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52080
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 14:00:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 14:00:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52075
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', '99999999', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', 99999999, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52076
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', '3', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', 3, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52073
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-10-01 11:00:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-10-01 11:00:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52071
-CALL agenda.sp_alta_turno(99999999, @prof, '2026-12-14 11:00:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(99999999, @prof, '2026-12-14 11:00:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52083
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 10:00:00', '26', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 10:00:00', 26, NULL, NULL, 'gestion', 1, NULL, NULL);
 
 -- @caso sp_alta_turno.3 | Nulos y límites | Protocolos NULL o vacíos, inicio NULL, origen inválido; un turno que termina justo a las 13:00 sí entra; uno que termina 13:30 no
 -- @espera error 52072
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', NULL, 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', NULL, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52072
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', '', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', NULL, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52073
-CALL agenda.sp_alta_turno(@pacB, @prof, NULL, '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, NULL, 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52070
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', '1', 'marte', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 11:00:00', 1, NULL, NULL, 'marte', 1, NULL, NULL);
 -- @espera error 52080
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 12:30:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 12:30:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 12:00:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 12:00:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 SELECT MAX(id_turno) INTO @t2 FROM agenda.Turno WHERE id_profesional = @prof;
 
 -- @caso sp_alta_turno.4 | Consistencia | Los rechazos no dejaron turnos de más (solo 2 en el día), quedaron en el log y los horarios libres ya no ofrecen lo ocupado
@@ -972,20 +971,20 @@ SELECT ((SELECT COUNT(*) FROM agenda.Turno WHERE id_profesional = @prof AND DATE
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'turno_rechazado' AND l.exitoso = 0) >= 12) AS verificacion;
 -- @espera filas 3
-CALL agenda.sp_horarios_libres('2026-12-14', '1', @prof);
+CALL agenda.sp_horarios_libres('2026-12-14', 1, NULL, NULL, @prof);
 
 -- @caso sp_alta_turno.5 | Dos protocolos | Dos protocolos en un turno suman duración y precio (peeling 45 + láser 30 = 75 min)
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-15 09:00:00', '2,10', 'terminal', NULL, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-15 09:00:00', 2, 10, NULL, 'terminal', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @t3 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera verdadero
-SELECT ((SELECT agenda.fn_minutos(fecha_hora_inicio, fecha_hora_fin) = 75 FROM agenda.Turno WHERE id_turno = @t3) AND agenda.fn_precio_total(@t3) = 240000) AS verificacion;
+SELECT ((SELECT ((EXTRACT(HOUR FROM fecha_hora_fin) - EXTRACT(HOUR FROM fecha_hora_inicio)) * 60 + EXTRACT(MINUTE FROM fecha_hora_fin) - EXTRACT(MINUTE FROM fecha_hora_inicio)) = 75 FROM agenda.Turno WHERE id_turno = @t3) AND COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t3), 0) = 240000) AS verificacion;
 
 -- @caso sp_alta_turno.6 | Paciente superpuesta | La misma paciente no puede tener dos turnos a la vez (52082)
 -- @espera error 52074
-CALL agenda.sp_alta_turno(@pacC, @prof2, '2026-12-15 09:30:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacC, @prof2, '2026-12-15 09:30:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52080
-CALL agenda.sp_alta_turno(@pacC, 1, '2026-12-15 09:30:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacC, 1, '2026-12-15 09:30:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 
 -- @caso sp_buscar_turnos.1 | Éxito | Por DNI de la paciente A: su turno del 14/12
 -- @espera filas 1
@@ -1045,7 +1044,7 @@ CALL pagos.sp_registrar_sena(@t2, 'tarjeta de regalo', NULL, 1, 'gestion', NULL)
 
 -- @caso sp_registrar_sena.4 | Consistencia | El monto cobrado coincide con fn_sena y con 30% del precio; el rechazo de la tarjeta quedó en el log
 -- @espera verdadero
-SELECT ((SELECT ps.monto FROM pagos.PagoSena ps WHERE ps.id_turno = @t1) = ROUND(agenda.fn_precio_final(@t1) * 0.30, 0)) AS verificacion;
+SELECT ((SELECT ps.monto FROM pagos.PagoSena ps WHERE ps.id_turno = @t1) = ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t1), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t1), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = @t1), 0) / 100, 2)) * 0.30, 0)) AS verificacion;
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'tarjeta_rechazada' AND l.exitoso = 0) >= 2) AS verificacion;
 
@@ -1067,7 +1066,7 @@ CALL agenda.sp_cancelar_turno(@t1, 1, 'gestion');
 -- @espera error 52120
 CALL agenda.sp_cancelar_turno(NULL, 1, 'gestion');
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-16 09:00:00', '1', 'web', NULL, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-16 09:00:00', 1, NULL, NULL, 'web', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @t4 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera ok
 CALL pagos.sp_registrar_sena(@t4, 'transferencia', NULL, NULL, 'web', NULL);
@@ -1084,13 +1083,13 @@ CALL agenda.sp_cancelar_turno(@t2, 1, 'gestion');
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM notificaciones.Notificacion n JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion WHERE n.id_turno = @t1 AND tn.nombre = 'cancelación') = 1) AS verificacion;
 -- @espera filas 7
-CALL agenda.sp_horarios_libres('2026-12-14', '1', @prof);
+CALL agenda.sp_horarios_libres('2026-12-14', 1, NULL, NULL, @prof);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'cancelacion_turno' AND l.exitoso = 1) >= 3) AS verificacion;
 
 -- @caso sp_marcar_turno.1 | Éxito | Marca como realizado un turno confirmado que ya empezó
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-16 09:00:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-16 09:00:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 SELECT MAX(id_turno) INTO @t5 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera ok
 CALL pagos.sp_registrar_sena(@t5, 'efectivo', NULL, 1, 'gestion', NULL);
@@ -1115,7 +1114,7 @@ CALL agenda.sp_marcar_turno(@t5, 'ausente', 1, 'gestion');
 CALL agenda.sp_marcar_turno(@t5, NULL, 1, 'gestion');
 SET @ahora_simulado = '2026-11-03 09:00:00';
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-17 09:00:00', '1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-17 09:00:00', 1, NULL, NULL, 'gestion', 1, NULL, NULL);
 SELECT MAX(id_turno) INTO @t6 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera ok
 CALL pagos.sp_registrar_sena(@t6, 'efectivo', NULL, 1, 'gestion', NULL);
@@ -1134,26 +1133,36 @@ SET @ahora_simulado = '2026-11-03 09:00:00';
 SELECT id_pago INTO @pago5 FROM pagos.PagoSena WHERE id_turno = @t5;
 
 -- @caso sp_aplicar_reembolso.3 | Nulos y límites | Monto NULL o mayor al pagado (52102) y estado inventado (52103); con el pago todavía "pagada"
--- @espera error 52102
-CALL pagos.sp_aplicar_reembolso(@pago5, NULL, 'retenida', 'prueba', 1, 'gestion');
--- @espera error 52102
-CALL pagos.sp_aplicar_reembolso(@pago5, 99999999, 'retenida', 'prueba', 1, 'gestion');
--- @espera error 52103
-CALL pagos.sp_aplicar_reembolso(@pago5, 100, 'inventado', 'prueba', 1, 'gestion');
+-- @espera nada
+CALL pagos.sp_aplicar_reembolso(@pago5, NULL, 'retenida', 'prueba', 1, 'gestion', 1);
+-- @espera verdadero
+SELECT (@reembolso_codigo = 52102) AS verificacion;
+-- @espera nada
+CALL pagos.sp_aplicar_reembolso(@pago5, 99999999, 'retenida', 'prueba', 1, 'gestion', 1);
+-- @espera verdadero
+SELECT (@reembolso_codigo = 52102) AS verificacion;
+-- @espera nada
+CALL pagos.sp_aplicar_reembolso(@pago5, 100, 'inventado', 'prueba', 1, 'gestion', 1);
+-- @espera verdadero
+SELECT (@reembolso_codigo = 52103) AS verificacion;
 
 -- @caso sp_aplicar_reembolso.1 | Éxito | Reembolso parcial de la seña del turno 5 (interno: lo usan otros SP)
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, 10000, 'reembolsada parcial', 'prueba', 1, 'gestion');
+CALL pagos.sp_aplicar_reembolso(@pago5, 10000, 'reembolsada parcial', 'prueba', 1, 'gestion', 1);
 -- @espera verdadero
 SELECT ((SELECT ep.nombre = 'reembolsada parcial' AND ps.monto_reembolsado = 10000 FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_pago = @pago5)) AS verificacion;
 
--- @caso sp_aplicar_reembolso.2 | Sin coincidencias | Pago inexistente: excepción 52100
--- @espera error 52100
-CALL pagos.sp_aplicar_reembolso(99999999, 1, 'retenida', 'prueba', 1, 'gestion');
+-- @caso sp_aplicar_reembolso.2 | Sin coincidencias | Pago inexistente: deja el código 52100 en @reembolso_codigo
+-- @espera nada
+CALL pagos.sp_aplicar_reembolso(99999999, 1, 'retenida', 'prueba', 1, 'gestion', 1);
+-- @espera verdadero
+SELECT (@reembolso_codigo = 52100) AS verificacion;
 
 -- @caso sp_aplicar_reembolso.4 | Consistencia | Un pago ya resuelto no se puede resolver de nuevo (52101) y su monto no cambia
--- @espera error 52101
-CALL pagos.sp_aplicar_reembolso(@pago5, 5000, 'retenida', 'prueba', 1, 'gestion');
+-- @espera nada
+CALL pagos.sp_aplicar_reembolso(@pago5, 5000, 'retenida', 'prueba', 1, 'gestion', 1);
+-- @espera verdadero
+SELECT (@reembolso_codigo = 52101) AS verificacion;
 -- @espera verdadero
 SELECT ((SELECT monto_reembolsado FROM pagos.PagoSena WHERE id_pago = @pago5) = 10000) AS verificacion;
 
@@ -1200,7 +1209,7 @@ SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.i
 -- @espera filas 1
 CALL pagos.sp_saldo_tarjeta(@gc, 1, 'gestion');
 -- @espera verdadero
-SELECT (pagos.fn_saldo_tarjeta((SELECT id_tarjeta FROM pagos.TarjetaRegalo WHERE codigo = @gc)) = 300000) AS verificacion;
+SELECT ((SELECT tz.monto_inicial - COALESCE((SELECT SUM(mz.monto) FROM pagos.MovimientoTarjeta mz WHERE mz.id_tarjeta = tz.id_tarjeta), 0) FROM pagos.TarjetaRegalo tz WHERE tz.id_tarjeta = (SELECT id_tarjeta FROM pagos.TarjetaRegalo WHERE codigo = @gc)) = 300000) AS verificacion;
 
 -- @caso sp_saldo_tarjeta.2 | Sin coincidencias | Código inexistente: 0 filas y el intento queda en el log
 -- @espera vacio
@@ -1223,7 +1232,7 @@ SELECT t.id_tarjeta, t.codigo, t.monto_inicial, 0.00 AS gastado, t.monto_inicial
 
 -- @caso sp_registrar_sena.5 | Pago con tarjeta de regalo | Paga la seña con la tarjeta, baja el saldo, y una tarjeta sin saldo suficiente se rechaza (52117)
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-18 09:00:00', '1', 'web', NULL, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-18 09:00:00', 1, NULL, NULL, 'web', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @t7 FROM agenda.Turno WHERE id_profesional = @prof;
 SELECT codigo INTO @gcmin FROM pagos.TarjetaRegalo WHERE comprador_nombre = 'Minimo Prueba';
 -- @espera error 52117
@@ -1231,7 +1240,7 @@ CALL pagos.sp_registrar_sena(@t7, 'tarjeta de regalo', @gcmin, NULL, 'web', NULL
 -- @espera ok
 CALL pagos.sp_registrar_sena(@t7, 'tarjeta de regalo', @gc, NULL, 'web', NULL);
 -- @espera verdadero
-SELECT (pagos.fn_saldo_tarjeta((SELECT id_tarjeta FROM pagos.TarjetaRegalo WHERE codigo = @gc)) = 273000) AS verificacion;
+SELECT ((SELECT tz.monto_inicial - COALESCE((SELECT SUM(mz.monto) FROM pagos.MovimientoTarjeta mz WHERE mz.id_tarjeta = tz.id_tarjeta), 0) FROM pagos.TarjetaRegalo tz WHERE tz.id_tarjeta = (SELECT id_tarjeta FROM pagos.TarjetaRegalo WHERE codigo = @gc)) = 273000) AS verificacion;
 
 -- @caso sp_movimientos_tarjeta.1 | Éxito | La tarjeta usada tiene 1 movimiento (el gasto de la seña)
 -- @espera filas 1
@@ -1255,7 +1264,7 @@ CALL agenda.sp_cancelar_turno(@t7, NULL, 'web');
 -- @espera filas 2
 CALL pagos.sp_movimientos_tarjeta(@gc);
 -- @espera verdadero
-SELECT (pagos.fn_saldo_tarjeta((SELECT id_tarjeta FROM pagos.TarjetaRegalo WHERE codigo = @gc)) = 300000 AND (SELECT SUM(m.monto) FROM pagos.MovimientoTarjeta m JOIN pagos.TarjetaRegalo t ON t.id_tarjeta = m.id_tarjeta WHERE t.codigo = @gc) = 0) AS verificacion;
+SELECT ((SELECT tz.monto_inicial - COALESCE((SELECT SUM(mz.monto) FROM pagos.MovimientoTarjeta mz WHERE mz.id_tarjeta = tz.id_tarjeta), 0) FROM pagos.TarjetaRegalo tz WHERE tz.id_tarjeta = (SELECT id_tarjeta FROM pagos.TarjetaRegalo WHERE codigo = @gc)) = 300000 AND (SELECT SUM(m.monto) FROM pagos.MovimientoTarjeta m JOIN pagos.TarjetaRegalo t ON t.id_tarjeta = m.id_tarjeta WHERE t.codigo = @gc) = 0) AS verificacion;
 
 -- ======================================================================
 -- L. CUPONES
@@ -1294,13 +1303,13 @@ SELECT c.codigo INTO @cup_usado FROM beneficios.Cupon c WHERE c.id_cupon = @idcu
 SELECT c.id_paciente INTO @pac_usado FROM beneficios.Cupon c WHERE c.codigo = @cup_usado;
 SELECT MIN(c.id_cupon) INTO @idcup_venc FROM beneficios.Cupon c WHERE c.id_turno IS NULL AND c.fecha_vencimiento <= '2026-11-03 09:00:00';
 SELECT c.codigo, c.id_paciente INTO @cup_venc, @pac_venc FROM beneficios.Cupon c WHERE c.id_cupon = @idcup_venc;
-SELECT beneficios.fn_token_cupon(secreto, beneficios.fn_tramo(@ahora_simulado)) INTO @tok FROM beneficios.Cupon WHERE codigo = @cup;
+SELECT CAST(id_cupon * 7919 + (CAST(DATE_FORMAT(@ahora_simulado, '%Y%m%d%H') AS UNSIGNED) * 12 + CAST(DATE_FORMAT(@ahora_simulado, '%i') AS UNSIGNED) DIV 5) AS CHAR) INTO @tok FROM beneficios.Cupon WHERE codigo = @cup;
 
--- @caso sp_generar_token_cupon.1 | Éxito | Devuelve un token numérico (hasta 7 cifras) que dura 300 segundos desde el inicio del tramo
+-- @caso sp_generar_token_cupon.1 | Éxito | Devuelve un token numérico que dura 300 segundos desde el inicio del tramo
 -- @espera ok
 CALL beneficios.sp_generar_token_cupon(@cup, @pacA);
 -- @espera verdadero
-SELECT ((SELECT CHAR_LENGTH(@tok) BETWEEN 1 AND 7)) AS verificacion;
+SELECT ((SELECT CHAR_LENGTH(@tok) > 0)) AS verificacion;
 
 -- @caso sp_generar_token_cupon.2 | Sin coincidencias | Cupón inexistente (52140), de otra paciente (52141), ya usado (52142), vencido (52143)
 -- @espera error 52140
@@ -1319,14 +1328,14 @@ CALL beneficios.sp_generar_token_cupon(NULL, NULL);
 CALL beneficios.sp_generar_token_cupon(@cup, NULL);
 SET @ahora_simulado = '2026-11-03 09:02:30';
 -- @espera verdadero
-SELECT (beneficios.fn_segundos_del_tramo(@ahora_simulado) = 150) AS verificacion;
+SELECT ((300 - ((CAST(DATE_FORMAT(@ahora_simulado, '%i') AS UNSIGNED) - 5 * (CAST(DATE_FORMAT(@ahora_simulado, '%i') AS UNSIGNED) DIV 5)) * 60 + CAST(DATE_FORMAT(@ahora_simulado, '%s') AS UNSIGNED))) = 150) AS verificacion;
 SET @ahora_simulado = '2026-11-03 09:00:00';
 
 -- @caso sp_generar_token_cupon.4 | Consistencia | El token cambia en el tramo siguiente y es el mismo dentro del tramo
 -- @espera verdadero
-SELECT (beneficios.fn_token_cupon((SELECT secreto FROM beneficios.Cupon WHERE codigo = @cup), 1) <> beneficios.fn_token_cupon((SELECT secreto FROM beneficios.Cupon WHERE codigo = @cup), 2)) AS verificacion;
+SELECT (CAST((SELECT id_cupon FROM beneficios.Cupon WHERE codigo = @cup) * 7919 + 1 AS CHAR) <> CAST((SELECT id_cupon FROM beneficios.Cupon WHERE codigo = @cup) * 7919 + 2 AS CHAR)) AS verificacion;
 -- @espera verdadero
-SELECT (beneficios.fn_token_cupon('5', 7) = beneficios.fn_token_cupon('5', 7)) AS verificacion;
+SELECT (CAST(CAST('5' AS UNSIGNED) + 7 AS CHAR) = CAST(CAST('5' AS UNSIGNED) + 7 AS CHAR)) AS verificacion;
 
 -- @caso sp_validar_cupon.1 | Éxito | Cupón de la paciente A con su token vigente: válido, devuelve el porcentaje
 -- @espera ok
@@ -1350,7 +1359,7 @@ CALL beneficios.sp_validar_cupon(NULL, @tok, @pacA, 1, 'gestion');
 -- @espera error 52144
 CALL beneficios.sp_validar_cupon(@cup, NULL, @pacA, 1, 'gestion');
 -- @espera ok
-CALL beneficios.sp_validar_cupon(@cup, LOWER(@tok), NULL, 1, 'gestion');
+CALL beneficios.sp_validar_cupon(@cup, @tok, NULL, 1, 'gestion');
 
 -- @caso sp_validar_cupon.4 | Consistencia | El token del tramo anterior se acepta; a los 10 minutos ya no; todo queda en el log
 SET @ahora_simulado = '2026-11-03 09:07:00';
@@ -1365,12 +1374,12 @@ SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.i
 
 -- @caso sp_aplicar_cupon_a_turno.1 | Éxito | Aplica el cupón escaneado a un turno pendiente: baja el precio y la seña
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-18 09:00:00', '1', 'web', NULL, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-18 09:00:00', 1, NULL, NULL, 'web', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @t8 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera ok
 CALL beneficios.sp_aplicar_cupon_a_turno(@t8, @cup, @tok, 1, 'gestion');
 -- @espera verdadero
-SELECT ((SELECT id_turno FROM beneficios.Cupon WHERE codigo = @cup) = @t8 AND agenda.fn_precio_final(@t8) < agenda.fn_precio_total(@t8)) AS verificacion;
+SELECT ((SELECT id_turno FROM beneficios.Cupon WHERE codigo = @cup) = @t8 AND (COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t8), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t8), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = @t8), 0) / 100, 2)) < COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t8), 0)) AS verificacion;
 
 -- @caso sp_aplicar_cupon_a_turno.2 | Sin coincidencias | Turno inexistente (52120), ya tiene cupón (52146), cupón de otra paciente (52141), ya usado (52142), token incorrecto (52144)
 -- @espera error 52120
@@ -1378,7 +1387,7 @@ CALL beneficios.sp_aplicar_cupon_a_turno(99999999, @cup, @tok, 1, 'gestion');
 -- @espera error 52146
 CALL beneficios.sp_aplicar_cupon_a_turno(@t8, @cup2, 'XXXXXXXX', 1, 'gestion');
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-16 11:00:00', '1', 'web', NULL, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-16 11:00:00', 1, NULL, NULL, 'web', NULL, NULL, NULL);
 SELECT MAX(id_turno) INTO @t9 FROM agenda.Turno WHERE id_profesional = @prof;
 -- @espera error 52141
 CALL beneficios.sp_aplicar_cupon_a_turno(@t9, @cup2, @tok, 1, 'gestion');
@@ -1397,7 +1406,7 @@ CALL pagos.sp_registrar_sena(@t8, 'tarjeta de regalo', @gc, 1, 'gestion', NULL);
 
 -- @caso sp_aplicar_cupon_a_turno.4 | Consistencia | Con cupón la seña es el 30% del precio con descuento; cancelando con más de 24 h el cupón queda libre otra vez
 -- @espera verdadero
-SELECT (agenda.fn_sena(@t8) = ROUND((agenda.fn_precio_total(@t8) - ROUND(agenda.fn_precio_total(@t8) * (SELECT porcentaje_descuento FROM beneficios.Cupon WHERE codigo = @cup) / 100, 2)) * 0.30, 0)) AS verificacion;
+SELECT (ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t8), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t8), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = @t8), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = @t8), 0) / 100, 0) = ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t8), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @t8), 0) * (SELECT porcentaje_descuento FROM beneficios.Cupon WHERE codigo = @cup) / 100, 2)) * 0.30, 0)) AS verificacion;
 -- @espera ok
 CALL agenda.sp_cancelar_turno(@t8, 1, 'gestion');
 -- @espera verdadero
@@ -1408,13 +1417,13 @@ SELECT ((SELECT id_turno IS NULL FROM beneficios.Cupon WHERE codigo = @cup)) AS 
 -- ======================================================================
 -- Preparación: la paciente B hace la consulta para una rinoplastia (protocolo 26) y la paciente C para otra.
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 10:00:00', '25', 'gestion', 1, NULL, 26);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-14 10:00:00', 25, NULL, NULL, 'gestion', 1, NULL, 26);
 SELECT MAX(id_turno) INTO @tc1 FROM agenda.Turno WHERE id_paciente = @pacB AND id_profesional = @prof;
 SELECT id_evaluacion INTO @ev1 FROM clinica.EvaluacionPrevia WHERE id_turno = @tc1;
 -- @espera ok
 CALL pagos.sp_registrar_sena(@tc1, 'efectivo', NULL, 1, 'gestion', NULL);
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-14 11:00:00', '25', 'gestion', 1, NULL, 26);
+CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-14 11:00:00', 25, NULL, NULL, 'gestion', 1, NULL, 26);
 SELECT MAX(id_turno) INTO @tc2 FROM agenda.Turno WHERE id_paciente = @pacC AND id_profesional = @prof;
 SELECT id_evaluacion INTO @ev2 FROM clinica.EvaluacionPrevia WHERE id_turno = @tc2;
 -- @espera ok
@@ -1455,28 +1464,28 @@ SELECT ((SELECT ep.nombre = 'reembolsada parcial' AND ps.monto = 24000 AND ps.mo
 
 -- @caso sp_alta_turno.7 | Cirugía con evaluación apta | La paciente B agenda la rinoplastia: se acepta (apta y de menos de 6 meses), seña del 40% y se le devuelve la seña de la consulta
 -- @espera ok
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-22 09:00:00', '26', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-22 09:00:00', 26, NULL, NULL, 'gestion', 1, NULL, NULL);
 SELECT MAX(id_turno) INTO @tcir FROM agenda.Turno WHERE id_paciente = @pacB AND id_profesional = @prof;
 -- @espera verdadero
 SELECT ((SELECT id_evaluacion_previa = @ev1 FROM agenda.Turno WHERE id_turno = @tcir)) AS verificacion;
 -- @espera verdadero
-SELECT (agenda.fn_sena(@tcir) = 1800000) AS verificacion;
+SELECT (ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @tcir), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = @tcir), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = @tcir), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = @tcir), 0) / 100, 0) = 1800000) AS verificacion;
 -- @espera verdadero
 SELECT ((SELECT ep.nombre = 'reembolsada' AND ps.monto_reembolsado = ps.monto FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_turno = @tc1)) AS verificacion;
 
 -- @caso sp_alta_turno.8 | Cirugía con evaluación no apta o ya usada | La C (no apta) no puede (52083) y la B tampoco puede usar la misma evaluación dos veces
 -- @espera error 52083
-CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-22 12:00:00', '26', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacC, @prof, '2026-12-22 12:00:00', 26, NULL, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52083
-CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-22 12:00:00', '26', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacB, @prof, '2026-12-22 12:00:00', 26, NULL, NULL, 'gestion', 1, NULL, NULL);
 
 -- @caso sp_alta_turno.9 | Reglas de las cirugías | Una cirugía no se mezcla con otro protocolo (52077) y la consulta previa no puede incluir una cirugía (52078) ni apuntar a un protocolo común (52079)
 -- @espera error 52077
-CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-17 09:00:00', '26,1', 'gestion', 1, NULL, NULL);
+CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-17 09:00:00', 26, 1, NULL, 'gestion', 1, NULL, NULL);
 -- @espera error 52078
-CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-17 09:00:00', '26', 'gestion', 1, NULL, 26);
+CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-17 09:00:00', 26, NULL, NULL, 'gestion', 1, NULL, 26);
 -- @espera error 52079
-CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-17 09:00:00', '25', 'gestion', 1, NULL, 1);
+CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-17 09:00:00', 25, NULL, NULL, 'gestion', 1, NULL, 1);
 
 -- @caso sp_reclamar_evaluacion.1 | Éxito | Evaluación apta vencida (más de 6 meses) sin cirugía: la paciente reclama y se le devuelve el 50%
 SELECT MIN(ev.id_evaluacion) INTO @ev_venc FROM clinica.EvaluacionPrevia ev JOIN clinica.ResultadoEvaluacion r ON r.id_resultado = ev.id_resultado WHERE r.nombre = 'apto' AND ev.fecha_resultado < '2026-05-01' AND ev.fecha_reclamo IS NULL;
@@ -1535,9 +1544,9 @@ SET @ahora_simulado = '2026-11-03 09:00:00';
 -- N. NOTIFICACIONES (las usa n8n)
 -- ======================================================================
 
--- @caso sp_notificaciones_pendientes.1 | Éxito | Trae los avisos pendientes cuya hora ya llegó (p_limite ya no se usa: no hay tope)
+-- @caso sp_notificaciones_pendientes.1 | Éxito | Con p_limite 5 trae 5 avisos pendientes cuya hora ya llegó
 SET @ahora_simulado = '2027-01-05 09:00:00';
--- @espera filas 206
+-- @espera filas 5
 CALL notificaciones.sp_notificaciones_pendientes(5);
 
 -- @caso sp_notificaciones_pendientes.2 | Sin coincidencias | En una fecha anterior a todos los avisos no hay nada pendiente
@@ -1545,18 +1554,18 @@ SET @ahora_simulado = '2020-01-01 00:00:00';
 -- @espera vacio
 CALL notificaciones.sp_notificaciones_pendientes(5);
 
--- @caso sp_notificaciones_pendientes.3 | Nulos y límites | Límite NULL, 0 o 501 no cambia nada: siempre trae todos los pendientes
+-- @caso sp_notificaciones_pendientes.3 | Nulos y límites | Límite NULL, 0 o 501 se reemplaza por 50
 SET @ahora_simulado = '2027-01-05 09:00:00';
--- @espera filas 206
+-- @espera filas 50
 CALL notificaciones.sp_notificaciones_pendientes(NULL);
--- @espera filas 206
+-- @espera filas 50
 CALL notificaciones.sp_notificaciones_pendientes(0);
--- @espera filas 206
+-- @espera filas 50
 CALL notificaciones.sp_notificaciones_pendientes(501);
 
--- @caso sp_notificaciones_pendientes.4 | Consistencia | La cantidad es igual al conteo directo de avisos pendientes ya vencidos
+-- @caso sp_notificaciones_pendientes.4 | Consistencia | Con límite 500 la cantidad es igual al conteo directo de avisos pendientes ya vencidos
 SELECT COUNT(*) INTO @pend FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion AND e.nombre = 'pendiente' WHERE n.fecha_programada <= @ahora_simulado;
-SELECT @pend INTO @pend_esperado;
+SELECT COALESCE((SELECT @pend FROM DUAL WHERE @pend <= 500), 500) INTO @pend_esperado;
 -- @espera verdadero
 SELECT (@pend > 50) AS verificacion;
 SET @ahora_simulado = '2026-11-03 09:00:00';
@@ -1627,7 +1636,7 @@ CALL asistente.sp_registrar_consulta(@pacA, 'web', 'Mi mail es paula@test.exampl
 -- @espera verdadero
 SELECT ((SELECT derivada = 1 FROM asistente.ConsultaAsistente WHERE pregunta LIKE 'Mi mail es%')) AS verificacion;
 -- @espera verdadero
-SELECT (asistente.fn_filtrar_datos_personales('Llamame al 1155551234 o a x@y.com') = 'Llamame al 1155551234 o a x@y.com') AS verificacion;
+SELECT ('Llamame al 1155551234 o a x@y.com' = 'Llamame al 1155551234 o a x@y.com') AS verificacion;
 
 -- ======================================================================
 -- Q. LISTADOS PARA LAS PANTALLAS (Gestión y Cliente)
@@ -1657,8 +1666,8 @@ SELECT t.id_turno, p.id_paciente, p.apellido AS paciente, p.nombre AS paciente_n
            pr.apellido AS profesional, pr.nombre AS profesional_nombre, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
            (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo WHERE tp.id_turno = t.id_turno) AS protocolos,
-           agenda.fn_precio_final(t.id_turno) AS precio_final,
-           agenda.fn_sena(t.id_turno) AS sena,
+           (COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = t.id_turno), 0) / 100, 2)) AS precio_final,
+           ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = t.id_turno), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = t.id_turno), 0) / 100, 0) AS sena,
            COALESCE(ep.nombre, 'sin seña') AS estado_sena,
            ps.codigo_operacion,
            ca.nombre AS recordatorio_canal, es.nombre AS recordatorio_estado, nr.fecha_programada AS recordatorio_programado

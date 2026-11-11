@@ -16,6 +16,7 @@ class QListWidget;
 class QPushButton;
 class QTableWidget;
 class QTimeEdit;
+class Repositorio;
 
 class PaginaProfesionales : public QWidget
 {
@@ -24,6 +25,15 @@ class PaginaProfesionales : public QWidget
 public:
     PaginaProfesionales(QVector<Profesional> *profesionales, const QVector<Protocolo> *protocolos,
                         QWidget *parent = nullptr);
+
+public:
+
+    /* Con la base conectada, las altas y cambios de esta pantalla pasan por los
+     * stored procedures (y quedan en el log con el usuario que ingresó). Sin base
+     * (`repo` nulo) trabaja solo en memoria, con los datos de prueba. */
+    void usarBase(Repositorio *repositorio, int idUsuarioActual) { repo = repositorio; idUsuario = idUsuarioActual; }
+    /* Vuelve a armar la lista de profesionales y elige uno. */
+    void recargarProfesionales(int elegir = -1);
 
 public slots:
     /* Los protocolos cambiaron en la otra pantalla: se vuelve a armar la lista. */
@@ -38,10 +48,11 @@ private slots:
     void quitarFranja();
 
 private:
-    void recargarProfesionales(int elegir = -1);
     void recargarDetalle();
     Profesional *actual();
 
+    Repositorio *repo = nullptr;
+    int idUsuario = 0;
     QVector<Profesional> *datos;
     const QVector<Protocolo> *protocolos;
     QListWidget *lista, *listaProtocolos;

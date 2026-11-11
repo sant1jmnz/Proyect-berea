@@ -1,0 +1,175 @@
+{
+  "name": "Dermalia - Enviar avisos pendientes",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Cada 5 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2",
+      "name": "Avisos pendientes",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CALL notificaciones.sp_notificaciones_pendientes(50)",
+        "options": {}
+      },
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "Dermalia MySQL (usuario dermalia_n8n)"
+        }
+      }
+    },
+    {
+      "id": "3",
+      "name": "¿Por Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.canal}}",
+              "value2": "Telegram"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4",
+      "name": "Enviar por Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        660,
+        -120
+      ],
+      "parameters": {
+        "chatId": "={{$json.telegram_chat_id}}",
+        "text": "={{$json.mensaje}}"
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "2",
+          "name": "Bot de Telegram de Dermalia"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "5",
+      "name": "Aviso asistido (WhatsApp / Calendar)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        660,
+        120
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "6",
+      "name": "Marcar enviada",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        880,
+        -120
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CALL notificaciones.sp_marcar_notificacion({{$('Avisos pendientes').item.json.id_notificacion}}, 'enviada', NULL)",
+        "options": {}
+      },
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "Dermalia MySQL (usuario dermalia_n8n)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada 5 minutos": {
+      "main": [
+        [
+          {
+            "node": "Avisos pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisos pendientes": {
+      "main": [
+        [
+          {
+            "node": "¿Por Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Por Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Enviar por Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aviso asistido (WhatsApp / Calendar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar por Telegram": {
+      "main": [
+        [
+          {
+            "node": "Marcar enviada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

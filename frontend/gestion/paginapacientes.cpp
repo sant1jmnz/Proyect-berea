@@ -1,5 +1,7 @@
 #include "paginapacientes.h"
 
+#include "repositorio.h"
+
 #include "validaciones.h"
 
 #include <QDateEdit>
@@ -217,6 +219,23 @@ void PaginaPacientes::guardar()
         return;
     }
     const bool esAlta = editada < 0;
+    if (repo) {   /* con la base, primero se guarda ahí */
+        const int ultimo = p.nombre.lastIndexOf(' ');   /* "Nombre Apellido": el apellido es la última palabra */
+        const QString nombre = ultimo > 0 ? p.nombre.left(ultimo) : p.nombre;
+        const QString apellido = ultimo > 0 ? p.nombre.mid(ultimo + 1) : p.nombre;
+        Respuesta r;
+        if (esAlta) {
+            r = repo->altaPaciente(p.dni, nombre, apellido, p.nacimiento, p.email, p.telefono, "gestion", idUsuario);
+            p.id = r.id;
+        } else {
+            p.id = (*datos)[editada].id;
+            r = repo->modificarPaciente(p.id, nombre, apellido, p.email, p.telefono, "gestion", idUsuario);
+        }
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo guardar", r.mensaje);
+            return;
+        }
+    }
     if (esAlta) {
         datos->append(p);
         editada = datos->size() - 1;

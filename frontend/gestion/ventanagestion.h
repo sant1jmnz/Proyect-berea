@@ -17,9 +17,11 @@ class AvisoConexion;
 class ConexionApp;
 class PaginaAvisos;
 class PaginaPacientes;
+class PaginaReportes;
 class PaginaProfesionales;
 class PaginaProtocolos;
 class QLineEdit;
+class Repositorio;
 
 namespace Ui { class VentanaGestion; }
 
@@ -44,6 +46,7 @@ private slots:
     void turnoElegido();             /* muestra el recordatorio del turno de la tabla */
     void protocolosCambiaron();      /* alta, edición o baja en la pantalla Protocolos */
     void cargarTurnoPara(const QString &nombre, const QString &dni, const QString &telefono);
+    void conectarBase();             /* hay conexión: ingreso del personal y datos de la base */
 
 private:
     void irA(int pagina);
@@ -54,6 +57,14 @@ private:
     QDateTime horarioElegido() const;
     void armarPantallasNuevas();
     QString nuevoCodigoOperacion() const;
+    /* Con la base conectada */
+    bool pedirLogin();
+    void cargarDesdeBase();
+    void cargarHorariosDeBase(const QDate &dia);
+    void refrescarTurnosDeBase(const QString &texto);
+    void confirmarTurnoEnBase(const Protocolo *p, const QDateTime &inicio);
+    bool buscarOCrearPaciente(int *idPaciente);
+    int profesionalElegido() const;
 
     Ui::VentanaGestion *ui;
     QVector<Protocolo> protocolos;
@@ -70,9 +81,16 @@ private:
     PaginaProfesionales *paginaProfesionales = nullptr;
     PaginaPacientes *paginaPacientes = nullptr;
     PaginaAvisos *paginaAvisos = nullptr;
+    PaginaReportes *paginaReportes = nullptr;
+    Repositorio *repositorio = nullptr;   /* stored procedures de la base */
+    bool enModoBase = false;              /* true: los datos vienen de la base; false: datos de prueba */
+    int idUsuario = 0;                    /* quién ingresó (va al log de auditoría) */
+    QString rolUsuario;
 
 public:
     ConexionApp *conexionApp() const { return conexion; }
+    bool usaBase() const { return enModoBase; }
+    int usuarioActual() const { return idUsuario; }
     const QVector<Turno> &listaTurnos() const { return turnos; }
 };
 

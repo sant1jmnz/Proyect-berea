@@ -153,11 +153,6 @@ CREATE TABLE agenda.Origen (
     nombre VARCHAR(50) NOT NULL UNIQUE
 );
 
--- Números del 0 al 47: reemplazan a las consultas recursivas (el material no las enseña).
-CREATE TABLE agenda.Numero (
-    n INT PRIMARY KEY
-);
-
 CREATE TABLE agenda.Turno (
     id_turno INT AUTO_INCREMENT PRIMARY KEY,
     id_paciente INT NOT NULL,

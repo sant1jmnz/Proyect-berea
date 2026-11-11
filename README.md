@@ -306,6 +306,23 @@ Arrancó con el frontend de escritorio y el diseño de la base de datos:
 - Siguiente: terminar el diagrama de Chen, el diseño lógico, implementar la
   base, conectar las pantallas y conectar el sitio web a la base.
 
+## Entrega del Hito 2 de Bases de Datos
+
+Carpeta `entrega-hito-2/` (la arma `python3 backend/armar_entrega.py --grupo <número>` a partir de los
+scripts de `backend/`, que son la fuente única):
+
+| Archivo | Qué es |
+|---|---|
+| `03_ModeloSQL_Grupo<N>.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
+| `04_DatosSQL_Grupo<N>.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
+| `05_Backend_Grupo<N>.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
+| `06_PruebasSQL.xlsx` | Punto 6: 222 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
+| `Diagrama_Chen_Grupo<N>.png`, `Diagrama_Codd_Grupo<N>.png` | Diagramas conceptual y lógico, con fondo blanco |
+
+El orden correcto es 03, 04 y 05, y la secuencia completa se puede repetir. El backend usa solo lo que
+enseña el material de la cátedra y pide la consigna: la lista de lo que se reemplazó y cómo está en
+[`docs/metodologia-sql.md`](docs/metodologia-sql.md) y [`docs/12-contrato-sp.md`](docs/12-contrato-sp.md).
+
 ## Qué falta
 
 El trabajo del 4° bimestre está armado en la rama `claude/awesome-hopper-20z4z2`; cada semana se

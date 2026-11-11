@@ -10,8 +10,6 @@
 --
 -- CAMBIAR las contraseñas antes de usar (y no subirlas al repositorio).
 
-SET NAMES utf8mb4;
-
 -- Aplicaciones de escritorio (Gestión y Cliente) y API del sitio web.
 CREATE USER IF NOT EXISTS 'dermalia_app'@'%' IDENTIFIED BY 'CAMBIAR_ESTA_CLAVE';
 GRANT EXECUTE ON seguridad.*       TO 'dermalia_app'@'%';

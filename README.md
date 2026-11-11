@@ -93,7 +93,7 @@ propuestas relevadas y por qué se eligió esta), [`docs/foda.md`](docs/foda.md)
 (FODA del equipo), [`docs/plan-de-aprendizaje.md`](docs/plan-de-aprendizaje.md)
 (cronograma del 3er bimestre), [`docs/plan-4to-bimestre.md`](docs/plan-4to-bimestre.md)
 (cronograma del 4° bimestre, transcripción del PDF), [`docs/reparto-4to-bimestre.md`](docs/reparto-4to-bimestre.md)
-(tareas de Santiago y Bautista semana a semana, martes de frontend y miércoles y jueves de base de datos) y [`docs/material-catedra.md`](docs/material-catedra.md)
+(tareas de Santiago y Bautista semana a semana, martes de frontend y miércoles y jueves de base de datos) y [`docs/metodologia-sql.md`](docs/metodologia-sql.md) (cómo se trabaja en SQL: metodología de Bases de Datos, rúbricas y técnica de optimización, con los scripts de profundización 02 en `docs/catedra/profundizacion-02/`), [`docs/material-catedra.md`](docs/material-catedra.md)
 (resumen de los videos de cátedra, alojados como [release `material-catedra`](https://github.com/sant1jmnz/Proyect-berea/releases/tag/material-catedra)),
 [`docs/catedra/bbdd-006-conectar-c-con-mysql.md`](docs/catedra/bbdd-006-conectar-c-con-mysql.md) (PPT de la cátedra para conectar C/C++ con MySQL, con sus ejemplos),
 [`docs/conexion-base.md`](docs/conexion-base.md) (cómo se conecta la aplicación a MySQL o a Aiven, y el modo contingencia) y los casos de prueba funcional de Gestión y Cliente

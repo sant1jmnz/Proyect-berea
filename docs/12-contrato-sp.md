@@ -21,7 +21,7 @@ devuelven **una fila con 6 columnas**:
 | `mensaje` | Texto en español listo para mostrar a la persona |
 | `id` | Lo que se creó o modificó (turno, pago, paciente...) |
 | `valor` | Un monto (la seña a pagar, lo reembolsado...) |
-| `dato` | Un texto (código de operación `SIM-...`, rol, token, código de tarjeta...) |
+| `dato` | Un texto (código de operación (número), rol, token, código de tarjeta...) |
 
 Si las reglas del negocio lo impiden, **no hay excepción**: vuelve la fila
 `ERROR` con su código y la operación se deshace sola (`EXIT HANDLER`, como en el

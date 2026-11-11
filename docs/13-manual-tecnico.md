@@ -191,7 +191,7 @@ Un fallo se reintenta hasta 3 veces. Una vez por día corre `CALL clinica.sp_ven
 |---|---|
 | `ERROR 1418 ... DETERMINISTIC, NO SQL, or READS SQL DATA` | El servidor tiene registro binario: las funciones del proyecto ya declaran la característica; si se agrega una función, hay que declararla |
 | Los `CHECK` no rechazan nada | MySQL 5.7 los ignora. Usar 8.0.16 o superior |
-| Tildes que salen como `Ã¡` | Cliente sin `utf8mb4`: correr `SET NAMES utf8mb4;` (los scripts ya lo hacen) |
+| Tildes que salen como `Ã¡` | Cliente sin `utf8mb4`: correr `SET NAMES utf8mb4;` en el cliente antes de ejecutar (los scripts ya no lo hacen) |
 | `ERROR 1055 ... ONLY_FULL_GROUP_BY` al probar consultas propias | Todo campo del `SELECT` debe estar en el `GROUP BY` o dentro de un agregado |
 | `Access denied for user 'root'@'localhost'` desde Python o Qt | `root` entra por socket; crear un usuario con contraseña o `ALTER USER ... IDENTIFIED WITH mysql_native_password` |
 | El programa dice "sin conexión" | Revisar variables `DERMALIA_DB_*`, el servidor y, en Aiven, `DERMALIA_DB_SSL=1` |

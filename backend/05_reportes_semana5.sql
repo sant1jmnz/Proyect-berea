@@ -10,8 +10,6 @@
 -- parámetros NULL o con p_desde > p_hasta devuelven 0 filas (sin error).
 -- Los dos reportes con versión `_tuneado` están en 06_tuning_semana6.sql.
 
-SET NAMES utf8mb4;
-
 DELIMITER //
 
 -- Reporte 1: turnos por período (mes) y profesional.
@@ -118,27 +116,49 @@ BEGIN
 END//
 
 -- Reporte 5: protocolos más pedidos en un período (sin contar turnos cancelados).
--- Ranking con RANK() y porcentaje sobre el total. p_limite NULL = 10.
+-- Puesto en el ranking = 1 + cuántos protocolos tienen más pedidos (o los mismos y
+-- un nombre anterior en el alfabeto); porcentaje sobre el total de pedidos.
+-- p_limite NULL = 10. Se arma con tablas temporales, como el Cheetah A del material:
+-- primero se filtra y se agrupa, después se compara. n2 es una copia de n1 porque
+-- MySQL no deja usar dos veces la misma tabla temporal en una consulta.
 DROP PROCEDURE IF EXISTS clinica.sp_reporte_protocolos_mas_pedidos//
 CREATE PROCEDURE clinica.sp_reporte_protocolos_mas_pedidos(IN p_desde DATE, IN p_hasta DATE, IN p_limite INT)
 BEGIN
+    DROP TEMPORARY TABLE IF EXISTS tmp_pedidos_n1;
+    DROP TEMPORARY TABLE IF EXISTS tmp_pedidos_n2;
+
+    CREATE TEMPORARY TABLE tmp_pedidos_n1 AS
+    SELECT p.id_protocolo, p.nombre AS protocolo, c.nombre AS categoria,
+           COUNT(*) AS pedidos, SUM(tp.precio_aplicado) AS ingresos_lista
+      FROM agenda.TurnoProtocolo tp
+      JOIN agenda.Turno t ON t.id_turno = tp.id_turno
+      JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre <> 'cancelado'
+      JOIN clinica.Protocolo p ON p.id_protocolo = tp.id_protocolo
+      JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
+     WHERE t.fecha_hora_inicio >= p_desde AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
+     GROUP BY p.id_protocolo, p.nombre, c.nombre;
+
+    CREATE TEMPORARY TABLE tmp_pedidos_n2 AS
+    SELECT id_protocolo, protocolo, pedidos
+      FROM tmp_pedidos_n1;
+
     SELECT x.puesto, x.protocolo, x.categoria, x.pedidos, x.ingresos_lista,
            ROUND(100 * x.pedidos / x.total_pedidos, 1) AS porcentaje
       FROM (
-            SELECT RANK() OVER (ORDER BY COUNT(*) DESC, p.nombre) AS puesto,
-                   p.nombre AS protocolo, c.nombre AS categoria,
-                   COUNT(*) AS pedidos, SUM(tp.precio_aplicado) AS ingresos_lista,
-                   SUM(COUNT(*)) OVER () AS total_pedidos
-              FROM agenda.TurnoProtocolo tp
-              JOIN agenda.Turno t ON t.id_turno = tp.id_turno
-              JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre <> 'cancelado'
-              JOIN clinica.Protocolo p ON p.id_protocolo = tp.id_protocolo
-              JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
-             WHERE t.fecha_hora_inicio >= p_desde AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
-             GROUP BY p.id_protocolo, p.nombre, c.nombre
+            SELECT 1 + COUNT(m.id_protocolo) AS puesto,
+                   a.protocolo, a.categoria, a.pedidos, a.ingresos_lista,
+                   (SELECT SUM(pedidos) FROM tmp_pedidos_n2) AS total_pedidos
+              FROM tmp_pedidos_n1 a
+              LEFT JOIN tmp_pedidos_n2 m
+                     ON m.pedidos > a.pedidos
+                     OR (m.pedidos = a.pedidos AND m.protocolo < a.protocolo)
+             GROUP BY a.id_protocolo, a.protocolo, a.categoria, a.pedidos, a.ingresos_lista
            ) x
      WHERE x.puesto <= COALESCE(p_limite, 10)
      ORDER BY x.puesto, x.protocolo;
+
+    DROP TEMPORARY TABLE IF EXISTS tmp_pedidos_n1;
+    DROP TEMPORARY TABLE IF EXISTS tmp_pedidos_n2;
 END//
 
 -- Reporte 6: ocupación por profesional = horas con turno / horas de disponibilidad.

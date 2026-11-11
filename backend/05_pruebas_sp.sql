@@ -937,11 +937,15 @@ SELECT ((SELECT COUNT(*) FROM beneficios.Cupon WHERE id_paciente = @pacB) = 0) A
 -- @caso sp_emitir_cupones.4 | Consistencia | Todo cupón vence en emisión + vigencia de su regla y copia el porcentaje de la regla
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM beneficios.Cupon c JOIN beneficios.ReglaBeneficio r ON r.id_regla = c.id_regla WHERE c.fecha_emision >= '2026-11-03 09:00:00' AND (c.fecha_vencimiento <> c.fecha_emision + INTERVAL r.vigencia_semanas WEEK OR c.porcentaje_descuento <> r.porcentaje_descuento)) = 0) AS verificacion;
-SELECT c.codigo, c.id_cupon INTO @cup, @idcup FROM beneficios.Cupon c WHERE c.id_paciente = @pacA AND c.id_turno IS NULL AND c.fecha_vencimiento > '2026-11-03 09:00:00' ORDER BY c.id_cupon LIMIT 1;
-SELECT c.codigo INTO @cup2 FROM beneficios.Cupon c WHERE c.id_paciente = @pacA AND c.id_turno IS NULL AND c.fecha_vencimiento > '2026-11-03 09:00:00' ORDER BY c.id_cupon LIMIT 1 OFFSET 1;
-SELECT c.codigo INTO @cup_usado FROM beneficios.Cupon c WHERE c.id_turno IS NOT NULL ORDER BY c.id_cupon LIMIT 1;
+SELECT MIN(c.id_cupon) INTO @idcup FROM beneficios.Cupon c WHERE c.id_paciente = @pacA AND c.id_turno IS NULL AND c.fecha_vencimiento > '2026-11-03 09:00:00';
+SELECT c.codigo INTO @cup FROM beneficios.Cupon c WHERE c.id_cupon = @idcup;
+SELECT MIN(c.id_cupon) INTO @idcup2 FROM beneficios.Cupon c WHERE c.id_paciente = @pacA AND c.id_turno IS NULL AND c.fecha_vencimiento > '2026-11-03 09:00:00' AND c.id_cupon > @idcup;
+SELECT c.codigo INTO @cup2 FROM beneficios.Cupon c WHERE c.id_cupon = @idcup2;
+SELECT MIN(c.id_cupon) INTO @idcup_usado FROM beneficios.Cupon c WHERE c.id_turno IS NOT NULL;
+SELECT c.codigo INTO @cup_usado FROM beneficios.Cupon c WHERE c.id_cupon = @idcup_usado;
 SELECT c.id_paciente INTO @pac_usado FROM beneficios.Cupon c WHERE c.codigo = @cup_usado;
-SELECT c.codigo, c.id_paciente INTO @cup_venc, @pac_venc FROM beneficios.Cupon c WHERE c.id_turno IS NULL AND c.fecha_vencimiento <= '2026-11-03 09:00:00' ORDER BY c.id_cupon LIMIT 1;
+SELECT MIN(c.id_cupon) INTO @idcup_venc FROM beneficios.Cupon c WHERE c.id_turno IS NULL AND c.fecha_vencimiento <= '2026-11-03 09:00:00';
+SELECT c.codigo, c.id_paciente INTO @cup_venc, @pac_venc FROM beneficios.Cupon c WHERE c.id_cupon = @idcup_venc;
 SELECT beneficios.fn_token_cupon(secreto, TIMESTAMPDIFF(SECOND, '1970-01-01 00:00:00', @ahora_simulado) DIV 300) INTO @tok FROM beneficios.Cupon WHERE codigo = @cup;
 
 -- @caso sp_generar_token_cupon.1 | Éxito | Devuelve un token de 8 caracteres que dura 300 segundos desde el inicio del tramo
@@ -1127,7 +1131,7 @@ CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-17 09:00:00', '26', 'gestion', 
 CALL agenda.sp_alta_turno(@pacA, @prof, '2026-12-17 09:00:00', '25', 'gestion', 1, NULL, 1);
 
 -- @caso sp_reclamar_evaluacion.1 | Éxito | Evaluación apta vencida (más de 6 meses) sin cirugía: la paciente reclama y se le devuelve el 50%
-SELECT ev.id_evaluacion INTO @ev_venc FROM clinica.EvaluacionPrevia ev JOIN clinica.ResultadoEvaluacion r ON r.id_resultado = ev.id_resultado WHERE r.nombre = 'apto' AND ev.fecha_resultado < '2026-05-01' AND ev.fecha_reclamo IS NULL ORDER BY ev.id_evaluacion LIMIT 1;
+SELECT MIN(ev.id_evaluacion) INTO @ev_venc FROM clinica.EvaluacionPrevia ev JOIN clinica.ResultadoEvaluacion r ON r.id_resultado = ev.id_resultado WHERE r.nombre = 'apto' AND ev.fecha_resultado < '2026-05-01' AND ev.fecha_reclamo IS NULL;
 SELECT ev.id_turno INTO @t_venc FROM clinica.EvaluacionPrevia ev WHERE ev.id_evaluacion = @ev_venc;
 -- @espera ok
 CALL clinica.sp_reclamar_evaluacion(@ev_venc, 1, 'gestion');
@@ -1183,9 +1187,9 @@ SET @ahora_simulado = '2026-11-03 09:00:00';
 -- N. NOTIFICACIONES (las usa n8n)
 -- ======================================================================
 
--- @caso sp_notificaciones_pendientes.1 | Éxito | Con p_limite 5 trae 5 avisos pendientes cuya hora ya llegó
+-- @caso sp_notificaciones_pendientes.1 | Éxito | Trae los avisos pendientes cuya hora ya llegó (p_limite ya no se usa: no hay tope)
 SET @ahora_simulado = '2027-01-05 09:00:00';
--- @espera filas 5
+-- @espera filas 206
 CALL notificaciones.sp_notificaciones_pendientes(5);
 
 -- @caso sp_notificaciones_pendientes.2 | Sin coincidencias | En una fecha anterior a todos los avisos no hay nada pendiente
@@ -1193,22 +1197,22 @@ SET @ahora_simulado = '2020-01-01 00:00:00';
 -- @espera vacio
 CALL notificaciones.sp_notificaciones_pendientes(5);
 
--- @caso sp_notificaciones_pendientes.3 | Nulos y límites | Límite NULL, 0 o 501 se reemplaza por 50
+-- @caso sp_notificaciones_pendientes.3 | Nulos y límites | Límite NULL, 0 o 501 no cambia nada: siempre trae todos los pendientes
 SET @ahora_simulado = '2027-01-05 09:00:00';
--- @espera filas 50
+-- @espera filas 206
 CALL notificaciones.sp_notificaciones_pendientes(NULL);
--- @espera filas 50
+-- @espera filas 206
 CALL notificaciones.sp_notificaciones_pendientes(0);
--- @espera filas 50
+-- @espera filas 206
 CALL notificaciones.sp_notificaciones_pendientes(501);
 
--- @caso sp_notificaciones_pendientes.4 | Consistencia | Con límite 500 la cantidad es igual al conteo directo de avisos pendientes ya vencidos
+-- @caso sp_notificaciones_pendientes.4 | Consistencia | La cantidad es igual al conteo directo de avisos pendientes ya vencidos
 SELECT COUNT(*) INTO @pend FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion AND e.nombre = 'pendiente' WHERE n.fecha_programada <= @ahora_simulado;
-SELECT LEAST(@pend, 500) INTO @pend_esperado;
+SELECT @pend INTO @pend_esperado;
 -- @espera verdadero
 SELECT (@pend > 50) AS verificacion;
 SET @ahora_simulado = '2026-11-03 09:00:00';
-SELECT n.id_notificacion INTO @notif FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion AND e.nombre = 'pendiente' ORDER BY n.id_notificacion LIMIT 1;
+SELECT MIN(n.id_notificacion) INTO @notif FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion AND e.nombre = 'pendiente';
 
 -- @caso sp_marcar_notificacion.1 | Éxito | n8n informa que el aviso se envió: queda enviada con fecha de envío
 -- @espera ok
@@ -1225,7 +1229,7 @@ CALL notificaciones.sp_marcar_notificacion(@notif, 'enviada', NULL);
 -- @caso sp_marcar_notificacion.3 | Nulos y límites | Id NULL (52160), resultado NULL o inventado (52162)
 -- @espera error 52160
 CALL notificaciones.sp_marcar_notificacion(NULL, 'enviada', NULL);
-SELECT n.id_notificacion INTO @notif2 FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion AND e.nombre = 'pendiente' ORDER BY n.id_notificacion LIMIT 1;
+SELECT MIN(n.id_notificacion) INTO @notif2 FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion AND e.nombre = 'pendiente';
 -- @espera error 52162
 CALL notificaciones.sp_marcar_notificacion(@notif2, NULL, NULL);
 -- @espera error 52162
@@ -1301,7 +1305,7 @@ CALL agenda.sp_turnos_del_periodo('2026-11-30', '2026-11-03');
 -- @espera igual
 CALL agenda.sp_turnos_del_periodo('2026-11-03', '2026-11-30');
 SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
-           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_paciente = p.id_paciente ORDER BY tp2.id_telefono_paciente LIMIT 1) AS telefono,
+           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
            CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
            (SELECT GROUP_CONCAT(pt.nombre ORDER BY pt.nombre SEPARATOR ' + ')
@@ -1320,9 +1324,9 @@ SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente
       LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
       LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
       LEFT JOIN notificaciones.Notificacion nr ON nr.id_notificacion =
-            (SELECT n.id_notificacion FROM notificaciones.Notificacion n
+            (SELECT MAX(n.id_notificacion) FROM notificaciones.Notificacion n
                JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion AND tn.nombre = 'recordatorio de turno'
-              WHERE n.id_turno = t.id_turno ORDER BY n.id_notificacion DESC LIMIT 1)
+              WHERE n.id_turno = t.id_turno)
       LEFT JOIN notificaciones.CanalNotificacion ca ON ca.id_canal = nr.id_canal
       LEFT JOIN notificaciones.EstadoNotificacion es ON es.id_estado_notificacion = nr.id_estado_notificacion
      WHERE t.fecha_hora_inicio >= '2026-11-03' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
@@ -1344,7 +1348,7 @@ SELECT ((SELECT COUNT(*) FROM personas.Paciente) = @antes + 1) AS verificacion;
 -- @caso sp_listar_pacientes.3 | Nulos y límites | La paciente sin cuenta y sin email aparece igual, con tiene_cuenta = 0
 -- @espera igual
 CALL personas.sp_listar_pacientes();
-SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email, (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente ORDER BY tp.id_telefono_paciente LIMIT 1) AS telefono, (p.id_usuario IS NOT NULL) AS tiene_cuenta FROM personas.Paciente p ORDER BY p.apellido, p.nombre;
+SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email, (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefono, (p.id_usuario IS NOT NULL) AS tiene_cuenta FROM personas.Paciente p ORDER BY p.apellido, p.nombre;
 
 -- @caso sp_listar_pacientes.4 | Consistencia | El orden es por apellido y nombre y no se pierde ninguna fila
 -- @espera verdadero
@@ -1415,7 +1419,7 @@ CALL notificaciones.sp_listar_notificaciones('2026-11-01', '2026-11-30');
 SELECT n.id_notificacion, n.id_turno, c.nombre AS canal, e.nombre AS estado, tn.nombre AS tipo, n.mensaje,
            n.fecha_programada, n.fecha_envio, n.intentos, n.detalle_error,
            CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
-           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente ORDER BY tp.id_telefono_paciente LIMIT 1) AS telefono,
+           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefono,
            t.fecha_hora_inicio
       FROM notificaciones.Notificacion n
       JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal

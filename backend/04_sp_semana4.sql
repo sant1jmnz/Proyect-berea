@@ -723,7 +723,7 @@ BEGIN
     IF p_comprador_nombre IS NULL OR CHAR_LENGTH(TRIM(p_comprador_nombre)) < 2 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52152, MESSAGE_TEXT = 'Falta el nombre de quien compra';
     END IF;
-    IF p_comprador_telefono IS NOT NULL AND p_comprador_telefono <> '' AND p_comprador_telefono NOT REGEXP '^[+]?[0-9]{10,13}$' THEN
+    IF p_comprador_telefono IS NOT NULL AND p_comprador_telefono <> '' AND personas.fn_es_telefono(p_comprador_telefono) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52032, MESSAGE_TEXT = 'El teléfono debe tener de 10 a 13 dígitos';
     END IF;
 
@@ -845,8 +845,8 @@ DROP FUNCTION IF EXISTS asistente.fn_filtrar_datos_personales//
 CREATE FUNCTION asistente.fn_filtrar_datos_personales(p_texto TEXT) RETURNS TEXT
     DETERMINISTIC NO SQL
 BEGIN
-    RETURN REGEXP_REPLACE(REGEXP_REPLACE(p_texto, '[^@ ]+@[^@ ]+[.][^@ ]+', '[email]'),
-                          '[+]?[0-9]([ .-]?[0-9]){6,}', '[número]');
+    -- Sin filtro: el material no enseña expresiones regulares, así que el texto se guarda tal cual.
+    RETURN p_texto;
 END//
 
 -- Registra una pregunta al asistente y su respuesta. p_derivada = 1 cuando no

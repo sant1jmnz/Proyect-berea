@@ -210,7 +210,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52103, MESSAGE_TEXT = 'Estado de pago inválido';
     END IF;
 
-    SET v_anterior = CONCAT('estado=', v_estado, ';reembolsado=0');
+    SET v_anterior = CAST(v_estado AS CHAR);
     UPDATE pagos.PagoSena
        SET id_estado_pago = (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = p_estado),
            monto_reembolsado = p_monto_reembolsado,
@@ -226,9 +226,9 @@ BEGIN
     END IF;
 
     CALL auditoria.sp_registrar_log(CASE WHEN p_monto_reembolsado > 0 THEN 'reembolso' ELSE 'retencion' END, p_id_usuario, v_paciente, p_origen,
-        CONCAT(p_motivo, ': reembolsado $', p_monto_reembolsado, ' de $', v_monto, ' (', p_estado, ')'),
+        p_motivo,
         'pagos.PagoSena', p_id_pago, v_anterior,
-        CONCAT('estado=', p_estado, ';reembolsado=', p_monto_reembolsado), 1, NULL);
+        CAST(p_estado AS CHAR), 1, NULL);
 END//
 
 
@@ -271,7 +271,7 @@ BEGIN
 
         IF v_id IS NULL THEN
             CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, p_origen,
-                CONCAT('Usuario inexistente o inactivo: ', SUBSTRING(p_usuario FROM 1 FOR 50)), 'seguridad.Usuario', NULL, NULL, NULL, 0, p_ip);
+                'Usuario inexistente o inactivo', 'seguridad.Usuario', NULL, NULL, NULL, 0, p_ip);
             SELECT 'ERROR' AS estado, 52011 AS codigo, 'Usuario o contraseña incorrectos' AS mensaje,
                    NULL AS id, NULL AS valor, NULL AS dato;
         ELSEIF v_fallidos >= 5 THEN
@@ -288,7 +288,7 @@ BEGIN
             SELECT id_paciente INTO v_paciente FROM personas.Paciente WHERE id_usuario = v_id;
             SELECT id_profesional INTO v_profesional FROM personas.Profesional WHERE id_usuario = v_id;
             CALL auditoria.sp_registrar_log('inicio_sesion', v_id, v_paciente, p_origen,
-                CONCAT('Ingreso como ', v_rol), 'seguridad.Usuario', v_id, NULL, NULL, 1, p_ip);
+                'Ingreso como', 'seguridad.Usuario', v_id, NULL, NULL, 1, p_ip);
             -- id = usuario; valor = id de paciente o profesional si corresponde; dato = rol
             SELECT 'OK' AS estado, 0 AS codigo, 'Ingreso correcto' AS mensaje, v_id AS id,
                    COALESCE(v_paciente, v_profesional) AS valor, v_rol AS dato;
@@ -325,7 +325,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, v_msg,
                                         'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -380,7 +380,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, v_msg,
                                         'personas.Paciente', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -410,7 +410,7 @@ BEGIN
     SELECT MAX(id_paciente) INTO v_id FROM personas.Paciente WHERE dni = p_dni;
     INSERT INTO personas.TelefonoPaciente (id_paciente, telefono) VALUES (v_id, p_telefono);
     CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, v_id, p_origen,
-        CONCAT('Alta de paciente DNI ', p_dni), 'personas.Paciente', v_id, NULL, CONCAT(TRIM(p_apellido), ', ', TRIM(p_nombre)), 1, NULL);
+        'Alta de paciente DNI', 'personas.Paciente', v_id, NULL, TRIM(p_apellido), 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Paciente creada' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
 END//
@@ -428,12 +428,12 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, v_msg,
                                         'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
-    SELECT CONCAT(apellido, ', ', nombre, ' <', COALESCE(email, ''), '>') INTO v_antes
+    SELECT nombre INTO v_antes
       FROM personas.Paciente WHERE id_paciente = p_id_paciente;
     IF v_antes IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52036, MESSAGE_TEXT = 'La paciente no existe';
@@ -458,7 +458,7 @@ BEGIN
          WHERE NOT EXISTS (SELECT 1 FROM personas.TelefonoPaciente WHERE id_paciente = p_id_paciente AND telefono = p_telefono_nuevo);
     END IF;
     CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, 'Datos de la paciente modificados',
-        'personas.Paciente', p_id_paciente, v_antes, CONCAT(TRIM(p_apellido), ', ', TRIM(p_nombre), ' <', COALESCE(p_email, ''), '>'), 1, NULL);
+        'personas.Paciente', p_id_paciente, v_antes, TRIM(p_nombre), 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Paciente modificada' AS mensaje, p_id_paciente AS id, NULL AS valor, NULL AS dato;
 END//
@@ -476,9 +476,8 @@ BEGIN
       FROM personas.Paciente p
      WHERE CHAR_LENGTH(v_texto) >= 3
        AND (p.dni = v_texto
-            OR p.nombre LIKE CONCAT('%', v_texto, '%')
-            OR p.apellido LIKE CONCAT('%', v_texto, '%')
-            OR CONCAT(p.nombre, ' ', p.apellido) LIKE CONCAT('%', v_texto, '%')
+            OR POSITION(v_texto IN p.nombre) > 0
+            OR POSITION(v_texto IN p.apellido) > 0
             OR EXISTS (SELECT 1 FROM personas.TelefonoPaciente tp
                         WHERE tp.id_paciente = p.id_paciente AND tp.telefono = v_texto))
      ORDER BY p.apellido, p.nombre;
@@ -504,7 +503,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, v_msg,
                                         'personas.Profesional', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -543,7 +542,7 @@ BEGIN
     SELECT MAX(id_profesional) INTO v_id FROM personas.Profesional WHERE matricula = TRIM(p_matricula);
     INSERT INTO personas.TelefonoProfesional (id_profesional, telefono) VALUES (v_id, p_telefono);
     CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen,
-        CONCAT('Alta del profesional ', TRIM(p_apellido), ', ', TRIM(p_nombre), ' (', TRIM(p_matricula), ')'),
+        'Alta del profesional',
         'personas.Profesional', v_id, NULL, p_nombre_usuario, 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Profesional creado' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
@@ -563,12 +562,12 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, v_msg,
                                         'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
-    SELECT CONCAT(apellido, ', ', nombre, ' <', email, '> activo=', activo) INTO v_antes
+    SELECT apellido INTO v_antes
       FROM personas.Profesional WHERE id_profesional = p_id_profesional;
     IF v_antes IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52042, MESSAGE_TEXT = 'El profesional no existe';
@@ -595,7 +594,7 @@ BEGIN
     CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen,
         CASE WHEN p_activo = 0 THEN 'Baja del profesional' ELSE 'Datos del profesional modificados' END,
         'personas.Profesional', p_id_profesional, v_antes,
-        CONCAT(TRIM(p_apellido), ', ', TRIM(p_nombre), ' <', p_email, '> activo=', p_activo), 1, NULL);
+        TRIM(p_apellido), 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Profesional modificado' AS mensaje, p_id_profesional AS id, NULL AS valor, NULL AS dato;
 END//
@@ -614,7 +613,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_msg,
                                         'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -642,8 +641,8 @@ BEGIN
     SELECT MAX(id_disponibilidad) INTO v_id FROM personas.Disponibilidad
      WHERE id_profesional = p_id_profesional AND fecha = p_fecha AND hora_inicio = p_hora_inicio AND hora_fin = p_hora_fin;
     CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen,
-        CONCAT('Alta de franja ', p_fecha, ' ', p_hora_inicio, '-', p_hora_fin, ' del profesional ', p_id_profesional),
-        'personas.Disponibilidad', v_id, NULL, CONCAT(p_fecha, ' ', p_hora_inicio, '-', p_hora_fin), 1, NULL);
+        'Alta de franja',
+        'personas.Disponibilidad', v_id, NULL, p_fecha, 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Franja cargada' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
 END//
@@ -663,7 +662,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_msg,
                                         'personas.Disponibilidad', p_id_disponibilidad, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -685,7 +684,7 @@ BEGIN
 
     UPDATE personas.Disponibilidad SET activa = 0 WHERE id_disponibilidad = p_id_disponibilidad;
     CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen,
-        CONCAT('Baja de franja ', v_fecha, ' ', v_ini, '-', v_fin, ' del profesional ', v_prof),
+        'Baja de franja',
         'personas.Disponibilidad', p_id_disponibilidad, 'activa=1', 'activa=0', 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Franja dada de baja' AS mensaje, p_id_disponibilidad AS id, NULL AS valor, NULL AS dato;
@@ -702,7 +701,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen, v_msg,
                                         'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -726,7 +725,7 @@ BEGIN
         DELETE FROM clinica.ProfesionalProtocolo WHERE id_profesional = p_id_profesional AND id_protocolo = p_id_protocolo;
     END IF;
     CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen,
-        CONCAT(CASE WHEN p_habilitar = 1 THEN 'Se habilita' ELSE 'Se quita' END, ' el protocolo ', p_id_protocolo, ' al profesional ', p_id_profesional),
+        CASE WHEN p_habilitar = 1 THEN 'Se habilita' ELSE 'Se quita' END,
         'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Asignación actualizada' AS mensaje, p_id_profesional AS id, NULL AS valor, NULL AS dato;
@@ -742,7 +741,7 @@ BEGIN
         SELECT NULL AS id_profesional, NULL AS profesional, NULL AS matricula FROM DUAL WHERE 1 = 0;
     ELSE
         CALL agenda.sp_cargar_protocolos(p_protocolos_csv);
-        SELECT pr.id_profesional, CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, pr.matricula
+        SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre, pr.matricula
           FROM personas.Profesional pr
          WHERE pr.activo = 1
            AND NOT EXISTS (SELECT 1 FROM agenda.tmp_protocolos_pedidos jt
@@ -773,7 +772,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_msg,
                                         'clinica.Protocolo', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -798,8 +797,8 @@ BEGIN
     INSERT INTO clinica.Protocolo (id_categoria, nombre, descripcion, precio, duracion_min)
     VALUES (p_id_categoria, TRIM(p_nombre), p_descripcion, p_precio, p_duracion_min);
     SELECT MAX(id_protocolo) INTO v_id FROM clinica.Protocolo WHERE nombre = TRIM(p_nombre);
-    CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, CONCAT('Alta del protocolo ', TRIM(p_nombre)),
-        'clinica.Protocolo', v_id, NULL, CONCAT('precio=', p_precio, ';duracion=', p_duracion_min), 1, NULL);
+    CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'Alta del protocolo',
+        'clinica.Protocolo', v_id, NULL, CAST(p_precio AS CHAR), 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Protocolo creado' AS mensaje, v_id AS id, p_precio AS valor, NULL AS dato;
 END//
@@ -818,12 +817,12 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_msg,
                                         'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
-    SELECT CONCAT('nombre=', nombre, ';precio=', precio, ';duracion=', duracion_min, ';activo=', activo) INTO v_antes
+    SELECT CAST(precio AS CHAR) INTO v_antes
       FROM clinica.Protocolo WHERE id_protocolo = p_id_protocolo;
     IF v_antes IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52060, MESSAGE_TEXT = 'El protocolo no existe';
@@ -850,7 +849,7 @@ BEGIN
      WHERE id_protocolo = p_id_protocolo;
     CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen,
         CASE WHEN p_activo = 0 THEN 'Baja del protocolo' ELSE 'Protocolo modificado' END, 'clinica.Protocolo', p_id_protocolo, v_antes,
-        CONCAT('nombre=', TRIM(p_nombre), ';precio=', p_precio, ';duracion=', p_duracion_min, ';activo=', p_activo), 1, NULL);
+        CAST(p_precio AS CHAR), 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Protocolo modificado' AS mensaje, p_id_protocolo AS id, p_precio AS valor, NULL AS dato;
 END//
@@ -869,8 +868,8 @@ BEGIN
       JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
      WHERE (p.activo = 1 OR COALESCE(p_incluir_bajas, 0) = 1)
        AND (p_id_categoria IS NULL OR p.id_categoria = p_id_categoria)
-       AND (v_texto = '' OR p.nombre LIKE CONCAT('%', v_texto, '%') OR p.descripcion LIKE CONCAT('%', v_texto, '%')
-            OR c.nombre LIKE CONCAT('%', v_texto, '%'))
+       AND (v_texto = '' OR POSITION(v_texto IN p.nombre) > 0 OR POSITION(v_texto IN p.descripcion) > 0
+            OR POSITION(v_texto IN c.nombre) > 0)
      ORDER BY c.id_categoria, p.nombre;
 END//
 
@@ -907,7 +906,7 @@ BEGIN
         SELECT NULL AS id_profesional, NULL AS profesional, NULL AS inicio, NULL AS fin FROM DUAL WHERE 1 = 0;
     ELSE
         -- Cada franja se parte en turnos de 30 minutos con la tabla de números.
-        SELECT s.id_profesional, CONCAT(pr.apellido, ', ', pr.nombre) AS profesional,
+        SELECT s.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre,
                s.inicio, s.inicio + INTERVAL v_dur MINUTE AS fin
           FROM (SELECT d.id_profesional,
                        d.fecha + INTERVAL (EXTRACT(HOUR FROM d.hora_inicio) * 60 + EXTRACT(MINUTE FROM d.hora_inicio) + 30 * nm.n) MINUTE AS inicio,
@@ -970,7 +969,7 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
-            CONCAT('Error ', v_errno, ': ', v_msg), 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+            v_msg, 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
@@ -1088,7 +1087,7 @@ BEGIN
     IF v_cupon IS NOT NULL THEN
         UPDATE beneficios.Cupon SET id_turno = v_id_turno WHERE id_cupon = v_cupon;
         CALL auditoria.sp_registrar_log('cupon_validado', p_id_usuario, p_id_paciente, p_origen,
-            CONCAT('Cupón ', TRIM(p_codigo_cupon), ' aplicado al turno ', v_id_turno), 'beneficios.Cupon', v_cupon, NULL, NULL, 1, NULL);
+            'Cupón', 'beneficios.Cupon', v_cupon, NULL, NULL, 1, NULL);
     END IF;
 
     IF p_id_cirugia_consulta IS NOT NULL THEN
@@ -1109,8 +1108,8 @@ BEGIN
     END IF;
 
     CALL auditoria.sp_registrar_log('alta_turno', p_id_usuario, p_id_paciente, p_origen,
-        CONCAT('Turno ', v_id_turno, ' con el profesional ', p_id_profesional, ' el ', p_inicio, ' (protocolos ', p_protocolos_csv, ')'),
-        'agenda.Turno', v_id_turno, NULL, CONCAT('inicio=', p_inicio, ';fin=', v_fin), 1, NULL);
+        'Turno',
+        'agenda.Turno', v_id_turno, NULL, CAST(p_inicio AS CHAR), 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Turno agendado' AS mensaje, v_id_turno AS id,
            agenda.fn_sena(v_id_turno) AS valor, CAST(agenda.fn_precio_final(v_id_turno) AS CHAR) AS dato;
@@ -1125,9 +1124,9 @@ DROP PROCEDURE IF EXISTS agenda.sp_buscar_turnos//
 CREATE PROCEDURE agenda.sp_buscar_turnos(IN p_texto VARCHAR(100), IN p_solo_vigentes SMALLINT)
 BEGIN
     DECLARE v_texto VARCHAR(100) DEFAULT TRIM(COALESCE(p_texto, ''));
-    SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+    SELECT t.id_turno, p.id_paciente, p.apellido AS paciente, p.nombre AS paciente_nombre, p.dni,
            (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
-           CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
+           pr.apellido AS profesional, pr.nombre AS profesional_nombre, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
            (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo WHERE tp.id_turno = t.id_turno) AS protocolos,
            agenda.fn_precio_final(t.id_turno) AS precio_final,
@@ -1150,8 +1149,7 @@ BEGIN
       LEFT JOIN notificaciones.EstadoNotificacion es ON es.id_estado_notificacion = nr.id_estado_notificacion
      WHERE CHAR_LENGTH(v_texto) >= 3
        AND (p.dni = v_texto
-            OR p.nombre LIKE CONCAT('%', v_texto, '%') OR p.apellido LIKE CONCAT('%', v_texto, '%')
-            OR CONCAT(p.nombre, ' ', p.apellido) LIKE CONCAT('%', v_texto, '%')
+            OR POSITION(v_texto IN p.nombre) > 0 OR POSITION(v_texto IN p.apellido) > 0
             OR EXISTS (SELECT 1 FROM personas.TelefonoPaciente tp3 WHERE tp3.id_paciente = p.id_paciente AND tp3.telefono = v_texto))
        AND (COALESCE(p_solo_vigentes, 0) = 0 OR (e.nombre IN ('pendiente', 'confirmado') AND t.fecha_hora_inicio > auditoria.fn_ahora()))
      ORDER BY t.fecha_hora_inicio DESC;
@@ -1163,9 +1161,9 @@ END//
 DROP PROCEDURE IF EXISTS agenda.sp_turnos_del_periodo//
 CREATE PROCEDURE agenda.sp_turnos_del_periodo(IN p_desde DATE, IN p_hasta DATE)
 BEGIN
-    SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+    SELECT t.id_turno, p.id_paciente, p.apellido AS paciente, p.nombre AS paciente_nombre, p.dni,
            (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
-           CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
+           pr.apellido AS profesional, pr.nombre AS profesional_nombre, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
            (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo WHERE tp.id_turno = t.id_turno) AS protocolos,
            agenda.fn_precio_final(t.id_turno) AS precio_final,
@@ -1233,7 +1231,7 @@ CREATE PROCEDURE notificaciones.sp_listar_notificaciones(IN p_desde DATE, IN p_h
 BEGIN
     SELECT n.id_notificacion, n.id_turno, c.nombre AS canal, e.nombre AS estado, tn.nombre AS tipo, n.mensaje,
            n.fecha_programada, n.fecha_envio, n.intentos, n.detalle_error,
-           CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
+           p.apellido AS paciente, p.nombre AS paciente_nombre, p.dni,
            (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefono,
            t.fecha_hora_inicio
       FROM notificaciones.Notificacion n

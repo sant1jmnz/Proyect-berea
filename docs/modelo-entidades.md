@@ -288,7 +288,7 @@ salen del turno de la consulta.
    la consulta al asistente y el log (terminal, web, gestión y *sistema*, para
    lo que hace n8n).
 5. **Cuentas simples.** `Usuario` tiene solo el nombre de usuario, el mail y la
-   contraseña cifrada; los nombres reales ya están en `Paciente` y
+   contraseña; los nombres reales ya están en `Paciente` y
    `Profesional`, y no se duplican (3FN). El personal de recepción y
    administración se identifica por su nombre de usuario. La contraseña
    se guarda tal cual, sin encriptar (decisión del equipo para este trabajo).

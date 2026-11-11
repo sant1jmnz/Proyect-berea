@@ -81,9 +81,7 @@ public:
     explicit Repositorio(BaseDatos &base) : base(base) {}
 
     /* ---- seguridad ---- */
-    /* La contraseña se manda como SHA-256 en hexadecimal: nunca en claro. */
     Respuesta login(const QString &usuario, const QString &clave, const QString &ip, const QString &origen);
-    static QString hashClave(const QString &clave);
 
     /* ---- pacientes ---- */
     Respuesta altaPaciente(const QString &dni, const QString &nombre, const QString &apellido, const QDate &nacimiento,

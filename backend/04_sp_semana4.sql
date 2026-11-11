@@ -90,7 +90,7 @@ BEGIN
     INSERT INTO pagos.PagoSena (id_turno, id_estado_pago, id_medio_pago, monto, fecha_pago, codigo_operacion)
     VALUES (p_id_turno, (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 'pagada'), v_medio, v_monto,
             auditoria.fn_ahora(), v_codigo);
-    SET v_pago = LAST_INSERT_ID();
+    SELECT MAX(id_pago) INTO v_pago FROM pagos.PagoSena WHERE codigo_operacion = v_codigo;
     UPDATE agenda.Turno SET id_estado_turno = (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'confirmado')
      WHERE id_turno = p_id_turno;
     IF v_tarjeta IS NOT NULL THEN
@@ -731,7 +731,7 @@ BEGIN
     SET v_codigo = CONCAT('GC-', UPPER(SUBSTRING(REPLACE(UUID(), '-', '') FROM 1 FOR 24)));
     INSERT INTO pagos.TarjetaRegalo (id_medio_pago, codigo, monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono)
     VALUES (v_medio, v_codigo, p_monto, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL 12 MONTH, TRIM(p_comprador_nombre), NULLIF(p_comprador_telefono, ''));
-    SET v_id = LAST_INSERT_ID();
+    SELECT MAX(id_tarjeta) INTO v_id FROM pagos.TarjetaRegalo WHERE codigo = v_codigo;
     CALL auditoria.sp_registrar_log('tarjeta_comprada', p_id_usuario, NULL, p_origen,
         CONCAT('Tarjeta de regalo de $', p_monto, ' comprada por ', TRIM(p_comprador_nombre)), 'pagos.TarjetaRegalo', v_id, NULL, CONCAT('monto=', p_monto), 1, NULL);
     COMMIT;
@@ -781,13 +781,12 @@ END//
 DROP PROCEDURE IF EXISTS notificaciones.sp_notificaciones_pendientes//
 CREATE PROCEDURE notificaciones.sp_notificaciones_pendientes(IN p_limite INT)
 BEGIN
-    -- Sin límite (o fuera de 1 a 500) trae de a 50.
-    DECLARE v_limite INT DEFAULT IF(p_limite BETWEEN 1 AND 500, p_limite, 50);
+    -- p_limite ya no se usa: el material no enseña LIMIT, así que trae todos los pendientes.
     SELECT n.id_notificacion, c.nombre AS canal, tn.nombre AS tipo, n.mensaje, n.fecha_programada, n.intentos, n.id_turno,
            COALESCE(CONCAT(p.apellido, ', ', p.nombre), CONCAT(pr.apellido, ', ', pr.nombre)) AS destinatario,
            p.telegram_chat_id,
-           COALESCE((SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente ORDER BY tp.id_telefono_paciente LIMIT 1),
-                    (SELECT tf.telefono FROM personas.TelefonoProfesional tf WHERE tf.id_profesional = pr.id_profesional ORDER BY tf.id_telefono_profesional LIMIT 1)) AS telefono,
+           COALESCE((SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)),
+                    (SELECT tf.telefono FROM personas.TelefonoProfesional tf WHERE tf.id_telefono_profesional = (SELECT MIN(tfx.id_telefono_profesional) FROM personas.TelefonoProfesional tfx WHERE tfx.id_profesional = pr.id_profesional))) AS telefono,
            COALESCE(p.email, pr.email) AS email
       FROM notificaciones.Notificacion n
       JOIN notificaciones.EstadoNotificacion en ON en.id_estado_notificacion = n.id_estado_notificacion AND en.nombre = 'pendiente'
@@ -796,8 +795,7 @@ BEGIN
       LEFT JOIN personas.Paciente p ON p.id_paciente = n.id_paciente
       LEFT JOIN personas.Profesional pr ON pr.id_profesional = n.id_profesional
      WHERE n.fecha_programada <= auditoria.fn_ahora()
-     ORDER BY n.fecha_programada, n.id_notificacion
-     LIMIT v_limite;
+     ORDER BY n.fecha_programada, n.id_notificacion;
 END//
 
 -- n8n informa cómo salió el envío. Un fallo se reintenta hasta 3 veces; recién
@@ -884,7 +882,7 @@ BEGIN
     INSERT INTO asistente.ConsultaAsistente (id_paciente, id_origen, pregunta, fecha_hora, derivada, respuesta)
     VALUES (p_id_paciente, v_origen, asistente.fn_filtrar_datos_personales(TRIM(p_pregunta)), auditoria.fn_ahora(),
             COALESCE(p_derivada, 0), asistente.fn_filtrar_datos_personales(p_respuesta));
-    SET v_id = LAST_INSERT_ID();
+    SELECT MAX(id_consulta) INTO v_id FROM asistente.ConsultaAsistente;
     CALL auditoria.sp_registrar_log('consulta_asistente', p_id_usuario, p_id_paciente, p_origen,
         IF(COALESCE(p_derivada, 0) = 1, 'Consulta derivada al WhatsApp del instituto', 'Consulta respondida por el asistente'),
         'asistente.ConsultaAsistente', v_id, NULL, NULL, 1, NULL);

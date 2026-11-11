@@ -192,7 +192,7 @@ BEGIN
         SELECT m.id_tarjeta, v_turno, -p_monto_reembolsado, auditoria.fn_ahora()
           FROM pagos.MovimientoTarjeta m
          WHERE m.id_turno = v_turno AND m.monto > 0
-         ORDER BY m.id_movimiento LIMIT 1;
+           AND m.id_movimiento = (SELECT MIN(m2.id_movimiento) FROM pagos.MovimientoTarjeta m2 WHERE m2.id_turno = v_turno AND m2.monto > 0);
     END IF;
 
     CALL auditoria.sp_registrar_log(IF(p_monto_reembolsado > 0, 'reembolso', 'retencion'), p_id_usuario, v_paciente, p_origen,
@@ -323,7 +323,7 @@ BEGIN
     START TRANSACTION;
     INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
     VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'paciente'), p_nombre_usuario, p_email, p_password);
-    SET v_usuario = LAST_INSERT_ID();
+    SELECT MAX(id_usuario) INTO v_usuario FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario;
     UPDATE personas.Paciente SET id_usuario = v_usuario WHERE id_paciente = v_paciente;
     CALL auditoria.sp_registrar_log('cuenta_creada', v_usuario, v_paciente, p_origen, 'Cuenta de paciente creada',
                                     'seguridad.Usuario', v_usuario, NULL, p_nombre_usuario, 1, NULL);
@@ -377,7 +377,7 @@ BEGIN
     START TRANSACTION;
     INSERT INTO personas.Paciente (dni, nombre, apellido, fecha_nacimiento, fecha_alta, email)
     VALUES (p_dni, TRIM(p_nombre), TRIM(p_apellido), p_fecha_nacimiento, auditoria.fn_ahora(), NULLIF(TRIM(p_email), ''));
-    SET v_id = LAST_INSERT_ID();
+    SELECT MAX(id_paciente) INTO v_id FROM personas.Paciente WHERE dni = p_dni;
     INSERT INTO personas.TelefonoPaciente (id_paciente, telefono) VALUES (v_id, p_telefono);
     CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, v_id, p_origen,
         CONCAT('Alta de paciente DNI ', p_dni), 'personas.Paciente', v_id, NULL, CONCAT(TRIM(p_apellido), ', ', TRIM(p_nombre)), 1, NULL);
@@ -507,10 +507,10 @@ BEGIN
     START TRANSACTION;
     INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
     VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'profesional'), p_nombre_usuario, p_email, p_password);
-    SET v_usuario = LAST_INSERT_ID();
+    SELECT MAX(id_usuario) INTO v_usuario FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario;
     INSERT INTO personas.Profesional (id_usuario, matricula, nombre, apellido, email)
     VALUES (v_usuario, TRIM(p_matricula), TRIM(p_nombre), TRIM(p_apellido), p_email);
-    SET v_id = LAST_INSERT_ID();
+    SELECT MAX(id_profesional) INTO v_id FROM personas.Profesional WHERE matricula = TRIM(p_matricula);
     INSERT INTO personas.TelefonoProfesional (id_profesional, telefono) VALUES (v_id, p_telefono);
     CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen,
         CONCAT('Alta del profesional ', TRIM(p_apellido), ', ', TRIM(p_nombre), ' (', TRIM(p_matricula), ')'),
@@ -609,7 +609,8 @@ BEGIN
 
     START TRANSACTION;
     INSERT INTO personas.Disponibilidad (id_profesional, fecha, hora_inicio, hora_fin) VALUES (p_id_profesional, p_fecha, p_hora_inicio, p_hora_fin);
-    SET v_id = LAST_INSERT_ID();
+    SELECT MAX(id_disponibilidad) INTO v_id FROM personas.Disponibilidad
+     WHERE id_profesional = p_id_profesional AND fecha = p_fecha AND hora_inicio = p_hora_inicio AND hora_fin = p_hora_fin;
     CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen,
         CONCAT('Alta de franja ', p_fecha, ' ', p_hora_inicio, '-', p_hora_fin, ' del profesional ', p_id_profesional),
         'personas.Disponibilidad', v_id, NULL, CONCAT(p_fecha, ' ', p_hora_inicio, '-', p_hora_fin), 1, NULL);
@@ -765,7 +766,7 @@ BEGIN
     START TRANSACTION;
     INSERT INTO clinica.Protocolo (id_categoria, nombre, descripcion, precio, duracion_min)
     VALUES (p_id_categoria, TRIM(p_nombre), p_descripcion, p_precio, p_duracion_min);
-    SET v_id = LAST_INSERT_ID();
+    SELECT MAX(id_protocolo) INTO v_id FROM clinica.Protocolo WHERE nombre = TRIM(p_nombre);
     CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, CONCAT('Alta del protocolo ', TRIM(p_nombre)),
         'clinica.Protocolo', v_id, NULL, CONCAT('precio=', p_precio, ';duracion=', p_duracion_min), 1, NULL);
     COMMIT;
@@ -1011,14 +1012,13 @@ BEGIN
 
     -- Cirugía: hace falta una evaluación apta, de menos de 6 meses y sin usar.
     IF v_cirugias = 1 THEN
-        SELECT ev.id_evaluacion INTO v_eval
+        SELECT MAX(ev.id_evaluacion) INTO v_eval
           FROM clinica.EvaluacionPrevia ev
           JOIN agenda.Turno tc ON tc.id_turno = ev.id_turno
           JOIN clinica.ResultadoEvaluacion r ON r.id_resultado = ev.id_resultado
          WHERE tc.id_paciente = p_id_paciente AND ev.id_protocolo = v_cirugia AND r.nombre = 'apto'
            AND ev.fecha_resultado + INTERVAL 6 MONTH >= auditoria.fn_ahora()
-           AND NOT EXISTS (SELECT 1 FROM agenda.Turno t2 WHERE t2.id_evaluacion_previa = ev.id_evaluacion AND t2.id_estado_turno <> v_cancelado)
-         ORDER BY ev.fecha_resultado DESC LIMIT 1;
+           AND NOT EXISTS (SELECT 1 FROM agenda.Turno t2 WHERE t2.id_evaluacion_previa = ev.id_evaluacion AND t2.id_estado_turno <> v_cancelado);
         IF v_eval IS NULL THEN
             SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52083, MESSAGE_TEXT = 'La cirugía necesita una consulta previa con resultado apto de menos de 6 meses';
         END IF;
@@ -1045,7 +1045,8 @@ BEGIN
     INSERT INTO agenda.Turno (id_paciente, id_profesional, id_estado_turno, id_origen, id_evaluacion_previa,
                               fecha_hora_inicio, fecha_hora_fin, fecha_creacion)
     VALUES (p_id_paciente, p_id_profesional, v_pendiente, v_id_origen, v_eval, p_inicio, v_fin, auditoria.fn_ahora());
-    SET v_id_turno = LAST_INSERT_ID();
+    SELECT MAX(id_turno) INTO v_id_turno FROM agenda.Turno
+     WHERE id_paciente = p_id_paciente AND id_profesional = p_id_profesional AND fecha_hora_inicio = p_inicio;
 
     INSERT INTO agenda.TurnoProtocolo (id_turno, id_protocolo, precio_aplicado)
     SELECT v_id_turno, p.id_protocolo, p.precio
@@ -1093,7 +1094,7 @@ CREATE PROCEDURE agenda.sp_buscar_turnos(IN p_texto VARCHAR(100), IN p_solo_vige
 BEGIN
     DECLARE v_texto VARCHAR(100) DEFAULT TRIM(COALESCE(p_texto, ''));
     SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
-           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_paciente = p.id_paciente ORDER BY tp2.id_telefono_paciente LIMIT 1) AS telefono,
+           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
            CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
            (SELECT GROUP_CONCAT(pt.nombre ORDER BY pt.nombre SEPARATOR ' + ')
@@ -1112,9 +1113,9 @@ BEGIN
       LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
       LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
       LEFT JOIN notificaciones.Notificacion nr ON nr.id_notificacion =
-            (SELECT n.id_notificacion FROM notificaciones.Notificacion n
+            (SELECT MAX(n.id_notificacion) FROM notificaciones.Notificacion n
                JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion AND tn.nombre = 'recordatorio de turno'
-              WHERE n.id_turno = t.id_turno ORDER BY n.id_notificacion DESC LIMIT 1)
+              WHERE n.id_turno = t.id_turno)
       LEFT JOIN notificaciones.CanalNotificacion ca ON ca.id_canal = nr.id_canal
       LEFT JOIN notificaciones.EstadoNotificacion es ON es.id_estado_notificacion = nr.id_estado_notificacion
      WHERE CHAR_LENGTH(v_texto) >= 3
@@ -1133,7 +1134,7 @@ DROP PROCEDURE IF EXISTS agenda.sp_turnos_del_periodo//
 CREATE PROCEDURE agenda.sp_turnos_del_periodo(IN p_desde DATE, IN p_hasta DATE)
 BEGIN
     SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
-           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_paciente = p.id_paciente ORDER BY tp2.id_telefono_paciente LIMIT 1) AS telefono,
+           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
            CONCAT(pr.apellido, ', ', pr.nombre) AS profesional, t.fecha_hora_inicio, t.fecha_hora_fin,
            e.nombre AS estado, o.nombre AS origen,
            (SELECT GROUP_CONCAT(pt.nombre ORDER BY pt.nombre SEPARATOR ' + ')
@@ -1152,9 +1153,9 @@ BEGIN
       LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
       LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
       LEFT JOIN notificaciones.Notificacion nr ON nr.id_notificacion =
-            (SELECT n.id_notificacion FROM notificaciones.Notificacion n
+            (SELECT MAX(n.id_notificacion) FROM notificaciones.Notificacion n
                JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion AND tn.nombre = 'recordatorio de turno'
-              WHERE n.id_turno = t.id_turno ORDER BY n.id_notificacion DESC LIMIT 1)
+              WHERE n.id_turno = t.id_turno)
       LEFT JOIN notificaciones.CanalNotificacion ca ON ca.id_canal = nr.id_canal
       LEFT JOIN notificaciones.EstadoNotificacion es ON es.id_estado_notificacion = nr.id_estado_notificacion
      WHERE t.fecha_hora_inicio >= p_desde AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
@@ -1166,7 +1167,7 @@ DROP PROCEDURE IF EXISTS personas.sp_listar_pacientes//
 CREATE PROCEDURE personas.sp_listar_pacientes()
 BEGIN
     SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email,
-           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente ORDER BY tp.id_telefono_paciente LIMIT 1) AS telefono,
+           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefono,
            (p.id_usuario IS NOT NULL) AS tiene_cuenta
       FROM personas.Paciente p
      ORDER BY p.apellido, p.nombre;
@@ -1205,7 +1206,7 @@ BEGIN
     SELECT n.id_notificacion, n.id_turno, c.nombre AS canal, e.nombre AS estado, tn.nombre AS tipo, n.mensaje,
            n.fecha_programada, n.fecha_envio, n.intentos, n.detalle_error,
            CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,
-           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_paciente = p.id_paciente ORDER BY tp.id_telefono_paciente LIMIT 1) AS telefono,
+           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefono,
            t.fecha_hora_inicio
       FROM notificaciones.Notificacion n
       JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal

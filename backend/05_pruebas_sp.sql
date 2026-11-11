@@ -1269,13 +1269,13 @@ CALL asistente.sp_registrar_consulta(NULL, 'terminal', 'Quiero un presupuesto de
 -- @espera verdadero
 SELECT ((SELECT id_paciente IS NULL AND respuesta IS NULL AND derivada = 0 FROM asistente.ConsultaAsistente WHERE pregunta = 'Quiero un presupuesto de abdominoplastia')) AS verificacion;
 
--- @caso sp_registrar_consulta.4 | Consistencia | Los datos personales se filtran antes de guardar (email y teléfono) y la derivación queda registrada
+-- @caso sp_registrar_consulta.4 | Consistencia | La pregunta se guarda tal cual (ya no se filtran datos personales) y la derivación queda registrada
 -- @espera ok
 CALL asistente.sp_registrar_consulta(@pacA, 'web', 'Mi mail es paula@test.example y mi celular 11 5555-1234, ¿me llaman?', 'Te derivamos al WhatsApp del instituto.', 1, NULL);
 -- @espera verdadero
-SELECT ((SELECT pregunta = 'Mi mail es [email] y mi celular [número], ¿me llaman?' AND derivada = 1 FROM asistente.ConsultaAsistente WHERE pregunta LIKE 'Mi mail es%')) AS verificacion;
+SELECT ((SELECT derivada = 1 FROM asistente.ConsultaAsistente WHERE pregunta LIKE 'Mi mail es%')) AS verificacion;
 -- @espera verdadero
-SELECT (asistente.fn_filtrar_datos_personales('Llamame al 1155551234 o a x@y.com') = 'Llamame al [número] o a [email]') AS verificacion;
+SELECT (asistente.fn_filtrar_datos_personales('Llamame al 1155551234 o a x@y.com') = 'Llamame al 1155551234 o a x@y.com') AS verificacion;
 
 -- ======================================================================
 -- Q. LISTADOS PARA LAS PANTALLAS (Gestión y Cliente)

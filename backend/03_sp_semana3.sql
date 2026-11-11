@@ -55,6 +55,54 @@ BEGIN
 END//
 
 -- Precio de un turno: suma de lo que costaba cada protocolo al agendar.
+-- Validaciones de formato sin expresiones regulares (el material no las enseña).
+-- Cada una devuelve 1 si el dato tiene buen formato y 0 si no. Usan solo LIKE, CAST,
+-- CHAR_LENGTH y REPLACE. Son aproximaciones: no aceptan un DNI ni un teléfono que
+-- empiece con cero, porque se compara el número con su texto.
+DROP FUNCTION IF EXISTS personas.fn_es_dni//
+CREATE FUNCTION personas.fn_es_dni(p_dni VARCHAR(20)) RETURNS SMALLINT
+    DETERMINISTIC NO SQL
+BEGIN
+    RETURN CASE WHEN p_dni IS NULL THEN 0
+                WHEN CHAR_LENGTH(p_dni) NOT BETWEEN 7 AND 8 THEN 0
+                WHEN CAST(CAST(p_dni AS UNSIGNED) AS CHAR) = p_dni THEN 1
+                ELSE 0 END;
+END//
+
+DROP FUNCTION IF EXISTS personas.fn_es_telefono//
+CREATE FUNCTION personas.fn_es_telefono(p_telefono VARCHAR(30)) RETURNS SMALLINT
+    DETERMINISTIC NO SQL
+BEGIN
+    DECLARE v_numero VARCHAR(30);
+    SET v_numero = CASE WHEN p_telefono LIKE '+%' THEN SUBSTRING(p_telefono FROM 2) ELSE p_telefono END;
+    RETURN CASE WHEN v_numero IS NULL THEN 0
+                WHEN CHAR_LENGTH(v_numero) NOT BETWEEN 10 AND 13 THEN 0
+                WHEN CAST(CAST(v_numero AS UNSIGNED) AS CHAR) = v_numero THEN 1
+                ELSE 0 END;
+END//
+
+DROP FUNCTION IF EXISTS personas.fn_es_email//
+CREATE FUNCTION personas.fn_es_email(p_email VARCHAR(200)) RETURNS SMALLINT
+    DETERMINISTIC NO SQL
+BEGIN
+    RETURN CASE WHEN p_email IS NULL THEN 0
+                WHEN p_email LIKE '% %' THEN 0
+                WHEN CHAR_LENGTH(p_email) - CHAR_LENGTH(REPLACE(p_email, '@', '')) <> 1 THEN 0
+                WHEN p_email LIKE '%_@_%._%' THEN 1
+                ELSE 0 END;
+END//
+
+DROP FUNCTION IF EXISTS personas.fn_es_usuario//
+CREATE FUNCTION personas.fn_es_usuario(p_usuario VARCHAR(100)) RETURNS SMALLINT
+    DETERMINISTIC NO SQL
+BEGIN
+    RETURN CASE WHEN p_usuario IS NULL THEN 0
+                WHEN CHAR_LENGTH(p_usuario) NOT BETWEEN 4 AND 50 THEN 0
+                WHEN p_usuario LIKE '% %' OR p_usuario LIKE '%@%' THEN 0
+                WHEN CAST(p_usuario AS BINARY) <> CAST(LOWER(p_usuario) AS BINARY) THEN 0
+                ELSE 1 END;
+END//
+
 DROP FUNCTION IF EXISTS agenda.fn_precio_total//
 CREATE FUNCTION agenda.fn_precio_total(p_id_turno INT) RETURNS DECIMAL(14,2)
     NOT DETERMINISTIC READS SQL DATA
@@ -259,10 +307,10 @@ BEGIN
     IF v_cuenta IS NOT NULL THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52021, MESSAGE_TEXT = 'Esa paciente ya tiene cuenta';
     END IF;
-    IF p_nombre_usuario IS NULL OR NOT REGEXP_LIKE(p_nombre_usuario, '^[a-z0-9._-]{4,50}$', 'c') THEN
+    IF p_nombre_usuario IS NULL OR personas.fn_es_usuario(p_nombre_usuario) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52022, MESSAGE_TEXT = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
     END IF;
-    IF p_email IS NULL OR p_email NOT REGEXP '^[^@ ]+@[^@ ]+[.][^@ ]+$' THEN
+    IF p_email IS NULL OR personas.fn_es_email(p_email) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52023, MESSAGE_TEXT = 'El email no es válido';
     END IF;
     IF p_password IS NULL OR TRIM(p_password) = '' THEN
@@ -307,19 +355,19 @@ BEGIN
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
-    IF p_dni IS NULL OR p_dni NOT REGEXP '^[0-9]{7,8}$' THEN
+    IF p_dni IS NULL OR personas.fn_es_dni(p_dni) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52030, MESSAGE_TEXT = 'El DNI debe tener 7 u 8 dígitos';
     END IF;
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(TRIM(p_apellido)) < 2 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52031, MESSAGE_TEXT = 'Nombre y apellido deben tener al menos 2 letras';
     END IF;
-    IF p_telefono IS NULL OR p_telefono NOT REGEXP '^[+]?[0-9]{10,13}$' THEN
+    IF p_telefono IS NULL OR personas.fn_es_telefono(p_telefono) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52032, MESSAGE_TEXT = 'El teléfono debe tener de 10 a 13 dígitos';
     END IF;
     IF p_fecha_nacimiento IS NULL OR p_fecha_nacimiento >= CURRENT_DATE THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52033, MESSAGE_TEXT = 'La fecha de nacimiento no es válida';
     END IF;
-    IF p_email IS NOT NULL AND p_email <> '' AND p_email NOT REGEXP '^[^@ ]+@[^@ ]+[.][^@ ]+$' THEN
+    IF p_email IS NOT NULL AND p_email <> '' AND personas.fn_es_email(p_email) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52034, MESSAGE_TEXT = 'El email no es válido';
     END IF;
     IF EXISTS (SELECT 1 FROM personas.Paciente WHERE dni = p_dni) THEN
@@ -363,10 +411,10 @@ BEGIN
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(TRIM(p_apellido)) < 2 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52031, MESSAGE_TEXT = 'Nombre y apellido deben tener al menos 2 letras';
     END IF;
-    IF p_email IS NOT NULL AND p_email <> '' AND p_email NOT REGEXP '^[^@ ]+@[^@ ]+[.][^@ ]+$' THEN
+    IF p_email IS NOT NULL AND p_email <> '' AND personas.fn_es_email(p_email) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52034, MESSAGE_TEXT = 'El email no es válido';
     END IF;
-    IF p_telefono_nuevo IS NOT NULL AND p_telefono_nuevo <> '' AND p_telefono_nuevo NOT REGEXP '^[+]?[0-9]{10,13}$' THEN
+    IF p_telefono_nuevo IS NOT NULL AND p_telefono_nuevo <> '' AND personas.fn_es_telefono(p_telefono_nuevo) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52032, MESSAGE_TEXT = 'El teléfono debe tener de 10 a 13 dígitos';
     END IF;
 
@@ -437,13 +485,13 @@ BEGIN
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(TRIM(p_apellido)) < 2 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52031, MESSAGE_TEXT = 'Nombre y apellido deben tener al menos 2 letras';
     END IF;
-    IF p_email IS NULL OR p_email NOT REGEXP '^[^@ ]+@[^@ ]+[.][^@ ]+$' THEN
+    IF p_email IS NULL OR personas.fn_es_email(p_email) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52034, MESSAGE_TEXT = 'El email no es válido';
     END IF;
-    IF p_telefono IS NULL OR p_telefono NOT REGEXP '^[+]?[0-9]{10,13}$' THEN
+    IF p_telefono IS NULL OR personas.fn_es_telefono(p_telefono) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52032, MESSAGE_TEXT = 'El teléfono debe tener de 10 a 13 dígitos';
     END IF;
-    IF p_nombre_usuario IS NULL OR NOT REGEXP_LIKE(p_nombre_usuario, '^[a-z0-9._-]{4,50}$', 'c') THEN
+    IF p_nombre_usuario IS NULL OR personas.fn_es_usuario(p_nombre_usuario) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52022, MESSAGE_TEXT = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
     END IF;
     IF p_password IS NULL OR TRIM(p_password) = '' THEN
@@ -498,7 +546,7 @@ BEGIN
     IF p_nombre IS NULL OR CHAR_LENGTH(TRIM(p_nombre)) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(TRIM(p_apellido)) < 2 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52031, MESSAGE_TEXT = 'Nombre y apellido deben tener al menos 2 letras';
     END IF;
-    IF p_email IS NULL OR p_email NOT REGEXP '^[^@ ]+@[^@ ]+[.][^@ ]+$' THEN
+    IF p_email IS NULL OR personas.fn_es_email(p_email) = 0 THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52034, MESSAGE_TEXT = 'El email no es válido';
     END IF;
     IF p_activo IS NULL OR p_activo NOT IN (0, 1) THEN

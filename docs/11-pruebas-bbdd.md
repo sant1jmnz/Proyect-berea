@@ -283,7 +283,7 @@ docente.
 | sp_registrar_consulta.1 | Éxito | Registra una pregunta y su respuesta | OK |
 | sp_registrar_consulta.2 | Sin coincidencias | Origen inválido (52070), pregunta vacía (52170) y paciente inexistente (52071) | OK |
 | sp_registrar_consulta.3 | Nulos y límites | Pregunta NULL (52170); sin paciente (invitada) y sin respuesta se registra; derivada NULL vale 0 | OK |
-| sp_registrar_consulta.4 | Consistencia | Los datos personales se filtran antes de guardar (email y teléfono) y la derivación queda registrada | OK |
+| sp_registrar_consulta.4 | Consistencia | La pregunta se guarda tal cual (ya no se filtran datos personales) y la derivación queda registrada | OK |
 | sp_turnos_del_periodo.1 | Éxito | Los turnos de todo noviembre (hay muchos: la agenda del mes) | OK |
 | sp_turnos_del_periodo.2 | Sin coincidencias | Un rango de 2020: 0 filas | OK |
 | sp_turnos_del_periodo.3 | Nulos y límites | Fechas NULL o rango invertido: 0 filas | OK |

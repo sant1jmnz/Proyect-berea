@@ -42,7 +42,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log(v_tipo_log, p_id_usuario, v_paciente, p_origen, COALESCE(v_desc_log, CONCAT('Error ', v_errno, ': ', v_msg)),
+        CALL auditoria.sp_registrar_log(v_tipo_log, p_id_usuario, v_paciente, p_origen, COALESCE(v_desc_log, v_msg),
                                         'pagos.PagoSena', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -100,8 +100,8 @@ BEGIN
         INSERT INTO pagos.MovimientoTarjeta (id_tarjeta, id_turno, monto, fecha_movimiento)
         VALUES (v_tarjeta, p_id_turno, v_monto, auditoria.fn_ahora());
         CALL auditoria.sp_registrar_log('tarjeta_usada', p_id_usuario, v_paciente, p_origen,
-            CONCAT('Gasto de $', v_monto, ' en el turno ', p_id_turno), 'pagos.MovimientoTarjeta', v_tarjeta, NULL,
-            CONCAT('saldo=', pagos.fn_saldo_tarjeta(v_tarjeta)), 1, NULL);
+            'Gasto de $', 'pagos.MovimientoTarjeta', v_tarjeta, NULL,
+            CAST(pagos.fn_saldo_tarjeta(v_tarjeta) AS CHAR), 1, NULL);
     END IF;
 
     -- Avisos: confirmación ahora y recordatorio 24 horas antes (Telegram si la paciente lo vinculó).
@@ -110,18 +110,18 @@ BEGIN
     INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, id_turno, mensaje, fecha_programada)
     VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
             (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'confirmación'), v_paciente, p_id_turno,
-            CONCAT('Tu turno quedó confirmado: ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), '.'),
+            'Tu turno quedó confirmado.',
             auditoria.fn_ahora());
     SET v_programada = CASE WHEN v_inicio - INTERVAL 24 HOUR > auditoria.fn_ahora() THEN v_inicio - INTERVAL 24 HOUR ELSE auditoria.fn_ahora() END;
     INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, id_turno, mensaje, fecha_programada)
     VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
             (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'recordatorio de turno'), v_paciente, p_id_turno,
-            CONCAT('Recordatorio: tu turno es el ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), '.'),
+            'Recordatorio de tu turno.',
             v_programada);
 
     CALL auditoria.sp_registrar_log('pago_registrado', p_id_usuario, v_paciente, p_origen,
-        CONCAT('Seña de $', v_monto, ' del turno ', p_id_turno, ' (', p_medio_pago, ')'), 'pagos.PagoSena', v_pago, NULL,
-        CONCAT('monto=', v_monto, ';codigo=', v_codigo), 1, NULL);
+        'Seña de $', 'pagos.PagoSena', v_pago, NULL,
+        CAST(v_monto AS CHAR), 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Seña registrada, turno confirmado' AS mensaje, v_pago AS id, v_monto AS valor, v_codigo AS dato;
 END//
@@ -149,7 +149,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('cancelacion_turno', p_id_usuario, v_paciente, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('cancelacion_turno', p_id_usuario, v_paciente, p_origen, v_msg,
                                         'agenda.Turno', p_id_turno, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -199,11 +199,11 @@ BEGIN
     INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, id_turno, mensaje, fecha_programada)
     VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
             (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'cancelación'), v_paciente, p_id_turno,
-            CONCAT('Tu turno del ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), ' fue cancelado.'),
+            'Tu turno fue cancelado.',
             auditoria.fn_ahora());
 
     CALL auditoria.sp_registrar_log('cancelacion_turno', p_id_usuario, v_paciente, p_origen,
-        CONCAT('Turno ', p_id_turno, ' cancelado; seña: ', v_resultado),
+        'Turno',
         'agenda.Turno', p_id_turno, v_estado, 'cancelado', 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Turno cancelado' AS mensaje, p_id_turno AS id, v_reembolsado AS valor, v_resultado AS dato;
@@ -225,7 +225,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('cambio_estado_turno', p_id_usuario, v_paciente, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('cambio_estado_turno', p_id_usuario, v_paciente, p_origen, v_msg,
                                         'agenda.Turno', p_id_turno, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -256,9 +256,9 @@ BEGIN
         END IF;
     END IF;
     CALL auditoria.sp_registrar_log('cambio_estado_turno', p_id_usuario, v_paciente, p_origen,
-        CONCAT('Turno ', p_id_turno, ' marcado como ', p_estado), 'agenda.Turno', p_id_turno, v_estado, p_estado, 1, NULL);
+        'Turno', 'agenda.Turno', p_id_turno, v_estado, p_estado, 1, NULL);
     COMMIT;
-    SELECT 'OK' AS estado, 0 AS codigo, CONCAT('Turno marcado como ', p_estado) AS mensaje, p_id_turno AS id, NULL AS valor, NULL AS dato;
+    SELECT 'OK' AS estado, 0 AS codigo, 'Turno marcado' AS mensaje, p_id_turno AS id, NULL AS valor, NULL AS dato;
 END//
 
 
@@ -288,7 +288,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('evaluacion_resuelta', p_id_usuario, v_paciente, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('evaluacion_resuelta', p_id_usuario, v_paciente, p_origen, v_msg,
                                         'clinica.EvaluacionPrevia', p_id_evaluacion, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -326,9 +326,9 @@ BEGIN
         END IF;
     END IF;
     CALL auditoria.sp_registrar_log('evaluacion_resuelta', p_id_usuario, v_paciente, p_origen,
-        CONCAT('Evaluación ', p_id_evaluacion, ': ', p_resultado), 'clinica.EvaluacionPrevia', p_id_evaluacion, 'pendiente', p_resultado, 1, NULL);
+        'Evaluación', 'clinica.EvaluacionPrevia', p_id_evaluacion, 'pendiente', p_resultado, 1, NULL);
     COMMIT;
-    SELECT 'OK' AS estado, 0 AS codigo, CONCAT('Evaluación resuelta: ', p_resultado) AS mensaje, p_id_evaluacion AS id, v_devuelto AS valor, p_resultado AS dato;
+    SELECT 'OK' AS estado, 0 AS codigo, 'Evaluación resuelta' AS mensaje, p_id_evaluacion AS id, v_devuelto AS valor, p_resultado AS dato;
 END//
 
 -- Evaluaciones aptas que vencieron (6 meses) sin que la paciente agende la
@@ -357,7 +357,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('evaluacion_vencida', NULL, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('evaluacion_vencida', NULL, NULL, p_origen, v_msg,
                                         'clinica.EvaluacionPrevia', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -370,12 +370,12 @@ BEGIN
         IF v_fin = 1 THEN LEAVE leer; END IF;
         CALL pagos.sp_aplicar_reembolso(v_pago, 0, 'retenida', 'Evaluación apta vencida sin agendar la cirugía', NULL, p_origen);
         CALL auditoria.sp_registrar_log('evaluacion_vencida', NULL, NULL, p_origen,
-            CONCAT('La evaluación ', v_eval, ' venció a los 6 meses'), 'clinica.EvaluacionPrevia', v_eval, NULL, NULL, 1, NULL);
+            'La evaluación', 'clinica.EvaluacionPrevia', v_eval, NULL, NULL, 1, NULL);
         SET v_cuenta = v_cuenta + 1;
     END LOOP;
     CLOSE cur;
     COMMIT;
-    SELECT 'OK' AS estado, 0 AS codigo, CONCAT(v_cuenta, ' evaluaciones vencidas') AS mensaje, NULL AS id, v_cuenta AS valor, NULL AS dato;
+    SELECT 'OK' AS estado, 0 AS codigo, 'Evaluaciones vencidas' AS mensaje, NULL AS id, v_cuenta AS valor, NULL AS dato;
 END//
 
 -- La paciente reclama una evaluación vencida: el instituto retiene el 50% de
@@ -399,7 +399,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('evaluacion_reclamo', p_id_usuario, v_paciente, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('evaluacion_reclamo', p_id_usuario, v_paciente, p_origen, v_msg,
                                         'clinica.EvaluacionPrevia', p_id_evaluacion, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -436,7 +436,7 @@ BEGIN
         CALL pagos.sp_aplicar_reembolso(v_pago, v_devuelto, 'reembolsada parcial', 'Reclamo de evaluación vencida: se retiene el 50%', p_id_usuario, p_origen);
     END IF;
     CALL auditoria.sp_registrar_log('evaluacion_reclamo', p_id_usuario, v_paciente, p_origen,
-        CONCAT('Reclamo de la evaluación ', p_id_evaluacion, ': se devuelven $', v_devuelto), 'clinica.EvaluacionPrevia', p_id_evaluacion, NULL, NULL, 1, NULL);
+        'Reclamo de la evaluación', 'clinica.EvaluacionPrevia', p_id_evaluacion, NULL, NULL, 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Reclamo registrado' AS mensaje, p_id_evaluacion AS id, v_devuelto AS valor, NULL AS dato;
 END//
@@ -471,7 +471,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('cupon_emitido', NULL, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('cupon_emitido', NULL, NULL, p_origen, v_msg,
                                         'beneficios.Cupon', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -537,15 +537,15 @@ BEGIN
         SELECT COALESCE((SELECT cn.id_canal FROM notificaciones.CanalNotificacion cn WHERE cn.nombre = 'Telegram' AND p.telegram_chat_id IS NOT NULL), v_canal),
                (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
                (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'cupón nuevo'),
-               v_pac, CONCAT('Tenés un cupón nuevo del ', ROUND(v_pct, 0), '%: ', v_codigo, '.'), auditoria.fn_ahora()
+               v_pac, 'Tenés un cupón nuevo.', auditoria.fn_ahora()
           FROM personas.Paciente p WHERE p.id_paciente = v_pac;
         CALL auditoria.sp_registrar_log('cupon_emitido', NULL, v_pac, p_origen,
-            CONCAT('Cupón ', v_codigo, ' del ', v_pct, '%'), 'beneficios.Cupon', v_id, NULL, NULL, 1, NULL);
+            'Cupón', 'beneficios.Cupon', v_id, NULL, NULL, 1, NULL);
         SET v_cuenta = v_cuenta + 1;
     END LOOP;
     CLOSE cur;
     COMMIT;
-    SELECT 'OK' AS estado, 0 AS codigo, CONCAT(v_cuenta, ' cupones emitidos') AS mensaje, NULL AS id, v_cuenta AS valor, NULL AS dato;
+    SELECT 'OK' AS estado, 0 AS codigo, 'Cupones emitidos' AS mensaje, NULL AS id, v_cuenta AS valor, NULL AS dato;
 END//
 
 -- Token rotativo del cupón: se renueva cada 5 minutos y no se guarda; sale de
@@ -659,7 +659,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('cupon_rechazado', p_id_usuario, v_paciente, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('cupon_rechazado', p_id_usuario, v_paciente, p_origen, v_msg,
                                         'beneficios.Cupon', v_cupon, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -697,7 +697,7 @@ BEGIN
     START TRANSACTION;
     UPDATE beneficios.Cupon SET id_turno = p_id_turno WHERE id_cupon = v_cupon;
     CALL auditoria.sp_registrar_log('cupon_validado', p_id_usuario, v_paciente, p_origen,
-        CONCAT('Cupón ', p_codigo, ' aplicado al turno ', p_id_turno, ' con QR'), 'beneficios.Cupon', v_cupon, NULL, NULL, 1, NULL);
+        'Cupón', 'beneficios.Cupon', v_cupon, NULL, NULL, 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Cupón aplicado' AS mensaje, v_cupon AS id,
            agenda.fn_sena(p_id_turno) AS valor, CAST(agenda.fn_precio_final(p_id_turno) AS CHAR) AS dato;
@@ -733,7 +733,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('tarjeta_comprada', p_id_usuario, NULL, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('tarjeta_comprada', p_id_usuario, NULL, p_origen, v_msg,
                                         'pagos.TarjetaRegalo', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
@@ -759,7 +759,7 @@ BEGIN
     VALUES (v_medio, v_codigo, p_monto, auditoria.fn_ahora(), auditoria.fn_ahora() + INTERVAL 12 MONTH, TRIM(p_comprador_nombre), NULLIF(p_comprador_telefono, ''));
     SELECT MAX(id_tarjeta) INTO v_id FROM pagos.TarjetaRegalo WHERE codigo = v_codigo;
     CALL auditoria.sp_registrar_log('tarjeta_comprada', p_id_usuario, NULL, p_origen,
-        CONCAT('Tarjeta de regalo de $', p_monto, ' comprada por ', TRIM(p_comprador_nombre)), 'pagos.TarjetaRegalo', v_id, NULL, CONCAT('monto=', p_monto), 1, NULL);
+        'Tarjeta de regalo de $', 'pagos.TarjetaRegalo', v_id, NULL, CAST(p_monto AS CHAR), 1, NULL);
     COMMIT;
     SELECT 'OK' AS estado, 0 AS codigo, 'Tarjeta emitida' AS mensaje, v_id AS id, p_monto AS valor, v_codigo AS dato;
 END//
@@ -789,7 +789,7 @@ DROP PROCEDURE IF EXISTS pagos.sp_movimientos_tarjeta//
 CREATE PROCEDURE pagos.sp_movimientos_tarjeta(IN p_codigo VARCHAR(50))
 BEGIN
     SELECT m.id_movimiento, m.fecha_movimiento, m.monto, CASE WHEN m.monto > 0 THEN 'gasto' ELSE 'devolución' END AS tipo,
-           m.id_turno, CONCAT(p.apellido, ', ', p.nombre) AS paciente
+           m.id_turno, p.apellido AS paciente, p.nombre AS paciente_nombre
       FROM pagos.MovimientoTarjeta m
       JOIN pagos.TarjetaRegalo t ON t.id_tarjeta = m.id_tarjeta
       JOIN agenda.Turno tu ON tu.id_turno = m.id_turno
@@ -809,7 +809,7 @@ CREATE PROCEDURE notificaciones.sp_notificaciones_pendientes(IN p_limite INT)
 BEGIN
     -- p_limite ya no se usa: el material no enseña LIMIT, así que trae todos los pendientes.
     SELECT n.id_notificacion, c.nombre AS canal, tn.nombre AS tipo, n.mensaje, n.fecha_programada, n.intentos, n.id_turno,
-           COALESCE(CONCAT(p.apellido, ', ', p.nombre), CONCAT(pr.apellido, ', ', pr.nombre)) AS destinatario,
+           COALESCE(p.apellido, pr.apellido) AS destinatario, COALESCE(p.nombre, pr.nombre) AS destinatario_nombre,
            p.telegram_chat_id,
            COALESCE((SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)),
                     (SELECT tf.telefono FROM personas.TelefonoProfesional tf WHERE tf.id_telefono_profesional = (SELECT MIN(tfx.id_telefono_profesional) FROM personas.TelefonoProfesional tfx WHERE tfx.id_profesional = pr.id_profesional))) AS telefono,
@@ -852,9 +852,9 @@ BEGIN
                detalle_error = CASE WHEN p_resultado = 'fallida' THEN SUBSTRING(p_detalle FROM 1 FOR 500) ELSE NULL END
          WHERE id_notificacion = p_id_notificacion;
         CALL auditoria.sp_registrar_log('notificacion_enviada', NULL, v_paciente, 'sistema',
-            CONCAT('Notificación ', p_id_notificacion, ': ', p_resultado, ' (intento ', v_intentos + 1, ')'),
+            'Notificación',
             'notificaciones.Notificacion', p_id_notificacion, v_estado, v_nuevo, CASE WHEN p_resultado = 'enviada' THEN 1 ELSE 0 END, NULL);
-        SELECT 'OK' AS estado, 0 AS codigo, CONCAT('Notificación ', v_nuevo) AS mensaje, p_id_notificacion AS id, v_intentos + 1 AS valor, v_nuevo AS dato;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Notificación actualizada' AS mensaje, p_id_notificacion AS id, v_intentos + 1 AS valor, v_nuevo AS dato;
     END IF;
 END//
 
@@ -888,7 +888,7 @@ BEGIN
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
-        CALL auditoria.sp_registrar_log('consulta_asistente', p_id_usuario, p_id_paciente, p_origen, CONCAT('Error ', v_errno, ': ', v_msg),
+        CALL auditoria.sp_registrar_log('consulta_asistente', p_id_usuario, p_id_paciente, p_origen, v_msg,
                                         'asistente.ConsultaAsistente', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;

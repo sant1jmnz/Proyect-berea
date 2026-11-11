@@ -212,7 +212,7 @@ docente.
 | sp_buscar_turnos.2 | Sin coincidencias | DNI y apellido que no existen: 0 filas | OK |
 | sp_buscar_turnos.3 | Nulos y límites | NULL, vacío y 2 caracteres: 0 filas | OK |
 | sp_buscar_turnos.4 | Consistencia | Por apellido trae los 4 turnos de las pacientes de prueba (uno está cancelado) y la cantidad coincide con un conteo directo | OK |
-| sp_registrar_sena.1 | Éxito | Seña del turno 1 en efectivo: $27.000, turno confirmado, código SIM-, confirmación y recordatorio programados | OK |
+| sp_registrar_sena.1 | Éxito | Seña del turno 1 en efectivo: $27.000, turno confirmado, código de operación, confirmación y recordatorio programados | OK |
 | sp_registrar_sena.2 | Sin coincidencias | Turno inexistente (52110), ya pagado (52111), medio de pago inexistente (52114), tarjeta inexistente (52117) | OK |
 | sp_registrar_sena.3 | Nulos y límites | Turno NULL, medio NULL y tarjeta de regalo sin código | OK |
 | sp_registrar_sena.4 | Consistencia | El monto cobrado coincide con fn_sena y con 30% del precio; el rechazo de la tarjeta quedó en el log | OK |
@@ -228,7 +228,7 @@ docente.
 | sp_aplicar_reembolso.1 | Éxito | Reembolso parcial de la seña del turno 5 (interno: lo usan otros SP) | OK |
 | sp_aplicar_reembolso.2 | Sin coincidencias | Pago inexistente: excepción 52100 | OK |
 | sp_aplicar_reembolso.4 | Consistencia | Un pago ya resuelto no se puede resolver de nuevo (52101) y su monto no cambia | OK |
-| sp_comprar_tarjeta.1 | Éxito | Venta de una tarjeta de $300.000 en efectivo: código GC- de 27 caracteres, vigencia de 12 meses | OK |
+| sp_comprar_tarjeta.1 | Éxito | Venta de una tarjeta de $300.000 en efectivo: código numérico de 7 cifras, vigencia de 12 meses | OK |
 | sp_comprar_tarjeta.2 | Sin coincidencias | Medio de pago inexistente o "tarjeta de regalo" (52151) | OK |
 | sp_comprar_tarjeta.3 | Nulos y límites | Monto 19.999 y 5.000.001 se rechazan, 20.000 y 5.000.000 se aceptan; nombre vacío; teléfono inválido | OK |
 | sp_comprar_tarjeta.4 | Consistencia | Las tres tarjetas válidas existen y las rechazadas no; las compras están en el log | OK |
@@ -245,7 +245,7 @@ docente.
 | sp_emitir_cupones.2 | Sin coincidencias | Una segunda corrida inmediata no emite nada nuevo (0 cupones) | OK |
 | sp_emitir_cupones.3 | Nulos y límites | Sin origen (NULL) corre igual; la paciente B, que no tiene cuenta, nunca recibe cupones | OK |
 | sp_emitir_cupones.4 | Consistencia | Todo cupón vence en emisión + vigencia de su regla y copia el porcentaje de la regla | OK |
-| sp_generar_token_cupon.1 | Éxito | Devuelve un token de 8 caracteres que dura 300 segundos desde el inicio del tramo | OK |
+| sp_generar_token_cupon.1 | Éxito | Devuelve un token numérico (hasta 7 cifras) que dura 300 segundos desde el inicio del tramo | OK |
 | sp_generar_token_cupon.2 | Sin coincidencias | Cupón inexistente (52140), de otra paciente (52141), ya usado (52142), vencido (52143) | OK |
 | sp_generar_token_cupon.3 | Nulos y límites | Código NULL: error 52140; sin paciente se genera igual; a mitad del tramo quedan 150 segundos | OK |
 | sp_generar_token_cupon.4 | Consistencia | El token cambia en el tramo siguiente y es el mismo dentro del tramo | OK |

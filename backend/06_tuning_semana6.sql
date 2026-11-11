@@ -71,7 +71,7 @@ BEGIN
            SUM(t.id_estado_turno = v_cancelado) AS cancelados,
            SUM(t.id_estado_turno = v_ausente) AS ausentes,
            SUM(t.id_estado_turno IN (v_pendiente, v_confirmado)) AS vigentes,
-           ROUND(SUM(TIMESTAMPDIFF(MINUTE, t.fecha_hora_inicio, t.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
+           ROUND(SUM(agenda.fn_minutos(t.fecha_hora_inicio, t.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
            COALESCE(SUM(f.total), 0) AS facturado
       FROM agenda.Turno t
       JOIN personas.Profesional pr ON pr.id_profesional = t.id_profesional

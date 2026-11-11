@@ -29,7 +29,7 @@ La terminal es una pantalla vertical en el instituto. Tiene tres opciones en el 
    de la seña. El pago es **simulado**: no te pide datos de tarjeta ni mueve dinero.
    Si tenés un **cupón**, ingresá su código antes de pagar y el precio baja.
 
-Al terminar ves el comprobante con un código `SIM-...` y el recordatorio que vas a recibir.
+Al terminar ves el comprobante con un código de operación y el recordatorio que vas a recibir.
 
 ### 🔍 2. Precios y protocolos
 

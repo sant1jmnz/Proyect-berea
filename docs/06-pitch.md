@@ -1,183 +1,98 @@
-# Pitch
+# Pitch de venta / Demo Day (Semanas 5 y 6)
 
-**Qué es "el pitch"**: la exposición oral de 7 a 10 minutos frente a la
-clase, defendiendo la propuesta (por qué este problema, por qué esta
-solución, por qué es viable). Este documento es el **guion**, lo que se
-dice; el Canva ("Proyecto Informático 1") es el **apoyo visual** que se
-proyecta mientras se habla, con lo que se fue haciendo semana a semana.
-Son dos piezas distintas: el guion ya está, el Canva es lo último que
-falta armar.
+Formato del 4° bimestre (`plan-4to-bimestre.md`): **5 a 7 minutos por grupo**,
+dicho como **venta a inversores**, con **demo en vivo** del programa conectado
+a la base y defensa de las objeciones. Este documento es el **guion** (lo que se
+dice y se hace); las diapositivas son el apoyo visual. La versión del bimestre
+anterior (9,5 minutos, sin demo) quedó en el historial de git.
 
-Guion de presentación oral, 9.5 minutos, Propuesta 1 (Dermalia, Instituto de
-Estética Médica). Cada bloque se apoya en un documento ya cerrado de la
-Carpeta de Proyecto: no hay nada acá que no salga de `01` a `05`.
+Reparto: **Santiago** (problema, solución, números) y **Bautista** (demo,
+competencia). Si se suman Nicolás y Clovis, se reparte el tiempo de la demo.
 
-Roles del equipo (definidos el 1 de septiembre): Santiago en Marco Lógico
-y coordinación, Bautista en requerimientos, Nicolás en diseño y maquetado,
-Clovis en el pitch.
+## Guion: 6 minutos y medio
 
-## Guion por bloques
-
-Reparto de tiempo por integrante (sobre los 9.5 min): Bautista 3 min,
-Santiago 3 min, Nicolás 1.75 min, Clovis 1.75 min. Bautista suma la
-Viabilidad a la Propuesta para cerrar el círculo: primero presenta los
-requerimientos, después confirma que se cumplen. Santiago cierra el
-resto de los bloques (Problema, la transición, Recorrido y Cierre).
-
-Cada línea del "Contenido" está escrita para calzar con lo que se ve en
-pantalla en ese momento (columna "Diapositiva"): si algo no está en el
-Canva, no se dice en este bloque, se deja para las Preguntas anticipadas.
-
-| Bloque | Tiempo | Habla | Contenido | Diapositiva / fuente |
+| Bloque | Tiempo | Habla | Qué se dice | Diapositiva |
 |---|---|---|---|---|
-| Gancho | 1.75 min | Clovis | "Dermalia pierde 312 turnos al año por inasistencia, $6.240.000 anuales, y su recepción dedica casi 500 horas al año, más de 60 jornadas laborales completas, a responder las mismas consultas repetidas por WhatsApp." Sin "nuestro proyecto se llama…": arranca directo con el dato, con los mismos números que van a estar en pantalla. Con el tiempo de sobra, suma una frase de contexto: quién es Dermalia y por qué eligieron mirar este problema. | Página "El problema", Canva; tabla de causas, `docs/01-arbol-de-problemas.md` |
-| Problema | 1.5 min | Santiago | El problema central: la gestión de turnos depende de la atención manual de la recepción por WhatsApp, y sus tres causas directas: sin disponibilidad visible en tiempo real (C1), consultas repetidas respondidas a mano (C2), sin seña ni recordatorio (C3, C4). | Páginas "El problema" y "Causas de ineficiencia", Canva; diagrama del Árbol de Problemas, `docs/01-arbol-de-problemas.md` |
-| Propuesta | 1.5 min | Bautista | Objetivo general: facilitar la gestión de turnos y consultas automatizando la carga de turnos, el registro de seña y las respuestas frecuentes. Qué hace el sistema, en criollo: cargar un turno en 3 pasos, un buscador que contesta precios y protocolos por palabra clave, seña simulada, recordatorio dentro del sistema, los RF Must de `docs/04-requerimientos.md`, sin nombrarlos por ID. Dos apartados: una terminal táctil en el instituto para que la paciente cargue su propio turno, y la PC de recepción para los turnos que llegan por teléfono. | Página "La propuesta: Dermalia", Canva; tabla de RF, `docs/04-requerimientos.md` |
-| Demostración | 1.75 min | Nicolás | Recorrer los dos apartados en el maquetado: la terminal (paciente elige protocolo → horario → confirma y paga la seña) y la PC de recepción con el mismo flujo para un turno por teléfono, más la búsqueda de turnos por nombre, DNI o teléfono. Se recorre como una tarea de punta a punta, no pantalla por pantalla suelta. | Página "Cómo funciona", Canva; user flow y mockup, `docs/05-maquetado.md` |
-| Transición | 0.5 min | Santiago | "Recorrimos los dos apartados, terminal y recepción, compartiendo la misma base: atrás C con SQL Server, adelante Qt de escritorio, sin depender de ninguna API externa. Ahora, los números: cómo sabemos que esto funciona." | Página "Stack técnico", Canva |
-| Viabilidad | 1.5 min | Bautista | Los cuatro indicadores de éxito, medidos a las 4 semanas de uso: 296 horas liberadas por año en la recepción, 156 turnos recuperados por año, 18 de las 25 consultas diarias resueltas por el buscador sin intervención humana, y 60 superposiciones de agenda evitadas por año. | Página "Éxito", Canva; matriz completa, `docs/03-matriz-marco-logico.md` |
-| Recorrido | 0.5 min | Santiago | "Esto es lo que se hizo semana a semana: el problema y las propuestas al principio, la matriz de marco lógico a mitad de camino, los requerimientos y el maquetado después, y esta semana el cierre de la carpeta. En el camino corregimos el stack (arrancamos pensando en algo más parecido a una web y terminamos en Qt de escritorio con SQL Server), reformulamos el modelo de uso —primero fue solo la recepción, después sumamos la terminal para que la paciente cargue su propio turno— y hasta el brainstorming inicial pasó por varios formatos hasta encontrar el que mejor se entendía sin cargar el repo de archivos pesados." | Páginas "Hitos del proyecto" y "Desafíos superados", Canva; `docs/plan-de-aprendizaje.md` |
-| Cierre | 0.5 min | Santiago | Este bimestre se formuló y se diseñó; el próximo arranca el desarrollo técnico sobre esta base ya trazada. Todavía falta la revisión cruzada con otro equipo. Se pide al auditorio feedback sobre la propuesta de valor y la seña, antes de empezar a programar. | Páginas "Próximos pasos" y "Gracias", Canva |
+| 1. Gancho | 0:30 | Santiago | "Dermalia es un instituto de estética médica. Cada semana **pierde 6 turnos** por inasistencia —unos **$900.000 por semana**— y su recepción dedica **95 minutos por día** a contestar lo mismo por WhatsApp. Hoy la agenda está en papel y se superpone 5 veces por mes." Sin presentarse antes: arranca con el dato. | El problema (Árbol de Problemas, `01`) |
+| 2. Solución | 0:40 | Santiago | "Construimos **un solo sistema, con tres puertas y una misma base**: una terminal táctil en el instituto para que la paciente reserve sola, la PC de recepción para las que llaman por teléfono, y un sitio web. La base cobra la seña, hace cumplir las reglas del negocio y avisa por Telegram o WhatsApp." | Arquitectura (`arquitectura.md`) |
+| 3. Demo en vivo | 2:30 | Bautista | Ver "Guion de la demo" abajo. | — (programa en pantalla) |
+| 4. Competencia | 0:50 | Bautista | "Las alternativas —AgendaPro, Fresha, Booksy, Doctoralia— cobran **por profesional**: con 20 profesionales son entre **USD 3.600 y 4.900 por año**, más comisión por paciente nueva en Fresha. Y son genéricos. Ninguna documentación pública que revisamos describe nuestra regla de **cirugías con consulta previa**. Además, **los datos son del instituto**." | Matriz comparativa (`07-competencia.md`) |
+| 5. Números | 1:00 | Santiago | "Desarrollo: 847 horas, **$16,9 millones**. Precio de implantación **$22 millones** más un abono de **$400.000 por mes**. El instituto recupera **156 turnos al año ($23,4 millones)** y **296 horas** de recepción: **se paga en unos 13 meses**. Si el ticket fuera la mitad, en 2,6 años." | Costos, precio, retorno (`08-presupuesto.md`) |
+| 6. Cierre | 0:30 | Santiago | "Buscamos que un instituto lo use cuatro semanas y medir los cuatro indicadores. La pregunta para ustedes: ¿qué necesitarían ver para pilotear esto?" | Gracias / pedido |
 
-## Preguntas anticipadas
+Total: 6:00 más 0:30 de margen. **Ensayar con cronómetro** (Semana 6): si pasa de
+7 minutos, se recorta la competencia, nunca la demo.
 
-Responde Santiago en la ronda de preguntas (coordina el Marco Lógico, es
-quien mejor conoce cómo se conecta todo). Igual, **los 4 tienen que
-conocer estas respuestas de memoria**: si a la cátedra le da por preguntarle
-a otro integrante, no puede quedar en blanco.
+## Guion de la demo (2:30)
 
-**¿Por qué este problema y no otro? ¿Cómo lo verificaron?**
-Se compararon 10 propuestas (`docs/propuestas.md`); se descartaron 5 por
-falta de evidencia o por tener ya una solución gratuita instalada.
-Dermalia quedó porque toda la cadena causal se sostiene con evidencia
-externa real (estudios de uso de WhatsApp, casos de cobro de seña y
-recordatorios automáticos citados en el Árbol de Problemas) en vez de una
-intuición.
+La demo muestra **una tarea de punta a punta**, no pantallas sueltas. Datos de
+ejemplo de la base (`backend/02_datos.sql`): paciente **Carla Gómez, DNI
+33222111**; profesional **Dra. Marino** (limpieza, peeling, mesoterapia).
 
-**¿Por qué es un instituto de estética médica y no un centro de estética simple?**
-Decisión de equipo tomada esta semana, no un dato relevado. Un instituto
-de estética médica (protocolos con tecnología: láser, radiofrecuencia,
-peeling químico) sostiene mejor la seña obligatoria y el ticket promedio
-que usan los indicadores ($20.000 en vez de precios de manicura), y da un
-posicionamiento más defendible en el pitch que un centro de tratamientos
-simples. El rubro y la lógica del problema (turnos, consultas repetidas,
-inasistencia) no cambian, cambia el catálogo y el nivel de la marca.
+| # | Tiempo | Dónde | Qué se hace | Qué se cuenta |
+|---|---|---|---|---|
+| 1 | 0:35 | Terminal (Cliente) | La paciente elige **Peeling químico + Mesoterapia**, el sistema ofrece solo los horarios libres de profesionales que hacen **los dos**, confirma | "Solo muestra lo realmente disponible (RF-04): cero superposiciones" |
+| 2 | 0:25 | Terminal | Paga la seña **simulada**: mostrar monto (30%) y el código `SIM-…` | "No mueve dinero real (RNF-05); calcula el 30%, 40% en cirugías" |
+| 3 | 0:30 | Gestión (recepción) | Buscar a Carla por DNI, ver el turno **confirmado**, intentar cargar otro turno en el mismo horario → mensaje de error | "La regla vive en la base: ni la recepción puede pisar un horario" |
+| 4 | 0:25 | Gestión | **Cancelar** el turno con más de 24 h → seña **reembolsada**; mostrar que con menos de 24 h queda retenida | "Reglas de seña y reembolso (RF-10), automáticas" |
+| 5 | 0:35 | Gestión → Auditoría | Abrir el reporte de **auditoría** del día: aparecen el alta, el pago y la cancelación con usuario, hora y origen | "Cada acción queda registrada solo por los stored procedures (RF-20)" |
 
-**¿Por qué software resuelve esta causa y no otra intervención?**
-Las cuatro causas raíz (C1.1-C4.1) son fricciones de proceso: un canal no
-integrado a nada, respuestas repetidas sin base centralizada, cobro y
-aviso manuales. No es falta de capacitación ni de infraestructura física.
-Automatizarlas ataca la fricción directamente, sin que el instituto tenga
-que cambiar de rubro ni invertir en algo distinto de lo que ya usa
-(WhatsApp).
+**Plan B si falla la conexión** (RNF-09): el programa entra en **modo
+contingencia** (franja amarilla), guarda el turno en el equipo y avisa. Si
+también falla el programa, mostrar el sitio web (`web/`, `npm run dev`) y los
+reportes ya ejecutados en Workbench (`backend/05_reportes_semana5.sql`).
+**Antes de empezar:** recargar la base (`01` a `08`), ingresar con `recepcion1` / `dermalia2026` y probar la
+conexión. Las pantallas de Gestión y de la terminal ya trabajan con la base (si no hay conexión, usan los datos
+de prueba y lo avisan). Para el paso 5 se abre la pantalla **Reportes** (auditoría) del mismo programa.
 
-**¿Por qué una terminal y no que la paciente reserve desde su celular?**
-Porque el stack real del equipo es C + SQL Server + Qt de escritorio, sin
-web y sin API externa: un self-service remoto necesita un canal web que
-el equipo no tiene. Una terminal táctil dentro del instituto sí es Qt
-nativo, así que la paciente sigue cargando su propio turno, solo que
-presencial en vez de desde su casa. Para cuando llama por teléfono está
-el apartado de recepción, con el mismo flujo.
+## Objeciones y respuestas
 
-**¿Qué pasa si el supuesto de mayor riesgo no se cumple?**
-El riesgo más alto es que la recepción no adopte el sistema como
-herramienta principal (supuesto del Propósito en la MML). Si no se
-cumple, el sistema queda subutilizado y ningún indicador de Propósito se
-mueve, aunque los Componentes (R1-R4) estén técnicamente terminados.
-Mitigación ya definida: capacitación breve al iniciar y transición
-gradual, en vez de cortar el hábito anterior de un día para otro.
+Responden los dos. Todos tienen que saberlas.
 
-**¿Cómo van a medir que el sistema funcionó?**
-Con los cuatro indicadores de la MML, medidos a las 4 semanas de uso: -60%
-en tiempo diario de atención manual, -50% en turnos perdidos por
-inasistencia, 0 superposiciones de agenda por mes, ≥70% de consultas
-resueltas con el buscador interno sin buscar a mano. Medios de
-verificación: panel de reportes del sistema y una encuesta breve a la
-recepción antes/después.
+**"¿La seña es de verdad?"** No. Es un **mock** que imita un pago (estado,
+monto, código `SIM-…`): el sistema no maneja dinero ni datos de tarjeta (RNF-05).
+Pasarse a una pasarela real es una etapa posterior y no cambia las reglas.
 
-**¿Qué queda afuera del alcance y por qué?**
-Historia clínica de tratamientos, gestión de stock de insumos, liquidación
-de comisiones y app nativa quedaron fuera desde el Árbol de Problemas: no
-atacan ninguna de las cuatro causas raíz identificadas. También queda
-fuera cualquier portal self-service para la paciente (lo que antes era la
-"vitrina" con fotos y reseñas): dependía de la API de Google Maps y de un
-canal web que el stack actual no tiene. Y en general: este bimestre no se
-programa nada, se formula y se diseña: el desarrollo técnico es alcance
-del bimestre siguiente.
+**"¿Qué pasa con los datos de salud y personales?"** Quedan en una base
+MySQL del instituto (Aiven). A servicios externos solo va lo mínimo; **al
+asistente de IA no se le envían datos personales**: el sistema tacha emails y
+números antes de guardar o enviar la pregunta, y si no sabe responder deriva al
+WhatsApp del instituto (RNF-06, RNF-10). Cada acción queda en un log que solo
+escriben los stored procedures.
 
-**¿Es realizable en el tiempo que tienen, con el equipo que son?**
-Para este bimestre (formulación y diseño), sí: el equipo cuenta 7 semanas
-reales de trabajo (desde el 4 de agosto), y las 6 piezas de la Carpeta de
-Proyecto están cerradas o en cierre en la Semana 7, la última. Las
-decisiones de diseño que no dependían de datos reales (monto de seña,
-catálogo de protocolos, el modelo de los dos apartados) se cerraron como
-decisión de equipo en vez de quedar abiertas esperando un relevamiento
-que nunca iba a llegar, justamente para no perder tiempo del bimestre
-corto.
+**"¿Y si se corta internet o la luz?"** No-break y conexión 4G de respaldo;
+y el **modo contingencia** guarda los turnos en el equipo y los sincroniza al
+volver (RNF-09). Hoy el sistema guarda y cuenta los pendientes; el envío
+automático al volver está previsto con los SP ya hechos.
 
-**¿Por qué está todo simulado en vez de conectado a un servicio real?**
-Restricción del equipo: el backend se hace en C con SQL Server, el
-frontend en Qt de escritorio, sin integraciones por API externa. El
-buscador de precios y protocolos funciona por palabra clave contra una
-tabla propia, la agenda vive en el sistema, y la seña se registra como un
-estado (pagada/no pagada) que marca la recepción. La lógica de negocio
-(30% de seña, derivación a WhatsApp sin coincidencia, recordatorio antes
-del turno) queda igual, solo cambia la implementación.
+**"¿Por qué pagar esto si Fresha o Booksy cuestan menos por mes?"** Con 20
+profesionales cuestan USD 3.600–4.900 al año, **por profesional**, y no
+tienen (en lo que revisamos) consulta previa para cirugías, tarjetas de
+regalo con saldo ni cupones con QR que cambia cada 5 minutos. Y los datos
+quedan en su plataforma. Aclaración honesta: varias celdas de la matriz dicen
+"a verificar" (`07-competencia.md`).
 
-### Preguntas técnicas y de proceso
+**"¿Quién lo mantiene?"** El abono de $400.000/mes incluye soporte, hosting,
+respaldos y la cuota de IA. El código está documentado (manual técnico) y la
+lógica vive en stored procedures probados (198 casos).
 
-**¿Qué pasa si dos personas reservan el mismo horario al mismo tiempo?**
-El sistema solo muestra horarios que siguen disponibles al momento de
-cargar el turno (RF-04); si dos pantallas leen la grilla en el mismo
-instante, gana quien confirma primero y a la otra se le actualiza la
-disponibilidad al instante. No es un escenario de alta concurrencia
-distribuida: los dos apartados corren contra una sola base local del
-instituto (RNF-09), no hay servidores en paralelo.
+**"¿Cómo saben que funciona?"** Cuatro indicadores de la MML, medidos a las 4
+semanas de uso: −60% de tiempo de atención manual, −50% de turnos perdidos, 0
+superposiciones, ≥70% de consultas resueltas con el buscador. Todavía no hay
+usuarios reales: lo que mostramos es el diseño y la prueba de las reglas, no
+resultados medidos.
 
-**¿Por qué SQL Server específicamente, y no otra base de datos?**
-Es la tecnología que exige la restricción técnica del proyecto (RNF-11):
-backend en C sobre SQL Server, sin excepción. No fue una comparación
-contra otras bases (MySQL, PostgreSQL); es un dato de la consigna, no una
-elección de diseño libre del equipo.
+**"¿Es realizable con el equipo que son?"** Para el bimestre sí, y está hecho: la base completa (reglas,
+reportes, auditoría), Gestión y la terminal conectadas a ella, el sitio con su API y 222 casos de prueba más las
+pruebas de integración contra MySQL real. Lo que queda para una etapa posterior —pasarela de pagos real,
+WhatsApp oficial, Google Calendar y las pantallas de cupones por QR, tarjetas y cirugías— está identificado y
+presupuestado.
 
-**¿Cómo protegen los datos de las pacientes?**
-Nombre, DNI, teléfono y protocolo se guardan solo en la base local del
-instituto, sin sincronizarse con ningún servicio externo (RNF-06). El
-sistema tampoco maneja pagos reales ni datos de tarjeta: la seña es un
-mock que solo cambia un estado (pagada/no pagada) en la base (RNF-05).
+## Para el día
 
-**¿Qué pasa si se corta internet o falla el sistema a mitad de un turno?**
-Los dos apartados corren en local contra la base del instituto, sin
-depender de internet (RNF-09), así que un corte de internet no los tira
-abajo. Una caída del propio SQL Server sí frena el sistema: no hay un plan
-de contingencia (backup, segundo servidor) definido todavía, queda fuera
-del alcance de este bimestre.
-
-**¿El sistema se podría usar en otro instituto, o está armado solo para Dermalia?**
-La lógica (turnos, buscador, seña, recordatorio) es genérica; lo que está
-a medida de Dermalia es el catálogo de protocolos, los precios y el monto
-de seña. Adaptarlo a otro instituto implicaría recargar esos datos, no
-reescribir el sistema.
-
-**¿Qué pasa si un profesional cancela su disponibilidad después de que ya hay turnos cargados en ese horario?**
-No está resuelto todavía: la disponibilidad (RF-03) se carga y edita en
-el sistema, pero no hay una regla definida de qué pasa con los turnos ya
-confirmados si el profesional bloquea ese horario después. Es un caso
-borde que queda para la etapa de desarrollo del bimestre siguiente.
-
-**¿Cómo se organizó el equipo para tener todo listo (documentos y Canva) a tiempo?**
-Con roles fijos desde el 1 de septiembre (ver arriba) y las 6 piezas de la
-Carpeta cerrándose en el orden que exige el Marco Lógico: no se puede
-definir un requerimiento sin tener antes cerrada la MML, por ejemplo, así
-que el orden de trabajo fue el mismo orden de los documentos.
-
-## Qué falta
-
-- Ensayar y cronometrar el guion completo, con los 4 integrantes.
-- Ajustar los tiempos de cada bloque según el ensayo, la tabla de arriba es
-  el reparto inicial, no una medición real todavía.
-- Armar la presentación de Canva ("Proyecto Informático 1"), que es lo
-  último que se arma en la Semana 7 real (ver
-  `docs/plan-de-aprendizaje.md`): recorrido semana a semana de lo que se
-  fue haciendo y los problemas que se encontraron, para usar como apoyo
-  visual durante este guion.
+- Diapositivas: una idea por diapositiva y los números grandes (6 turnos, 95
+  min, $900.000, 13 meses).
+- Cronometrar entero tres veces. Ensayar el plan B.
+- Llevar impresa la matriz de competencia y la tabla de presupuesto por si
+  piden detalle.
+- Coevaluación: completar la rúbrica de BA Aprende de los otros equipos.

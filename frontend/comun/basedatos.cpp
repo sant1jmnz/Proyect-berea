@@ -188,6 +188,8 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
         if (primero) {
             const unsigned n = mysql_num_fields(res);
             MYSQL_FIELD *campos = mysql_fetch_fields(res);
+            for (unsigned i = 0; i < n; ++i)
+                r.columnas << QString::fromUtf8(campos[i].name);
             while (MYSQL_ROW fila = mysql_fetch_row(res)) {
                 QVariantMap m;
                 for (unsigned i = 0; i < n; ++i)
@@ -200,10 +202,14 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
         mysql_free_result(res);   /* libera la memoria que reservó la librería */
     } while (mysql_next_result(d->conn) == 0);
 
-    /* El EXIT HANDLER de la cátedra devuelve estado='ERROR'. */
+    /* El EXIT HANDLER devuelve estado='ERROR'. Los SP de la cátedra (PPT 006)
+     * usan las columnas codigo_sql / descripcion_error; los SP de Dermalia
+     * (backend/03 y 04) usan codigo / mensaje. Se aceptan las dos. */
     if (!r.filas.isEmpty() && r.filas.first().value("estado").toString() == "ERROR") {
-        r.codigoSql = r.filas.first().value("codigo_sql").toInt();
-        r.error = mensajeDeError(r.codigoSql, r.filas.first().value("descripcion_error").toString());
+        const QVariantMap &f = r.filas.first();
+        r.codigoSql = f.contains("codigo_sql") ? f.value("codigo_sql").toInt() : f.value("codigo").toInt();
+        r.error = mensajeDeError(r.codigoSql, f.contains("descripcion_error") ? f.value("descripcion_error").toString()
+                                                                            : f.value("mensaje").toString());
         r.filas.clear();
         return r;
     }

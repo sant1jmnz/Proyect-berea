@@ -1,5 +1,6 @@
 #include "buscadorwidget.h"
 #include "ui_buscadorwidget.h"
+#include "repositorio.h"
 #include <QLabel>
 #include <QPushButton>
 #include <QDesktopServices>
@@ -31,6 +32,11 @@ void BuscadorWidget::inicializarCatalogo() {
     };
 }
 
+void BuscadorWidget::usarBase(Repositorio *repositorio) {
+    m_repo = repositorio;
+    refrescarBusqueda();
+}
+
 void BuscadorWidget::refrescarBusqueda() {
     filtrarResultados(ui->txtBuscar->text());
 }
@@ -49,7 +55,19 @@ void BuscadorWidget::filtrarResultados(const QString &termino) {
     QString t = termino.trimmed().toLower();
     QList<ProtocoloItem> filtrados;
 
+    if (m_repo) {   // con la base: la búsqueda por palabra clave la hace sp_listar_protocolos
+        for (const ProtocoloBD &d : m_repo->listarProtocolos(termino.trimmed())) {
+            ProtocoloItem item = { d.nombre, d.duracionMin, d.precio, d.categoria, d.descripcion };
+            item.sena = d.sena;
+            filtrados.append(item);
+        }
+        // RF-07: lo que no se encuentra queda registrado como consulta derivada al WhatsApp
+        if (filtrados.isEmpty() && t.size() >= 3)
+            m_repo->registrarConsultaAsistente(0, "terminal", termino.trimmed(), QString(), true);
+    }
     for (const auto &p : m_catalogo) {
+        if (m_repo)
+            break;   // ya se llenó con los datos de la base
         if (t.isEmpty() || p.nombre.toLower().contains(t) ||
             p.descripcion.toLower().contains(t) ||
             p.categoria.toLower().contains(t)) {
@@ -88,6 +106,8 @@ void BuscadorWidget::filtrarResultados(const QString &termino) {
 
             double senia = p.precio * 0.30;
             if (senia < 5000.0) senia = 5000.0;
+            if (p.sena >= 0)
+                senia = p.sena;   // la base calcula la seña con el porcentaje de la categoría
 
             QHBoxLayout *hlFooter = new QHBoxLayout();
             QLabel *lblInfo = new QLabel(QString("⏱ Duración: <b>%1 min</b>   |   💰 Precio: <b style='color:#2e7d32; font-size:14px;'>$%2</b>   |   💳 Seña (30%, mín $5.000): <b style='color:#8e2a59;'>$%3</b>")

@@ -12,12 +12,17 @@ class QLabel;
 class QPushButton;
 class QTableWidget;
 
+class Repositorio;
+
 class PaginaAvisos : public QWidget
 {
     Q_OBJECT
 
 public:
     explicit PaginaAvisos(RegistroAvisos *registro, QWidget *parent = nullptr);
+
+    /* Con la base conectada, marcar un aviso como enviado o fallido también lo guarda ahí. */
+    void usarBase(Repositorio *repositorio) { repo = repositorio; }
 
 public slots:
     void recargar();
@@ -28,6 +33,7 @@ private slots:
     void actualizarBotones();
 
 private:
+    Repositorio *repo = nullptr;
     RegistroAvisos *avisos;
     QTableWidget *tabla;
     QLabel *lblCuenta;

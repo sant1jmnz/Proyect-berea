@@ -7,6 +7,8 @@ namespace Ui {
 class BuscarTurnoWidget;
 }
 
+class Repositorio;
+
 /**
  * @brief BuscarTurnoWidget - Pantalla Cliente 5 (RF-12, RF-11, RF-10)
  * Búsqueda de turnos por DNI o Teléfono, visualización del recordatorio activo en sistema
@@ -18,6 +20,9 @@ class BuscarTurnoWidget : public QWidget {
 
 public:
     explicit BuscarTurnoWidget(QWidget *parent = nullptr);
+
+    /* Con la base conectada, los turnos se buscan en la base y se cancelan con sp_cancelar_turno. */
+    void usarBase(Repositorio *repositorio);
     ~BuscarTurnoWidget();
 
     void agregarTurnoDesdeFormulario(const QString &paciente, const QString &dni,
@@ -48,9 +53,12 @@ private:
         double seniaMonto;
         QString seniaEstado;
         QString estado;
+        int id = 0;            // id del turno en la base (0 = dato de prueba)
     };
 
     QList<TurnoItem> m_turnos;
+    Repositorio *m_repo = nullptr;
+    void cargarDeBase(const QString &criterio);
 
     void inicializarTurnos();
     void mostrarResultados(const QString &criterio);

@@ -166,7 +166,7 @@ CALL agenda.sp_alta_turno(33, @demo, '2026-11-18 12:00:00', '1', 'gestion', 2, N
 SELECT MAX(id_turno) INTO @tdemo FROM agenda.Turno WHERE id_profesional = @demo;
 CALL pagos.sp_registrar_sena(@tdemo, 'tarjeta simulada', NULL, 2, 'gestion');
 -- n8n informa el envío del primer aviso pendiente cuya hora ya llegó
-SELECT id_notificacion INTO @aviso FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion AND e.nombre = 'pendiente' WHERE n.fecha_programada <= @ahora_simulado ORDER BY n.id_notificacion LIMIT 1;
+SELECT MIN(n.id_notificacion) INTO @aviso FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion AND e.nombre = 'pendiente' WHERE n.fecha_programada <= @ahora_simulado;
 CALL notificaciones.sp_marcar_notificacion(@aviso, 'enviada', NULL);
 SET @ahora_simulado = '2026-11-03 19:30:00';
 CALL seguridad.sp_cerrar_sesion(2, 'gestion', '192.168.0.11');

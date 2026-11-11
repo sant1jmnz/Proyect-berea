@@ -17,7 +17,6 @@
 -- En cada plan hay que mirar la línea de arriba: "actual time=A..B" (B = milisegundos
 -- totales) y los "rows=" de la tabla leída: sin índice lee toda la tabla.
 
-SET NAMES utf8mb4;
 SET SESSION cte_max_recursion_depth = 400000;
 
 DELIMITER //

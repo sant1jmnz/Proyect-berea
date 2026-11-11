@@ -23,8 +23,6 @@
 -- La medición con datos de volumen y el plan de ejecución están en
 -- backend/medir_tuning.sql y en docs/11-pruebas-bbdd.md.
 
-SET NAMES utf8mb4;
-
 DELIMITER //
 
 -- Crea un índice solo si no existe (MySQL no tiene CREATE INDEX IF NOT EXISTS).

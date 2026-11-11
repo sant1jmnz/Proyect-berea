@@ -11,8 +11,6 @@
 -- El reloj simulado (@ahora_simulado) hace que cada acción quede con su día.
 -- Algunos CALL fallan a propósito (clave mal, horario ocupado): también se registran.
 
-SET NAMES utf8mb4;
-
 -- Un profesional más para la demo, con su agenda de las próximas dos semanas
 SET @ahora_simulado = '2026-10-26 08:30:00';
 CALL personas.sp_alta_profesional('MN 900001', 'Camila', 'Demo', 'camila.demo@dermalia.example', '1155550900', 'dr.demo', SHA2('dermalia2026', 256), 'gestion', 1);

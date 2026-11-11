@@ -148,7 +148,7 @@ docente.
 | sp_cerrar_sesion.4 | Consistencia | Hay exactamente un cierre de sesión en el log (el del caso 1) | OK |
 | sp_crear_cuenta_paciente.1 | Éxito | Una paciente sin cuenta crea la suya con su DNI | OK |
 | sp_crear_cuenta_paciente.2 | Sin coincidencias | DNI inexistente (52020), cuenta ya creada (52021), usuario o email repetidos (52025) | OK |
-| sp_crear_cuenta_paciente.3 | Nulos y límites | DNI NULL, usuario corto o con mayúsculas, email mal escrito y contraseña que no es un hash | OK |
+| sp_crear_cuenta_paciente.3 | Nulos y límites | DNI NULL, usuario corto o con mayúsculas, email mal escrito y contraseña vacía | OK |
 | sp_crear_cuenta_paciente.4 | Consistencia | El usuario nuevo tiene rol paciente, la paciente quedó vinculada y el alta está en el log | OK |
 | sp_alta_paciente.1 | Éxito | Alta con todos los datos válidos: queda la paciente y su teléfono | OK |
 | sp_alta_paciente.2 | Sin coincidencias | DNI repetido: error 52035 y no se crea otra fila | OK |

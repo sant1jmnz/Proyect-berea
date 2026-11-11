@@ -105,7 +105,7 @@ Cada uno tiene que **correr la prueba de lo que trae** (`DERMALIA_DB_USER=root c
    cada uno. La carga de un turno acepta el cupón en el sitio (campo "Cupón") y en la API.
 4. **El sitio solo reserva los 4 protocolos del maquetado** (se relacionan con la base por nombre); la base tiene 30.
    Para mostrar todos hay que rehacer el catálogo del sitio, que tiene el modelo 3D por capas de la piel.
-5. **Contraseñas con algoritmo lento** (bcrypt/argon2) en lugar de SHA-256 sin sal, para producción.
+5. **Proteger las contraseñas** (hoy se guardan tal cual, decisión del equipo para este trabajo).
 6. **Verificar la competencia:** las celdas "a verificar" de `docs/07-competencia.md`.
 7. **Diapositivas / Canva del pitch** y **revisión cruzada** con otro equipo.
 8. Confirmar con el docente el criterio de las tablas maestras con menos de 20 filas.

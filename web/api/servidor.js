@@ -15,6 +15,7 @@
  * Variables: DERMALIA_DB_HOST, _PORT, _USER, _PASS, _SSL (como las apps de escritorio) y PUERTO_API.
  * Conviene un usuario de la base que solo pueda ejecutar stored procedures (backend/08_usuarios.sql). */
 import http from 'node:http';
+import { randomInt } from 'node:crypto';
 import mysql from 'mysql2/promise';
 
 /* Llama a un stored procedure y devuelve las filas de su primer conjunto de resultados. */
@@ -85,7 +86,9 @@ export function crearServidor(pool) {
           [paciente.id, d.profesional, aFechaHora(d.inicio), (d.protocolos || []).join(','), 'web', null, d.cupon || null, null]);
         if (!turno.ok) return responder(res, 409, { error: turno.mensaje, codigo: turno.codigo });
         // la seña es simulada (RNF-05): se marca como pagada con tarjeta simulada
-        const sena = await escribir(pool, 'pagos.sp_registrar_sena', [turno.id, 'tarjeta simulada', null, null, 'web']);
+        /* El código de operación lo genera el servidor; la base solo lo guarda. */
+        const codigoOperacion = `SIM-${randomInt(100000, 1000000)}`;
+        const sena = await escribir(pool, 'pagos.sp_registrar_sena', [turno.id, 'tarjeta simulada', null, null, 'web', codigoOperacion]);
         return responder(res, 201, { turno: turno.id, sena: turno.valor, precioFinal: Number(turno.dato), senaRegistrada: sena.ok, codigoOperacion: sena.dato, aviso: sena.ok ? null : sena.mensaje });
       }
       if (req.method === 'GET' && ruta === '/api/turnos') {

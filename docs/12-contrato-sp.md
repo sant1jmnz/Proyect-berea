@@ -21,7 +21,7 @@ devuelven **una fila con 6 columnas**:
 | `mensaje` | Texto en español listo para mostrar a la persona |
 | `id` | Lo que se creó o modificó (turno, pago, paciente...) |
 | `valor` | Un monto (la seña a pagar, lo reembolsado...) |
-| `dato` | Un texto (código de operación (número), rol, token, código de tarjeta...) |
+| `dato` | Un texto (código de operación, rol, token, código de tarjeta...) |
 
 Si las reglas del negocio lo impiden, **no hay excepción**: vuelve la fila
 `ERROR` con su código y la operación se deshace sola (`EXIT HANDLER`, como en el
@@ -101,9 +101,9 @@ devuelven 0 filas y no dan error.
 | `notificaciones.sp_marcar_notificacion` (SP) | `p_id_notificacion INT, p_resultado VARCHAR(20), p_detalle VARCHAR(500)` | n8n informa cómo salió el envío. Un fallo se reintenta hasta 3 veces; recién al tercero queda 'fallida'. |
 | `notificaciones.sp_notificaciones_pendientes` (SP) | `p_limite INT` | Avisos pendientes cuya hora ya llegó, con los datos del destinatario. `p_limite` ya no se usa: trae todos. |
 | `pagos.fn_saldo_tarjeta` (función) | `p_id_tarjeta INT` | El saldo no se guarda: es el monto inicial menos la suma de los movimientos. |
-| `pagos.sp_comprar_tarjeta` (SP) | `p_monto DECIMAL(12,2), p_medio_pago VARCHAR(50), p_comprador_nombre VARCHAR(100), p_comprador_telefono VARCHAR(30), p_id_usuario INT, p_origen VARCHAR(50)` | Vende una tarjeta de regalo (código largo y aleatorio, vigencia de 12 meses). Devuelve: id = tarjeta, valor = monto, dato = código de la tarjeta. |
+| `pagos.sp_comprar_tarjeta` (SP) | `p_monto DECIMAL(12,2), p_medio_pago VARCHAR(50), p_comprador_nombre VARCHAR(100), p_comprador_telefono VARCHAR(30), p_id_usuario INT, p_origen VARCHAR(50), p_codigo VARCHAR(50)` | Vende una tarjeta de regalo (código largo y aleatorio, vigencia de 12 meses). Devuelve: id = tarjeta, valor = monto, dato = código de la tarjeta. |
 | `pagos.sp_movimientos_tarjeta` (SP) | `p_codigo VARCHAR(50)` | Historial de una tarjeta de regalo: cada gasto (monto positivo) y cada devolución (negativo), con el turno y la paciente. Código inexistente, NULL o vacío: 0 filas. |
-| `pagos.sp_registrar_sena` (SP) | `p_id_turno INT, p_medio_pago VARCHAR(50), p_codigo_tarjeta VARCHAR(50), p_id_usuario INT, p_origen VARCHAR(50)` | Registra la seña (pago simulado, sin pasarela) y confirma el turno. Devuelve: id = pago, valor = monto de la seña, dato = código de operación 'SIM-...'. Si se paga con tarjeta de regalo hay que pasar su código; el turno no puede tener cupón (un cupón y una tarjeta no van juntos). |
+| `pagos.sp_registrar_sena` (SP) | `p_id_turno INT, p_medio_pago VARCHAR(50), p_codigo_tarjeta VARCHAR(50), p_id_usuario INT, p_origen VARCHAR(50), p_codigo_operacion VARCHAR(50)` | Registra la seña (pago simulado, sin pasarela) y confirma el turno. Devuelve: id = pago, valor = monto de la seña, dato = código de operación 'SIM-...'. Si se paga con tarjeta de regalo hay que pasar su código; el turno no puede tener cupón (un cupón y una tarjeta no van juntos). |
 | `pagos.sp_saldo_tarjeta` (SP) | `p_codigo VARCHAR(50), p_id_usuario INT, p_origen VARCHAR(50)` | Saldo y vigencia de una tarjeta. Un código inexistente queda en el log (intentos fallidos, modelo grupo 3 decisión 9) y no devuelve filas. |
 
 ### Semana 5 (`backend/05_reportes_semana5.sql`): 8 reportes y auditoría

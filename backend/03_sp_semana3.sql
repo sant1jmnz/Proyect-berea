@@ -30,7 +30,7 @@ DROP FUNCTION IF EXISTS auditoria.fn_ahora//
 CREATE FUNCTION auditoria.fn_ahora() RETURNS DATETIME
     NOT DETERMINISTIC NO SQL
 BEGIN
-    RETURN COALESCE(@ahora_simulado, NOW());
+    RETURN COALESCE(@ahora_simulado, CURRENT_TIMESTAMP);
 END//
 
 -- Escribe una fila en el log. Nunca falla: si el tipo de evento no existe no
@@ -39,7 +39,7 @@ DROP PROCEDURE IF EXISTS auditoria.sp_registrar_log//
 CREATE PROCEDURE auditoria.sp_registrar_log(
     IN p_tipo VARCHAR(50), IN p_id_usuario INT, IN p_id_paciente INT, IN p_origen VARCHAR(50),
     IN p_descripcion VARCHAR(2000), IN p_tabla VARCHAR(100), IN p_id_registro INT,
-    IN p_anterior LONGTEXT, IN p_nuevo LONGTEXT, IN p_exitoso TINYINT, IN p_ip VARCHAR(45))
+    IN p_anterior TEXT, IN p_nuevo TEXT, IN p_exitoso SMALLINT, IN p_ip VARCHAR(45))
 BEGIN
     INSERT INTO auditoria.Log (id_tipo_evento, id_usuario, id_paciente, id_origen, fecha_hora, descripcion,
                                ip_origen, tabla_afectada, id_registro_afectado, valor_anterior, valor_nuevo, exitoso)
@@ -48,7 +48,7 @@ BEGIN
            (SELECT p.id_paciente FROM personas.Paciente p WHERE p.id_paciente = p_id_paciente),
            COALESCE((SELECT o.id_origen FROM agenda.Origen o WHERE o.nombre = p_origen),
                     (SELECT o.id_origen FROM agenda.Origen o WHERE o.nombre = 'sistema')),
-           auditoria.fn_ahora(), LEFT(p_descripcion, 500), p_ip, p_tabla, p_id_registro,
+           auditoria.fn_ahora(), SUBSTRING(p_descripcion FROM 1 FOR 500), p_ip, p_tabla, p_id_registro,
            p_anterior, p_nuevo, COALESCE(p_exitoso, 1)
     FROM auditoria.TipoEvento te
     WHERE te.nombre = p_tipo;
@@ -193,7 +193,7 @@ BEGIN
 
         IF v_id IS NULL THEN
             CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, p_origen,
-                CONCAT('Usuario inexistente o inactivo: ', LEFT(p_usuario, 50)), 'seguridad.Usuario', NULL, NULL, NULL, 0, p_ip);
+                CONCAT('Usuario inexistente o inactivo: ', SUBSTRING(p_usuario FROM 1 FOR 50)), 'seguridad.Usuario', NULL, NULL, NULL, 0, p_ip);
             SELECT 'ERROR' AS estado, 52011 AS codigo, 'Usuario o contraseña incorrectos' AS mensaje,
                    NULL AS id, NULL AS valor, NULL AS dato;
         ELSEIF v_fallidos >= 5 THEN
@@ -316,7 +316,7 @@ BEGIN
     IF p_telefono IS NULL OR p_telefono NOT REGEXP '^[+]?[0-9]{10,13}$' THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52032, MESSAGE_TEXT = 'El teléfono debe tener de 10 a 13 dígitos';
     END IF;
-    IF p_fecha_nacimiento IS NULL OR p_fecha_nacimiento >= CURDATE() THEN
+    IF p_fecha_nacimiento IS NULL OR p_fecha_nacimiento >= CURRENT_DATE THEN
         SIGNAL SQLSTATE '45000' SET MYSQL_ERRNO = 52033, MESSAGE_TEXT = 'La fecha de nacimiento no es válida';
     END IF;
     IF p_email IS NOT NULL AND p_email <> '' AND p_email NOT REGEXP '^[^@ ]+@[^@ ]+[.][^@ ]+$' THEN
@@ -375,7 +375,9 @@ BEGIN
        SET nombre = TRIM(p_nombre), apellido = TRIM(p_apellido), email = NULLIF(TRIM(p_email), '')
      WHERE id_paciente = p_id_paciente;
     IF p_telefono_nuevo IS NOT NULL AND p_telefono_nuevo <> '' THEN
-        INSERT IGNORE INTO personas.TelefonoPaciente (id_paciente, telefono) VALUES (p_id_paciente, p_telefono_nuevo);
+        INSERT INTO personas.TelefonoPaciente (id_paciente, telefono)
+        SELECT p_id_paciente, p_telefono_nuevo
+         WHERE NOT EXISTS (SELECT 1 FROM personas.TelefonoPaciente WHERE id_paciente = p_id_paciente AND telefono = p_telefono_nuevo);
     END IF;
     CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, 'Datos de la paciente modificados',
         'personas.Paciente', p_id_paciente, v_antes, CONCAT(TRIM(p_apellido), ', ', TRIM(p_nombre), ' <', COALESCE(p_email, ''), '>'), 1, NULL);
@@ -474,7 +476,7 @@ END//
 DROP PROCEDURE IF EXISTS personas.sp_modificar_profesional//
 CREATE PROCEDURE personas.sp_modificar_profesional(
     IN p_id_profesional INT, IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_email VARCHAR(100),
-    IN p_activo TINYINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
+    IN p_activo SMALLINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
@@ -577,7 +579,7 @@ BEGIN
     DECLARE v_fecha DATE;
     DECLARE v_ini TIME;
     DECLARE v_fin TIME;
-    DECLARE v_activa TINYINT;
+    DECLARE v_activa SMALLINT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
@@ -613,7 +615,7 @@ END//
 -- Habilita (o quita) un protocolo a un profesional (RF-18).
 DROP PROCEDURE IF EXISTS clinica.sp_asignar_protocolo//
 CREATE PROCEDURE clinica.sp_asignar_protocolo(
-    IN p_id_profesional INT, IN p_id_protocolo INT, IN p_habilitar TINYINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
+    IN p_id_profesional INT, IN p_id_protocolo INT, IN p_habilitar SMALLINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
@@ -638,7 +640,9 @@ BEGIN
 
     START TRANSACTION;
     IF p_habilitar = 1 THEN
-        INSERT IGNORE INTO clinica.ProfesionalProtocolo (id_profesional, id_protocolo) VALUES (p_id_profesional, p_id_protocolo);
+        INSERT INTO clinica.ProfesionalProtocolo (id_profesional, id_protocolo)
+        SELECT p_id_profesional, p_id_protocolo
+         WHERE NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo WHERE id_profesional = p_id_profesional AND id_protocolo = p_id_protocolo);
     ELSE
         DELETE FROM clinica.ProfesionalProtocolo WHERE id_profesional = p_id_profesional AND id_protocolo = p_id_protocolo;
     END IF;
@@ -725,7 +729,7 @@ END//
 DROP PROCEDURE IF EXISTS clinica.sp_modificar_protocolo//
 CREATE PROCEDURE clinica.sp_modificar_protocolo(
     IN p_id_protocolo INT, IN p_nombre VARCHAR(100), IN p_descripcion VARCHAR(500), IN p_precio DECIMAL(12,2),
-    IN p_duracion_min INT, IN p_activo TINYINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
+    IN p_duracion_min INT, IN p_activo SMALLINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
 BEGIN
     DECLARE v_errno INT DEFAULT 0;
     DECLARE v_msg VARCHAR(500) DEFAULT '';
@@ -776,7 +780,7 @@ END//
 -- p_incluir_bajas = 1 incluye también los protocolos dados de baja (lo usa la
 -- pantalla de administración de protocolos); con 0 o NULL, solo los activos.
 DROP PROCEDURE IF EXISTS clinica.sp_listar_protocolos//
-CREATE PROCEDURE clinica.sp_listar_protocolos(IN p_texto VARCHAR(100), IN p_id_categoria INT, IN p_incluir_bajas TINYINT)
+CREATE PROCEDURE clinica.sp_listar_protocolos(IN p_texto VARCHAR(100), IN p_id_categoria INT, IN p_incluir_bajas SMALLINT)
 BEGIN
     DECLARE v_texto VARCHAR(100) DEFAULT TRIM(COALESCE(p_texto, ''));
     SELECT p.id_protocolo, p.nombre, p.descripcion, c.id_categoria, c.nombre AS categoria, p.precio, p.duracion_min,
@@ -1037,7 +1041,7 @@ END//
 -- Cada fila trae también el teléfono, la seña, el código de operación y el
 -- último recordatorio del turno (canal, estado y cuándo sale).
 DROP PROCEDURE IF EXISTS agenda.sp_buscar_turnos//
-CREATE PROCEDURE agenda.sp_buscar_turnos(IN p_texto VARCHAR(100), IN p_solo_vigentes TINYINT)
+CREATE PROCEDURE agenda.sp_buscar_turnos(IN p_texto VARCHAR(100), IN p_solo_vigentes SMALLINT)
 BEGIN
     DECLARE v_texto VARCHAR(100) DEFAULT TRIM(COALESCE(p_texto, ''));
     SELECT t.id_turno, p.id_paciente, CONCAT(p.apellido, ', ', p.nombre) AS paciente, p.dni,

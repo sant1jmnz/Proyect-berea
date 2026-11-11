@@ -78,13 +78,13 @@ SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion LIKE 'prueba log 4
 -- @espera verdadero
 SELECT (auditoria.fn_ahora() = '2026-11-03 09:00:00') AS verificacion;
 
--- @caso fn_ahora.2 | Sin coincidencias | Sin reloj simulado devuelve la hora real (cerca de NOW())
+-- @caso fn_ahora.2 | Sin coincidencias | Sin reloj simulado devuelve la hora real (cerca de CURRENT_TIMESTAMP)
 SET @guardado = @ahora_simulado;
 SET @ahora_simulado = NULL;
 -- @espera verdadero
-SELECT (ABS(TIMESTAMPDIFF(SECOND, auditoria.fn_ahora(), NOW())) <= 2) AS verificacion;
+SELECT (ABS(TIMESTAMPDIFF(SECOND, auditoria.fn_ahora(), CURRENT_TIMESTAMP)) <= 2) AS verificacion;
 
--- @caso fn_ahora.3 | Nulos y límites | Un valor vacío del reloj también cae a NOW()
+-- @caso fn_ahora.3 | Nulos y límites | Un valor vacío del reloj también cae a CURRENT_TIMESTAMP
 -- @espera verdadero
 SELECT (auditoria.fn_ahora() IS NOT NULL) AS verificacion;
 

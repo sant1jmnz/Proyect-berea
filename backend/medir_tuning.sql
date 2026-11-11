@@ -16,7 +16,7 @@ SELECT COALESCE(MAX(id_pago), 0) INTO @base_pago FROM pagos.PagoSena;
 
 -- 300.000 turnos, uno cada 7 minutos desde enero de 2024 (casi 4 años)
 INSERT INTO agenda.Turno (id_paciente, id_profesional, id_estado_turno, id_origen, fecha_hora_inicio, fecha_hora_fin, fecha_creacion)
-SELECT 1 + x.k MOD 60, 1 + x.k MOD 20, 1 + x.k MOD 5, 1 + x.k MOD 4,
+SELECT 1 + (x.k - 60 * (x.k DIV 60)), 1 + (x.k - 20 * (x.k DIV 20)), 1 + (x.k - 5 * (x.k DIV 5)), 1 + (x.k - 4 * (x.k DIV 4)),
        CAST('2024-01-01' AS DATETIME) + INTERVAL (7 * x.k) MINUTE,
        CAST('2024-01-01' AS DATETIME) + INTERVAL (7 * x.k + 30) MINUTE,
        CAST('2024-01-01' AS DATETIME) + INTERVAL (7 * x.k) MINUTE - INTERVAL 5 DAY
@@ -25,10 +25,10 @@ SELECT 1 + x.k MOD 60, 1 + x.k MOD 20, 1 + x.k MOD 5, 1 + x.k MOD 4,
          WHERE d.n < 3) x
  WHERE x.k BETWEEN 1 AND 300000;
 INSERT INTO agenda.TurnoProtocolo (id_turno, id_protocolo, precio_aplicado)
-SELECT id_turno, 1 + id_turno MOD 24, 90000 FROM agenda.Turno WHERE id_turno > @base;
+SELECT id_turno, 1 + (id_turno - 24 * (id_turno DIV 24)), 90000 FROM agenda.Turno WHERE id_turno > @base;
 INSERT INTO pagos.PagoSena (id_turno, id_estado_pago, id_medio_pago, monto, fecha_pago, codigo_operacion, monto_reembolsado)
-SELECT id_turno, 1 + id_turno MOD 5, 1 + id_turno MOD 4, 27000, fecha_hora_inicio - INTERVAL 3 DAY, id_turno + 100000000, 0
-  FROM agenda.Turno WHERE id_turno > @base AND id_turno MOD 5 <> 1;
+SELECT id_turno, 1 + (id_turno - 5 * (id_turno DIV 5)), 1 + (id_turno - 4 * (id_turno DIV 4)), 27000, fecha_hora_inicio - INTERVAL 3 DAY, id_turno + 100000000, 0
+  FROM agenda.Turno WHERE id_turno > @base AND (id_turno - 5 * (id_turno DIV 5)) <> 1;
 
 -- ===================== REPORTE 1: turnos por período y profesional (marzo de 2025) =====================
 SELECT '--- REPORTE 1: filas de cada paso ---' AS medicion;

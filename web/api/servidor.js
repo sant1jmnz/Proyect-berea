@@ -31,6 +31,13 @@ function unirNombres(fila) {
   return fila;
 }
 
+/* Los SP reciben hasta 3 protocolos en parámetros separados; los que faltan van en null. */
+function tresProtocolos(lista) {
+  const ids = lista.slice(0, 3).map((x) => Number(x));
+  while (ids.length < 3) ids.push(null);
+  return ids;
+}
+
 async function llamar(pool, sp, parametros = []) {
   const marcas = parametros.map(() => '?').join(', ');
   const [resultado] = await pool.query(`CALL ${sp}(${marcas})`, parametros);
@@ -86,8 +93,9 @@ export function crearServidor(pool) {
         return responder(res, 200, await llamar(pool, 'clinica.sp_listar_protocolos', [url.searchParams.get('texto') || null, null, 0]));
       }
       if (req.method === 'GET' && ruta === '/api/horarios') {
+        const ids = tresProtocolos((url.searchParams.get('protocolos') || '').split(',').filter((x) => x !== ''));
         const filas = await llamar(pool, 'agenda.sp_horarios_libres',
-          [url.searchParams.get('fecha'), url.searchParams.get('protocolos') || '', url.searchParams.get('profesional') || null]);
+          [url.searchParams.get('fecha'), ...ids, url.searchParams.get('profesional') || null]);
         return responder(res, 200, filas);
       }
       if (req.method === 'POST' && ruta === '/api/turnos') {
@@ -95,7 +103,7 @@ export function crearServidor(pool) {
         const paciente = await pacienteDe(pool, d);
         if (!paciente.ok) return responder(res, paciente.necesitaNacimiento ? 422 : 409, { error: paciente.mensaje, codigo: paciente.codigo ?? 0, necesitaNacimiento: !!paciente.necesitaNacimiento });
         const turno = await escribir(pool, 'agenda.sp_alta_turno',
-          [paciente.id, d.profesional, aFechaHora(d.inicio), (d.protocolos || []).join(','), 'web', null, d.cupon || null, null]);
+          [paciente.id, d.profesional, aFechaHora(d.inicio), ...tresProtocolos(d.protocolos || []), 'web', null, d.cupon || null, null]);
         if (!turno.ok) return responder(res, 409, { error: turno.mensaje, codigo: turno.codigo });
         // la seña es simulada (RNF-05): se marca como pagada con tarjeta simulada
         /* El código de operación lo genera el servidor; la base solo lo guarda. */

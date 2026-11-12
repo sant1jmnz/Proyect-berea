@@ -1,14 +1,17 @@
-/* Modelo 3D de las capas de la piel (hero del inicio). Sirve para elegir:
- * tocás una capa (en el modelo o en su rótulo) y aparecen los protocolos que
- * actúan ahí, con el botón para reservarlos. Si lo mantenés apretado, las
- * capas se separan para ver el corte por dentro (idea tomada de tesseract).
+/* Modelo 3D de las capas de la piel (hero del inicio). Sirve para elegir y
+ * entender: tocás una capa (en el modelo o en su rótulo) y aparecen los
+ * protocolos que actúan ahí; al señalar un protocolo, su herramienta (láser,
+ * aguja, ondas, producto o bisturí) aparece actuando en la profundidad
+ * correcta del corte. El botón "Separar las capas" las abre para ver cada una.
  * Las líneas que unen cada capa con su rótulo son un SVG que se recalcula con
- * la posición real del modelo en pantalla. */
+ * la posición real del modelo en pantalla. Sin WebGL queda el corte en SVG y
+ * los rótulos funcionan igual. */
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { gsap, movimientoReducido } from '../movimiento/gsap.js';
-import { alEstarListo } from '../movimiento/cargador.js';
 import { hayWebGL, crearRenderer, entornoDeEstudio, bucleVisible, ajustarTamano, texturaBurbuja } from './escena.js';
+
+const ROSA = '#A8475F';
 
 const ANCHO = 3.2;
 const FONDO = 2.2;
@@ -101,41 +104,125 @@ function pielSVG(contenedor) {
     </svg>`;
 }
 
+/* Herramientas que actúan en la cara del corte (adelante). Cada una se anima en
+ * el cuadro según su tipo; todas se posicionan en la profundidad de la capa. */
+function crearHerramientas() {
+  const grupo = new THREE.Group();
+  grupo.visible = false;
+  const mat = (opacidad = 1) => new THREE.MeshBasicMaterial({ color: ROSA, transparent: true, opacity: opacidad, depthWrite: false });
+  const x = 0.9;
+  const z = FONDO / 2 + 0.05;
+
+  const laser = new THREE.Group();
+  const haz = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 12), mat(0.75));
+  const foco = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), mat(0.9));
+  laser.add(haz, foco);
+
+  const jeringa = new THREE.Group();
+  const aguja = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.6, 8), new THREE.MeshBasicMaterial({ color: '#3A2B2B' }));
+  aguja.position.y = 0.8;
+  const cuerpo = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.9, 12), new THREE.MeshBasicMaterial({ color: '#FFFDFA' }));
+  cuerpo.position.y = 2.05;
+  jeringa.add(aguja, cuerpo);
+
+  const ondas = new THREE.Group();
+  for (let i = 0; i < 3; i++) ondas.add(new THREE.Mesh(new THREE.TorusGeometry(1, 0.025, 8, 48), mat(0.8)));
+
+  const gota = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), mat(0.9));
+  const incision = new THREE.Mesh(new THREE.BoxGeometry(1, 0.045, 0.02), new THREE.MeshBasicMaterial({ color: '#8E3A50' }));
+
+  const piezas = { laser, jeringa, ondas, frasco: gota, bisturi: incision };
+  Object.values(piezas).forEach((p) => {
+    p.visible = false;
+    p.position.set(x, 0, z);
+    grupo.add(p);
+  });
+
+  /* y: altura del centro de la capa. t: segundos. */
+  function animar(tipo, y, t) {
+    Object.entries(piezas).forEach(([k, p]) => (p.visible = k === tipo));
+    const ciclo = (t % 2.4) / 2.4;
+    if (tipo === 'laser') {
+      const alto = 3.2 - y;
+      haz.scale.y = alto;
+      haz.position.y = y + alto / 2;
+      haz.material.opacity = 0.55 + Math.sin(t * 14) * 0.2;
+      foco.position.y = y;
+      foco.scale.setScalar(1 + Math.sin(t * 9) * 0.25);
+    } else if (tipo === 'jeringa') {
+      const baja = 0.5 - 0.5 * Math.cos(ciclo * Math.PI * 2);
+      jeringa.position.y = y + 0.1 + (1 - baja) * 1.1;
+    } else if (tipo === 'ondas') {
+      ondas.children.forEach((r, i) => {
+        const f = (ciclo + i / 3) % 1;
+        r.position.y = y;
+        r.scale.setScalar(0.15 + f * 0.85);
+        r.material.opacity = (1 - f) * 0.8;
+      });
+    } else if (tipo === 'frasco') {
+      gota.position.y = 3.2 + (y - 3.2) * Math.min(ciclo * 1.4, 1);
+      gota.material.opacity = ciclo > 0.7 ? Math.max(0, 1 - (ciclo - 0.7) * 3.3) : 0.9;
+    } else if (tipo === 'bisturi') {
+      incision.position.y = y;
+      const avance = Math.min(ciclo * 1.5, 1);
+      incision.scale.x = Math.max(avance * 2.4, 0.001);
+      incision.position.x = -0.2 + (avance * 2.4) / 2 - 1.2;
+    }
+  }
+  return { grupo, animar };
+}
+
 export function iniciarPiel({ alElegir }) {
   const contenedor = document.querySelector('[data-piel]');
   if (!contenedor) return null;
   const lienzo = contenedor.querySelector('[data-piel-lienzo]');
   const lineas = Object.fromEntries([...contenedor.querySelectorAll('[data-linea]')].map((p) => [p.dataset.linea, p]));
   const rotulos = Object.fromEntries([...contenedor.querySelectorAll('[data-capa]')].map((b) => [b.dataset.capa, b]));
+  const botonSeparar = contenedor.querySelector('[data-separar]');
   const reducido = movimientoReducido();
-  const estado = { elegida: null, encima: null, separacion: 0 };
+  const estado = { elegida: null, encima: null, separacion: 0, protocolo: null };
 
   // Los rótulos funcionan siempre, haya 3D o no.
   Object.entries(rotulos).forEach(([id, boton]) => {
     boton.addEventListener('click', () => elegir(id));
-    boton.addEventListener('pointerenter', () => (estado.encima = id));
-    boton.addEventListener('pointerleave', () => (estado.encima = null));
+    boton.addEventListener('pointerenter', () => { estado.encima = id; dibujarUnaVez(); });
+    boton.addEventListener('pointerleave', () => { estado.encima = null; dibujarUnaVez(); });
   });
 
   let dibujarUnaVez = () => {};
   function elegir(id) {
-    estado.elegida = estado.elegida === id ? null : id;
+    estado.elegida = estado.elegida === id || id === null ? null : id;
+    estado.protocolo = null;
     Object.entries(rotulos).forEach(([k, b]) => b.setAttribute('aria-pressed', String(k === estado.elegida)));
     alElegir(estado.elegida);
     dibujarUnaVez();
   }
 
+  /* Señalar un protocolo: se ve su herramienta actuando (o null para quitarla). */
+  function senalar(protocolo) {
+    estado.protocolo = protocolo ? { capa: protocolo.capa, tipo: protocolo.tipo } : null;
+    dibujarUnaVez();
+  }
+
+  function separar(abrir) {
+    botonSeparar?.setAttribute('aria-pressed', String(abrir));
+    if (botonSeparar) botonSeparar.textContent = abrir ? 'Juntar las capas' : 'Separar las capas';
+    gsap.to(estado, { separacion: abrir ? 1 : 0, duration: reducido ? 0 : 0.9, ease: 'power3.out', overwrite: true, onUpdate: dibujarUnaVez });
+  }
+  botonSeparar?.addEventListener('click', () => separar(botonSeparar.getAttribute('aria-pressed') !== 'true'));
+
   if (!hayWebGL()) {
     pielSVG(contenedor);
     Object.values(lineas).forEach((l) => l.remove());
-    return { elegir };
+    botonSeparar?.remove();
+    return { elegir, senalar };
   }
 
   const renderer = crearRenderer(lienzo);
   const escena = new THREE.Scene();
   escena.environment = entornoDeEstudio(renderer);
   const camara = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-  camara.position.set(0, 1.4, 11.5);
+  camara.position.set(0, 1.2, 9.4);
   camara.lookAt(0, -0.1, 0);
 
   const luz = new THREE.DirectionalLight('#FFF3E8', 2.2);
@@ -146,10 +233,12 @@ export function iniciarPiel({ alElegir }) {
   modelo.rotation.set(0.32, -0.55, 0);
   const grupos = Object.fromEntries(Object.keys(CAPAS).map((id) => [id, crearCapa(id)]));
   Object.values(grupos).forEach((g) => modelo.add(g));
+  const herramientas = crearHerramientas();
+  modelo.add(herramientas.grupo);
   escena.add(modelo);
 
   // Partículas suaves alrededor: el "sérum" que rodea la piel.
-  const cantidad = 160;
+  const cantidad = 120;
   const pos = new Float32Array(cantidad * 3);
   for (let i = 0; i < cantidad; i++) pos.set([THREE.MathUtils.randFloatSpread(7), THREE.MathUtils.randFloat(-2, 2.6), THREE.MathUtils.randFloatSpread(4)], i * 3);
   const geoP = new THREE.BufferGeometry();
@@ -163,7 +252,7 @@ export function iniciarPiel({ alElegir }) {
     dibujarUnaVez();
   });
 
-  // Puntero: la capa que está debajo se marca; el modelo gira un poco.
+  // Puntero: la capa que está debajo se marca y el modelo gira un poco.
   const rayo = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   const objetivo = { x: 0, y: 0 };
@@ -176,35 +265,18 @@ export function iniciarPiel({ alElegir }) {
     return rayo.intersectObjects(tocables, false)[0]?.object.userData.capa ?? null;
   }
   lienzo.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse') return;
     estado.encima = capaBajo(e);
     lienzo.style.cursor = estado.encima ? 'pointer' : '';
     objetivo.x = (e.clientX / window.innerWidth - 0.5) * 2;
     objetivo.y = (e.clientY / window.innerHeight - 0.5) * 2;
     dibujarUnaVez();
   });
-  lienzo.addEventListener('pointerleave', () => (estado.encima = null));
-
-  // Toque corto: elige la capa. Mantener apretado: separa las capas.
-  let apretado = 0;
-  let separando = null;
-  lienzo.addEventListener('pointerdown', (e) => {
-    apretado = performance.now();
-    lienzo.setPointerCapture?.(e.pointerId);
-    separando = setTimeout(() => {
-      gsap.to(estado, { separacion: 1, duration: reducido ? 0 : 1.1, ease: 'power3.out', overwrite: true, onUpdate: dibujarUnaVez });
-    }, 260);
+  lienzo.addEventListener('pointerleave', () => { estado.encima = null; dibujarUnaVez(); });
+  lienzo.addEventListener('click', (e) => {
+    const capa = capaBajo(e);
+    if (capa) elegir(capa);
   });
-  const soltar = (e) => {
-    clearTimeout(separando);
-    const largo = performance.now() - apretado;
-    if (largo < 260 && e?.type === 'pointerup') {
-      const capa = capaBajo(e);
-      if (capa) elegir(capa);
-    }
-    gsap.to(estado, { separacion: 0, duration: reducido ? 0 : 1.4, ease: 'elastic.out(1, 0.5)', overwrite: true, onUpdate: dibujarUnaVez });
-  };
-  lienzo.addEventListener('pointerup', soltar);
-  lienzo.addEventListener('pointercancel', soltar);
 
   const ancla = new THREE.Vector3();
   function actualizarLineas() {
@@ -221,22 +293,30 @@ export function iniciarPiel({ alElegir }) {
       const y2 = r.top - caja.top + r.height / 2;
       const medio = x1 + (x2 - x1) * 0.55;
       lineas[id].setAttribute('d', `M${x1.toFixed(1)} ${y1.toFixed(1)} C${medio.toFixed(1)} ${y1.toFixed(1)} ${medio.toFixed(1)} ${y2.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`);
-      lineas[id].classList.toggle('activa', id === estado.elegida || id === estado.encima);
+      lineas[id].classList.toggle('activa', id === (estado.protocolo?.capa ?? estado.elegida) || id === estado.encima);
     });
   }
 
   function aplicarEstado(t = 0) {
+    const foco = estado.protocolo?.capa ?? estado.elegida;
     Object.entries(grupos).forEach(([id, g]) => {
-      const marcada = id === estado.elegida || id === estado.encima;
-      const atenuada = estado.elegida && id !== estado.elegida;
-      g.position.y = (g.userData.caida ?? 0) + CAPAS[id].abierta * estado.separacion + (marcada ? 0.08 : 0) + Math.sin(t * 0.9 + g.id) * 0.015;
+      const marcada = id === foco || id === estado.encima;
+      const atenuada = foco && id !== foco;
+      g.position.y = CAPAS[id].abierta * estado.separacion + (marcada ? 0.08 : 0) + (reducido ? 0 : Math.sin(t * 0.9 + g.id) * 0.015);
       g.traverse((o) => {
         if (!o.material) return;
-        o.material.opacity += ((atenuada ? 0.35 : 1) - o.material.opacity) * 0.15;
+        o.material.opacity += ((atenuada ? 0.35 : 1) - o.material.opacity) * 0.2;
         o.material.emissive?.set(marcada ? '#3A2B2B' : '#000000');
         o.material.emissiveIntensity = marcada ? 0.12 : 0;
       });
     });
+    // La herramienta del protocolo señalado, en el centro de su capa.
+    const p = estado.protocolo;
+    herramientas.grupo.visible = Boolean(p);
+    if (p) {
+      const { alto, base, abierta } = CAPAS[p.capa];
+      herramientas.animar(p.tipo, base + alto / 2 + abierta * estado.separacion, t);
+    }
   }
 
   function cuadro(t = 0) {
@@ -250,41 +330,21 @@ export function iniciarPiel({ alElegir }) {
   }
 
   if (reducido) {
-    // Sin animación: se dibuja solo cuando algo cambia.
+    // Sin animación: se dibuja solo cuando algo cambia (la herramienta queda quieta).
+    let pendiente = false;
     dibujarUnaVez = () => {
-      Object.values(grupos).forEach((g) => g.traverse((o) => o.material && (o.material.opacity = estado.elegida && g.name !== estado.elegida ? 0.35 : 1)));
-      requestAnimationFrame(() => cuadro());
+      if (pendiente) return;
+      pendiente = true;
+      requestAnimationFrame(() => {
+        pendiente = false;
+        Object.values(grupos).forEach((g) => g.traverse((o) => o.material && (o.material.opacity = (estado.protocolo?.capa ?? estado.elegida) && g.name !== (estado.protocolo?.capa ?? estado.elegida) ? 0.35 : 1)));
+        cuadro(0.8);
+      });
     };
     dibujarUnaVez();
   } else {
-    // Entrada: las capas bajan una por una cuando termina el loader.
-    Object.values(grupos).forEach((g) => (g.visible = false));
-    Object.values(lineas).forEach((l) => (l.style.opacity = 0));
-    alEstarListo(() => {
-      ['hipodermis', 'dermis', 'epidermis'].forEach((id, i) => {
-        const g = grupos[id];
-        g.visible = true;
-        g.userData.caida = 3;
-        Object.values(lineas).forEach((l) => (l.style.opacity = ''));
-        gsap.to(g.userData, { caida: 0, duration: 1.2, delay: 0.2 + i * 0.22, ease: 'bounce.out' });
-        gsap.from(g.scale, { x: 0.6, z: 0.6, duration: 1, delay: 0.2 + i * 0.22 });
-      });
-      gsap.from(Object.values(lineas), {
-        drawSVG: 0,
-        duration: 1,
-        delay: 1.3,
-        stagger: 0.15,
-        // Después las líneas cambian de largo en cada cuadro: se sacan los guiones.
-        onComplete() {
-          this.targets().forEach((l) => {
-            l.style.removeProperty('stroke-dasharray');
-            l.style.removeProperty('stroke-dashoffset');
-          });
-        },
-      });
-    });
     bucleVisible(lienzo, renderer, (t) => cuadro(t));
   }
 
-  return { elegir };
+  return { elegir, senalar };
 }

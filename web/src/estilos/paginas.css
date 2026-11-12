@@ -1,34 +1,17 @@
 /* Páginas internas: reservar y mi turno. */
 
 .pagina {
-  padding-top: 130px;
+  padding-top: calc(72px + clamp(28px, 5vw, 56px));
   padding-bottom: 120px;
   min-height: 100svh;
 }
 
 .titulo-pagina {
-  font-size: clamp(42px, 6.4vw, 88px);
+  font-size: clamp(38px, 5.4vw, 68px);
 }
 
 .titulo-panel {
   font-size: clamp(28px, 3vw, 38px);
-}
-
-.nota {
-  margin-top: 8px;
-  color: var(--texto-2);
-  font-size: 15px;
-}
-
-.apagado {
-  color: var(--apagado);
-}
-
-.error {
-  grid-column: 1 / -1;
-  min-height: 1.6em;
-  color: var(--rojo);
-  font-size: 15px;
 }
 
 /* ---------- Indicador de pasos ---------- */
@@ -110,13 +93,25 @@
   opacity: 1;
 }
 
-.indicador__linea {
+/* La línea dorada avanza con el paso (--avance, lo pone reservar.js). */
+.indicador::before,
+.indicador::after {
+  content: '';
   position: absolute;
   left: 22px;
-  right: 22px;
   top: 21px;
-  width: calc(100% - 44px);
   height: 2px;
+}
+
+.indicador::before {
+  right: 22px;
+  background: var(--borde-campo);
+}
+
+.indicador::after {
+  width: calc((100% - 44px) * var(--avance, 0%) / 100%);
+  background: var(--dorado-linea);
+  transition: width 0.5s var(--ease-salida);
 }
 
 /* ---------- Reserva ---------- */
@@ -421,23 +416,6 @@
   margin-inline: auto;
 }
 
-.petalos {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  perspective: 600px;
-  overflow: visible;
-}
-
-.petalo {
-  position: absolute;
-  left: 50%;
-  top: 60px;
-  width: 16px;
-  height: 22px;
-  border-radius: 80% 0 80% 0;
-}
-
 /* ---------- Pago simulado ---------- */
 
 .pago {
@@ -452,7 +430,6 @@
 
 .pago::backdrop {
   background: rgb(58 43 43 / 0.35);
-  backdrop-filter: blur(4px);
 }
 
 .pago__caja {
@@ -560,49 +537,6 @@
   }
 }
 
-/* Reloj del paso 2. */
-.horario {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 190px;
-  gap: 24px;
-  align-items: start;
-}
-
-.reloj {
-  margin: 22px 0 0;
-  text-align: center;
-}
-
-.reloj svg {
-  width: 170px;
-  height: 170px;
-  margin-inline: auto;
-}
-
-.reloj figcaption {
-  margin-top: 6px;
-}
-
-@media (max-width: 640px) {
-  .horario {
-    grid-template-columns: 1fr;
-  }
-
-  .reloj {
-    display: grid;
-    grid-template-columns: 110px 1fr;
-    align-items: center;
-    gap: 14px;
-    text-align: left;
-  }
-
-  .reloj svg {
-    width: 110px;
-    height: 110px;
-    margin: 0;
-  }
-}
-
 /* Anillo de plazo en Mi turno. */
 .plazo {
   display: grid;
@@ -628,4 +562,64 @@
   font-family: var(--sans);
   font-size: 9px;
   fill: var(--texto-2);
+}
+
+
+/* ---------- Paso 1: filtros y aviso de cirugía ---------- */
+
+.reserva__filtros {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.aviso-cirugia {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: var(--dorado-suave);
+  border: 1px solid var(--dorado-borde);
+  font-size: 15px;
+}
+
+.aviso-cirugia[hidden] {
+  display: none;
+}
+
+/* Barra de seña y botón para seguir, fija en el celular. */
+.barra-total {
+  display: none;
+}
+
+@media (max-width: 920px) {
+  .barra-total:not([hidden]) {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 35;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px var(--gutter);
+    background: rgb(255 253 250 / 0.97);
+    border-top: 1px solid var(--borde-campo);
+    box-shadow: 0 -12px 30px -22px rgb(58 43 43 / 0.5);
+  }
+
+  .barra-total span {
+    display: block;
+    color: var(--texto-2);
+    font-size: 13px;
+  }
+
+  .barra-total strong {
+    font-size: 20px;
+  }
+
+  .pagina {
+    padding-bottom: 160px;
+  }
 }

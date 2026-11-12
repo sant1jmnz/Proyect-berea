@@ -520,8 +520,8 @@ CALL clinica.sp_modificar_protocolo(@protprueba, 'Protocolo de prueba', 'Solo pa
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE tabla_afectada = 'clinica.Protocolo' AND id_registro_afectado = @protprueba AND valor_anterior LIKE '%precio=50000%' AND valor_nuevo LIKE '%precio=65000%') = 1) AS verificacion;
 
--- @caso sp_listar_protocolos.1 | Éxito | Sin filtros trae todo el catálogo activo (30 de ejemplo + "Otro protocolo")
--- @espera filas 31
+-- @caso sp_listar_protocolos.1 | Éxito | Sin filtros trae todo el catálogo activo (44 de ejemplo + "Otro protocolo")
+-- @espera filas 45
 CALL clinica.sp_listar_protocolos(NULL, NULL, 0);
 
 -- @caso sp_listar_protocolos.2 | Sin coincidencias | Una palabra que no está en ningún protocolo: 0 filas
@@ -529,7 +529,7 @@ CALL clinica.sp_listar_protocolos(NULL, NULL, 0);
 CALL clinica.sp_listar_protocolos('xyzxyz', NULL, 0);
 
 -- @caso sp_listar_protocolos.3 | Nulos y límites | Texto vacío trae todo; un protocolo dado de baja no aparece; categoría inexistente trae 0 filas
--- @espera filas 31
+-- @espera filas 45
 CALL clinica.sp_listar_protocolos('', NULL, 0);
 -- @espera vacio
 CALL clinica.sp_listar_protocolos('Protocolo de prueba', NULL, 0);
@@ -540,7 +540,7 @@ CALL clinica.sp_listar_protocolos(NULL, 99999999, 0);
 -- @espera igual
 CALL clinica.sp_listar_protocolos('láser', NULL, 0);
 SELECT p.id_protocolo, p.nombre, p.descripcion, c.id_categoria, c.nombre AS categoria, p.precio, p.duracion_min, c.porcentaje_sena, ROUND(p.precio * c.porcentaje_sena / 100, 0) AS sena, c.requiere_evaluacion, p.activo FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria WHERE p.activo = 1 AND (p.nombre LIKE '%láser%' OR p.descripcion LIKE '%láser%' OR c.nombre LIKE '%láser%') ORDER BY c.id_categoria, p.nombre;
--- @espera filas 5
+-- @espera filas 7
 CALL clinica.sp_listar_protocolos(NULL, 4, 0);
 -- @espera filas 1
 CALL clinica.sp_listar_protocolos('Protocolo de prueba', NULL, 1);

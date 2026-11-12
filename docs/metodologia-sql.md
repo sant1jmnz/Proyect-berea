@@ -170,6 +170,6 @@ cambios llevan `WHERE ... AND v_codigo IS NULL` y la respuesta se arma con `UNIO
 
 Los reportes y sus versiones `_tuneado` se escriben como los scripts de la cátedra (TP9 y profundización 02):
 una pregunta de negocio por consulta, `INNER JOIN` / `LEFT JOIN`, alias siempre con `AS`, una cláusula por
-línea, tablas derivadas en el `FROM` y `CASE WHEN` dentro de `SUM(...)` para contar por estado (en lugar de
+línea, tablas derivadas en el `FROM` y `LEFT JOIN` + `COUNT(columna)` para contar por estado (en lugar de `CASE`, de
 sumar comparaciones o simular el `CASE` con `SELECT ... FROM DUAL`). Los cuatro scripts de TP9 en SQL Server
 (Prod y QA, ejercicios 2 a 5) están en [`catedra/tp9-sql-server/`](catedra/tp9-sql-server/).

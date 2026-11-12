@@ -1,5 +1,7 @@
 #include "paginaavisos.h"
 
+#include "repositorio.h"
+
 #include <QApplication>
 #include <QClipboard>
 #include <QDesktopServices>
@@ -103,8 +105,11 @@ void PaginaAvisos::abrirWhatsApp()
     QDesktopServices::openUrl(QUrl(enlace));
     const auto r = QMessageBox::question(this, "¿Se envió?",
         "Se abrió WhatsApp con el mensaje (el enlace también quedó copiado).\n¿Lo enviaste?");
-    if (r == QMessageBox::Yes)
+    if (r == QMessageBox::Yes) {
+        if (repo && a.id > 0)
+            repo->marcarNotificacion(a.id, "enviada");
         avisos->marcarEnviado(fila, QDateTime::currentDateTime());
+    }
     recargar();
     tabla->selectRow(fila);
 }
@@ -119,6 +124,8 @@ void PaginaAvisos::marcarFallido()
                                                  "La paciente no tiene WhatsApp", &ok);
     if (!ok)
         return;
+    if (repo && avisos->todos()[fila].id > 0)
+        repo->marcarNotificacion(avisos->todos()[fila].id, "fallida", motivo.simplified());
     avisos->marcarFallido(fila, motivo.simplified());
     recargar();
     tabla->selectRow(fila);

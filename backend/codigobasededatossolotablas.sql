@@ -41,7 +41,7 @@ CREATE TABLE seguridad.Usuario (
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    activo TINYINT NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
+    activo SMALLINT NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT FK_Usuario_Rol FOREIGN KEY (id_rol) REFERENCES seguridad.Rol(id_rol)
 );
@@ -81,7 +81,7 @@ CREATE TABLE personas.Profesional (
     nombre VARCHAR(50) NOT NULL,
     apellido VARCHAR(50) NOT NULL,
     email VARCHAR(100),
-    activo TINYINT NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
+    activo SMALLINT NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
     google_calendar_id VARCHAR(255),
     CONSTRAINT FK_Profesional_Usuario FOREIGN KEY (id_usuario) REFERENCES seguridad.Usuario(id_usuario)
 );
@@ -101,7 +101,7 @@ CREATE TABLE personas.Disponibilidad (
     fecha DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fin TIME NOT NULL,
-    activa TINYINT NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+    activa SMALLINT NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
     CONSTRAINT CK_Disponibilidad_Horas CHECK (hora_fin > hora_inicio),
     CONSTRAINT FK_Disponibilidad_Profesional FOREIGN KEY (id_profesional) REFERENCES personas.Profesional(id_profesional)
 );
@@ -113,7 +113,7 @@ CREATE TABLE clinica.CategoriaProtocolo (
     id_categoria INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
     porcentaje_sena DECIMAL(5,2) NOT NULL CHECK (porcentaje_sena BETWEEN 0 AND 100),
-    requiere_evaluacion TINYINT NOT NULL DEFAULT 0 CHECK (requiere_evaluacion IN (0, 1))
+    requiere_evaluacion SMALLINT NOT NULL DEFAULT 0 CHECK (requiere_evaluacion IN (0, 1))
 );
 
 CREATE TABLE clinica.Protocolo (
@@ -123,7 +123,7 @@ CREATE TABLE clinica.Protocolo (
     descripcion VARCHAR(500),
     precio DECIMAL(12,2) NOT NULL CHECK (precio > 0),
     duracion_min INT NOT NULL CHECK (duracion_min > 0),
-    activo TINYINT NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
+    activo SMALLINT NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
     CONSTRAINT FK_Protocolo_Categoria FOREIGN KEY (id_categoria) REFERENCES clinica.CategoriaProtocolo(id_categoria)
 );
 
@@ -269,7 +269,7 @@ CREATE TABLE beneficios.ReglaBeneficio (
     porcentaje_descuento DECIMAL(5,2) NOT NULL CHECK (porcentaje_descuento BETWEEN 0 AND 100),
     -- Los cupones duran entre 2 y 8 semanas.
     vigencia_semanas INT NOT NULL CHECK (vigencia_semanas BETWEEN 2 AND 8),
-    activa TINYINT NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+    activa SMALLINT NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
     ventana_dias INT CHECK (ventana_dias > 0),
     CONSTRAINT FK_ReglaBeneficio_TipoRegla FOREIGN KEY (id_tipo_regla) REFERENCES beneficios.TipoRegla(id_tipo_regla)
 );
@@ -353,9 +353,9 @@ CREATE TABLE auditoria.Log (
     ip_origen VARCHAR(45),
     tabla_afectada VARCHAR(100),
     id_registro_afectado INT,
-    valor_anterior LONGTEXT,
-    valor_nuevo LONGTEXT,
-    exitoso TINYINT NOT NULL DEFAULT 1 CHECK (exitoso IN (0, 1)),
+    valor_anterior TEXT,
+    valor_nuevo TEXT,
+    exitoso SMALLINT NOT NULL DEFAULT 1 CHECK (exitoso IN (0, 1)),
     CONSTRAINT FK_Log_TipoEvento FOREIGN KEY (id_tipo_evento) REFERENCES auditoria.TipoEvento(id_tipo_evento),
     CONSTRAINT FK_Log_Usuario FOREIGN KEY (id_usuario) REFERENCES seguridad.Usuario(id_usuario),
     CONSTRAINT FK_Log_Paciente FOREIGN KEY (id_paciente) REFERENCES personas.Paciente(id_paciente),
@@ -369,10 +369,10 @@ CREATE TABLE asistente.ConsultaAsistente (
     id_consulta INT AUTO_INCREMENT PRIMARY KEY,
     id_paciente INT NULL,
     id_origen INT NOT NULL,
-    pregunta LONGTEXT NOT NULL,
+    pregunta TEXT NOT NULL,
     fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    derivada TINYINT NOT NULL DEFAULT 0 CHECK (derivada IN (0, 1)),
-    respuesta LONGTEXT,
+    derivada SMALLINT NOT NULL DEFAULT 0 CHECK (derivada IN (0, 1)),
+    respuesta TEXT,
     CONSTRAINT FK_ConsultaAsistente_Paciente FOREIGN KEY (id_paciente) REFERENCES personas.Paciente(id_paciente),
     CONSTRAINT FK_ConsultaAsistente_Origen FOREIGN KEY (id_origen) REFERENCES agenda.Origen(id_origen)
 );

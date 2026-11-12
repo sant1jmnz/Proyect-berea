@@ -288,3 +288,7 @@ claras y nombres descriptivos.
 
 > **Pendiente para la defensa:** revisar las "preguntas de reflexión" del trabajo integrador (memoria
 > dinámica vs. estática, `exec()` vs. `show()`, modelo-vista) y poder explicarlas con el código propio.
+
+## Carpeta de Bases de Datos 2026 (zip del release)
+
+Subida al release `material-catedra` el 11 de noviembre de 2026 (`BASES DE DATOS 2026-...zip`, 17 MB). Trae seis presentaciones (normalización, subconsultas y vistas, blindaje y auditoría, optimización, agrupamientos y conexión con C), los scripts de ejemplo, el libro *Fundamentos de SQL* (Oppel y Sheldon), las rúbricas de los grupos y la plantilla de casos de prueba. Su resumen, junto con los scripts de profundización 02, está en [`metodologia-sql.md`](metodologia-sql.md).

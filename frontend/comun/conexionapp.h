@@ -31,6 +31,17 @@ public:
     BaseDatos &base() { return base_; }
     Contingencia &contingencia() { return local; }
 
+    /* Envía a la base los turnos que se guardaron en este equipo sin conexión. Devuelve cuántos se
+     * enviaron; los que la base no aceptó (horario ocupado, paciente que no existe...) siguen guardados
+     * y el motivo de cada uno queda en `problemas`. */
+    int sincronizar(QStringList *problemas = nullptr);
+
+signals:
+    /* Se avisa cada vez que se logra conectar (al arrancar o con "Reintentar"). */
+    void conectada();
+    /* Tras sincronizar los turnos guardados: cuántos se enviaron y por qué no se pudieron enviar los demás. */
+    void pendientesSincronizados(int enviados, const QStringList &problemas);
+
 private:
     AvisoConexion *aviso;
     BaseDatos base_;

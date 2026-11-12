@@ -1,0 +1,88 @@
+{
+  "name": "Dermalia - Tareas diarias (evaluaciones y cupones)",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Todos los días 03:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 3 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2",
+      "name": "Vencer evaluaciones de 6 meses",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        240,
+        -80
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CALL clinica.sp_vencer_evaluaciones('sistema')",
+        "options": {}
+      },
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "Dermalia MySQL (usuario dermalia_n8n)"
+        }
+      }
+    },
+    {
+      "id": "3",
+      "name": "Emitir cupones por fidelidad",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        240,
+        80
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CALL beneficios.sp_emitir_cupones('sistema')",
+        "options": {}
+      },
+      "credentials": {
+        "mySql": {
+          "id": "1",
+          "name": "Dermalia MySQL (usuario dermalia_n8n)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Todos los días 03:00": {
+      "main": [
+        [
+          {
+            "node": "Vencer evaluaciones de 6 meses",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Emitir cupones por fidelidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

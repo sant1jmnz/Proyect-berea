@@ -15,14 +15,34 @@
  * Variables: DERMALIA_DB_HOST, _PORT, _USER, _PASS, _SSL (como las apps de escritorio) y PUERTO_API.
  * Conviene un usuario de la base que solo pueda ejecutar stored procedures (backend/08_usuarios.sql). */
 import http from 'node:http';
+import { randomInt } from 'node:crypto';
 import mysql from 'mysql2/promise';
 
 /* Llama a un stored procedure y devuelve las filas de su primer conjunto de resultados. */
+/* Los SP devuelven el apellido en `paciente` o `profesional` y el nombre en `paciente_nombre` o
+ * `profesional_nombre` (el material de la cátedra no enseña CONCAT): acá se arma "Apellido, Nombre". */
+function unirNombres(fila) {
+  for (const clave of ['paciente', 'profesional', 'destinatario']) {
+    if (fila[`${clave}_nombre`] !== undefined) {
+      fila[clave] = `${fila[clave]}, ${fila[`${clave}_nombre`]}`;
+      delete fila[`${clave}_nombre`];
+    }
+  }
+  return fila;
+}
+
+/* Los SP reciben hasta 3 protocolos en parámetros separados; los que faltan van en null. */
+function tresProtocolos(lista) {
+  const ids = lista.slice(0, 3).map((x) => Number(x));
+  while (ids.length < 3) ids.push(null);
+  return ids;
+}
+
 async function llamar(pool, sp, parametros = []) {
   const marcas = parametros.map(() => '?').join(', ');
   const [resultado] = await pool.query(`CALL ${sp}(${marcas})`, parametros);
   const conjuntos = Array.isArray(resultado) ? resultado : [];
-  return Array.isArray(conjuntos[0]) ? conjuntos[0] : [];
+  return Array.isArray(conjuntos[0]) ? conjuntos[0].map(unirNombres) : [];
 }
 
 /* Los SP que escriben devuelven una fila {estado, codigo, mensaje, id, valor, dato}. */
@@ -73,8 +93,9 @@ export function crearServidor(pool) {
         return responder(res, 200, await llamar(pool, 'clinica.sp_listar_protocolos', [url.searchParams.get('texto') || null, null, 0]));
       }
       if (req.method === 'GET' && ruta === '/api/horarios') {
+        const ids = tresProtocolos((url.searchParams.get('protocolos') || '').split(',').filter((x) => x !== ''));
         const filas = await llamar(pool, 'agenda.sp_horarios_libres',
-          [url.searchParams.get('fecha'), url.searchParams.get('protocolos') || '', url.searchParams.get('profesional') || null]);
+          [url.searchParams.get('fecha'), ...ids, url.searchParams.get('profesional') || null]);
         return responder(res, 200, filas);
       }
       if (req.method === 'POST' && ruta === '/api/turnos') {
@@ -82,10 +103,12 @@ export function crearServidor(pool) {
         const paciente = await pacienteDe(pool, d);
         if (!paciente.ok) return responder(res, paciente.necesitaNacimiento ? 422 : 409, { error: paciente.mensaje, codigo: paciente.codigo ?? 0, necesitaNacimiento: !!paciente.necesitaNacimiento });
         const turno = await escribir(pool, 'agenda.sp_alta_turno',
-          [paciente.id, d.profesional, aFechaHora(d.inicio), (d.protocolos || []).join(','), 'web', null, d.cupon || null, null]);
+          [paciente.id, d.profesional, aFechaHora(d.inicio), ...tresProtocolos(d.protocolos || []), 'web', null, d.cupon || null, null]);
         if (!turno.ok) return responder(res, 409, { error: turno.mensaje, codigo: turno.codigo });
         // la seña es simulada (RNF-05): se marca como pagada con tarjeta simulada
-        const sena = await escribir(pool, 'pagos.sp_registrar_sena', [turno.id, 'tarjeta simulada', null, null, 'web']);
+        /* El código de operación lo genera el servidor; la base solo lo guarda. */
+        const codigoOperacion = `SIM-${randomInt(100000, 1000000)}`;
+        const sena = await escribir(pool, 'pagos.sp_registrar_sena', [turno.id, 'tarjeta simulada', null, null, 'web', codigoOperacion]);
         return responder(res, 201, { turno: turno.id, sena: turno.valor, precioFinal: Number(turno.dato), senaRegistrada: sena.ok, codigoOperacion: sena.dato, aviso: sena.ok ? null : sena.mensaje });
       }
       if (req.method === 'GET' && ruta === '/api/turnos') {

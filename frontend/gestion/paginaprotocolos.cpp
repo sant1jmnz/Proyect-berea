@@ -1,5 +1,7 @@
 #include "paginaprotocolos.h"
 
+#include "repositorio.h"
+
 #include "sena.h"
 #include "validaciones.h"
 
@@ -236,6 +238,17 @@ void PaginaProtocolos::guardar()
     p.duracionMin = editDuracion->text().trimmed().toInt();
 
     const bool esAlta = editado < 0;
+    if (repo) {   /* con la base, primero se guarda ahí: ella aplica las reglas */
+        const Respuesta r = esAlta
+            ? repo->altaProtocolo(p.categoria.id, p.nombre, p.descripcion, p.precio, p.duracionMin, "gestion", idUsuario)
+            : repo->modificarProtocolo(p.id, p.nombre, p.descripcion, p.precio, p.duracionMin, p.activo, "gestion", idUsuario);
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo guardar", r.mensaje);
+            return;
+        }
+        if (esAlta)
+            p.id = r.id;
+    }
     if (esAlta) {
         p.activo = true;
         datos->append(p);
@@ -259,6 +272,13 @@ void PaginaProtocolos::cambiarEstado()
             QString("¿Dar de baja \"%1\"? Deja de ofrecerse, pero los turnos ya cargados lo conservan.").arg(p.nombre));
         if (r != QMessageBox::Yes)
             return;
+    }
+    if (repo) {
+        const Respuesta r = repo->modificarProtocolo(p.id, p.nombre, p.descripcion, p.precio, p.duracionMin, !p.activo, "gestion", idUsuario);
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo cambiar el estado", r.mensaje);
+            return;
+        }
     }
     p.activo = !p.activo;
     btnEstado->setText(p.activo ? "Dar de baja" : "Reactivar");

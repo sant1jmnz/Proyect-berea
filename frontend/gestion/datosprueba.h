@@ -19,6 +19,7 @@ struct Categoria {
     QString nombre;
     int porcentajeSena;        /* 30, o 40 en cirugías */
     bool requiereEvaluacion;   /* cirugías: consulta previa obligatoria */
+    int id = 0;                /* id en la base (0 = dato de prueba) */
 };
 
 struct Protocolo {
@@ -27,6 +28,8 @@ struct Protocolo {
     int precio;
     Categoria categoria;
     bool activo = true;        /* una baja lo oculta, no lo borra: los turnos viejos lo siguen mostrando */
+    int id = 0;                /* id en la base (0 = dato de prueba) */
+    QString descripcion;       /* texto del catálogo (solo con datos de la base) */
 };
 
 /* Profesional: qué protocolos hace (RF-18) y cuándo atiende (RF-03). */
@@ -36,6 +39,8 @@ struct Profesional {
     bool activo;
     QStringList protocolos;    /* nombres de los protocolos que realiza */
     QVector<Franja> franjas;
+    QString email;             /* solo con datos de la base */
+    int id = 0;                /* id en la base (0 = dato de prueba) */
 };
 
 /* Paciente (la cuenta es opcional; se identifica por DNI). */
@@ -45,10 +50,12 @@ struct Paciente {
     QString telefono;          /* solo dígitos */
     QString email;             /* opcional */
     QDate nacimiento;
+    int id = 0;                /* id en la base (0 = dato de prueba) */
 };
 
 /* Estado del turno (tabla maestra). */
-enum class EstadoTurno { Confirmado, Realizado, Cancelado };
+/* Pendiente (sin seña) y Ausente existen solo cuando los datos vienen de la base. */
+enum class EstadoTurno { Confirmado, Realizado, Cancelado, Pendiente, Ausente };
 
 struct Turno {
     QString paciente;
@@ -64,6 +71,9 @@ struct Turno {
     bool senaPagada;
     QString codigoOperacion;   /* de la seña (mock): SIM-000123; vacío si no se pagó */
     int reembolsado = 0;       /* seña devuelta al cancelar (RF-10) */
+    int id = 0;                /* id del turno en la base (0 = dato de prueba) */
+    int idPaciente = 0;
+    QString profesional;       /* quién atiende (solo con datos de la base) */
 };
 
 namespace DatosPrueba {

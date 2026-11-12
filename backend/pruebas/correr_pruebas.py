@@ -26,7 +26,7 @@ import pymysql
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 BACKEND = os.path.dirname(AQUI)
-CARGA = ['codigobasededatossolotablas.sql', '02_datos.sql', '03_sp_semana3.sql', '04_sp_semana4.sql',
+CARGA = ['codigobasededatossolotablas.sql', '02_datos.sql', '02b_numero.sql', '03_sp_semana3.sql', '04_sp_semana4.sql',
          '05_reportes_semana5.sql', '06_tuning_semana6.sql']
 
 

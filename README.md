@@ -93,7 +93,7 @@ propuestas relevadas y por qué se eligió esta), [`docs/foda.md`](docs/foda.md)
 (FODA del equipo), [`docs/plan-de-aprendizaje.md`](docs/plan-de-aprendizaje.md)
 (cronograma del 3er bimestre), [`docs/plan-4to-bimestre.md`](docs/plan-4to-bimestre.md)
 (cronograma del 4° bimestre, transcripción del PDF), [`docs/reparto-4to-bimestre.md`](docs/reparto-4to-bimestre.md)
-(tareas de Santiago y Bautista semana a semana, martes de frontend y miércoles y jueves de base de datos) y [`docs/material-catedra.md`](docs/material-catedra.md)
+(tareas de Santiago y Bautista semana a semana, martes de frontend y miércoles y jueves de base de datos) y [`docs/metodologia-sql.md`](docs/metodologia-sql.md) (cómo se trabaja en SQL: metodología de Bases de Datos, rúbricas y técnica de optimización, con los scripts de profundización 02 en `docs/catedra/profundizacion-02/`), [`docs/material-catedra.md`](docs/material-catedra.md)
 (resumen de los videos de cátedra, alojados como [release `material-catedra`](https://github.com/sant1jmnz/Proyect-berea/releases/tag/material-catedra)),
 [`docs/catedra/bbdd-006-conectar-c-con-mysql.md`](docs/catedra/bbdd-006-conectar-c-con-mysql.md) (PPT de la cátedra para conectar C/C++ con MySQL, con sus ejemplos),
 [`docs/conexion-base.md`](docs/conexion-base.md) (cómo se conecta la aplicación a MySQL o a Aiven, y el modo contingencia) y los casos de prueba funcional de Gestión y Cliente
@@ -134,9 +134,18 @@ docs/
   conexion-base.md       # conexión de la app a MySQL/Aiven y modo contingencia
   09-casos-de-prueba.md          # casos de prueba funcional de Gestión
   10-casos-de-prueba-cliente.md  # casos de prueba funcional de Cliente
+  07-competencia.md      # análisis de competencia y PUV (Semana 4)
+  08-presupuesto.md      # presupuesto, monetización y retorno (Semana 5)
+  11-pruebas-bbdd.md     # documentación de pruebas de la base y tuning
+  12-contrato-sp.md      # catálogo de stored procedures y códigos de error
+  13-manual-tecnico.md   14-manual-usuario.md
+  15-guia-por-semana.md  # qué traer de esta rama cada semana
   catedra/               # material de cátedra transcripto (con ejemplos de conexión C y MySQL)
   diagramas/             # diseño conceptual escrito (Peter Chen)
-backend/                 # base MySQL: tablas en 9 schemas, pruebas de estructura y revisión
+backend/                 # base MySQL: tablas en 9 schemas, datos, stored procedures, reportes, tuning y pruebas
+  01 codigobasededatossolotablas.sql  02_datos.sql  03_sp_semana3.sql  04_sp_semana4.sql
+  05_reportes_semana5.sql  06_tuning_semana6.sql  07_actividad_con_sps.sql  05_pruebas_sp.sql
+  medir_tuning.sql  pruebas/correr_pruebas.py
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
 web/                     # sitio web para la paciente (Vite, GSAP, Three.js)
 diseno-dermalia/         # guía de estética de las pantallas
@@ -297,16 +306,35 @@ Arrancó con el frontend de escritorio y el diseño de la base de datos:
 - Siguiente: terminar el diagrama de Chen, el diseño lógico, implementar la
   base, conectar las pantallas y conectar el sitio web a la base.
 
+## Entrega del Hito 2 de Bases de Datos
+
+Carpeta `entrega-hito-2/` (la arma `python3 backend/armar_entrega.py --grupo <número>` a partir de los
+scripts de `backend/`, que son la fuente única):
+
+| Archivo | Qué es |
+|---|---|
+| `03_ModeloSQL_Grupo<N>.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
+| `04_DatosSQL_Grupo<N>.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
+| `05_Backend_Grupo<N>.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
+| `06_PruebasSQL.xlsx` | Punto 6: 222 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
+| `Diagrama_Chen_Grupo<N>.png`, `Diagrama_Codd_Grupo<N>.png` | Diagramas conceptual y lógico, con fondo blanco |
+
+El orden correcto es 03, 04 y 05, y la secuencia completa se puede repetir. El backend usa solo lo que
+enseña el material de la cátedra y pide la consigna: la lista de lo que se reemplazó y cómo está en
+[`docs/metodologia-sql.md`](docs/metodologia-sql.md) y [`docs/12-contrato-sp.md`](docs/12-contrato-sp.md).
+
 ## Qué falta
 
-- Diseño de la base de datos: diagrama de Chen con atributos, diseño lógico,
-  implementación, datos, stored procedures y pruebas (ver el plan semanal).
-- Apartado Web: conectarlo a la base; faltan la cuenta, las tarjetas de regalo,
-  el asistente de IA y el número real de WhatsApp (`web/src/js/movimiento/comun.js`).
-- Análisis de competencia, presupuesto y pitch de venta de 5 a 7 minutos.
-- Revisión cruzada (peer review) del maquetado y de los árboles con otro
-  equipo: sigue pendiente. Sin fecha concreta por ahora; se retoma si
-  aparece otro equipo con quien coordinarla.
-- Armar la presentación de Canva ("Proyecto Informático 1"): recorrido
-  semana a semana de lo que se fue haciendo, más los problemas que se
-  encontraron. Es lo último que se arma.
+El trabajo del 4° bimestre está armado en la rama `claude/awesome-hopper-20z4z2`; cada semana se
+trae lo que toca a la rama de cada uno (ver [`docs/15-guia-por-semana.md`](docs/15-guia-por-semana.md)).
+Ya hecho y probado en esa rama: base con datos, stored procedures, 8 reportes, auditoría, tuning medido y
+222 casos de prueba; **Gestión, la terminal y el sitio web conectados a la base** (con pruebas de integración
+contra MySQL real); modo contingencia que se sincroniza; usuarios de la base con permisos mínimos; informe de
+competencia, presupuesto, pitch de 5 a 7 minutos y manuales.
+
+- Plantillas de **n8n** (`n8n/`): escritas pero sin probar en una instancia real.
+- Pasarela de pagos real, WhatsApp oficial y Google Calendar (hoy: seña simulada, enlace `wa.me`, enlace de Calendar).
+- Pantallas para cupones por QR, tarjetas de regalo y consulta previa de cirugías (la base ya las resuelve).
+- El sitio ofrece los 4 protocolos del maquetado; la base tiene 30.
+- Verificar las celdas "a verificar" del análisis de competencia (`docs/07-competencia.md`) y armar las diapositivas del pitch.
+- Revisión cruzada (peer review) del maquetado y de los árboles con otro equipo: sigue pendiente.

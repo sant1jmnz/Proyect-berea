@@ -1,6 +1,7 @@
 #include "ventanacliente.h"
 #include "ui_ventanacliente.h"
 
+#include "almacenlocal.h"
 #include "reembolso.h"
 #include "sena.h"
 #include "validaciones.h"
@@ -42,8 +43,9 @@ static QString fechaLarga(const QDate &fecha)
     return QLocale().toString(fecha, "dddd d 'de' MMMM");   /* jueves 8 de octubre */
 }
 
-VentanaCliente::VentanaCliente(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::VentanaCliente)
+VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo)
+    : QMainWindow(parent), ui(new Ui::VentanaCliente),
+      archivoLocal(archivo.isEmpty() ? AlmacenLocal::rutaPorDefecto() : archivo)
 {
     ui->setupUi(this);   /* crea todos los widgets dibujados en el .ui */
 
@@ -111,6 +113,7 @@ VentanaCliente::VentanaCliente(QWidget *parent)
     connect(ui->editBuscarTurno, &QLineEdit::returnPressed, this, &VentanaCliente::buscarMiTurno);
     connect(ui->btnCancelarMiTurno, &QPushButton::clicked, this, &VentanaCliente::cancelarMiTurno);
 
+    recargarLocal();
     cargarProtocolos();
     ui->editNombre->clear();
     ui->editDni->clear();
@@ -138,10 +141,43 @@ void VentanaCliente::irA(int pagina)
  * Carga de un turno en memoria
  * --------------------------------------------------------------------------- */
 
-/* La lista de protocolos sale de los datos de prueba (los mismos de Gestión). */
+/* Vuelve a leer el archivo: Gestión pudo haber cargado o cancelado turnos. */
+void VentanaCliente::recargarLocal()
+{
+    AlmacenLocal::Datos datos;
+    if (!AlmacenLocal::leer(archivoLocal, &datos))
+        return;
+    turnos = datos.turnos;
+    if (turnoMostrado >= turnos.size())
+        turnoMostrado = -1;
+}
+
+/* Deja los turnos en el archivo sin pisar lo que es de Gestión (protocolos, profesionales). */
+void VentanaCliente::guardarLocal()
+{
+    AlmacenLocal::Datos datos;
+    AlmacenLocal::leer(archivoLocal, &datos);
+    datos.turnos = turnos;
+    if (datos.protocolos.isEmpty())
+        datos.protocolos = protocolos;
+    for (const Turno &t : std::as_const(turnos)) {   /* quien saca turno queda como paciente */
+        const bool conocida = std::any_of(datos.pacientes.cbegin(), datos.pacientes.cend(),
+                                          [&](const Paciente &p) { return p.dni == t.dni; });
+        if (!conocida)
+            datos.pacientes.append({ t.paciente, t.dni, t.telefono, QString(), QDate() });
+    }
+    if (!AlmacenLocal::guardar(archivoLocal, datos))
+        QMessageBox::warning(this, "No se pudo guardar",
+                             "El turno quedó cargado, pero no se pudo guardar en el archivo local de este equipo.");
+}
+
+/* La lista de protocolos sale del catálogo guardado (el mismo de Gestión); la primera vez, el inicial. */
 void VentanaCliente::cargarProtocolos()
 {
     protocolos = DatosPrueba::protocolos();
+    AlmacenLocal::Datos guardados;
+    if (AlmacenLocal::leer(archivoLocal, &guardados) && !guardados.protocolos.isEmpty())
+        protocolos = guardados.protocolos;
     ui->listaProtocolos->clear();
     protocolosVisibles.clear();
     for (int i = 0; i < protocolos.size(); ++i) {
@@ -227,6 +263,7 @@ void VentanaCliente::actualizarHorarios()
 {
     const QDate dia = ui->calendario->selectedDate();
     const QDateTime ahora = QDateTime::currentDateTime();
+    recargarLocal();   /* horarios que Gestión ocupó o liberó */
     ui->listaHorarios->clear();
     ui->lblNotaHorario->setText(notaHorarioOriginal);
 
@@ -324,6 +361,7 @@ void VentanaCliente::confirmar()
         irA(PagHorario);
         return;
     }
+    recargarLocal();
     const bool ocupado = std::any_of(turnos.cbegin(), turnos.cend(), [&](const Turno &t) {
         return t.inicio == inicio && t.estado != EstadoTurno::Cancelado;
     });
@@ -342,6 +380,7 @@ void VentanaCliente::confirmar()
     if (nuevo.senaPagada)   /* seña simulada: imita un pago real pero no mueve dinero */
         nuevo.codigoOperacion = nuevoCodigoOperacion();
     turnos.append(nuevo);
+    guardarLocal();
 
     QString mensaje = QString("¡Listo! Tu turno quedó reservado.\n%1 · %2 de %3, %4")
                           .arg(nuevo.protocolo, fechaLarga(inicio.date()), QString::number(inicio.date().year()), inicio.toString("HH:mm"));
@@ -396,6 +435,7 @@ void VentanaCliente::buscarMiTurno()
     }
     const QString buscado = soloDigitos(texto);
     const QDateTime ahora = QDateTime::currentDateTime();
+    recargarLocal();
     QVector<int> encontrados;
     for (int i = 0; i < turnos.size(); ++i)
         if (turnos[i].dni == buscado || soloDigitos(turnos[i].telefono) == buscado)
@@ -459,8 +499,13 @@ void VentanaCliente::mostrarTurno(int indice, int vigentes)
 /* RF-10: más de 24 h de anticipación y seña pagada → se devuelve el 100%; si no, queda retenida. */
 void VentanaCliente::cancelarMiTurno()
 {
-    if (turnoMostrado < 0 || turnoMostrado >= turnos.size())
+    const Turno visto = (turnoMostrado >= 0 && turnoMostrado < turnos.size()) ? turnos[turnoMostrado] : Turno();
+    recargarLocal();   /* puede haber cambiado desde que se mostró */
+    if (turnoMostrado < 0 || turnoMostrado >= turnos.size() || turnos[turnoMostrado].inicio != visto.inicio
+        || turnos[turnoMostrado].dni != visto.dni) {
+        ocultarTurno();
         return;
+    }
     Turno &t = turnos[turnoMostrado];
     if (t.estado != EstadoTurno::Confirmado && t.estado != EstadoTurno::Pendiente) {
         QMessageBox::information(this, "No se puede cancelar", "Solo se cancelan turnos pendientes o confirmados.");
@@ -484,6 +529,7 @@ void VentanaCliente::cancelarMiTurno()
 
     t.estado = EstadoTurno::Cancelado;
     t.reembolsado = devolver;
+    guardarLocal();
     actualizarHorarios();              /* el horario vuelve a estar libre */
     mostrarTurno(turnoMostrado, 0);
     QMessageBox::information(this, "Turno cancelado",

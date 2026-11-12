@@ -37,6 +37,7 @@ public:
     static QVector<int> buscar(const QVector<Paciente> &pacientes, const QString &texto);
 
 signals:
+    void cambiaron();   /* alta o modificación: para guardar los datos locales */
     void cargarTurnoPara(const QString &nombre, const QString &dni, const QString &telefono);
 
 private slots:

@@ -1,6 +1,7 @@
 /* Pruebas de la terminal del Cliente con el diseño de ventanacliente: sacar un turno en memoria,
  * encontrarlo en "Buscar mi turno", cancelarlo, y las fechas que ya pasaron.
  * Se corre con: QT_QPA_PLATFORM=offscreen ./prueba_ventanacliente */
+#include "almacenlocal.h"
 #include "ventanacliente.h"
 
 #include <QApplication>
@@ -11,6 +12,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QStackedWidget>
+#include <QTemporaryDir>
 #include <QtTest>
 
 namespace {
@@ -86,8 +88,52 @@ class PruebaVentanaCliente : public QObject
 {
     Q_OBJECT
 
+    QTemporaryDir carpeta;
+
 private slots:
-    void initTestCase() { QLocale::setDefault(QLocale(QLocale::Spanish, QLocale::Argentina)); }   /* como main.cpp */
+    void initTestCase()
+    {
+        QLocale::setDefault(QLocale(QLocale::Spanish, QLocale::Argentina));   /* como main.cpp */
+        QVERIFY(carpeta.isValid());
+        qputenv("DERMALIA_DATOS_LOCAL", carpeta.filePath("local.json").toUtf8());   /* nunca el archivo real */
+    }
+    void init() { QFile::remove(carpeta.filePath("local.json")); }   /* cada prueba arranca sin datos */
+
+    void losTurnosSeGuardanYSeVenAlReabrir()
+    {
+        const QDate dia = diaHabil(10);
+        {
+            VentanaCliente w;
+            QVERIFY(sacarTurno(w, dia, 0, "Ana Paz", "35111222", "1166667777", true));
+            QCOMPARE(w.turnosCargados().size(), 1);
+        }
+        VentanaCliente otra;   /* "reabrir la terminal" */
+        QCOMPARE(otra.turnosCargados().size(), 1);
+        campo(otra, "editBuscarTurno")->setText("35111222");
+        boton(otra, "btnBuscarTurno")->click();
+        QVERIFY(!otra.findChild<QWidget *>("tarjetaMiTurno")->isHidden());   /* lo encontró */
+        AlmacenLocal::Datos datos;
+        QVERIFY(AlmacenLocal::leer(carpeta.filePath("local.json"), &datos));
+        QCOMPARE(datos.turnos.size(), 1);
+        QCOMPARE(datos.pacientes.size(), 1);   /* quien saca turno queda como paciente para Gestión */
+    }
+
+    void horarioQueOcupoGestionNoSeOfrece()
+    {
+        const QDate dia = diaHabil(10);
+        VentanaCliente w;
+        w.findChild<QCalendarWidget *>("calendario")->setSelectedDate(dia);
+        const int antes = w.findChild<QListWidget *>("listaHorarios")->count();
+        QVERIFY(antes > 0);
+        AlmacenLocal::Datos datos;   /* Gestión carga un turno en el mismo archivo */
+        const QDateTime inicio(dia, QTime(9, 0));
+        datos.turnos.append({ "Eva Luz", "30999888", "1144443333", "Peeling químico", 40000, 12000, inicio,
+                              inicio.addSecs(45 * 60), EstadoTurno::Confirmado, "Gestión", true, QString(), 0 });
+        QVERIFY(AlmacenLocal::guardar(carpeta.filePath("local.json"), datos));
+        w.findChild<QCalendarWidget *>("calendario")->setSelectedDate(dia.addDays(1));   /* fuerza a recalcular */
+        w.findChild<QCalendarWidget *>("calendario")->setSelectedDate(dia);
+        QCOMPARE(w.findChild<QListWidget *>("listaHorarios")->count(), antes - 1);
+    }
 
     void arrancaSinTurnosNiDatosDeEjemplo()
     {

@@ -70,7 +70,7 @@ private slots:
     void ventana_leeLosDatosDeLaBase()
     {
         QTemporaryDir carpeta;
-        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
         QTest::qWait(1500);   // la ventana prueba la conexión apenas se muestra, e ingresa con DERMALIA_USUARIO
         if (!w.usaBase())
             QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
@@ -133,7 +133,7 @@ private slots:
     void ventana_reportesYAuditoria()
     {
         QTemporaryDir carpeta;
-        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
         QTest::qWait(1500);
         if (!w.usaBase())
             QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
@@ -161,7 +161,7 @@ private slots:
     void ventana_cargarPagarBuscarYCancelar()
     {
         QTemporaryDir carpeta;
-        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
         QTest::qWait(1500);   // la ventana prueba la conexión apenas se muestra, e ingresa con DERMALIA_USUARIO
         if (!w.usaBase())
             QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");

@@ -248,8 +248,29 @@ private slots:
     }
 
     // ---------- RF-12 / RF-10: buscar y cancelar mi turno ----------
+    // El widget arranca sin turnos: las pruebas cargan los suyos como lo hace el formulario.
+    static void cargarTurnosDeEjemplo(BuscarTurnoWidget &w) {
+        w.agregarTurnoDesdeFormulario("Luciana Gómez", "38123456", "1155443322", "Láser Diodo Facial",
+                                      QDate::currentDate().addDays(3).toString("dd/MM/yyyy"), "10:00",
+                                      "Dra. Sofía Martínez", 6600.0);
+        w.agregarTurnoDesdeFormulario("Mariana Fernández", "40987654", "1144332211", "Peeling Químico Médico",
+                                      QDate::currentDate().addDays(1).toString("dd/MM/yyyy"), "15:00",
+                                      "Dr. Lucas Benítez", 5400.0);
+    }
+
+    void arranca_sin_turnos_de_ejemplo() {
+        BuscarTurnoWidget w;
+        w.findChild<QLineEdit *>("txtDniTel")->setText("38123456");
+        w.findChild<QPushButton *>("btnBuscar")->click();
+        bool sinResultados = false;
+        for (auto *l : w.findChildren<QLabel *>())
+            if (l->text().contains("No se encontraron turnos"))
+                sinResultados = true;
+        QVERIFY(sinResultados);
+    }
     void rf12_buscar_por_dni_y_telefono() {
         BuscarTurnoWidget w;
+        cargarTurnosDeEjemplo(w);
         auto *txt = w.findChild<QLineEdit *>("txtDniTel");
         auto *btn = w.findChild<QPushButton *>("btnBuscar");
 
@@ -287,6 +308,7 @@ private slots:
     // ---------- RF-11: recordatorio visible en el turno ----------
     void rf11_cada_turno_muestra_su_recordatorio() {
         BuscarTurnoWidget w;
+        cargarTurnosDeEjemplo(w);
         w.findChild<QLineEdit *>("txtDniTel")->setText("38123456");
         w.findChild<QPushButton *>("btnBuscar")->click();
         int recordatorios = 0;
@@ -315,6 +337,7 @@ private slots:
 
     void rf10_cancelar_con_mas_de_24hs_reembolsa() {
         BuscarTurnoWidget w;
+        cargarTurnosDeEjemplo(w);
         QSignalSpy spy(&w, &BuscarTurnoWidget::turnoCancelado);
         w.findChild<QLineEdit *>("txtDniTel")->setText("38123456"); // turno en 3 días
         w.findChild<QPushButton *>("btnBuscar")->click();

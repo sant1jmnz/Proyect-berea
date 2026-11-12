@@ -17,6 +17,7 @@
 #include <QDateEdit>
 #include <QTimeEdit>
 
+#include "almacenlocal.h"
 #include "avisoconexion.h"
 #include "basedatos.h"
 #include "conexionapp.h"
@@ -369,7 +370,7 @@ private slots:
     void ventana_tieneLasPantallasNuevasYLaFranja()
     {
         QTemporaryDir carpeta;
-        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
         auto *menu = w.findChild<QListWidget *>("menu");
         auto *paginas = w.findChild<QStackedWidget *>("paginas");
         QVERIFY(menu && paginas);
@@ -396,7 +397,7 @@ private slots:
     void ventana_cancelarConMasDe24HorasDevuelveLaSena()
     {
         QTemporaryDir carpeta;
-        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
         auto *tabla = w.findChild<QTableWidget *>("tablaTurnos");
         auto *buscar = w.findChild<QLineEdit *>("editBuscar");
         auto *cancelar = w.findChild<QPushButton *>("btnCancelarTurno");
@@ -438,7 +439,7 @@ private slots:
     void ventana_cancelarSinSenaNoDevuelveNada()
     {
         QTemporaryDir carpeta;
-        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
         auto *tabla = w.findChild<QTableWidget *>("tablaTurnos");
         auto *buscar = w.findChild<QLineEdit *>("editBuscar");
         buscar->setText("33222111");                           // Carla Gómez: seña sin pagar
@@ -457,7 +458,7 @@ private slots:
     void ventana_cancelarElegirNoDejaTodoIgual()
     {
         QTemporaryDir carpeta;
-        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
         auto *tabla = w.findChild<QTableWidget *>("tablaTurnos");
         auto *buscar = w.findChild<QLineEdit *>("editBuscar");
         buscar->setText("33222111");
@@ -474,7 +475,7 @@ private slots:
     void ventana_altaYBajaDeProtocolo()
     {
         QTemporaryDir carpeta;
-        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
         auto *pagina = w.findChild<QWidget *>("pagProtocolos");
         auto *lista = w.findChild<QListWidget *>("listaProtocolos");
         auto *tabla = pagina->findChild<QTableWidget *>("tablaProtocolos");
@@ -510,7 +511,7 @@ private slots:
     void ventana_franjasNoSePisan()
     {
         QTemporaryDir carpeta;
-        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
         auto *pagina = w.findChild<QWidget *>("pagProfesionales");
         auto *tabla = pagina->findChild<QTableWidget *>("tablaFranjas");
         const int antes = tabla->rowCount();                    // 5 franjas de 9 a 13
@@ -543,7 +544,7 @@ private slots:
         QTemporaryDir carpeta;
         const QString archivo = carpeta.filePath("p.json");
         {
-            VentanaGestion w(nullptr, archivo);
+            VentanaGestion w(nullptr, archivo, true);
             w.conexionApp()->probar();                          // sin configurar: no hay base
             auto *tablaAvisos = w.findChild<QTableWidget *>("tablaAvisos");
             const int avisosAntes = tablaAvisos->rowCount();
@@ -584,6 +585,75 @@ private slots:
         QCOMPARE(t.telefono, QString("1166667777"));
         QVERIFY(t.senaPagada);
         QCOMPARE(t.origen, QString("Gestión"));
+    }
+
+    // ---- Datos locales: arranca vacía, guarda y toma lo que carga la Terminal ----
+    void local_arrancaVaciaYGuardaLosTurnosYPacientes()
+    {
+        QTemporaryDir carpeta;
+        qputenv("DERMALIA_DATOS_LOCAL", carpeta.filePath("local.json").toUtf8());
+        const QString contingencia = carpeta.filePath("p.json");
+        {
+            VentanaGestion w(nullptr, contingencia);
+            QCOMPARE(w.listaTurnos().size(), 0);                       // nada de ejemplo
+            QCOMPARE(w.findChild<QTableWidget *>("tablaTurnos")->rowCount(), 0);
+
+            w.findChild<QLineEdit *>("editPaciente")->setText("Ana Paz");
+            w.findChild<QLineEdit *>("editDni")->setText("35111222");
+            w.findChild<QLineEdit *>("editTelefono")->setText("11 6666-7777");
+            auto *protocolos = w.findChild<QListWidget *>("listaProtocolos");
+            protocolos->setCurrentRow(0);
+            protocolos->item(0)->setSelected(true);
+            w.findChild<QPushButton *>("btnContinuar1")->click();
+            QDate dia = QDate::currentDate().addDays(20);
+            if (dia.dayOfWeek() == Qt::Sunday)
+                dia = dia.addDays(1);
+            w.findChild<QCalendarWidget *>("calendario")->setSelectedDate(dia);
+            auto *horarios = w.findChild<QListWidget *>("listaHorarios");
+            horarios->setCurrentRow(0);
+            horarios->item(0)->setSelected(true);
+            w.findChild<QPushButton *>("btnContinuar2")->click();
+            cerrarDialogo(QMessageBox::Ok);
+            w.findChild<QPushButton *>("btnConfirmar")->click();
+
+            QCOMPARE(w.listaTurnos().size(), 1);
+            QCOMPARE(w.findChild<QTableWidget *>("tablaTurnos")->rowCount(), 1);
+        }
+        // "reabrir la aplicación": el turno y la paciente siguen ahí
+        qputenv("DERMALIA_DATOS_LOCAL", carpeta.filePath("local.json").toUtf8());
+        VentanaGestion w(nullptr, carpeta.filePath("p2.json"));
+        QCOMPARE(w.listaTurnos().size(), 1);
+        QCOMPARE(w.listaTurnos().first().paciente, QString("Ana Paz"));
+        QCOMPARE(w.findChild<QTableWidget *>("tablaTurnos")->rowCount(), 1);
+        AlmacenLocal::Datos datos;
+        QVERIFY(AlmacenLocal::leer(carpeta.filePath("local.json"), &datos));
+        QCOMPARE(datos.pacientes.size(), 1);
+        QCOMPARE(datos.pacientes.first().dni, QString("35111222"));
+        qunsetenv("DERMALIA_DATOS_LOCAL");
+    }
+
+    void local_tomaElTurnoQueCargoLaTerminal()
+    {
+        QTemporaryDir carpeta;
+        const QString local = carpeta.filePath("local.json");
+        qputenv("DERMALIA_DATOS_LOCAL", local.toUtf8());
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"));
+        QCOMPARE(w.listaTurnos().size(), 0);
+
+        // la Terminal escribe un turno en el mismo archivo
+        AlmacenLocal::Datos datos;
+        const QDateTime inicio(QDate::currentDate().addDays(5), QTime(10, 30));
+        datos.turnos.append({ "Eva Luz", "30999888", "1144443333", "Peeling químico", 40000, 12000, inicio,
+                              inicio.addSecs(45 * 60), EstadoTurno::Confirmado, "Terminal", true, "SIM-123456", 0 });
+        QTest::qWait(1100);   // el archivo tiene que verse con otra fecha de modificación
+        QVERIFY(AlmacenLocal::guardar(local, datos));
+        QVERIFY(QMetaObject::invokeMethod(&w, "sincronizarLocal"));
+
+        QCOMPARE(w.listaTurnos().size(), 1);
+        auto *tabla = w.findChild<QTableWidget *>("tablaTurnos");
+        QCOMPARE(tabla->rowCount(), 1);
+        QCOMPARE(tabla->item(0, 0)->text(), QString("Eva Luz"));
+        qunsetenv("DERMALIA_DATOS_LOCAL");
     }
 };
 

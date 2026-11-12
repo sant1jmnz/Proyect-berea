@@ -276,6 +276,7 @@ void PaginaProfesionales::agregarProfesional()
         nuevo.email = email.trimmed();
     }
     datos->append(nuevo);
+    emit cambiaron();
     editNombre->clear();
     editMatricula->clear();
     recargarProfesionales(datos->size() - 1);
@@ -296,6 +297,7 @@ void PaginaProfesionales::cambiarEstadoProfesional()
         }
     }
     p->activo = !p->activo;
+    emit cambiaron();
     recargarProfesionales(lista->currentRow());
 }
 
@@ -324,6 +326,7 @@ void PaginaProfesionales::marcarProtocolo(QListWidgetItem *item)
     } else {
         p->protocolos.removeAll(item->text());
     }
+    emit cambiaron();
 }
 
 void PaginaProfesionales::agregarFranja()
@@ -353,6 +356,7 @@ void PaginaProfesionales::agregarFranja()
         guardada.id = r.id;
     }
     p->franjas.append(guardada);
+    emit cambiaron();
     recargarDetalle();
 }
 
@@ -374,6 +378,7 @@ void PaginaProfesionales::quitarFranja()
                 }
             }
             p->franjas.removeAt(i);
+            emit cambiaron();
             break;
         }
     }

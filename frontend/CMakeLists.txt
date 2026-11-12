@@ -89,8 +89,10 @@ add_executable(dermalia_cliente
     cliente/ventanacliente.cpp
     cliente/ventanacliente.h
     cliente/ventanacliente.ui
+    gestion/datosprueba.cpp   # protocolos y horarios de ejemplo (los mismos de Gestión)
+    gestion/datosprueba.h
     ${COMUN})
-target_include_directories(dermalia_cliente PRIVATE comun)
+target_include_directories(dermalia_cliente PRIVATE comun gestion)
 target_link_libraries(dermalia_cliente PRIVATE Qt6::Widgets)
 con_mysql(dermalia_cliente)
 
@@ -272,4 +274,19 @@ if(Qt6Test_FOUND)
     con_mysql(prueba_cliente_base)
     add_test(NAME cliente_base COMMAND prueba_cliente_base)
     set_tests_properties(cliente_base PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+    # Terminal del Cliente con el diseño de ventanacliente: sacar, buscar y cancelar un turno en memoria.
+    add_executable(prueba_ventanacliente
+        pruebas/prueba_ventanacliente.cpp
+        cliente/ventanacliente.cpp
+        cliente/ventanacliente.h
+        cliente/ventanacliente.ui
+        gestion/datosprueba.cpp
+        gestion/datosprueba.h
+        ${COMUN})
+    target_include_directories(prueba_ventanacliente PRIVATE comun gestion cliente)
+    target_link_libraries(prueba_ventanacliente PRIVATE Qt6::Widgets Qt6::Test)
+    con_mysql(prueba_ventanacliente)
+    add_test(NAME ventanacliente COMMAND prueba_ventanacliente)
+    set_tests_properties(ventanacliente PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()

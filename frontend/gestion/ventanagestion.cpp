@@ -15,6 +15,7 @@
 #include "sena.h"
 #include "validaciones.h"
 
+#include <QFileInfo>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QInputDialog>
@@ -59,7 +60,7 @@ static QString fechaLarga(const QDate &fecha)
     return QLocale().toString(fecha, "dddd d 'de' MMMM");   /* jueves 8 de octubre */
 }
 
-VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingencia)
+VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingencia, bool datosDeEjemplo)
     : QMainWindow(parent), ui(new Ui::VentanaGestion)
 {
     ui->setupUi(this);   /* crea todos los widgets dibujados en el .ui */
@@ -82,12 +83,28 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
         tarjeta->setGraphicsEffect(sombra);
     }
 
-    /* Datos de prueba: reemplazan los textos de ejemplo escritos en el .ui. */
+    /* Datos locales: sin base, todo se guarda en un archivo de esta PC (AlmacenLocal)
+     * y arranca vacío, salvo el catálogo de protocolos. Las pruebas piden los datos
+     * de ejemplo de DatosPrueba. */
     const QDateTime ahora = QDateTime::currentDateTime();
     protocolos = DatosPrueba::protocolos();
-    turnos = DatosPrueba::turnos(ahora.date());
-    profesionales = DatosPrueba::profesionales(ahora.date());
-    pacientes = DatosPrueba::pacientes();
+    persistir = !datosDeEjemplo;
+    if (datosDeEjemplo) {
+        turnos = DatosPrueba::turnos(ahora.date());
+        profesionales = DatosPrueba::profesionales(ahora.date());
+        pacientes = DatosPrueba::pacientes();
+    } else {
+        archivoLocal = AlmacenLocal::rutaPorDefecto();
+        AlmacenLocal::Datos guardados;
+        if (AlmacenLocal::leer(archivoLocal, &guardados)) {
+            if (!guardados.protocolos.isEmpty())
+                protocolos = guardados.protocolos;
+            turnos = guardados.turnos;
+            profesionales = guardados.profesionales;
+            pacientes = guardados.pacientes;
+        }
+        ultimaVersionLocal = QFileInfo(archivoLocal).lastModified();
+    }
     for (const Turno &t : std::as_const(turnos))   /* los turnos futuros ya tienen su aviso */
         if (t.estado == EstadoTurno::Confirmado && t.inicio > ahora)
             avisos.programar(t.paciente, t.dni, t.telefono, t.protocolo, t.inicio, ahora);
@@ -162,11 +179,59 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
 
     actualizarHorarios();
     buscarTurnos();
+
+    /* Si la Terminal (otra aplicación) carga o cancela un turno, aparece acá sin reiniciar. */
+    if (persistir) {
+        relojLocal = new QTimer(this);
+        relojLocal->setInterval(1000);
+        connect(relojLocal, &QTimer::timeout, this, &VentanaGestion::sincronizarLocal);
+        relojLocal->start();
+    }
 }
 
 VentanaGestion::~VentanaGestion()
 {
+    guardarLocal();
     delete ui;
+}
+
+/* Sin base: guarda protocolos, turnos, profesionales y pacientes en el archivo local. */
+void VentanaGestion::guardarLocal()
+{
+    if (!persistir || enModoBase)
+        return;
+    AlmacenLocal::Datos datos;
+    datos.protocolos = protocolos;
+    datos.turnos = turnos;
+    datos.profesionales = profesionales;
+    datos.pacientes = pacientes;
+    if (AlmacenLocal::guardar(archivoLocal, datos))
+        ultimaVersionLocal = QFileInfo(archivoLocal).lastModified();
+}
+
+/* Si otra aplicación cambió el archivo, se vuelven a leer los turnos y las pacientes. */
+void VentanaGestion::sincronizarLocal()
+{
+    if (!persistir || enModoBase)
+        return;
+    const QDateTime version = QFileInfo(archivoLocal).lastModified();
+    if (!version.isValid() || version == ultimaVersionLocal)
+        return;
+    AlmacenLocal::Datos guardados;
+    if (!AlmacenLocal::leer(archivoLocal, &guardados))
+        return;
+    ultimaVersionLocal = version;
+    turnos = guardados.turnos;
+    pacientes = guardados.pacientes;
+    const QDateTime ahora = QDateTime::currentDateTime();
+    avisos = RegistroAvisos();
+    for (const Turno &t : std::as_const(turnos))
+        if (t.estado == EstadoTurno::Confirmado && t.inicio > ahora)
+            avisos.programar(t.paciente, t.dni, t.telefono, t.protocolo, t.inicio, ahora);
+    paginaAvisos->recargar();
+    paginaPacientes->recargar();
+    actualizarHorarios();
+    buscarTurnos();
 }
 
 /* Agrega al menú y al QStackedWidget las pantallas que se arman por código:
@@ -193,6 +258,8 @@ void VentanaGestion::armarPantallasNuevas()
 
     connect(paginaProtocolos, &PaginaProtocolos::cambiaron, this, &VentanaGestion::protocolosCambiaron);
     connect(paginaPacientes, &PaginaPacientes::cargarTurnoPara, this, &VentanaGestion::cargarTurnoPara);
+    connect(paginaPacientes, &PaginaPacientes::cambiaron, this, &VentanaGestion::guardarLocal);
+    connect(paginaProfesionales, &PaginaProfesionales::cambiaron, this, &VentanaGestion::guardarLocal);
 
     /* La franja va arriba del contenido, a lo ancho de las pantallas. */
     franja = new AvisoConexion;
@@ -253,6 +320,7 @@ void VentanaGestion::protocolosCambiaron()
 {
     cargarProtocolos();
     paginaProfesionales->recargarProtocolos();
+    guardarLocal();
 }
 
 void VentanaGestion::cargarTurnoPara(const QString &nombre, const QString &dni, const QString &telefono)
@@ -412,6 +480,17 @@ void VentanaGestion::confirmarTurno()
         confirmarTurnoEnBase(p, inicio);
         return;
     }
+    sincronizarLocal();   /* por si la Terminal tomó ese horario hace un instante */
+    const bool tomado = std::any_of(turnos.cbegin(), turnos.cend(), [&](const Turno &o) {
+        return o.inicio == inicio && o.estado != EstadoTurno::Cancelado;
+    });
+    if (tomado) {
+        QMessageBox::warning(this, "Horario ocupado",
+                             "Ese horario acaba de ocuparse. Elegí otro, por favor.");
+        actualizarHorarios();
+        irA(PagHorario);
+        return;
+    }
 
     const Turno t = { ui->editPaciente->text().simplified(), ui->editDni->text().trimmed(),
                       soloDigitos(ui->editTelefono->text()), p->nombre, p->precio,
@@ -423,6 +502,13 @@ void VentanaGestion::confirmarTurno()
     if (nuevo.senaPagada)
         nuevo.codigoOperacion = nuevoCodigoOperacion();
     turnos.append(nuevo);
+    const bool conocida = std::any_of(pacientes.cbegin(), pacientes.cend(),
+                                      [&](const Paciente &x) { return x.dni == nuevo.dni; });
+    if (!conocida) {   /* la paciente nueva queda en la pantalla Pacientes */
+        pacientes.append({ nuevo.paciente, nuevo.dni, nuevo.telefono, QString(), QDate() });
+        paginaPacientes->recargar();
+    }
+    guardarLocal();
     /* Recordatorio 24 h antes (RF-11): queda registrado en la pantalla Avisos. */
     const QDateTime ahora = QDateTime::currentDateTime();
     avisos.programar(nuevo.paciente, nuevo.dni, nuevo.telefono, nuevo.protocolo, nuevo.inicio, ahora);
@@ -587,6 +673,7 @@ void VentanaGestion::cancelarTurno()
 
     t.estado = EstadoTurno::Cancelado;
     t.reembolsado = devolver;
+    guardarLocal();
     avisos.anularDeTurno(t.dni, t.inicio);   /* el recordatorio ya no tiene sentido */
     paginaAvisos->recargar();
     actualizarHorarios();                    /* el horario vuelve a estar libre */

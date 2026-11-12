@@ -60,7 +60,6 @@ private:
     Repositorio *m_repo = nullptr;
     void cargarDeBase(const QString &criterio);
 
-    void inicializarTurnos();
     void mostrarResultados(const QString &criterio);
 };
 

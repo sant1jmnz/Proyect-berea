@@ -61,6 +61,8 @@ add_executable(dermalia_gestion
     gestion/main.cpp
     gestion/datosprueba.cpp
     gestion/datosprueba.h
+    gestion/almacenlocal.cpp
+    gestion/almacenlocal.h
     gestion/datosbase.cpp
     gestion/datosbase.h
     gestion/dialogologin.cpp
@@ -91,6 +93,8 @@ add_executable(dermalia_cliente
     cliente/ventanacliente.ui
     gestion/datosprueba.cpp   # protocolos y horarios de ejemplo (los mismos de Gestión)
     gestion/datosprueba.h
+    gestion/almacenlocal.cpp
+    gestion/almacenlocal.h
     ${COMUN})
 target_include_directories(dermalia_cliente PRIVATE comun gestion)
 target_link_libraries(dermalia_cliente PRIVATE Qt6::Widgets)
@@ -175,6 +179,8 @@ if(Qt6Test_FOUND)
         pruebas/prueba_gestion.cpp
         gestion/datosprueba.cpp
         gestion/datosprueba.h
+        gestion/almacenlocal.cpp
+        gestion/almacenlocal.h
         gestion/datosbase.cpp
         gestion/datosbase.h
         gestion/dialogologin.cpp
@@ -217,6 +223,8 @@ if(Qt6Test_FOUND)
         pruebas/prueba_gestion_base.cpp
         gestion/datosprueba.cpp
         gestion/datosprueba.h
+        gestion/almacenlocal.cpp
+        gestion/almacenlocal.h
         gestion/datosbase.cpp
         gestion/datosbase.h
         gestion/dialogologin.cpp
@@ -283,6 +291,8 @@ if(Qt6Test_FOUND)
         cliente/ventanacliente.ui
         gestion/datosprueba.cpp
         gestion/datosprueba.h
+        gestion/almacenlocal.cpp
+        gestion/almacenlocal.h
         ${COMUN})
     target_include_directories(prueba_ventanacliente PRIVATE comun gestion cliente)
     target_link_libraries(prueba_ventanacliente PRIVATE Qt6::Widgets Qt6::Test)

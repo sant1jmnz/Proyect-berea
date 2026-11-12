@@ -256,6 +256,7 @@ void PaginaPacientes::guardar()
     } else {
         (*datos)[editada] = p;
     }
+    emit cambiaron();
     filtrar();
     lblModo->setText("Modificar paciente");
     btnTurno->setEnabled(true);

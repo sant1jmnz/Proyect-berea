@@ -20,32 +20,16 @@ BuscarTurnoWidget::BuscarTurnoWidget(QWidget *parent) :
     ui->txtDniTel->setMaxLength(14);
     ui->txtDniTel->setValidator(new QRegularExpressionValidator(QRegularExpression("^\\+?[0-9]{0,13}$"), this));
 
-    inicializarTurnos();
+    /* Arranca sin turnos: aparecen los que se cargan desde el formulario (o los de la base). */
 }
 
 BuscarTurnoWidget::~BuscarTurnoWidget() {
     delete ui;
 }
 
-void BuscarTurnoWidget::inicializarTurnos() {
-    QDate fechaFutura = QDate::currentDate().addDays(3);
-    m_turnos.append({
-        "Luciana Gómez", "38123456", "1155443322",
-        "Láser Diodo Facial", fechaFutura.toString("dd/MM/yyyy"), "10:00",
-        "Dra. Sofía Martínez", 6600.0, "Pagada", "Confirmado"
-    });
-
-    QDate fechaManiana = QDate::currentDate().addDays(1);
-    m_turnos.append({
-        "Mariana Fernández", "40987654", "1144332211",
-        "Peeling Químico Médico", fechaManiana.toString("dd/MM/yyyy"), "15:00",
-        "Dr. Lucas Benítez", 5400.0, "Pagada", "Confirmado"
-    });
-}
-
 void BuscarTurnoWidget::usarBase(Repositorio *repositorio) {
     m_repo = repositorio;
-    m_turnos.clear();   // los turnos de ejemplo se reemplazan por los de la base
+    m_turnos.clear();   // los turnos cargados en memoria se reemplazan por los de la base
 }
 
 // Con la base: trae los turnos del DNI o teléfono ingresado (sp_buscar_turnos).

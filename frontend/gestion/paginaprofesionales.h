@@ -35,6 +35,9 @@ public:
     /* Vuelve a armar la lista de profesionales y elige uno. */
     void recargarProfesionales(int elegir = -1);
 
+signals:
+    void cambiaron();   /* alta, baja, protocolos o franjas: para guardar los datos locales */
+
 public slots:
     /* Los protocolos cambiaron en la otra pantalla: se vuelve a armar la lista. */
     void recargarProtocolos();

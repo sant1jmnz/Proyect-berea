@@ -17,7 +17,9 @@ class VentanaCliente : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit VentanaCliente(QWidget *parent = nullptr);
+    /* Los turnos se guardan en el archivo local de AlmacenLocal (el mismo que usa
+     * Gestión); `archivoLocal` vacío usa el de siempre. */
+    explicit VentanaCliente(QWidget *parent = nullptr, const QString &archivoLocal = QString());
     ~VentanaCliente();
 
     /* Los turnos cargados (para las pruebas). */
@@ -41,11 +43,14 @@ private:
     void ocultarTurno();
     void cancelarMiTurno();
     QString nuevoCodigoOperacion() const;
+    void recargarLocal();   /* toma del archivo los turnos que cargó o canceló Gestión */
+    void guardarLocal();    /* deja los turnos (y la paciente nueva) en el archivo */
 
     Ui::VentanaCliente *ui;
     QVector<Protocolo> protocolos;
     QVector<int> protocolosVisibles;   /* fila de la lista → índice en `protocolos` */
     QVector<Turno> turnos;
+    QString archivoLocal;
     int turnoMostrado = -1;            /* índice en `turnos` del que se ve en "Buscar mi turno" */
     bool ajustandoFecha = false;       /* evita que setSelectedDate vuelva a disparar el aviso */
     QString notaHorarioOriginal;

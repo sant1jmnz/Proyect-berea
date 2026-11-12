@@ -59,6 +59,7 @@ QString BaseDatos::literal(const QVariant &v)
     t.replace('\0', "\\0");
     t.replace('\n', "\\n");
     t.replace('\r', "\\r");
+    t.replace('\x1a', "\\Z");   /* Ctrl-Z: mysql_real_escape_string también lo escapa */
     return "'" + t + "'";
 }
 

@@ -95,6 +95,7 @@ private:
     void inicializarHorarios();
     void actualizarResumenPaso3();
     void actualizarDisponibilidad();
+    void actualizarFechaMinima();
     QString claveHorario(const QString &hora) const;
 };
 

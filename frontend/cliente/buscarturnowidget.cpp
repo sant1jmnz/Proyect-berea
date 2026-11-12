@@ -120,14 +120,15 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
     QList<int> encontrados;
     for (int indice = 0; indice < m_turnos.size(); ++indice) {
         const auto &t = m_turnos.at(indice);
-        const QString buscado = Validaciones::normalizar(criterio);
-        if (t.dni == buscado || t.telefono == buscado) {
+        QString buscado = Validaciones::normalizar(criterio);
+        buscado.remove('+');   // el teléfono se guarda solo con dígitos; "+54..." tiene que encontrar igual el turno
+        if (t.dni == buscado || t.telefono == buscado || Validaciones::normalizar(t.telefono).remove('+') == buscado) {
             encontrados.append(indice);
         }
     }
 
     if (encontrados.isEmpty()) {
-        QLabel *lblNo = new QLabel(QString("No se encontraron turnos agendados para '%1'.").arg(criterio), this);
+        QLabel *lblNo = new QLabel(QString("No se encontraron turnos agendados para '%1'.").arg(criterio.toHtmlEscaped()), this);
         lblNo->setAlignment(Qt::AlignCenter);
         lblNo->setStyleSheet("color: #777; font-size: 14px; margin: 30px;");
         ui->layoutTurnos->addWidget(lblNo);
@@ -141,7 +142,7 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
 
             // Cabecera: Protocolo y badge de estado
             QHBoxLayout *hlHeader = new QHBoxLayout();
-            QLabel *lblProto = new QLabel(QString("<b style='font-size:16px; color:#8e2a59;'>%1</b>").arg(t.protocolo), card);
+            QLabel *lblProto = new QLabel(QString("<b style='font-size:16px; color:#8e2a59;'>%1</b>").arg(t.protocolo.toHtmlEscaped()), card);
 
             QLabel *lblEstadoBadge = new QLabel(QString(" %1 ").arg(t.estado), card);
             if (t.estado == "Confirmado") {
@@ -160,11 +161,11 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
                                                      "📅 <b>Fecha y Hora:</b> <span style='font-size:14px; color:#333;'><b>%4 a las %5 hs</b></span><br/>"
                                                      "🩺 <b>Profesional:</b> %6<br/>"
                                                      "💳 <b>Seña abonada:</b> $%7 (Estado: <b>%8</b>)")
-                                             .arg(t.paciente, t.dni, t.telefono)
+                                             .arg(t.paciente.toHtmlEscaped(), t.dni.toHtmlEscaped(), t.telefono.toHtmlEscaped())
                                              .arg(t.fecha, t.hora)
-                                             .arg(t.profesional)
+                                             .arg(t.profesional.toHtmlEscaped())
                                              .arg(QString::number(t.seniaMonto, 'f', 0))
-                                             .arg(t.seniaEstado), card);
+                                             .arg(t.seniaEstado.toHtmlEscaped()), card);
             lblDetalles->setTextFormat(Qt::RichText);
             lblDetalles->setStyleSheet("font-size: 13px; line-height: 1.4;");
             vl->addWidget(lblDetalles);
@@ -176,7 +177,7 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
             QLabel *lblRec = new QLabel(QString("🔔 <b>Recordatorio activo en sistema (RF-11):</b><br/>"
                                                 "Te esperamos el día %1 a las %2 hs en Av. Rivadavia 6500, Flores, CABA. "
                                                 "Protocolo: %3 con %4.")
-                                        .arg(t.fecha, t.hora, t.protocolo, t.profesional), cardRec);
+                                        .arg(t.fecha, t.hora, t.protocolo.toHtmlEscaped(), t.profesional.toHtmlEscaped()), cardRec);
             lblRec->setWordWrap(true);
             lblRec->setStyleSheet("color: #2e5b1e; font-size: 12px;");
             vlRec->addWidget(lblRec);

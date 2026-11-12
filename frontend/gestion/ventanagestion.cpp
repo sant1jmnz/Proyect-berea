@@ -103,6 +103,8 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
         new QRegularExpressionValidator(QRegularExpression("\\+?[\\d \\-()]{0,20}"), this));
     ui->editTelefono->setPlaceholderText("11 5555-0102");
     ui->editPaciente->setPlaceholderText("Nombre y apellido");
+    ui->editPaciente->setMaxLength(60);
+    ui->editPaciente->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));   /* sin números ni símbolos */
     ui->editPaciente->clear();
     ui->editDni->clear();
     ui->editTelefono->clear();
@@ -292,7 +294,7 @@ void VentanaGestion::marcarError(QLineEdit *campo, bool hayError)
 void VentanaGestion::continuarPaso1()
 {
     QString errorNombre, errorDni, errorTelefono;
-    Validaciones::nombreValido(ui->editPaciente->text(), &errorNombre);
+    Validaciones::nombreApellidoValido(ui->editPaciente->text(), &errorNombre);
     Validaciones::dniValido(ui->editDni->text(), &errorDni);
     Validaciones::telefonoValido(ui->editTelefono->text(), &errorTelefono);
 
@@ -711,27 +713,44 @@ bool VentanaGestion::buscarOCrearPaciente(int *idPaciente)
 {
     const QString dni = ui->editDni->text().trimmed();
     const Resultado r = repositorio->buscarPaciente(dni);
-    if (r.ok && !r.filas.isEmpty()) {
-        *idPaciente = r.filas.first().value("id_paciente").toInt();
-        return true;
+    if (!r.ok) {   /* si la base falló no se puede asumir que la paciente no existe (se duplicaría el alta) */
+        QMessageBox::warning(this, "No se pudo buscar la paciente", r.error);
+        return false;
+    }
+    for (const QVariantMap &fila : r.filas) {   /* el SP también busca por nombre y teléfono: se exige el mismo DNI */
+        if (fila.value("dni").toString() == dni) {
+            *idPaciente = fila.value("id_paciente").toInt();
+            return true;
+        }
     }
 
     const QStringList partes = ui->editPaciente->text().simplified().split(' ');
     const QString nombre = partes.mid(0, qMax(1, partes.size() - 1)).join(' ');
+    /* Se vuelve a preguntar hasta que el dato sea válido o se cancele. */
     bool ok = false;
-    const QString apellido = QInputDialog::getText(this, "Paciente nueva",
-        QString("%1 no está en la base. Apellido:").arg(nombre), QLineEdit::Normal,
-        partes.size() > 1 ? partes.last() : QString(), &ok);
-    if (!ok)
-        return false;
-    const QString textoNacimiento = QInputDialog::getText(this, "Paciente nueva",
-        "Fecha de nacimiento (dd/mm/aaaa):", QLineEdit::Normal, QString(), &ok);
-    if (!ok)
-        return false;
-    const QDate nacimiento = QDate::fromString(textoNacimiento.trimmed(), "dd/MM/yyyy");
-    if (!nacimiento.isValid()) {
-        QMessageBox::warning(this, "Fecha inválida", "Escribí la fecha así: 25/07/1990.");
-        return false;
+    QString apellido = partes.size() > 1 ? partes.last() : QString();
+    for (;;) {
+        apellido = QInputDialog::getText(this, "Paciente nueva",
+            QString("%1 no está en la base. Apellido:").arg(nombre), QLineEdit::Normal, apellido, &ok);
+        if (!ok)
+            return false;
+        QString errorApellido;
+        if (Validaciones::apellidoValido(apellido, &errorApellido))
+            break;
+        QMessageBox::warning(this, "Apellido incorrecto", errorApellido);
+    }
+    QDate nacimiento;
+    QString textoNacimiento;
+    for (;;) {
+        textoNacimiento = QInputDialog::getText(this, "Paciente nueva",
+            "Fecha de nacimiento (dd/mm/aaaa):", QLineEdit::Normal, textoNacimiento, &ok);
+        if (!ok)
+            return false;
+        QString errorFecha;
+        nacimiento = Validaciones::fechaDesdeTexto(textoNacimiento, &errorFecha);
+        if (nacimiento.isValid() && Validaciones::fechaNacimientoValida(nacimiento, QDate::currentDate(), &errorFecha))
+            break;
+        QMessageBox::warning(this, "Fecha inválida", errorFecha);
     }
     const Respuesta alta = repositorio->altaPaciente(dni, nombre, apellido.simplified(), nacimiento, QString(),
                                                      soloDigitos(ui->editTelefono->text()), "gestion", idUsuario);
@@ -765,10 +784,15 @@ void VentanaGestion::confirmarTurnoEnBase(const Protocolo *p, const QDateTime &i
         const QString medio = QInputDialog::getItem(this, "Medio de pago", "¿Cómo pagó la seña?",
             { "efectivo", "transferencia", "tarjeta simulada", "tarjeta de regalo" }, 0, false, &ok);
         QString codigoTarjeta;
-        if (ok && medio == "tarjeta de regalo")
-            codigoTarjeta = QInputDialog::getText(this, "Tarjeta de regalo", "Código de la tarjeta:", QLineEdit::Normal, QString(), &ok);
+        while (ok && medio == "tarjeta de regalo") {
+            codigoTarjeta = QInputDialog::getText(this, "Tarjeta de regalo", "Código de la tarjeta:", QLineEdit::Normal, codigoTarjeta, &ok);
+            QString errorCodigo;
+            if (!ok || Validaciones::codigoTarjetaValido(codigoTarjeta, &errorCodigo))
+                break;
+            QMessageBox::warning(this, "Código incorrecto", errorCodigo);
+        }
         if (ok) {
-            const Respuesta sena = repositorio->registrarSena(turno.id, medio, codigoTarjeta, "gestion", idUsuario);
+            const Respuesta sena = repositorio->registrarSena(turno.id, medio, codigoTarjeta.trimmed(), "gestion", idUsuario);
             if (sena.ok)
                 mensaje += QString("\nPago de la seña simulado y aprobado (código %1).").arg(sena.dato);
             else

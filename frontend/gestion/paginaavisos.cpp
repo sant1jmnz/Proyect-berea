@@ -1,5 +1,7 @@
 #include "paginaavisos.h"
 
+#include "validaciones.h"
+
 #include "repositorio.h"
 
 #include <QApplication>
@@ -120,10 +122,16 @@ void PaginaAvisos::marcarFallido()
     if (fila < 0 || fila >= avisos->todos().size())
         return;
     bool ok = false;
-    const QString motivo = QInputDialog::getText(this, "Aviso fallido", "¿Qué pasó?", QLineEdit::Normal,
-                                                 "La paciente no tiene WhatsApp", &ok);
-    if (!ok)
-        return;
+    QString motivo = "La paciente no tiene WhatsApp";
+    for (;;) {   /* el motivo es obligatorio: se vuelve a pedir hasta que sea válido o se cancele */
+        motivo = QInputDialog::getText(this, "Aviso fallido", "¿Qué pasó?", QLineEdit::Normal, motivo, &ok);
+        if (!ok)
+            return;
+        QString error;
+        if (Validaciones::textoObligatorioValido(motivo, 200, "el motivo", &error))
+            break;
+        QMessageBox::warning(this, "Dato incorrecto", error);
+    }
     if (repo && avisos->todos()[fila].id > 0)
         repo->marcarNotificacion(avisos->todos()[fila].id, "fallida", motivo.simplified());
     avisos->marcarFallido(fila, motivo.simplified());

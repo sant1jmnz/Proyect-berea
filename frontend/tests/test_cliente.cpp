@@ -53,6 +53,35 @@ class TestCliente : public QObject {
     Q_OBJECT
 
 private slots:
+    // ---------- Campos que no dejan escribir datos inválidos ----------
+    void nombre_noDejaEscribirNumerosNiSimbolos() {
+        PasosCargaTurnoWidget w;
+        auto *txt = w.findChild<QLineEdit *>("txtNombre");
+        txt->clear();
+        QTest::keyClicks(txt, "Ana3 Pa@z_1");
+        QCOMPARE(txt->text(), QString("Ana Paz"));
+    }
+
+    void nombre_unaSolaPalabraNoAvanza() {
+        PasosCargaTurnoWidget w;
+        completarPaso1(w, "Ana", "36123456", "1155550102");
+        cerrarDialogo(QMessageBox::Ok);
+        QTest::mouseClick(w.findChild<QPushButton *>("btnPaso1Siguiente"), Qt::LeftButton);
+        QCOMPARE(paginaActual(w), 0);
+    }
+
+    void dniYTelefono_noDejanEscribirLetras() {
+        PasosCargaTurnoWidget w;
+        auto *dni = w.findChild<QLineEdit *>("txtDni");
+        auto *tel = w.findChild<QLineEdit *>("txtTelefono");
+        dni->clear();
+        tel->clear();
+        QTest::keyClicks(dni, "36ab12-3456789");
+        QTest::keyClicks(tel, "11 5a55-5-0102");
+        QCOMPARE(dni->text(), QString("36123456"));   // solo dígitos y hasta 8
+        QCOMPARE(tel->text(), QString("1155550102"));
+    }
+
     // ---------- Validaciones (RNF / Semana 3) ----------
     void dni_valido_data() {
         QTest::addColumn<QString>("dni");

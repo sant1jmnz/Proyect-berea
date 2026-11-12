@@ -21,6 +21,8 @@ PasosCargaTurnoWidget::PasosCargaTurnoWidget(QWidget *parent) :
     ui->txtTelefono->setMaxLength(14);
     ui->txtTelefono->setValidator(new QRegularExpressionValidator(QRegularExpression("^\\+?[0-9]{0,13}$"), this));
     ui->txtNombre->setMaxLength(60);
+    // El nombre no deja escribir números ni símbolos (solo letras, espacios, apóstrofes y guiones)
+    ui->txtNombre->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));
 
     // Inicializar controles de Paso 2
     ui->dateEdit->setDate(QDate::currentDate().addDays(1));
@@ -85,6 +87,7 @@ void PasosCargaTurnoWidget::construirTarjetas(const QList<ProtoItem> &catalogo) 
         QHBoxLayout *hl = new QHBoxLayout(card);
 
         QRadioButton *rb = new QRadioButton(card);
+        rb->setProperty("protocolo", p.nombre);   // para marcarlo cuando se elige desde el buscador
         rb->setMinimumHeight(32);
         rb->setStyleSheet("QRadioButton::indicator { width: 22px; height: 22px; }");
 
@@ -217,6 +220,11 @@ void PasosCargaTurnoWidget::setProtocoloSeleccionado(const QString &nombre, doub
             m_protocoloSena = p.sena;
         }
     }
+    // La tarjeta marcada tiene que ser la elegida en el buscador (si no, la pantalla muestra una y se reserva otra)
+    for (QRadioButton *rb : findChildren<QRadioButton *>()) {
+        if (rb->property("protocolo").toString() == nombre)
+            rb->setChecked(true);
+    }
     ui->stackedPasos->setCurrentIndex(0);
 }
 
@@ -233,8 +241,16 @@ void PasosCargaTurnoWidget::reiniciarFormulario() {
     ui->txtDni->clear();
     ui->txtTelefono->clear();
     m_hora.clear();
+    actualizarFechaMinima();
     actualizarDisponibilidad();
     ui->stackedPasos->setCurrentIndex(0);
+}
+
+// La terminal queda prendida varios días: la fecha mínima tiene que ser siempre hoy, no el día en que abrió.
+void PasosCargaTurnoWidget::actualizarFechaMinima() {
+    const QDate hoy = QDate::currentDate();
+    if (ui->dateEdit->minimumDate() != hoy)
+        ui->dateEdit->setMinimumDate(hoy);   // si la fecha elegida quedó vieja, Qt la sube a hoy
 }
 
 void PasosCargaTurnoWidget::on_btnPaso1Siguiente_clicked() {
@@ -243,7 +259,7 @@ void PasosCargaTurnoWidget::on_btnPaso1Siguiente_clicked() {
     m_pacienteTelefono = ui->txtTelefono->text().trimmed();
 
     QString error;
-    if (!Validaciones::nombreValido(m_pacienteNombre, &error)) {
+    if (!Validaciones::nombreApellidoValido(m_pacienteNombre, &error)) {
         QMessageBox::warning(this, "Dato incorrecto: Nombre", error);
         ui->txtNombre->setFocus();
         return;
@@ -268,6 +284,8 @@ void PasosCargaTurnoWidget::on_btnPaso1Siguiente_clicked() {
             return;
         }
     }
+    actualizarFechaMinima();
+    actualizarDisponibilidad();
     ui->stackedPasos->setCurrentIndex(1); // Paso 2: Horarios
 }
 
@@ -352,7 +370,7 @@ void PasosCargaTurnoWidget::usarBase(Repositorio *repositorio) {
         return;
     m_catalogoBD.clear();
     for (const ProtocoloBD &d : m_repo->listarProtocolos())
-        m_catalogoBD.append({ d.nombre, d.duracionMin, d.precio, d.categoria, d.descripcion, d.id, d.sena });
+        m_catalogoBD.append({ d.nombre, d.duracionMin, double(d.precio), d.categoria, d.descripcion, d.id, double(d.sena) });
     if (!m_catalogoBD.isEmpty())
         construirTarjetas(m_catalogoBD);
     m_hora.clear();
@@ -407,26 +425,44 @@ void PasosCargaTurnoWidget::armarGrillaDeBase() {
 // pidiendo lo que el formulario no tiene (apellido y fecha de nacimiento).
 bool PasosCargaTurnoWidget::buscarOCrearPaciente(int *idPaciente) {
     const Resultado r = m_repo->buscarPaciente(m_pacienteDni);
-    if (r.ok && !r.filas.isEmpty()) {
-        *idPaciente = r.filas.first().value("id_paciente").toInt();
-        return true;
+    if (!r.ok) {   // si la base falló, no se puede asumir que la paciente no existe (se duplicaría el alta)
+        QMessageBox::warning(this, "No pudimos buscar tus datos", r.error);
+        return false;
+    }
+    for (const QVariantMap &fila : r.filas) {   // el SP también busca por nombre y teléfono: se exige el mismo DNI
+        if (fila.value("dni").toString() == m_pacienteDni) {
+            *idPaciente = fila.value("id_paciente").toInt();
+            return true;
+        }
     }
     const QStringList partes = m_pacienteNombre.split(' ', Qt::SkipEmptyParts);
     const QString nombre = partes.mid(0, qMax(1, partes.size() - 1)).join(' ');
+    // Se vuelve a preguntar hasta que el dato sea válido o la paciente cancele.
     bool ok = false;
-    const QString apellido = QInputDialog::getText(this, "Es tu primera vez",
-        QString("Hola %1. Para guardar tu turno, ¿cuál es tu apellido?").arg(nombre), QLineEdit::Normal,
-        partes.size() > 1 ? partes.last() : QString(), &ok);
-    if (!ok)
-        return false;
-    const QString textoNacimiento = QInputDialog::getText(this, "Es tu primera vez",
-        "¿Cuál es tu fecha de nacimiento? (dd/mm/aaaa)", QLineEdit::Normal, QString(), &ok);
-    if (!ok)
-        return false;
-    const QDate nacimiento = QDate::fromString(textoNacimiento.trimmed(), "dd/MM/yyyy");
-    if (!nacimiento.isValid()) {
-        QMessageBox::warning(this, "Fecha inválida", "Escribí la fecha así: 25/07/1990.");
-        return false;
+    QString apellido = partes.size() > 1 ? partes.last() : QString();
+    for (;;) {
+        apellido = QInputDialog::getText(this, "Es tu primera vez",
+            QString("Hola %1. Para guardar tu turno, ¿cuál es tu apellido?").arg(nombre), QLineEdit::Normal,
+            apellido, &ok);
+        if (!ok)
+            return false;
+        QString errorApellido;
+        if (Validaciones::apellidoValido(apellido, &errorApellido))
+            break;
+        QMessageBox::warning(this, "Dato incorrecto: Apellido", errorApellido);
+    }
+    QDate nacimiento;
+    QString textoNacimiento;
+    for (;;) {
+        textoNacimiento = QInputDialog::getText(this, "Es tu primera vez",
+            "¿Cuál es tu fecha de nacimiento? (dd/mm/aaaa)", QLineEdit::Normal, textoNacimiento, &ok);
+        if (!ok)
+            return false;
+        QString errorFecha;
+        nacimiento = Validaciones::fechaDesdeTexto(textoNacimiento, &errorFecha);
+        if (nacimiento.isValid() && Validaciones::fechaNacimientoValida(nacimiento, QDate::currentDate(), &errorFecha))
+            break;
+        QMessageBox::warning(this, "Fecha inválida", errorFecha);
     }
     const Respuesta alta = m_repo->altaPaciente(m_pacienteDni, nombre, apellido.simplified(), nacimiento,
                                                 QString(), m_pacienteTelefono, "terminal");

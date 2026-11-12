@@ -1,39 +1,46 @@
-/* Catálogo fijo para el maquetado (mismos datos que
- * frontend/gestion/datosprueba.cpp). Cuando exista la API se reemplaza por
- * la consulta a la base. */
+/* Catálogo para la web. Los nombres, precios y duraciones salen de la base de
+ * datos de ejemplo (backend/02_datos.sql, vía catalogo.generado.js), así web y
+ * base no se desfasan. Lo que la base no guarda (capa de la piel, sesiones,
+ * cuidados) está en fichas.js. */
+import { categorias, protocolosBase } from './catalogo.generado.js';
+import { fichaDe } from './fichas.js';
 
-export const categorias = [
-  { id: 'faciales', nombre: 'Faciales y corporales', porcentajeSena: 30, esCirugia: false },
-  { id: 'aparatologia', nombre: 'Aparatología', porcentajeSena: 30, esCirugia: false },
-  { id: 'medicina', nombre: 'Medicina estética', porcentajeSena: 30, esCirugia: false },
-  { id: 'cirugias', nombre: 'Cirugías', porcentajeSena: 40, esCirugia: true },
-];
+export { categorias };
+export { tiposDeObjeto } from './fichas.js';
 
-export const protocolos = [
-  { id: 'limpieza', nombre: 'Limpieza facial profunda', duracionMin: 60, precio: 25000, categoria: 'faciales', capa: 'epidermis',
-    descripcion: 'Higiene, extracción y máscara calmante para piel mixta o grasa.' },
-  { id: 'peeling', nombre: 'Peeling químico', duracionMin: 45, precio: 40000, categoria: 'faciales', capa: 'epidermis',
-    descripcion: 'Renueva la capa superficial y empareja manchas y textura.' },
-  { id: 'mesoterapia', nombre: 'Mesoterapia facial', duracionMin: 45, precio: 55000, categoria: 'medicina', capa: 'dermis',
-    descripcion: 'Microinyecciones de vitaminas y ácido hialurónico para hidratar.' },
-  { id: 'laser', nombre: 'Depilación láser (zona chica)', duracionMin: 30, precio: 18000, categoria: 'aparatologia', capa: 'dermis',
-    descripcion: 'Axilas, bozo o cavado. Se hace en sesiones cada 4 a 6 semanas.' },
-];
+export const protocolos = protocolosBase.map((p) => ({ ...p, ...fichaDe(p.idBase) }));
 
 export const categoriaDe = (p) => categorias.find((c) => c.id === p.categoria);
+export const protocoloPorId = (id) => protocolos.find((p) => p.id === id);
+export const protocoloPorIdBase = (idBase) => protocolos.find((p) => p.idBase === idBase);
 
-/* Capas de la piel del modelo 3D del inicio: en cuál actúa principalmente
- * cada protocolo (campo "capa" de arriba). */
+/* La consulta prequirúrgica (RF-25): obligatoria antes de cualquier cirugía. */
+export const CONSULTA_PREQUIRURGICA = 'consulta-prequirurgica';
+
+/* Capas de la piel del modelo 3D: en cuál actúa cada protocolo (campo "capa"). */
 export const capas = [
   { id: 'epidermis', nombre: 'Epidermis', profundidad: 'La capa de afuera, menos de 1 mm',
     texto: 'Es la que se ve: textura, brillo, poros y manchas superficiales.' },
   { id: 'dermis', nombre: 'Dermis', profundidad: 'Debajo, de 1 a 4 mm',
     texto: 'Tiene el colágeno, la hidratación profunda y la raíz del vello.' },
   { id: 'hipodermis', nombre: 'Hipodermis', profundidad: 'La más profunda: tejido graso',
-    texto: 'Da volumen y contorno. Acá trabajan los tratamientos corporales y las cirugías.' },
+    texto: 'Da volumen y contorno. Acá trabajan los tratamientos corporales, los rellenos profundos y las cirugías.' },
 ];
 
 export const protocolosDeCapa = (id) => protocolos.filter((p) => p.capa === id);
+
+export const normalizar = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/* Búsqueda por palabra clave (RF-05): nombre, descripción, zona y categoría, sin tildes. */
+export function buscarProtocolos({ texto = '', categoria = 'todas', capa = 'todas' } = {}) {
+  const palabras = normalizar(texto.trim()).split(/\s+/).filter(Boolean);
+  return protocolos.filter((p) => {
+    if (categoria !== 'todas' && p.categoria !== categoria) return false;
+    if (capa !== 'todas' && p.capa !== capa) return false;
+    const pajar = normalizar(`${p.nombre} ${p.descripcion} ${p.zona} ${categoriaDe(p).nombre}`);
+    return palabras.every((w) => pajar.includes(w));
+  });
+}
 
 /* Horarios de ejemplo: el instituto atiende de lunes a sábado. */
 export const horasDelDia = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
@@ -43,7 +50,7 @@ export const turnoEjemplo = {
   paciente: 'María Sosa',
   dni: '30111222',
   telefono: '1155550102',
-  protocolo: 'laser',
+  protocolo: 'depilacion-laser-zona-chica',
   diasDesdeHoy: 2,
   hora: '09:00',
   senaPagada: true,

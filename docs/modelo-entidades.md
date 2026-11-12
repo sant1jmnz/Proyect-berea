@@ -259,7 +259,7 @@ salen del turno de la consulta.
   `generar_token_cupon`) y se valida con otro (`validar_cupon`), que además
   deja registrado en el log cada validación aceptada o rechazada.
 - MySQL no trae un HMAC formal; para el trabajo alcanza con una cuenta simple
-  (`CRC32` sobre el secreto y el tramo de tiempo), sin encriptación. Se aclara
+  (una cuenta con suma y resto sobre el secreto y el tramo de tiempo), sin encriptación. Se aclara
   en la defensa.
 
 ### Relaciones y cardinalidades (mín,máx)
@@ -288,7 +288,7 @@ salen del turno de la consulta.
    la consulta al asistente y el log (terminal, web, gestión y *sistema*, para
    lo que hace n8n).
 5. **Cuentas simples.** `Usuario` tiene solo el nombre de usuario, el mail y la
-   contraseña cifrada; los nombres reales ya están en `Paciente` y
+   contraseña; los nombres reales ya están en `Paciente` y
    `Profesional`, y no se duplican (3FN). El personal de recepción y
    administración se identifica por su nombre de usuario. La contraseña
    se guarda tal cual, sin encriptar (decisión del equipo para este trabajo).

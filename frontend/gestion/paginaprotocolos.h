@@ -11,6 +11,7 @@
 #include <QWidget>
 
 class QComboBox;
+class Repositorio;
 class QLabel;
 class QLineEdit;
 class QPushButton;
@@ -22,6 +23,13 @@ class PaginaProtocolos : public QWidget
 
 public:
     explicit PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *parent = nullptr);
+
+    /* Con la base conectada, las altas y cambios de esta pantalla pasan por los
+     * stored procedures (y quedan en el log con el usuario que ingresó). Sin base
+     * (`repo` nulo) trabaja solo en memoria, con los datos de prueba. */
+    void usarBase(Repositorio *repositorio, int idUsuarioActual) { repo = repositorio; idUsuario = idUsuarioActual; }
+    /* Vuelve a dibujar la tabla (cuando los datos se leyeron de la base). */
+    void recargar() { recargarTabla(); }
 
     /* Revisa los datos del formulario. Devuelve los errores (vacío = todo bien). */
     static QStringList revisar(const QString &nombre, const QString &precio, const QString &duracion,
@@ -39,6 +47,8 @@ private slots:
 private:
     void recargarTabla();
 
+    Repositorio *repo = nullptr;
+    int idUsuario = 0;
     QVector<Protocolo> *datos;
     int editado = -1;              /* índice en `datos`; -1 = alta nueva */
     QTableWidget *tabla;

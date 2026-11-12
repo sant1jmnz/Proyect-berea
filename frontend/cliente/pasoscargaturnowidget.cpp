@@ -1,6 +1,8 @@
 #include "pasoscargaturnowidget.h"
 #include "ui_pasoscargaturnowidget.h"
 #include "validaciones.h"
+#include "repositorio.h"
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QRadioButton>
 #include <QLabel>
@@ -47,14 +49,7 @@ PasosCargaTurnoWidget::~PasosCargaTurnoWidget() {
 }
 
 void PasosCargaTurnoWidget::inicializarProtocolos() {
-    struct ProtoItem {
-        const char* nombre;
-        int duracion;
-        double precio;
-        const char* categoria;
-        const char* desc;
-    };
-
+    // Catálogo de prueba: se usa mientras no hay conexión con la base.
     QList<ProtoItem> catalogo = {
         {"Láser Diodo Facial", 45, 22000.0, "Láser", "Depilación médica definitiva con enfriamiento de zafiro para máxima seguridad epidérmica."},
         {"Radiofrecuencia Fraccionada", 60, 28000.0, "Aparatología", "Estimulación profunda de colágeno, tensado dérmico y reducción de líneas de expresión."},
@@ -63,11 +58,24 @@ void PasosCargaTurnoWidget::inicializarProtocolos() {
         {"Mesoterapia Facial Rejuvenecedora", 45, 24000.0, "Inyectables", "Microinyecciones de ácido hialurónico no reticulado y vitaminas revitalizantes."},
         {"Dermapen / Microneedling", 50, 20000.0, "Aparatología", "Inducción percutánea de colágeno para poros dilatados, cicatrices y revitalización."}
     };
+    construirTarjetas(catalogo);
+}
+
+// Dibuja una tarjeta por protocolo y deja elegido el primero.
+void PasosCargaTurnoWidget::construirTarjetas(const QList<ProtoItem> &catalogo) {
+    // Se borran las tarjetas anteriores (cuando el catálogo se vuelve a cargar desde la base).
+    QLayoutItem *anterior;
+    while ((anterior = ui->layoutListaProto->takeAt(0)) != nullptr) {
+        delete anterior->widget();
+        delete anterior;
+    }
 
     // Selección por defecto del primer protocolo
     m_protocoloNombre = catalogo[0].nombre;
     m_protocoloPrecio = catalogo[0].precio;
     m_protocoloDuracion = catalogo[0].duracion;
+    m_protocoloId = catalogo[0].id;
+    m_protocoloSena = catalogo[0].sena;
 
     for (int i = 0; i < catalogo.size(); ++i) {
         const auto &p = catalogo[i];
@@ -87,12 +95,16 @@ void PasosCargaTurnoWidget::inicializarProtocolos() {
         QString nombre = p.nombre;
         double precio = p.precio;
         int duracion = p.duracion;
+        int id = p.id;
+        double sena = p.sena;
 
-        connect(rb, &QRadioButton::toggled, this, [this, nombre, precio, duracion](bool checked){
+        connect(rb, &QRadioButton::toggled, this, [this, nombre, precio, duracion, id, sena](bool checked){
             if (checked) {
                 m_protocoloNombre = nombre;
                 m_protocoloPrecio = precio;
                 m_protocoloDuracion = duracion;
+                m_protocoloId = id;
+                m_protocoloSena = sena;
             }
         });
 
@@ -105,10 +117,16 @@ void PasosCargaTurnoWidget::inicializarProtocolos() {
 
         double senia = precio * 0.30;
         if (senia < 5000.0) senia = 5000.0;
+        QString reglaSena = "Seña (30%, mín $5.000)";
+        if (sena >= 0) {   // la base calcula la seña con el porcentaje de la categoría
+            senia = sena;
+            reglaSena = "Seña";
+        }
 
-        QLabel *lblDetalles = new QLabel(QString("⏱ Duración: <b>%1 min</b>   |   💰 Precio Total: <b>$%2</b>   |   💳 Seña (30%, mín $5.000): <b style='color:#8e2a59;'>$%3</b>")
+        QLabel *lblDetalles = new QLabel(QString("⏱ Duración: <b>%1 min</b>   |   💰 Precio Total: <b>$%2</b>   |   💳 %3: <b style='color:#8e2a59;'>$%4</b>")
                                          .arg(duracion)
                                          .arg(QString::number(precio, 'f', 0))
+                                         .arg(reglaSena)
                                          .arg(QString::number(senia, 'f', 0)), card);
         lblDetalles->setStyleSheet("font-size: 13px;");
 
@@ -170,6 +188,10 @@ QString PasosCargaTurnoWidget::claveHorario(const QString &hora) const {
 }
 
 void PasosCargaTurnoWidget::actualizarDisponibilidad() {
+    if (m_repo) {   // con la base, los horarios libres los calcula sp_horarios_libres (RF-04)
+        armarGrillaDeBase();
+        return;
+    }
     ui->lblHorarioSeleccionado->setText(
         "<span style='color:#777;'>Por favor seleccioná un horario disponible de la grilla táctil.</span>");
 
@@ -189,6 +211,12 @@ void PasosCargaTurnoWidget::setProtocoloSeleccionado(const QString &nombre, doub
     m_protocoloNombre = nombre;
     m_protocoloPrecio = precio;
     m_protocoloDuracion = duracion;
+    for (const ProtoItem &p : m_catalogoBD) {   // con la base, se busca también el id y la seña del protocolo
+        if (p.nombre == nombre) {
+            m_protocoloId = p.id;
+            m_protocoloSena = p.sena;
+        }
+    }
     ui->stackedPasos->setCurrentIndex(0);
 }
 
@@ -233,6 +261,13 @@ void PasosCargaTurnoWidget::on_btnPaso1Siguiente_clicked() {
     m_pacienteDni = Validaciones::normalizar(m_pacienteDni);
     m_pacienteTelefono = Validaciones::normalizar(m_pacienteTelefono);
 
+    if (m_repo) {   // con la base: solo los profesionales que hacen el protocolo elegido (RF-18)
+        cargarProfesionalesDeBase();
+        if (ui->comboProf->count() == 0) {
+            QMessageBox::warning(this, "Sin profesionales", "Por ahora ningún profesional atiende este protocolo. Consultá en recepción.");
+            return;
+        }
+    }
     ui->stackedPasos->setCurrentIndex(1); // Paso 2: Horarios
 }
 
@@ -281,12 +316,18 @@ void PasosCargaTurnoWidget::actualizarResumenPaso3() {
     // RF-10: Seña del 30%, mínimo $5.000
     double senia = m_protocoloPrecio * 0.30;
     if (senia < 5000.0) senia = 5000.0;
+    if (m_protocoloSena >= 0)
+        senia = m_protocoloSena;   // con la base: el porcentaje de la categoría
 
     ui->lblMontoSenia->setText(QString("<h1 style='color:#8e2a59; margin:4px;'>Monto de Seña: $%1</h1>")
                                .arg(QString::number(senia, 'f', 0)));
 }
 
 void PasosCargaTurnoWidget::on_btnPaso3Confirmar_clicked() {
+    if (m_repo) {   // con la base: el turno y la seña se guardan en los stored procedures
+        confirmarEnBase();
+        return;
+    }
     const double senia = qMax(5000.0, m_protocoloPrecio * 0.30);
     m_horariosReservados.insert(claveHorario(m_hora));
     emit turnoConfirmado(m_pacienteNombre, m_pacienteDni, m_pacienteTelefono,
@@ -297,4 +338,129 @@ void PasosCargaTurnoWidget::on_btnPaso3Confirmar_clicked() {
 
 void PasosCargaTurnoWidget::on_btnNuevoTurno_clicked() {
     reiniciarFormulario();
+}
+
+
+// ---------------------------------------------------------------------------
+// Con la base conectada
+// ---------------------------------------------------------------------------
+
+// Cambia el catálogo fijo de prueba por el de la base.
+void PasosCargaTurnoWidget::usarBase(Repositorio *repositorio) {
+    m_repo = repositorio;
+    if (!m_repo)
+        return;
+    m_catalogoBD.clear();
+    for (const ProtocoloBD &d : m_repo->listarProtocolos())
+        m_catalogoBD.append({ d.nombre, d.duracionMin, d.precio, d.categoria, d.descripcion, d.id, d.sena });
+    if (!m_catalogoBD.isEmpty())
+        construirTarjetas(m_catalogoBD);
+    m_hora.clear();
+    actualizarDisponibilidad();
+}
+
+// Paso 2: el combo muestra solo a los profesionales que hacen el protocolo elegido.
+void PasosCargaTurnoWidget::cargarProfesionalesDeBase() {
+    ui->comboProf->blockSignals(true);   // al llenar el combo no hay que recalcular horarios cada vez
+    ui->comboProf->clear();
+    const Resultado r = m_repo->profesionalesParaProtocolos({ m_protocoloId });
+    for (const QVariantMap &fila : r.filas)
+        ui->comboProf->addItem(fila.value("profesional").toString(), fila.value("id_profesional").toInt());
+    ui->comboProf->blockSignals(false);
+    m_hora.clear();
+    actualizarDisponibilidad();
+}
+
+// Dibuja un botón grande por cada horario libre de la base (día y profesional elegidos).
+void PasosCargaTurnoWidget::armarGrillaDeBase() {
+    ui->lblHorarioSeleccionado->setText(
+        "<span style='color:#777;'>Por favor seleccioná un horario disponible de la grilla táctil.</span>");
+    for (QPushButton *btn : m_botonesHorarios) {
+        ui->gridHorarios->removeWidget(btn);
+        delete btn;
+    }
+    m_botonesHorarios.clear();
+
+    const QVector<HorarioLibre> libres = m_repo->horariosLibres(ui->dateEdit->date(), { m_protocoloId },
+                                                                ui->comboProf->currentData().toInt());
+    int fila = 0, columna = 0;
+    for (const HorarioLibre &h : libres) {
+        QPushButton *btn = new QPushButton(h.inicio.toString("HH:mm") + " hs", this);
+        btn->setMinimumHeight(54);   // botón grande táctil
+        btn->setMinimumWidth(130);
+        btn->setFont(QFont("Arial", 12, QFont::Bold));
+        btn->setStyleSheet("QPushButton { background-color: #ffffff; color: #8e2a59; border: 2px solid #8e2a59; border-radius: 10px; } "
+                           "QPushButton:hover { background-color: #fbebf1; }");
+        connect(btn, &QPushButton::clicked, this, [this, btn]() { onHorarioSeleccionado(btn); });
+        m_botonesHorarios.append(btn);
+        ui->gridHorarios->addWidget(btn, fila, columna);
+        if (++columna >= 3) {
+            columna = 0;
+            ++fila;
+        }
+    }
+    if (libres.isEmpty())
+        ui->lblHorarioSeleccionado->setText("<span style='color:#c62828;'>No quedan horarios libres ese día. Probá con otra fecha.</span>");
+}
+
+// La paciente de la terminal: si el DNI está en la base se usa; si no, se la da de alta
+// pidiendo lo que el formulario no tiene (apellido y fecha de nacimiento).
+bool PasosCargaTurnoWidget::buscarOCrearPaciente(int *idPaciente) {
+    const Resultado r = m_repo->buscarPaciente(m_pacienteDni);
+    if (r.ok && !r.filas.isEmpty()) {
+        *idPaciente = r.filas.first().value("id_paciente").toInt();
+        return true;
+    }
+    const QStringList partes = m_pacienteNombre.split(' ', Qt::SkipEmptyParts);
+    const QString nombre = partes.mid(0, qMax(1, partes.size() - 1)).join(' ');
+    bool ok = false;
+    const QString apellido = QInputDialog::getText(this, "Es tu primera vez",
+        QString("Hola %1. Para guardar tu turno, ¿cuál es tu apellido?").arg(nombre), QLineEdit::Normal,
+        partes.size() > 1 ? partes.last() : QString(), &ok);
+    if (!ok)
+        return false;
+    const QString textoNacimiento = QInputDialog::getText(this, "Es tu primera vez",
+        "¿Cuál es tu fecha de nacimiento? (dd/mm/aaaa)", QLineEdit::Normal, QString(), &ok);
+    if (!ok)
+        return false;
+    const QDate nacimiento = QDate::fromString(textoNacimiento.trimmed(), "dd/MM/yyyy");
+    if (!nacimiento.isValid()) {
+        QMessageBox::warning(this, "Fecha inválida", "Escribí la fecha así: 25/07/1990.");
+        return false;
+    }
+    const Respuesta alta = m_repo->altaPaciente(m_pacienteDni, nombre, apellido.simplified(), nacimiento,
+                                                QString(), m_pacienteTelefono, "terminal");
+    if (!alta.ok) {
+        QMessageBox::warning(this, "No pudimos guardar tus datos", alta.mensaje);
+        return false;
+    }
+    *idPaciente = alta.id;
+    return true;
+}
+
+// Paso 3 con la base: alta del turno y pago simulado de la seña (RF-08).
+void PasosCargaTurnoWidget::confirmarEnBase() {
+    int idPaciente = 0;
+    if (!buscarOCrearPaciente(&idPaciente))
+        return;
+
+    const QDateTime inicio(m_fecha, QTime::fromString(m_hora, "HH:mm"));
+    const Respuesta turno = m_repo->altaTurno(idPaciente, ui->comboProf->currentData().toInt(), inicio,
+                                              { m_protocoloId }, "terminal");
+    if (!turno.ok) {   // la base aplicó una regla (por ejemplo, otra persona se llevó ese horario)
+        QMessageBox::warning(this, "No pudimos reservar el turno", turno.mensaje);
+        m_hora.clear();
+        actualizarDisponibilidad();
+        ui->stackedPasos->setCurrentIndex(1);
+        return;
+    }
+    const Respuesta sena = m_repo->registrarSena(turno.id, "tarjeta simulada", QString(), "terminal");
+    if (!sena.ok)
+        QMessageBox::warning(this, "Seña pendiente",
+                             QString("Tu turno quedó reservado, pero la seña no se pudo registrar: %1\nAcercate a recepción.").arg(sena.mensaje));
+
+    emit turnoConfirmado(m_pacienteNombre, m_pacienteDni, m_pacienteTelefono,
+                         m_protocoloNombre, m_fecha.toString("dd/MM/yyyy"), m_hora,
+                         m_profesional, turno.valor);
+    ui->stackedPasos->setCurrentIndex(3); // Paso 4: Éxito
 }

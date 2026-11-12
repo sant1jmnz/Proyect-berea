@@ -373,8 +373,8 @@ private slots:
         auto *menu = w.findChild<QListWidget *>("menu");
         auto *paginas = w.findChild<QStackedWidget *>("paginas");
         QVERIFY(menu && paginas);
-        QCOMPARE(menu->count(), 8);
-        QCOMPARE(paginas->count(), 10);
+        QCOMPARE(menu->count(), 9);        // ...Avisos y Reportes
+        QCOMPARE(paginas->count(), 11);
         for (int fila = 0; fila < menu->count(); ++fila) {   // cada opción del menú abre su pantalla
             menu->setCurrentRow(fila);
             QVERIFY2(paginas->currentWidget() != nullptr, qPrintable(menu->item(fila)->text()));
@@ -383,6 +383,8 @@ private slots:
         QCOMPARE(paginas->currentWidget()->objectName(), QString("pagProtocolos"));
         menu->setCurrentRow(7);
         QCOMPARE(paginas->currentWidget()->objectName(), QString("pagAvisos"));
+        menu->setCurrentRow(8);
+        QCOMPARE(paginas->currentWidget()->objectName(), QString("pagReportes"));
 
         auto *franja = w.findChild<AvisoConexion *>("avisoConexion");
         QVERIFY(franja);

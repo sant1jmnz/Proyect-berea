@@ -72,9 +72,8 @@ restricciones de las tablas) y
 
 ### Convenciones de los stored procedures
 
-- Los que **escriben** validan sin `IF`: cada regla guarda su código (`52xxx`) en `v_codigo` si no se
-  cumple (`COALESCE` con una subconsulta), los cambios llevan `WHERE ... AND v_codigo IS NULL` y la respuesta
-  es una sola consulta `OK`/`ERROR` unida con `UNION ALL`. Abren una transacción (`COMMIT`/`ROLLBACK`) y tienen
+- Los que **escriben** validan con `IF`: cada regla guarda su código (`52xxx`) y su mensaje en `v_codigo` y
+  `v_mensaje` si no se cumple; si todas se cumplen, se escribe y se responde `OK`, y si no, se responde `ERROR`. Abren una transacción (`COMMIT`/`ROLLBACK`) y tienen
   un `EXIT HANDLER FOR SQLEXCEPTION` para los errores del motor, como en el PPT 006 de la cátedra.
 - Todos devuelven 6 columnas: `estado, codigo, mensaje, id, valor, dato`.
 - **El log solo se escribe desde los SP** (`auditoria.sp_registrar_log`); nunca con `INSERT` a mano.

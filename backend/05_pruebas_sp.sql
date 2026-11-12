@@ -567,25 +567,25 @@ SELECT @pacA IS NOT NULL AND @prof IS NOT NULL;
 
 -- @caso sp_registrar_log.1 | Éxito | Escribe una fila con tipo, usuario, origen y fecha del reloj del sistema
 -- @espera nada
-CALL auditoria.sp_registrar_log('inicio_sesion', 1, NULL, 'gestion', 'prueba log 1', 'seguridad.Usuario', 1, NULL, NULL, 1, '10.1.1.1', 1);
+CALL auditoria.sp_registrar_log('inicio_sesion', 1, NULL, 'gestion', 'prueba log 1', 'seguridad.Usuario', 1, NULL, NULL, 1, '10.1.1.1');
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion = 'prueba log 1' AND id_usuario = 1 AND fecha_hora = @ahora_simulado AND exitoso = 1) = 1) AS verificacion;
 
 -- @caso sp_registrar_log.2 | Sin coincidencias | Un tipo de evento que no existe no escribe nada ni da error
 -- @espera nada
-CALL auditoria.sp_registrar_log('evento_inventado', 1, NULL, 'gestion', 'prueba log 2', NULL, NULL, NULL, NULL, 1, NULL, 1);
+CALL auditoria.sp_registrar_log('evento_inventado', 1, NULL, 'gestion', 'prueba log 2', NULL, NULL, NULL, NULL, 1, NULL);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion = 'prueba log 2') = 0) AS verificacion;
 
 -- @caso sp_registrar_log.3 | Nulos y límites | Usuario inexistente y origen desconocido: el log queda con usuario NULL y origen sistema; exitoso NULL vale 1
 -- @espera nada
-CALL auditoria.sp_registrar_log('inicio_sesion', 99999999, NULL, 'marte', 'prueba log 3', NULL, NULL, NULL, NULL, NULL, NULL, 1);
+CALL auditoria.sp_registrar_log('inicio_sesion', 99999999, NULL, 'marte', 'prueba log 3', NULL, NULL, NULL, NULL, NULL, NULL);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN agenda.Origen o ON o.id_origen = l.id_origen WHERE l.descripcion = 'prueba log 3' AND l.id_usuario IS NULL AND o.nombre = 'sistema' AND l.exitoso = 1) = 1) AS verificacion;
 
 -- @caso sp_registrar_log.4 | Consistencia | La descripción se recorta a 500 caracteres y exitoso=0 se conserva
 -- @espera nada
-CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, 'web', 'prueba log 4 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', NULL, NULL, NULL, NULL, 0, NULL, 1);
+CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, 'web', 'prueba log 4 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', NULL, NULL, NULL, NULL, 0, NULL);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion LIKE 'prueba log 4 %' AND CHAR_LENGTH(descripcion) = 500 AND exitoso = 0) = 1) AS verificacion;
 
@@ -1302,33 +1302,33 @@ SELECT id_pago INTO @pago5 FROM pagos.PagoSena WHERE id_turno = @t5;
 
 -- @caso sp_aplicar_reembolso.3 | Nulos y límites | Monto NULL o mayor al pagado (52102) y estado inventado (52103); con el pago todavía "pagada"
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, NULL, 'retenida', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, NULL, 'retenida', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52102) AS verificacion;
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, 99999999, 'retenida', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, 99999999, 'retenida', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52102) AS verificacion;
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, 100, 'inventado', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, 100, 'inventado', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52103) AS verificacion;
 
 -- @caso sp_aplicar_reembolso.1 | Éxito | Reembolso parcial de la seña del turno 5 (interno: lo usan otros SP)
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, 10000, 'reembolsada parcial', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, 10000, 'reembolsada parcial', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT ((SELECT ep.nombre = 'reembolsada parcial' AND ps.monto_reembolsado = 10000 FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_pago = @pago5)) AS verificacion;
 
 -- @caso sp_aplicar_reembolso.2 | Sin coincidencias | Pago inexistente: deja el código 52100 en @reembolso_codigo
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(99999999, 1, 'retenida', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(99999999, 1, 'retenida', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52100) AS verificacion;
 
 -- @caso sp_aplicar_reembolso.4 | Consistencia | Un pago ya resuelto no se puede resolver de nuevo (52101) y su monto no cambia
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, 5000, 'retenida', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, 5000, 'retenida', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52101) AS verificacion;
 -- @espera verdadero

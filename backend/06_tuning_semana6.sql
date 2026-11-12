@@ -37,7 +37,8 @@ BEGIN
     CREATE TEMPORARY TABLE tmp_r1_n1 AS
     SELECT id_turno, id_profesional, id_estado_turno, fecha_hora_inicio, fecha_hora_fin
       FROM agenda.Turno
-     WHERE DATE(fecha_hora_inicio) BETWEEN p_desde AND p_hasta
+     WHERE fecha_hora_inicio >= p_desde
+       AND fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
        AND (p_id_profesional IS NULL OR id_profesional = p_id_profesional);
 
     -- N2: EstadoTurno proyectado
@@ -58,22 +59,24 @@ BEGIN
      GROUP BY tp.id_turno;
 
     -- Reunión final y agrupamiento
-    SELECT DATE_FORMAT(a.fecha_hora_inicio, '%Y-%m') AS periodo,
-           p.id_profesional,
-           p.apellido AS profesional, p.nombre AS profesional_nombre,
-           COUNT(*) AS turnos,
-           SUM(e.nombre = 'realizado') AS realizados,
-           SUM(e.nombre = 'cancelado') AS cancelados,
-           SUM(e.nombre = 'ausente') AS ausentes,
-           SUM(e.nombre IN ('pendiente', 'confirmado')) AS vigentes,
-           ROUND(SUM(((EXTRACT(HOUR FROM a.fecha_hora_fin) - EXTRACT(HOUR FROM a.fecha_hora_inicio)) * 60 + EXTRACT(MINUTE FROM a.fecha_hora_fin) - EXTRACT(MINUTE FROM a.fecha_hora_inicio))) / 60, 1) AS horas_agendadas,
-           SUM((e.nombre = 'realizado') * COALESCE(f.total, 0)) AS facturado
-      FROM tmp_r1_n1 a
-      JOIN tmp_r1_n3 p ON p.id_profesional = a.id_profesional
-      JOIN tmp_r1_n2 e ON e.id_estado_turno = a.id_estado_turno
-      LEFT JOIN tmp_r1_n4 f ON f.id_turno = a.id_turno
-     GROUP BY DATE_FORMAT(a.fecha_hora_inicio, '%Y-%m'), p.id_profesional, p.apellido, p.nombre
-     ORDER BY periodo, profesional, profesional_nombre;
+    SELECT
+        DATE_FORMAT(a.fecha_hora_inicio, '%Y-%m') AS periodo,
+        p.id_profesional AS id_profesional,
+        p.apellido AS profesional,
+        p.nombre AS profesional_nombre,
+        COUNT(*) AS turnos,
+        SUM(CASE WHEN e.nombre = 'realizado' THEN 1 ELSE 0 END) AS realizados,
+        SUM(CASE WHEN e.nombre = 'cancelado' THEN 1 ELSE 0 END) AS cancelados,
+        SUM(CASE WHEN e.nombre = 'ausente' THEN 1 ELSE 0 END) AS ausentes,
+        SUM(CASE WHEN e.nombre IN ('pendiente', 'confirmado') THEN 1 ELSE 0 END) AS vigentes,
+        ROUND(SUM(TIMESTAMPDIFF(MINUTE, a.fecha_hora_inicio, a.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
+        SUM(CASE WHEN e.nombre = 'realizado' THEN IFNULL(f.total, 0) ELSE 0 END) AS facturado
+    FROM tmp_r1_n1 a
+    INNER JOIN tmp_r1_n3 p ON a.id_profesional = p.id_profesional
+    INNER JOIN tmp_r1_n2 e ON a.id_estado_turno = e.id_estado_turno
+    LEFT JOIN tmp_r1_n4 f ON a.id_turno = f.id_turno
+    GROUP BY DATE_FORMAT(a.fecha_hora_inicio, '%Y-%m'), p.id_profesional, p.apellido, p.nombre
+    ORDER BY periodo, profesional, profesional_nombre;
 
     DROP TEMPORARY TABLE IF EXISTS tmp_r1_n1;
     DROP TEMPORARY TABLE IF EXISTS tmp_r1_n2;
@@ -93,7 +96,8 @@ BEGIN
     CREATE TEMPORARY TABLE tmp_r2_n1 AS
     SELECT id_medio_pago, id_estado_pago, monto, monto_reembolsado, fecha_pago
       FROM pagos.PagoSena
-     WHERE DATE(fecha_pago) BETWEEN p_desde AND p_hasta;
+     WHERE fecha_pago >= p_desde
+       AND fecha_pago < p_hasta + INTERVAL 1 DAY;
 
     -- N2: EstadoPago proyectado
     CREATE TEMPORARY TABLE tmp_r2_n2 AS
@@ -106,18 +110,20 @@ BEGIN
       FROM pagos.MedioPago;
 
     -- Reunión final y agrupamiento
-    SELECT DATE_FORMAT(a.fecha_pago, '%Y-%m') AS periodo,
-           m.nombre AS medio_pago,
-           COUNT(*) AS pagos,
-           SUM(a.monto) AS cobrado,
-           SUM(COALESCE(a.monto_reembolsado, 0)) AS reembolsado,
-           SUM(COALESCE((SELECT a.monto - COALESCE(a.monto_reembolsado, 0) FROM DUAL WHERE e.nombre IN ('retenida', 'reembolsada parcial')), 0)) AS retenido,
-           SUM(a.monto - COALESCE(a.monto_reembolsado, 0)) AS neto
-      FROM tmp_r2_n1 a
-      JOIN tmp_r2_n2 e ON e.id_estado_pago = a.id_estado_pago
-      JOIN tmp_r2_n3 m ON m.id_medio_pago = a.id_medio_pago
-     GROUP BY DATE_FORMAT(a.fecha_pago, '%Y-%m'), a.id_medio_pago, m.nombre
-     ORDER BY periodo, medio_pago;
+    SELECT
+        DATE_FORMAT(a.fecha_pago, '%Y-%m') AS periodo,
+        m.nombre AS medio_pago,
+        COUNT(*) AS pagos,
+        SUM(a.monto) AS cobrado,
+        SUM(IFNULL(a.monto_reembolsado, 0)) AS reembolsado,
+        SUM(CASE WHEN e.nombre IN ('retenida', 'reembolsada parcial')
+                 THEN a.monto - IFNULL(a.monto_reembolsado, 0) ELSE 0 END) AS retenido,
+        SUM(a.monto - IFNULL(a.monto_reembolsado, 0)) AS neto
+    FROM tmp_r2_n1 a
+    INNER JOIN tmp_r2_n2 e ON a.id_estado_pago = e.id_estado_pago
+    INNER JOIN tmp_r2_n3 m ON a.id_medio_pago = m.id_medio_pago
+    GROUP BY DATE_FORMAT(a.fecha_pago, '%Y-%m'), a.id_medio_pago, m.nombre
+    ORDER BY periodo, medio_pago;
 
     DROP TEMPORARY TABLE IF EXISTS tmp_r2_n1;
     DROP TEMPORARY TABLE IF EXISTS tmp_r2_n2;

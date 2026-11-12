@@ -165,3 +165,11 @@ Por eso el backend **no usa** `IF`, `CASE`, `WHILE`, `LOOP`, cursores, `LEAVE`, 
 `CREATE FUNCTION` ni funciones de texto (salvo `CHAR_LENGTH`). Cómo se reemplazó cada cosa está en
 [`12-contrato-sp.md`](12-contrato-sp.md): las validaciones se escriben con `COALESCE` y subconsultas, los
 cambios llevan `WHERE ... AND v_codigo IS NULL` y la respuesta se arma con `UNION ALL`.
+
+### Estilo de los reportes (scripts 05 y 06)
+
+Los reportes y sus versiones `_tuneado` se escriben como los scripts de la cátedra (TP9 y profundización 02):
+una pregunta de negocio por consulta, `INNER JOIN` / `LEFT JOIN`, alias siempre con `AS`, una cláusula por
+línea, tablas derivadas en el `FROM` y `CASE WHEN` dentro de `SUM(...)` para contar por estado (en lugar de
+sumar comparaciones o simular el `CASE` con `SELECT ... FROM DUAL`). Los cuatro scripts de TP9 en SQL Server
+(Prod y QA, ejercicios 2 a 5) están en [`catedra/tp9-sql-server/`](catedra/tp9-sql-server/).

@@ -163,7 +163,7 @@ if(Qt6Test_FOUND)
         comun/validaciones.cpp
         comun/validaciones.h)
     target_include_directories(prueba_validaciones PRIVATE comun)
-    target_link_libraries(prueba_validaciones PRIVATE Qt6::Core Qt6::Test)
+    target_link_libraries(prueba_validaciones PRIVATE Qt6::Core Qt6::Gui Qt6::Test)
     add_test(NAME validaciones COMMAND prueba_validaciones)
     set_tests_properties(cliente PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 

@@ -8,6 +8,7 @@ class BuscadorWidget;
 }
 
 class Repositorio;
+class QTimer;
 
 /**
  * @brief BuscadorWidget - Pantalla 4 compartida (Cliente 4 y Gestión 4)
@@ -47,6 +48,9 @@ private:
 
     QList<ProtocoloItem> m_catalogo;
     Repositorio *m_repo = nullptr;
+    QTimer *m_temporizadorConsulta = nullptr;   /* registra la búsqueda sin resultados cuando se deja de escribir */
+    QString m_consultaPendiente;
+    QString m_ultimaConsultaRegistrada;
 
     void inicializarCatalogo();
     void filtrarResultados(const QString &termino);

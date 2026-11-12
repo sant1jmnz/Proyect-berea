@@ -1,8 +1,12 @@
 #include "ventanacliente.h"
 #include "ui_ventanacliente.h"
 
+#include "validaciones.h"
+
 #include <QGraphicsDropShadowEffect>
+#include <QLineEdit>
 #include <QMessageBox>
+#include <QRegularExpressionValidator>
 #include <QTextCharFormat>
 
 /* Orden de las páginas dentro del QStackedWidget `paginas` del .ui. */
@@ -28,6 +32,17 @@ VentanaCliente::VentanaCliente(QWidget *parent)
         tarjeta->setGraphicsEffect(sombra);
     }
 
+    /* Máscaras de entrada: mientras se escribe solo entran los caracteres válidos
+     * (sin números en el nombre, sin letras en el DNI ni en el teléfono). */
+    ui->editNombre->setMaxLength(60);
+    ui->editNombre->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));
+    ui->editDni->setMaxLength(8);
+    ui->editDni->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9]{0,8}"), this));
+    ui->editTelefono->setMaxLength(14);
+    ui->editTelefono->setValidator(new QRegularExpressionValidator(QRegularExpression("\\+?[0-9]{0,13}"), this));
+    ui->editBuscarTurno->setMaxLength(14);
+    ui->editBuscarTurno->setValidator(new QRegularExpressionValidator(QRegularExpression("\\+?[0-9]{0,13}"), this));
+
     /* Señales y slots: connect(quién avisa, qué pasó, quién reacciona, qué hace). */
 
     /* Franja de arriba: "Inicio" vuelve al principio desde cualquier pantalla. */
@@ -51,6 +66,20 @@ VentanaCliente::VentanaCliente(QWidget *parent)
     connect(ui->btnContinuar2, &QPushButton::clicked, this, [this] { irA(PagConfirmar); });
     connect(ui->btnVolver3, &QPushButton::clicked, this, [this] { irA(PagHorario); });
     connect(ui->btnConfirmar, &QPushButton::clicked, this, [this] {
+        /* Antes de confirmar se revisan los datos de la paciente (misma regla que la terminal funcional). */
+        QString error;
+        QLineEdit *campoMalo = nullptr;
+        if (!Validaciones::nombreApellidoValido(ui->editNombre->text(), &error))
+            campoMalo = ui->editNombre;
+        else if (!Validaciones::dniValido(ui->editDni->text(), &error))
+            campoMalo = ui->editDni;
+        else if (!Validaciones::telefonoValido(ui->editTelefono->text(), &error))
+            campoMalo = ui->editTelefono;
+        if (campoMalo) {
+            QMessageBox::warning(this, "Revisá tus datos", error);
+            campoMalo->setFocus();
+            return;
+        }
         QMessageBox::information(this, "Turno confirmado",
             "¡Listo! Tu turno quedó reservado.\njueves 8 de octubre, 09:00");
         irA(PagMiTurno);

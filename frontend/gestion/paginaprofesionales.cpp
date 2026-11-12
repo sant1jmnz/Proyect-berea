@@ -14,10 +14,33 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 #include <QTableWidget>
 #include <QTimeEdit>
 #include <QVBoxLayout>
 #include <algorithm>
+#include <functional>
+
+/* Pide un dato en un cuadro de diálogo y lo vuelve a pedir hasta que `validar` lo acepte.
+ * Devuelve false si se canceló. */
+static bool pedirDato(QWidget *padre, const QString &etiqueta, QLineEdit::EchoMode modo, QString *dato,
+                      const std::function<bool(const QString &, QString *)> &validar)
+{
+    for (;;) {
+        bool ok = false;
+        const QString texto = QInputDialog::getText(padre, "Alta de profesional", etiqueta, modo, *dato, &ok);
+        if (!ok)
+            return false;
+        *dato = texto;
+        QString error;
+        if (validar(texto, &error))
+            return true;
+        QMessageBox::warning(padre, "Dato incorrecto", error);
+        if (modo == QLineEdit::Password)
+            dato->clear();
+    }
+}
 
 PaginaProfesionales::PaginaProfesionales(QVector<Profesional> *profesionales,
                                          const QVector<Protocolo> *protocolosDisponibles, QWidget *parent)
@@ -48,8 +71,12 @@ PaginaProfesionales::PaginaProfesionales(QVector<Profesional> *profesionales,
     capaIzq->addWidget(lista, 1);
     editNombre = new QLineEdit;
     editNombre->setPlaceholderText("Nombre y apellido");
+    editNombre->setMaxLength(60);
+    editNombre->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));   // sin números ni símbolos
     editMatricula = new QLineEdit;
     editMatricula->setPlaceholderText("Matrícula (ej: MN 123456)");
+    editMatricula->setMaxLength(12);
+    editMatricula->setValidator(new QRegularExpressionValidator(Validaciones::filtroMatricula(), this));
     auto *btnAlta = new QPushButton("Agregar profesional");
     btnAlta->setProperty("primario", true);
     capaIzq->addWidget(editNombre);
@@ -206,15 +233,19 @@ void PaginaProfesionales::recargarDetalle()
 void PaginaProfesionales::agregarProfesional()
 {
     QString errorNombre;
-    if (!Validaciones::nombreValido(editNombre->text(), &errorNombre)) {
+    if (!Validaciones::nombreApellidoValido(editNombre->text(), &errorNombre)) {
         QMessageBox::warning(this, "Revisá los datos", errorNombre);
         return;
     }
-    const QString matricula = editMatricula->text().simplified().toUpper();
-    if (matricula.size() < 4) {
-        QMessageBox::warning(this, "Revisá los datos", "Ingresá la matrícula (ej: MN 123456).");
+    QString matricula = editMatricula->text().simplified().toUpper();
+    QString errorMatricula;
+    if (!Validaciones::matriculaValida(matricula, &errorMatricula)) {
+        QMessageBox::warning(this, "Revisá los datos", errorMatricula);
         return;
     }
+    /* "mn123456" y "MN 123456" son la misma matrícula: se guarda siempre como "MN 123456". */
+    const QRegularExpressionMatch partes = QRegularExpression("^([A-Z]+) ?(\\d+)$").match(matricula);
+    matricula = partes.captured(1) + " " + partes.captured(2);
     for (const Profesional &p : *datos) {
         if (p.matricula == matricula) {
             QMessageBox::warning(this, "Revisá los datos", "Ya hay un profesional con esa matrícula.");
@@ -223,19 +254,15 @@ void PaginaProfesionales::agregarProfesional()
     }
     Profesional nuevo = { editNombre->text().simplified(), matricula, true, {}, {} };
     if (repo) {   /* en la base el profesional necesita cuenta propia: usuario, clave, email y teléfono */
-        bool ok = false;
-        const QString email = QInputDialog::getText(this, "Alta de profesional", "Email:", QLineEdit::Normal, QString(), &ok);
-        if (!ok)
+        /* Cada dato se pide de nuevo hasta que sea válido; Cancelar corta el alta. */
+        QString email, telefono, usuario, clave;
+        if (!pedirDato(this, "Email:", QLineEdit::Normal, &email,
+                       [](const QString &t, QString *e) { return Validaciones::emailValido(t, true, e); })
+            || !pedirDato(this, "Teléfono (solo números):", QLineEdit::Normal, &telefono, Validaciones::telefonoValido)
+            || !pedirDato(this, "Usuario (minúsculas, sin espacios):", QLineEdit::Normal, &usuario, Validaciones::usuarioValido)
+            || !pedirDato(this, "Contraseña inicial (6 a 50 caracteres, sin espacios):", QLineEdit::Password, &clave, Validaciones::claveValida))
             return;
-        const QString telefono = QInputDialog::getText(this, "Alta de profesional", "Teléfono (solo números):", QLineEdit::Normal, QString(), &ok);
-        if (!ok)
-            return;
-        const QString usuario = QInputDialog::getText(this, "Alta de profesional", "Usuario (minúsculas, sin espacios):", QLineEdit::Normal, QString(), &ok);
-        if (!ok)
-            return;
-        const QString clave = QInputDialog::getText(this, "Alta de profesional", "Contraseña inicial:", QLineEdit::Password, QString(), &ok);
-        if (!ok)
-            return;
+        telefono = Validaciones::normalizar(telefono).remove('+');
         const QString texto = editNombre->text().simplified();
         const int ultimo = texto.lastIndexOf(' ');
         const Respuesta r = repo->altaProfesional(matricula, ultimo > 0 ? texto.left(ultimo) : texto,

@@ -1,0 +1,369 @@
+/* Catálogo completo de protocolos. */
+
+.pagina {
+  padding-top: calc(72px + clamp(28px, 5vw, 56px));
+  padding-bottom: 120px;
+  min-height: 100svh;
+}
+
+.titulo-pagina {
+  font-size: clamp(38px, 5.4vw, 68px);
+}
+
+.titulo-panel {
+  font-size: clamp(26px, 3vw, 34px);
+}
+
+.herramientas {
+  display: grid;
+  gap: 16px;
+  margin-top: 36px;
+  max-width: 860px;
+}
+
+.herramientas__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.herramienta {
+  flex: 1 1 200px;
+}
+
+.herramienta .etiqueta-campo {
+  margin-bottom: 6px;
+}
+
+.vistas {
+  display: flex;
+  gap: 8px;
+}
+
+.conteo {
+  margin-top: 28px;
+  color: var(--texto-2);
+  font-size: 15px;
+}
+
+/* ---------- Lista ---------- */
+
+.carta {
+  display: grid;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 860px;
+}
+
+.carta--completa li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: start;
+  border-bottom: 1px solid var(--borde-tarjeta);
+}
+
+.comparar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.comparar input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--rosa);
+  cursor: pointer;
+}
+
+.carta__fila {
+  display: block;
+  width: 100%;
+  padding: 12px 4px 14px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.carta__linea1 {
+  display: grid;
+  grid-template-columns: auto minmax(16px, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.carta__nombre {
+  font-family: var(--serif);
+  font-size: clamp(19px, 2.2vw, 24px);
+}
+
+.carta__relleno {
+  align-self: end;
+  margin-bottom: 7px;
+  border-bottom: 2px dotted var(--dorado-linea);
+}
+
+.carta__precio {
+  font-weight: 700;
+}
+
+.carta__meta {
+  display: block;
+  margin-top: 2px;
+  color: var(--texto-2);
+  font-size: 15px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .carta__fila:hover .carta__nombre {
+    color: var(--rosa-hover);
+  }
+}
+
+.sin-resultados {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  max-width: 560px;
+  margin-top: 24px;
+  padding: 24px;
+}
+
+@media (max-width: 480px) {
+  .carta__linea1 {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .carta__relleno {
+    display: none;
+  }
+}
+
+/* ---------- Vitrina ---------- */
+
+.vitrina {
+  margin-top: 24px;
+}
+
+.vitrina__marco {
+  position: relative;
+  height: 420px;
+  border: 1px solid var(--borde-tarjeta);
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--tarjeta), var(--crema-2));
+  overflow: hidden;
+}
+
+.vitrina__lienzo {
+  position: absolute;
+  inset: 0;
+}
+
+.vitrina__lienzo canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.vitrina__etiquetas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vitrina__etiqueta {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  justify-items: center;
+  width: 150px;
+  min-height: 44px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(255 253 250 / 0.85);
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background-color 0.15s;
+}
+
+.vitrina__etiqueta span:first-child {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.vitrina__etiqueta.activa {
+  background: var(--rosa-suave);
+}
+
+.vitrina__pie {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
+}
+
+.punto {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.paginador {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ---------- Comparador ---------- */
+
+.comparador {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 35;
+  padding-block: 12px;
+  background: rgb(255 253 250 / 0.96);
+  border-top: 1px solid var(--borde-campo);
+  box-shadow: 0 -12px 30px -22px rgb(58 43 43 / 0.5);
+}
+
+.comparador[hidden] {
+  display: none;
+}
+
+.comparador__fila {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.comparador__acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.ficha--ancha {
+  width: min(860px, calc(100vw - 24px));
+}
+
+.tabla-envoltura {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.tabla th,
+.tabla td {
+  padding: 12px 12px 12px 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--borde-tarjeta);
+}
+
+.tabla thead th {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.tabla tbody th {
+  width: 130px;
+  color: var(--dorado);
+  font-size: 14px;
+}
+
+/* ---------- Ficha ---------- */
+
+.ficha__caja {
+  position: relative;
+}
+
+.ficha__categoria {
+  color: var(--dorado);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ficha h2 {
+  margin-top: 6px;
+  padding-right: 40px;
+  font-size: clamp(26px, 4vw, 36px);
+}
+
+.ficha__desc {
+  margin-top: 10px;
+  color: var(--texto-2);
+}
+
+.ficha__datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 24px;
+  margin: 24px 0 0;
+}
+
+.ficha__datos dt {
+  color: var(--dorado);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ficha__datos dd {
+  margin: 2px 0 0;
+}
+
+.ficha__datos .ancho {
+  grid-column: 1 / -1;
+}
+
+.ficha__aviso {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--dorado-suave);
+  border: 1px solid var(--dorado-borde);
+  font-size: 15px;
+}
+
+.ficha__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+@media (max-width: 520px) {
+  .ficha__datos {
+    grid-template-columns: 1fr;
+  }
+}

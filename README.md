@@ -292,13 +292,14 @@ Arrancó con el frontend de escritorio y el diseño de la base de datos:
   procedures (funcionalidades, 8 reportes, auditoría, 2 `_tuneado`) y las
   pruebas. El plan semanal está en `docs/reparto-4to-bimestre.md`.
 - `web/`: el sitio para la paciente (apartado Web). Inicio con un modelo 3D
-  de las capas de la piel (tocás una capa y ves qué protocolos actúan ahí),
-  catálogo con buscador y una vitrina 3D donde cada objeto es un protocolo
-  (tocalo para ver su ficha y reservarlo), calculadora de seña con gráfico,
-  reserva en 3 pasos con un reloj que muestra cuánto dura el turno, cupón y
-  pago simulado, y "Mi turno" para buscar y cancelar por DNI, con un anillo
-  que marca el plazo de 24 h para el reembolso. Por ahora con datos fijos (los
-  mismos de `frontend/gestion/datosprueba.cpp`). Para verlo:
+  de las capas de la piel (tocás una capa, ves qué protocolos actúan ahí y, al
+  señalar uno, su herramienta actuando), carta de protocolos, calculadora de
+  seña, equipo, preguntas frecuentes y horarios. `protocolos.html` tiene los 44
+  protocolos de la base con buscador, filtros, comparador de hasta 3, ficha
+  completa y una vitrina 3D (cada objeto es un protocolo). La reserva en 3 pasos
+  pide una consulta prequirúrgica antes de cualquier cirugía, y "Mi turno"
+  busca y cancela por DNI. El catálogo sale de `backend/02_datos.sql`
+  (`npm run generar`); sin API, la reserva usa horarios de ejemplo. Para verlo: 
   `cd web && npm install && npm run dev`, y abrir `http://localhost:5173`.
 - **Arquitectura**: la base va en Aiven (MySQL gratuito), los recordatorios
   salen con n8n desde una VM gratuita de Google Cloud, con Telegram en

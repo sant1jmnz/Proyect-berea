@@ -4,352 +4,218 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dermalia · Reservá tu turno</title>
-    <meta name="description" content="Dermalia, Instituto de Estética Médica en Flores, CABA. Elegí tu protocolo, tu horario y confirmá tu turno en tres pasos." />
+    <meta name="description" content="Dermalia, Instituto de Estética Médica en Flores, CABA. Mirá los protocolos con su precio, elegí tu horario libre y confirmá tu turno con una seña." />
     <meta name="theme-color" content="#FCF8F2" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script>document.documentElement.classList.replace('sin-js', 'con-js');</script>
     <link rel="stylesheet" href="/src/estilos/base.css" />
     <link rel="stylesheet" href="/src/estilos/componentes.css" />
+    <link rel="stylesheet" href="/src/estilos/inicio.css" />
   </head>
   <body data-pagina="inicio">
     <a class="saltar" href="#contenido">Saltar al contenido</a>
-
-    <!-- Loader: la D se dibuja y se vuelve gota (ivan.technology). -->
-    <div class="cargador" aria-hidden="true">
-      <div class="cargador__centro">
-        <svg class="cargador__logo" viewBox="0 0 92 92" fill="none" stroke="#A8475F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle class="cargador__aro" cx="46" cy="46" r="44" stroke="#D9C3A0" />
-          <path class="cargador__d" d="M36 28h10c11 0 19 8 19 18s-8 18-19 18H36z" />
-        </svg>
-        <div class="cargador__barra"><div class="cargador__progreso"></div></div>
-        <div class="cargador__pie"><span>Dermalia</span><span class="cargador__porcentaje numero">0%</span></div>
-      </div>
-    </div>
-
-    <div class="telon" aria-hidden="true">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-        <path class="telon__ola" fill="#A8475F" d="M0 100 C 30 100 70 100 100 100 L100 100 L0 100 Z" />
-      </svg>
-    </div>
-
-    <div class="cursor" aria-hidden="true"></div>
-    <div class="cursor__punto" aria-hidden="true"></div>
 
     <header class="cabecera">
       <div class="envoltura cabecera__fila">
         <a class="marca" href="/" aria-label="Dermalia, inicio">
           <span class="marca__d" aria-hidden="true">D</span>
-          <span class="rueda" data-rueda>Dermalia</span>
+          Dermalia
         </a>
         <nav class="nav" aria-label="Principal">
-          <a class="nav__link" href="#protocolos">Protocolos</a>
-          <a class="nav__link" href="#sena">La seña</a>
-          <a class="nav__link" href="/mi-turno.html" data-transicion>Mi turno</a>
-          <a class="boton boton--chico" href="/reservar.html" data-transicion data-magnetico><span class="rueda" data-rueda>Sacar un turno</span></a>
+          <a class="nav__link" href="/protocolos.html">Protocolos</a>
+          <a class="nav__link" href="#equipo">Equipo</a>
+          <a class="nav__link" href="#preguntas">Preguntas</a>
+          <a class="nav__link" href="/mi-turno.html">Mi turno</a>
+          <a class="boton boton--chico boton--primario" href="/reservar.html">Sacar un turno</a>
         </nav>
       </div>
     </header>
 
     <main id="contenido">
-      <!-- Hero: la perla 3D (tesseract) sobre ilustraciones de línea (pixelismo). -->
+      <!-- Hero: propuesta clara + el modelo de la piel, que sirve para elegir. -->
       <section class="hero" aria-labelledby="titulo-hero">
-        <div class="formas" aria-hidden="true">
-          <svg viewBox="0 0 600 600" style="width: 62vw; right: -12vw; top: -8vw" data-parallax="0.25">
-            <path class="forma forma--1" fill="#F7E8EB" d="M421 99c56 41 104 113 96 182-8 70-72 138-146 170-75 33-160 30-216-13S75 312 86 236c11-77 62-146 129-171 66-25 150 0 206 34Z" />
-          </svg>
-          <svg viewBox="0 0 600 600" style="width: 34vw; left: -10vw; bottom: -6vw" data-parallax="-0.15">
-            <path class="forma forma--2" fill="#FBF3E6" d="M452 168c40 60 39 151-2 214-41 64-122 100-197 89-76-11-145-70-162-141-17-72 18-156 82-205 65-49 239-17 279 43Z" />
-          </svg>
-        </div>
-
-        <div class="hero__fondo" aria-hidden="true">
-          <!-- Gotero -->
-          <svg class="ilustracion" viewBox="0 0 200 220" style="width: 150px; left: 4%; top: 18%" fill="none" stroke="#D9C3A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-parallax="0.4">
-            <path d="M78 96h44a18 18 0 0 1 18 18v74a18 18 0 0 1-18 18H78a18 18 0 0 1-18-18v-74a18 18 0 0 1 18-18Z" />
-            <path d="M82 96V74h36v22" />
-            <path d="M88 74V46a12 12 0 0 1 24 0v28" />
-            <path d="M76 138h48M76 154h30" />
-          </svg>
-          <!-- Rama -->
-          <svg class="ilustracion" viewBox="0 0 200 200" style="width: 190px; right: 6%; bottom: 8%" fill="none" stroke="#D9C3A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-parallax="0.6">
-            <path d="M22 182C62 142 110 98 180 22" />
-            <path d="M64 140c-22-4-38-20-42-44 24 2 42 18 42 44Z" />
-            <path d="M96 106c-4-22 4-42 22-56 8 22 0 42-22 56Z" />
-            <path d="M98 128c20-10 42-8 60 6-20 12-42 10-60-6Z" />
-            <path d="M138 66c16-12 34-14 50-6-14 14-32 16-50 6Z" />
-          </svg>
-          <!-- Pote -->
-          <svg class="ilustracion" viewBox="0 0 200 200" style="width: 120px; left: 38%; bottom: 6%" fill="none" stroke="#D9C3A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" data-parallax="0.3">
-            <path d="M40 112h120v56a18 18 0 0 1-18 18H58a18 18 0 0 1-18-18v-56Z" />
-            <path d="M50 112V94a8 8 0 0 1 8-8h84a8 8 0 0 1 8 8v18" />
-            <path d="M62 142c12 8 64 8 76 0" />
-          </svg>
-        </div>
-
         <div class="envoltura hero__grilla">
-          <div>
-            <h1 class="hero__titulo" id="titulo-hero" data-revelar>Tu piel, tu horario, <em>sin esperar</em></h1>
-            <svg class="hero__subrayado" viewBox="0 0 420 34" fill="none" aria-hidden="true">
-              <path d="M6 22C70 8 150 6 230 14s130 12 184-6" stroke="#D9C3A0" stroke-width="3" stroke-linecap="round" />
-              <path d="M40 28c60-8 140-10 220-4" stroke="#A8475F" stroke-width="2" stroke-linecap="round" stroke-opacity="0.5" />
-            </svg>
-            <p class="hero__bajada" data-aparecer>
-              Elegí el protocolo, mirá los horarios libres y confirmá tu turno con una seña. Tres pasos,
-              sin esperar que te respondan por WhatsApp.
+          <div class="hero__texto">
+            <h1 class="hero__titulo" id="titulo-hero">Tu piel, tu horario, <em>sin esperar</em></h1>
+            <p class="hero__bajada">
+              Elegí el protocolo, mirá los horarios libres de verdad y confirmá tu turno con una seña.
+              Sin esperar que te respondan por WhatsApp.
             </p>
-            <div class="hero__acciones" data-aparecer>
-              <a class="boton boton--primario" href="/reservar.html" data-transicion data-magnetico><span class="rueda" data-rueda>Sacar un turno</span></a>
-              <a class="boton" href="#protocolos" data-magnetico><span class="rueda" data-rueda>Ver protocolos y precios</span></a>
+            <div class="hero__acciones">
+              <a class="boton boton--primario" href="/reservar.html">Sacar un turno</a>
+              <a class="boton" href="/protocolos.html">Ver protocolos y precios</a>
             </div>
+            <ul class="hero__datos">
+              <li>Lunes a sábado, en Flores, CABA</li>
+              <li>Seña del 30 %, devuelta si cancelás con más de 24 h</li>
+              <li>Pago simulado: no te pedimos tarjeta</li>
+            </ul>
           </div>
 
-          <!-- Capas de la piel en 3D: elegí una y mirá qué protocolos actúan ahí. -->
-          <div class="hero__escena piel" data-piel>
-            <div class="piel__lienzo" data-piel-lienzo></div>
-            <svg class="piel__lineas" aria-hidden="true">
-              <path data-linea="epidermis" />
-              <path data-linea="dermis" />
-              <path data-linea="hipodermis" />
-            </svg>
-            <div class="piel__rotulos" role="group" aria-label="Capas de la piel: elegí una para ver sus protocolos">
-              <button type="button" class="piel__rotulo" data-capa="epidermis" aria-pressed="false"><strong>Epidermis</strong><span>superficie</span></button>
-              <button type="button" class="piel__rotulo" data-capa="dermis" aria-pressed="false"><strong>Dermis</strong><span>colágeno y vello</span></button>
-              <button type="button" class="piel__rotulo" data-capa="hipodermis" aria-pressed="false"><strong>Hipodermis</strong><span>volumen</span></button>
-            </div>
-            <div class="piel__info tarjeta" data-piel-info aria-live="polite" hidden></div>
-            <p class="hero__pista" data-piel-pista>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="3" />
-                <circle class="pista__onda" cx="12" cy="12" r="8" stroke-opacity="0.5" />
+          <!-- Capas de la piel: elegí una y mirá qué protocolos actúan ahí. -->
+          <div class="hero__piel">
+            <h2 class="piel__titulo">¿Dónde actúa cada tratamiento?</h2>
+            <div class="piel" data-piel>
+              <div class="piel__lienzo" data-piel-lienzo></div>
+              <svg class="piel__lineas" aria-hidden="true">
+                <path data-linea="epidermis" />
+                <path data-linea="dermis" />
+                <path data-linea="hipodermis" />
               </svg>
-              Tocá una capa para ver qué protocolos actúan ahí. Mantené apretado para separarlas.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Cifras que cuentan al aparecer (dark-moon). -->
-      <section class="envoltura" aria-label="Dermalia en números">
-        <div class="cifras">
-          <div class="cifra">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
-              <path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11Z" />
-              <path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" />
-            </svg>
-            <span class="cifra__valor numero" data-contar="3">3</span>
-            <span class="cifra__texto">pasos para reservar, desde el celu o la compu</span>
-          </div>
-          <div class="cifra">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 2" />
-            </svg>
-            <span class="cifra__valor numero"><span data-contar="24">24</span> h</span>
-            <span class="cifra__texto">antes del turno podés cancelar y te devolvemos la seña</span>
-          </div>
-          <div class="cifra">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
-              <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
-            <span class="cifra__valor numero"><span data-contar="30">30</span> %</span>
-            <span class="cifra__texto">de seña para confirmar; el resto se paga en el instituto</span>
-          </div>
-        </div>
-      </section>
-
-      <svg class="ola-divisoria" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="none" stroke="#D9C3A0" stroke-width="1.5" d="M0 45C240 10 480 80 720 45S1200 10 1440 45" data-ola="M0 45C240 80 480 10 720 45S1200 80 1440 45" />
-        <path fill="none" stroke="#A8475F" stroke-opacity="0.35" stroke-width="1" d="M0 60C300 30 520 90 760 55S1180 25 1440 60" data-ola="M0 30C300 70 520 20 760 60S1180 75 1440 30" />
-      </svg>
-
-      <!-- Cómo funciona: un trazo dorado une los tres pasos. -->
-      <section class="seccion" id="como-funciona" aria-labelledby="titulo-pasos">
-        <div class="envoltura">
-          <h2 class="titulo-seccion" id="titulo-pasos" data-revelar>Cómo se saca un turno</h2>
-          <p class="bajada" data-aparecer>El mismo recorrido que en la terminal del instituto, ahora desde donde estés.</p>
-
-          <div class="pasos">
-            <svg class="pasos__trazo" viewBox="0 0 1200 200" preserveAspectRatio="none" fill="none" aria-hidden="true">
-              <path data-trazo-scroll stroke="#D9C3A0" stroke-width="1.5"
-                d="M52 92C230 -10 330 190 452 92S700 -10 852 92s270 100 330 0" />
-            </svg>
-
-            <article class="paso">
-              <div class="paso__icono">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
-                  <path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11Z" />
-                  <path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" />
-                </svg>
-                <span class="paso__numero numero">1</span>
+              <div class="piel__rotulos" role="group" aria-label="Capas de la piel: elegí una para ver sus protocolos">
+                <button type="button" class="piel__rotulo" data-capa="epidermis" aria-pressed="false"><strong>Epidermis</strong><span>superficie</span></button>
+                <button type="button" class="piel__rotulo" data-capa="dermis" aria-pressed="false"><strong>Dermis</strong><span>colágeno y vello</span></button>
+                <button type="button" class="piel__rotulo" data-capa="hipodermis" aria-pressed="false"><strong>Hipodermis</strong><span>volumen</span></button>
               </div>
+            </div>
+            <button type="button" class="boton boton--chico piel__separar" data-separar aria-pressed="false">Separar las capas</button>
+            <div class="piel__info tarjeta" data-piel-info aria-live="polite">
+              <p class="nota">Tocá una capa para ver qué protocolos actúan ahí. Al señalar uno, vas a ver con qué se trabaja.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cómo se reserva: el mismo recorrido que la terminal del instituto. -->
+      <section class="seccion seccion--clara" id="como-funciona" aria-labelledby="titulo-pasos">
+        <div class="envoltura">
+          <h2 class="titulo-seccion" id="titulo-pasos" data-aparecer>Tres pasos, desde el celu o la compu</h2>
+          <ol class="pasos">
+            <li class="paso" data-aparecer>
+              <span class="paso__numero numero" aria-hidden="true">1</span>
               <h3>Elegí tu protocolo</h3>
-              <p>Uno o varios en el mismo turno. Ves el precio y cuánto dura cada uno antes de seguir.</p>
-            </article>
-
-            <article class="paso">
-              <div class="paso__icono">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
-                  <rect x="3" y="5" width="18" height="16" rx="2" />
-                  <path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" />
-                </svg>
-                <span class="paso__numero numero">2</span>
-              </div>
+              <p>Uno o varios en el mismo turno. Antes de seguir ves cuánto dura y cuánto sale cada uno.</p>
+            </li>
+            <li class="paso" data-aparecer style="--demora: 0.08s">
+              <span class="paso__numero numero" aria-hidden="true">2</span>
               <h3>Elegí tu horario</h3>
-              <p>Solo aparecen los horarios libres de verdad, los mismos que ve la recepción.</p>
-            </article>
-
-            <article class="paso">
-              <div class="paso__icono">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="m8 12 3 3 5-6" />
-                </svg>
-                <span class="paso__numero numero">3</span>
-              </div>
+              <p>Solo aparecen los horarios que están libres, los mismos que ve la recepción.</p>
+            </li>
+            <li class="paso" data-aparecer style="--demora: 0.16s">
+              <span class="paso__numero numero" aria-hidden="true">3</span>
               <h3>Confirmá con la seña</h3>
-              <p>Pagás la seña (en esta versión es simulada) y te llega el recordatorio. Lo podés sumar a tu Google Calendar.</p>
-            </article>
-          </div>
+              <p>Te llega el recordatorio y podés sumar el turno a tu Google Calendar. Si necesitás cancelar, lo hacés con tu DNI.</p>
+            </li>
+          </ol>
         </div>
       </section>
 
-      <div class="marquesina" aria-hidden="true">
-        <div class="marquesina__pista" data-marquesina></div>
-      </div>
-
-      <!-- Catálogo con buscador (RF-05) y vitrina 3D (pixelismo). -->
-      <section class="seccion" id="protocolos" aria-labelledby="titulo-catalogo">
+      <!-- Carta de protocolos con precios (RF-05). -->
+      <section class="seccion" id="protocolos" aria-labelledby="titulo-carta">
         <div class="envoltura">
-          <h2 class="titulo-seccion" id="titulo-catalogo" data-revelar>Protocolos y precios</h2>
-          <p class="bajada" data-aparecer>Buscá por nombre o por lo que querés tratar. Si no encontrás algo, escribinos.</p>
-
-          <div class="catalogo">
+          <div class="carta__cabeza">
             <div>
-              <div class="chips" role="group" aria-label="Filtrar por categoría" data-chips></div>
-              <label class="buscador">
-                <span class="solo-lectores">Buscar protocolo</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-4-4" />
-                </svg>
-                <input class="campo" type="search" placeholder="Por ejemplo: manchas, láser, hidratación…" autocomplete="off" data-buscar />
-              </label>
-              <ul class="lista-protocolos" data-lista aria-live="polite"></ul>
-              <div class="sin-resultados tarjeta" data-sin-resultados hidden>
-                <svg class="sin-resultados__ilustracion" viewBox="0 0 120 90" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="50" cy="42" r="24" stroke="#D9C3A0" stroke-width="2" />
-                  <path d="m68 60 16 16" stroke="#A8475F" stroke-width="3" />
-                  <path d="M42 36c2-4 6-6 10-6" stroke="#D9C3A0" stroke-width="2" />
-                  <path class="destello" d="M96 18v10M91 23h10M20 70v6M17 73h6" stroke="#A8475F" stroke-width="2" />
-                </svg>
-                <p>No encontramos un protocolo con esa palabra. Te respondemos por WhatsApp.</p>
-                <a class="boton" href="https://wa.me/" target="_blank" rel="noopener" data-whatsapp>Consultar por WhatsApp</a>
-              </div>
+              <h2 class="titulo-seccion" id="titulo-carta" data-aparecer>Los protocolos más pedidos</h2>
+              <p class="bajada" data-aparecer>Precios de referencia por sesión. En la lista completa podés buscar, filtrar y comparar.</p>
             </div>
-
-            <!-- Vitrina 3D: cada objeto es un protocolo; tocalo para ver su ficha. -->
-            <div class="vitrina" data-vitrina>
-              <p class="vitrina__rotulo" data-vitrina-rotulo aria-hidden="true">Todos</p>
-              <p class="vitrina__ayuda">Cada objeto es un protocolo. Tocalo para ver su ficha; cuanto más grande, más caro.</p>
-              <div class="vitrina__tooltip numero" data-vitrina-tooltip aria-hidden="true" hidden></div>
-              <div class="vitrina__detalle tarjeta" data-vitrina-detalle aria-live="polite" hidden></div>
-            </div>
+            <a class="boton" href="/protocolos.html" data-aparecer><span data-total-protocolos>Ver todos</span></a>
           </div>
+          <div class="chips" role="group" aria-label="Categoría" data-carta-chips></div>
+          <ul class="carta" data-carta aria-live="polite"></ul>
+          <p class="nota carta__aviso" data-carta-aviso hidden></p>
         </div>
       </section>
 
       <!-- Seña transparente (RF-10): calculadora. -->
-      <section class="seccion" id="sena" aria-labelledby="titulo-sena">
+      <section class="seccion seccion--clara" id="sena" aria-labelledby="titulo-sena">
         <div class="envoltura sena">
           <div>
-            <h2 class="titulo-seccion" id="titulo-sena" data-revelar>La seña, clara desde el principio</h2>
-            <ul class="sena__lista">
-              <li data-aparecer>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
-                  <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z" /><path d="m9 12 2 2 4-4" />
-                </svg>
-                <span><strong>Te la devolvemos entera</strong> si cancelás con más de 24 horas de anticipación.</span>
-              </li>
-              <li data-aparecer>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
-                  <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
-                </svg>
-                <span><strong>Con menos de 24 horas</strong> o si no venís, la seña no se devuelve.</span>
-              </li>
-              <li data-aparecer>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar>
-                  <rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18M7 15h4" />
-                </svg>
-                <span><strong>En esta versión el pago es simulado:</strong> no te pedimos tarjeta.</span>
-              </li>
+            <h2 class="titulo-seccion" id="titulo-sena" data-aparecer>La seña, clara desde el principio</h2>
+            <ul class="sena__reglas">
+              <li data-aparecer><strong>Te la devolvemos entera</strong> si cancelás con más de 24 horas de anticipación.</li>
+              <li data-aparecer><strong>Con menos de 24 horas</strong>, o si no venís, la seña no se devuelve.</li>
+              <li data-aparecer><strong>En cirugías es del 40 %</strong> y hace falta una consulta prequirúrgica antes.</li>
+              <li data-aparecer><strong>En esta versión el pago es simulado:</strong> no te pedimos tarjeta.</li>
             </ul>
           </div>
 
-          <div class="tarjeta-sena" data-aparecer>
+          <div class="calculadora tarjeta" data-aparecer>
             <label class="etiqueta-campo" for="calc-protocolo">Calculá tu seña</label>
             <select class="selector" id="calc-protocolo" data-calc-protocolo></select>
-            <div class="sena__resultado">
-              <div>
-                <p class="sena__monto numero" data-calc-monto aria-live="polite">$0</p>
-                <p class="sena__regla" data-calc-regla></p>
-              </div>
-              <!-- Qué parte del precio es la seña y qué parte se paga en el instituto. -->
-              <figure class="dona" aria-hidden="true">
-                <svg viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="48" fill="none" stroke="#E5D2B0" stroke-width="14" />
-                  <circle class="dona__sena" data-dona cx="60" cy="60" r="48" fill="none" stroke="#A8475F" stroke-width="14" stroke-linecap="round" transform="rotate(-90 60 60)" />
-                  <text x="60" y="58" text-anchor="middle" class="dona__pct numero" data-dona-pct>30 %</text>
-                  <text x="60" y="76" text-anchor="middle" class="dona__txt">de seña</text>
-                </svg>
-                <figcaption class="dona__leyenda">
-                  <span><i class="punto punto--rosa"></i>Seña ahora</span>
-                  <span><i class="punto punto--dorado"></i>En el instituto</span>
-                </figcaption>
-              </figure>
+            <p class="calculadora__monto numero" data-calc-monto aria-live="polite">$0</p>
+            <p class="nota" data-calc-regla></p>
+            <!-- La barra muestra qué parte del precio es la seña y qué parte se paga en el instituto. -->
+            <div class="barra" aria-hidden="true">
+              <div class="barra__sena" data-calc-barra></div>
             </div>
+            <p class="barra__leyenda" aria-hidden="true"><span>Seña ahora</span><span>En el instituto</span></p>
           </div>
         </div>
       </section>
 
-      <svg class="ola-divisoria" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="none" stroke="#D9C3A0" stroke-width="1.5" d="M0 45C240 10 480 80 720 45S1200 10 1440 45" data-ola="M0 45C240 80 480 10 720 45S1200 80 1440 45" />
-        <path fill="none" stroke="#A8475F" stroke-opacity="0.35" stroke-width="1" d="M0 60C300 30 520 90 760 55S1180 25 1440 60" data-ola="M0 30C300 70 520 20 760 60S1180 75 1440 30" />
-      </svg>
-
-      <section class="seccion cierre" aria-labelledby="titulo-cierre">
+      <section class="seccion" id="equipo" aria-labelledby="titulo-equipo">
         <div class="envoltura">
-          <h2 class="titulo-seccion" id="titulo-cierre" data-revelar>¿Ya tenés un turno?</h2>
-          <p class="bajada" data-aparecer>Buscalo con tu DNI o tu teléfono, sin crear una cuenta. Desde ahí también lo podés cancelar.</p>
-          <div class="hero__acciones" data-aparecer>
-            <a class="boton" href="/mi-turno.html" data-transicion data-magnetico><span class="rueda" data-rueda>Buscar mi turno</span></a>
+          <h2 class="titulo-seccion" id="titulo-equipo" data-aparecer>Quién te atiende</h2>
+          <p class="bajada" data-aparecer>Cada profesional hace solo los protocolos para los que está habilitada. En la reserva ves únicamente los horarios de quien corresponde.</p>
+          <ul class="equipo" data-equipo></ul>
+        </div>
+      </section>
+
+      <section class="seccion seccion--clara" id="preguntas" aria-labelledby="titulo-preguntas">
+        <div class="envoltura preguntas">
+          <h2 class="titulo-seccion" id="titulo-preguntas" data-aparecer>Preguntas frecuentes</h2>
+          <div class="preguntas__lista">
+            <details data-aparecer>
+              <summary>¿Cómo cancelo o cambio mi turno?</summary>
+              <p>Entrá a <a class="enlace" href="/mi-turno.html">Mi turno</a> con tu DNI o teléfono, sin crear una cuenta. Si cancelás con más de 24 horas, la seña vuelve entera.</p>
+            </details>
+            <details data-aparecer>
+              <summary>¿Qué pasa si es mi primera vez?</summary>
+              <p>Te pedimos nombre, DNI, teléfono y fecha de nacimiento al reservar. No hace falta llamar ni ir antes.</p>
+            </details>
+            <details data-aparecer>
+              <summary>¿Por qué las cirugías piden una consulta antes?</summary>
+              <p>Toda cirugía empieza con una consulta prequirúrgica, que tiene su propia seña. Solo se agenda la cirugía si la evaluación da "apto", y esa evaluación vale 6 meses. Si seguís con la cirugía, el valor de la consulta se devuelve.</p>
+            </details>
+            <details data-aparecer>
+              <summary>¿Cuánto se paga de seña?</summary>
+              <p>El 30 % del precio del protocolo, y el 40 % en cirugías. El resto lo pagás en el instituto. Podés calcularla arriba antes de reservar.</p>
+            </details>
+            <details data-aparecer>
+              <summary>¿Puedo usar un cupón o una tarjeta de regalo?</summary>
+              <p>Sí, en el último paso de la reserva. Se usa uno u otro: un cupón y una tarjeta de regalo no se pueden usar en el mismo turno.</p>
+            </details>
+            <details data-aparecer>
+              <summary>¿Cómo me avisan antes del turno?</summary>
+              <p>Te mandamos un recordatorio por Telegram o WhatsApp, y podés agregar el turno a tu Google Calendar al confirmar.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="seccion" id="donde" aria-labelledby="titulo-donde">
+        <div class="envoltura donde">
+          <h2 class="titulo-seccion" id="titulo-donde" data-aparecer>Dónde y cuándo</h2>
+          <dl class="donde__datos" data-aparecer>
+            <div><dt>Dónde</dt><dd>Dermalia, Instituto de Estética Médica<br />Flores, Ciudad de Buenos Aires<br /><span class="apagado">Dirección exacta: a confirmar.</span></dd></div>
+            <div><dt>Cuándo</dt><dd>Lunes a viernes de 9 a 19 h<br />Sábados de 9 a 13 h</dd></div>
+            <div><dt>Consultas</dt><dd><a class="enlace" href="https://wa.me/" target="_blank" rel="noopener" data-whatsapp>Escribinos por WhatsApp</a><br />Reservas online: todos los días, a cualquier hora.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="cierre" aria-labelledby="titulo-cierre">
+        <div class="envoltura cierre__caja">
+          <h2 class="titulo-seccion" id="titulo-cierre">¿Ya tenés un turno?</h2>
+          <p class="bajada">Buscalo con tu DNI o tu teléfono, sin crear una cuenta. Desde ahí también lo podés cancelar.</p>
+          <div class="hero__acciones">
+            <a class="boton boton--primario" href="/mi-turno.html">Buscar mi turno</a>
+            <a class="boton" href="/reservar.html">Sacar un turno nuevo</a>
           </div>
         </div>
       </section>
     </main>
 
-    <a class="boton boton--primario flotante" href="/reservar.html" data-transicion data-flotante tabindex="-1">Sacar un turno</a>
+    <a class="boton boton--primario flotante" href="/reservar.html" data-flotante tabindex="-1">Sacar un turno</a>
 
     <footer class="pie">
       <div class="envoltura">
         <div class="pie__grilla">
           <p>Dermalia, Instituto de Estética Médica<br />Flores, Ciudad de Buenos Aires</p>
           <p>Lunes a sábado<br /><a href="https://wa.me/" target="_blank" rel="noopener" data-whatsapp>Escribinos por WhatsApp</a></p>
-          <p><a href="/reservar.html" data-transicion>Sacar un turno</a><br /><a href="/mi-turno.html" data-transicion>Mi turno</a></p>
+          <p><a href="/protocolos.html">Protocolos y precios</a><br /><a href="/reservar.html">Sacar un turno</a><br /><a href="/mi-turno.html">Mi turno</a></p>
         </div>
-        <div class="pie__fondo">
-          <svg class="pie__rama" viewBox="0 0 260 200" fill="none" stroke="#D9C3A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-dibujar-scroll>
-            <path d="M10 190C70 150 150 110 250 20" />
-            <path d="M60 156c-26-2-46-20-52-48 28 0 48 20 52 48Z" />
-            <path d="M104 124c-6-26 2-50 24-66 10 26 0 50-24 66Z" />
-            <path d="M110 140c24-12 50-10 72 6-24 14-50 12-72-6Z" />
-            <path d="M168 82c18-14 40-16 58-6-16 16-38 18-58 6Z" />
-            <path d="M196 64c-2-20 6-38 22-48 6 20-2 38-22 48Z" />
-            <circle cx="232" cy="34" r="5" />
-            <circle cx="40" cy="176" r="3" />
-          </svg>
-          <p class="pie__marca" aria-hidden="true" data-pie-marca>Dermalia</p>
-        </div>
+        <p class="pie__aviso">Versión de demostración: la seña es simulada y el equipo que se muestra es de ejemplo.</p>
       </div>
     </footer>
 

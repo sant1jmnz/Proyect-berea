@@ -8,18 +8,10 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
   /* La cabecera fija no tapa lo que recibe el foco. */
   scroll-padding-top: 96px;
   -webkit-tap-highlight-color: rgb(247 232 235 / 0.6);
-}
-
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
 }
 
 body {
@@ -44,7 +36,8 @@ body::before {
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   font-family: var(--serif);
   font-weight: 500;
   line-height: 1.08;
@@ -128,4 +121,43 @@ a,
 .numero {
   font-family: var(--sans);
   font-variant-numeric: tabular-nums;
+}
+
+/* Reducir movimiento: sin desplazamientos animados ni revelados. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Revelado al llegar a la pantalla: solo opacidad y un desplazamiento corto. */
+.con-js [data-aparecer] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s var(--ease-salida), transform 0.5s var(--ease-salida);
+  transition-delay: var(--demora, 0s);
+}
+
+.con-js [data-aparecer].visto {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .con-js [data-aparecer] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* El atributo hidden siempre gana, aunque el elemento tenga display propio. */
+[hidden] {
+  display: none !important;
 }

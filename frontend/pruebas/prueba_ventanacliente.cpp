@@ -11,7 +11,10 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QInputDialog>
+#include <QMenu>
 #include <QStackedWidget>
+#include <QToolButton>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -238,30 +241,37 @@ private slots:
     {
         VentanaCliente w;
         auto *cal = w.findChild<QCalendarWidget *>("calendario");
-        QCOMPARE(cal->minimumDate(), QDate(2026, 1, 1));
-        tocarEnDialogo("No, elegir otro día");   /* el calendario lo sube a 1/1/2026, que ya pasó: avisa */
+        QVERIFY(cal->minimumDate() >= QDate(2026, 1, 1));
+        /* Qt lleva una fecha fuera de rango al primer día permitido (el 1 del mes actual). */
+        if (QDate::currentDate().day() > 1)
+            tocarEnDialogo("No, elegir otro día");
         cal->setSelectedDate(QDate(2025, 5, 1));
-        QVERIFY(cal->selectedDate().year() >= 2026);
+        QVERIFY(cal->selectedDate() >= QDate(2026, 1, 1));
+        QVERIFY(cal->selectedDate() >= cal->minimumDate());
     }
 
-    void mesPasadoPreguntaPorElAnioQueViene()
+    void losMesesQueYaPasaronQuedanBloqueados()
     {
         const QDate hoy = QDate::currentDate();
-        if (hoy.year() != 2026 || hoy.month() < 3)
-            QSKIP("Hace falta un mes ya pasado de 2026");
         VentanaCliente w;
         auto *cal = w.findChild<QCalendarWidget *>("calendario");
-
-        QString texto;
-        tocarEnDialogo("Sí, para 2027", &texto);
-        cal->setSelectedDate(QDate(2026, 1, 15));
-        QVERIFY2(texto.contains("enero") && texto.contains("2026") && texto.contains("2027"), qPrintable(texto));
-        QCOMPARE(cal->selectedDate(), QDate(2027, 1, 15));
-
-        /* Si dice que no, vuelve a hoy. */
-        tocarEnDialogo("No, elegir otro día");
-        cal->setSelectedDate(QDate(2026, 2, 10));
-        QCOMPARE(cal->selectedDate(), hoy);
+        QCOMPARE(cal->minimumDate(), std::max(QDate(2026, 1, 1), QDate(hoy.year(), hoy.month(), 1)));
+        if (hoy.year() == 2026 && hoy.month() > 1) {
+            if (hoy.day() > 1)
+                tocarEnDialogo("No, elegir otro día");
+            cal->setSelectedDate(QDate(2026, 1, 15));   /* un mes pasado no se puede quedar elegido */
+            QVERIFY(cal->selectedDate() >= QDate(hoy.year(), hoy.month(), 1));
+            /* en el selector de mes, los meses pasados aparecen deshabilitados */
+            auto *botonMes = cal->findChild<QToolButton *>("qt_calendar_monthbutton");
+            QVERIFY(botonMes && botonMes->menu());
+            const auto acciones = botonMes->menu()->actions();
+            QCOMPARE(acciones.size(), 12);
+            for (int mes = 1; mes <= 12; ++mes)
+                QCOMPARE(acciones[mes - 1]->isEnabled(), mes >= hoy.month());
+        }
+        /* el año que viene se puede elegir entero, enero incluido */
+        cal->setSelectedDate(QDate(hoy.year() + 1, 1, 15));
+        QCOMPARE(cal->selectedDate(), QDate(hoy.year() + 1, 1, 15));
     }
 
     void unDiaPasadoDelMesActualPregunta()
@@ -276,6 +286,50 @@ private slots:
         cal->setSelectedDate(hoy.addDays(-2));
         QVERIFY2(texto.contains("ya pasó"), qPrintable(texto));
         QCOMPARE(cal->selectedDate(), hoy.addDays(-2).addYears(1));
+    }
+
+    void cancelarConVariosTurnosPideElegirCual()
+    {
+        VentanaCliente w;
+        w.show();
+        QVERIFY(sacarTurno(w, diaHabil(10), 0, "Ana Paz", "35111222", "1166667777", true));
+        QVERIFY(sacarTurno(w, diaHabil(12), 1, "Ana Paz", "35111222", "1166667777", false));
+        QCOMPARE(w.turnosCargados().size(), 2);
+
+        /* Se muestra el próximo; al cancelar, primero pregunta cuál de los dos. */
+        QString opciones;
+        QTimer::singleShot(30, [&opciones]() {
+            auto *d = QApplication::activeModalWidget() ? qobject_cast<QInputDialog *>(QApplication::activeModalWidget()) : nullptr;
+            QVERIFY(d);
+            opciones = d->comboBoxItems().join(" | ");
+            d->setTextValue(d->comboBoxItems().last());   /* el segundo turno */
+            d->accept();
+        });
+        tocarEnDialogo("Yes");
+        QTimer::singleShot(400, []() { tocarEnDialogo("OK"); });
+        boton(w, "btnCancelarMiTurno")->click();
+
+        QVERIFY2(opciones.contains("1)") && opciones.contains("2)"), qPrintable(opciones));
+        QCOMPARE(w.turnosCargados().size(), 2);
+        QCOMPARE(w.turnosCargados()[0].estado, EstadoTurno::Confirmado);   /* el primero sigue en pie */
+        QCOMPARE(w.turnosCargados()[1].estado, EstadoTurno::Cancelado);    /* se canceló el que se eligió */
+        QCOMPARE(w.findChild<QLabel *>("lblEstadoTurno")->text(), QString("Confirmado"));   /* queda a la vista el que sobra */
+    }
+
+    void cancelarConVariosTurnosYVolverNoCancelaNada()
+    {
+        VentanaCliente w;
+        w.show();
+        QVERIFY(sacarTurno(w, diaHabil(10), 0, "Ana Paz", "35111222", "1166667777", true));
+        QVERIFY(sacarTurno(w, diaHabil(12), 1, "Ana Paz", "35111222", "1166667777", true));
+        QTimer::singleShot(30, []() {
+            auto *d = qobject_cast<QInputDialog *>(QApplication::activeModalWidget());
+            QVERIFY(d);
+            d->reject();   /* "Volver" */
+        });
+        boton(w, "btnCancelarMiTurno")->click();
+        for (const Turno &t : w.turnosCargados())
+            QCOMPARE(t.estado, EstadoTurno::Confirmado);
     }
 
     void paraElAnioQueViene2027FuncionaElFlujo()

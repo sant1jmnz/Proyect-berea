@@ -15,24 +15,17 @@
   <body data-pagina="reservar">
     <a class="saltar" href="#contenido">Saltar al contenido</a>
 
-    <div class="telon" aria-hidden="true">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-        <path class="telon__ola" fill="#A8475F" d="M0 100 C 30 100 70 100 100 100 L100 100 L0 100 Z" />
-      </svg>
-    </div>
-    <div class="cursor" aria-hidden="true"></div>
-    <div class="cursor__punto" aria-hidden="true"></div>
 
     <header class="cabecera con-fondo">
       <div class="envoltura cabecera__fila">
-        <a class="marca" href="/" data-transicion aria-label="Dermalia, inicio">
+        <a class="marca" href="/" aria-label="Dermalia, inicio">
           <span class="marca__d" aria-hidden="true">D</span>
-          <span class="rueda" data-rueda>Dermalia</span>
+          Dermalia
         </a>
         <nav class="nav" aria-label="Principal">
-          <a class="nav__link" href="/#protocolos" data-transicion>Protocolos</a>
-          <a class="nav__link" href="/mi-turno.html" data-transicion>Mi turno</a>
-          <a class="boton boton--chico" href="/" data-transicion data-magnetico><span class="rueda" data-rueda>Inicio</span></a>
+          <a class="nav__link" href="/protocolos.html">Protocolos</a>
+          <a class="nav__link" href="/mi-turno.html">Mi turno</a>
+          <a class="boton boton--chico" href="/">Inicio</a>
         </nav>
       </div>
     </header>
@@ -43,7 +36,7 @@
         <p class="bajada" data-aparecer>Tocá una opción para continuar. Podés volver atrás en cualquier momento.</p>
 
         <!-- Indicador de pasos: la línea dorada avanza y el ✓ se dibuja. -->
-        <ol class="indicador" data-aparecer aria-label="Pasos de la reserva">
+        <ol class="indicador" aria-label="Pasos de la reserva">
           <li class="indicador__paso" data-indicador="1" aria-current="step">
             <span class="indicador__circulo numero">
               <span class="indicador__num">1</span>
@@ -65,10 +58,6 @@
             </span>
             3 · Confirmar
           </li>
-          <svg class="indicador__linea" viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true">
-            <line x1="0" y1="1" x2="100" y2="1" stroke="#E8DCCF" stroke-width="2" />
-            <line data-indicador-linea x1="0" y1="1" x2="100" y2="1" stroke="#D9C3A0" stroke-width="2" />
-          </svg>
         </ol>
       </div>
 
@@ -78,9 +67,19 @@
           <section class="panel" data-panel="1" aria-labelledby="titulo-p1">
             <h2 class="titulo-panel" id="titulo-p1">Elegí tu protocolo</h2>
             <p class="nota">Podés sumar más de uno al mismo turno.</p>
+            <div class="reserva__filtros">
+              <label class="buscador">
+                <span class="solo-lectores">Buscar protocolo</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8E5A68" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+                <input class="campo" type="search" placeholder="Buscá por nombre o zona: láser, labios, manchas…" autocomplete="off" data-buscar-protocolo />
+              </label>
+              <div class="chips" role="group" aria-label="Categoría" data-chips-protocolo></div>
+            </div>
+            <div class="aviso-cirugia" data-aviso-cirugia role="status" hidden></div>
             <ul class="opciones" data-opciones-protocolo></ul>
+            <p class="nota" data-sin-protocolos hidden>No encontramos un protocolo con esa búsqueda. Probá con otra palabra.</p>
             <div class="acciones">
-              <a class="boton" href="/" data-transicion>Volver</a>
+              <a class="boton" href="/">Volver</a>
               <button class="boton boton--primario" type="button" data-siguiente="2" disabled>Continuar</button>
             </div>
           </section>
@@ -90,21 +89,8 @@
             <h2 class="titulo-panel" id="titulo-p2">Elegí tu horario</h2>
             <p class="nota">Solo ves los horarios libres. El instituto atiende de lunes a sábado.</p>
             <div class="dias" role="group" aria-label="Día" data-dias></div>
-            <div class="horario">
-              <div class="horas" role="group" aria-label="Horario" data-horas></div>
-              <!-- Reloj: marca la hora elegida y pinta cuánto dura el turno. -->
-              <figure class="reloj">
-                <svg viewBox="0 0 160 160" aria-hidden="true">
-                  <circle cx="80" cy="80" r="72" fill="#FFFDFA" stroke="#E8DCCF" stroke-width="1.5" />
-                  <g data-reloj-marcas stroke="#D9C3A0" stroke-width="2" stroke-linecap="round"></g>
-                  <circle data-reloj-arco cx="80" cy="80" r="58" fill="none" stroke="#A8475F" stroke-opacity="0.35" stroke-width="12" transform="rotate(-90 80 80)" />
-                  <line data-reloj-hora x1="80" y1="80" x2="80" y2="46" stroke="#3A2B2B" stroke-width="4" stroke-linecap="round" />
-                  <line data-reloj-minuto x1="80" y1="80" x2="80" y2="30" stroke="#A8475F" stroke-width="2.5" stroke-linecap="round" />
-                  <circle cx="80" cy="80" r="5" fill="#A8475F" />
-                </svg>
-                <figcaption class="nota" data-reloj-texto aria-live="polite">Elegí un horario y acá vas a ver cuánto dura tu turno.</figcaption>
-              </figure>
-            </div>
+            <div class="horas" role="group" aria-label="Horario" data-horas></div>
+            <p class="nota" data-duracion aria-live="polite">Elegí un horario y acá vas a ver cuánto dura tu turno.</p>
             <div class="acciones">
               <button class="boton" type="button" data-anterior="1">Volver</button>
               <button class="boton boton--primario" type="button" data-siguiente="3" disabled>Continuar</button>
@@ -157,9 +143,8 @@
             <p class="nota" data-listo-detalle></p>
             <div class="acciones acciones--centro">
               <a class="boton" href="#" target="_blank" rel="noopener" data-calendar>Agregar a Google Calendar</a>
-              <a class="boton boton--primario" href="/mi-turno.html" data-transicion>Ver mi turno</a>
+              <a class="boton boton--primario" href="/mi-turno.html">Ver mi turno</a>
             </div>
-            <div class="petalos" aria-hidden="true" data-petalos></div>
           </section>
         </div>
 
@@ -180,6 +165,11 @@
         </aside>
       </div>
     </main>
+
+    <div class="barra-total" data-barra-total hidden>
+      <p><span>Seña a pagar</span> <strong class="numero" data-barra-sena>$ 0</strong></p>
+      <button class="boton boton--chico boton--primario" type="button" data-barra-continuar>Continuar</button>
+    </div>
 
     <!-- Pago simulado (RF-08): imita el paso por una pasarela, sin dinero real. -->
     <dialog class="pago" data-pago aria-labelledby="titulo-pago">

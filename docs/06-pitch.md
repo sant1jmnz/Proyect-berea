@@ -74,7 +74,7 @@ quedan en su plataforma. Aclaración honesta: varias celdas de la matriz dicen
 
 **"¿Quién lo mantiene?"** El abono de $400.000/mes incluye soporte, hosting,
 respaldos y la cuota de IA. El código está documentado (manual técnico) y la
-lógica vive en stored procedures probados (198 casos).
+lógica vive en stored procedures probados (222 casos).
 
 **"¿Cómo saben que funciona?"** Cuatro indicadores de la MML, medidos a las 4
 semanas de uso: −60% de tiempo de atención manual, −50% de turnos perdidos, 0

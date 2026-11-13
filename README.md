@@ -336,6 +336,6 @@ competencia, presupuesto, pitch de 5 a 7 minutos y manuales.
 - Plantillas de **n8n** (`n8n/`): escritas pero sin probar en una instancia real.
 - Pasarela de pagos real, WhatsApp oficial y Google Calendar (hoy: seña simulada, enlace `wa.me`, enlace de Calendar).
 - Pantallas para cupones por QR, tarjetas de regalo y consulta previa de cirugías (la base ya las resuelve).
-- El sitio ofrece los 4 protocolos del maquetado; la base tiene 30.
+- El sitio y la base tienen los mismos 44 protocolos: al agregar uno, hay que cargarlo en los dos.
 - Verificar las celdas "a verificar" del análisis de competencia (`docs/07-competencia.md`) y armar las diapositivas del pitch.
 - Revisión cruzada (peer review) del maquetado y de los árboles con otro equipo: sigue pendiente.

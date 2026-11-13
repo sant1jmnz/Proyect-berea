@@ -51,6 +51,7 @@ private:
     QVector<int> protocolosVisibles;   /* fila de la lista → índice en `protocolos` */
     QVector<Turno> turnos;
     QString archivoLocal;
+    QString buscadoActual;             /* DNI o teléfono (solo dígitos) de la última búsqueda con resultados */
     int turnoMostrado = -1;            /* índice en `turnos` del que se ve en "Buscar mi turno" */
     bool ajustandoFecha = false;       /* evita que setSelectedDate vuelva a disparar el aviso */
     QString notaHorarioOriginal;

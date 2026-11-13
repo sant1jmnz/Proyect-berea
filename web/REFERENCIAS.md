@@ -1,16 +1,24 @@
-# Referencias de movimiento
+# Decisiones de diseño del sitio
 
-Cinco sitios que eligió el equipo. De cada uno tomamos el **movimiento**, no
-la estética: el sitio usa la paleta y las tipografías de Dermalia
-(`diseno-dermalia/SKILL.md`).
+El sitio usa la paleta y las tipografías de Dermalia (`diseno-dermalia/SKILL.md`).
+Cada elemento está porque cumple una función; lo que era solo decoración se sacó
+(pantalla de carga, cursor propio, marquesina, letras que ruedan, olas, ilustraciones
+sueltas, scroll suave forzado y la física de objetos que rebotaban).
 
-| Sitio | Qué tiene | Qué tomamos | Dónde va |
-|---|---|---|---|
-| [ivan.technology](https://ivan.technology/) | Loader centrado con barra fina y porcentaje; cursor de círculo con borde | Loader con barra dorada y porcentaje; cursor propio | `cargador.js`, `cursor.js` |
-| [tesseract.postminimal.agency](https://tesseract.postminimal.agency/) | Una esfera de luz en WebGL que responde a "mantené apretado" | El modelo 3D de las capas de la piel del inicio: si lo mantenés apretado, las capas se separan para ver el corte | `tres/piel.js` |
-| [pixelismo.it](https://www.pixelismo.it/) | Ilustraciones de línea de fondo; ventana redondeada con objetos 3D que caen con física (cannon.js); transiciones con Barba | Ilustraciones de línea (frascos, hojas, gotas) que se dibujan; ventana 3D donde cada objeto es un protocolo y cae al cambiar de categoría; transición entre páginas | `trazos.js`, `tres/vitrina.js`, `transiciones.js` |
-| [dark-moon.org](https://dark-moon.org/) | Logo con letras duplicadas que ruedan; horizonte de luz; fila de cifras con íconos de píxeles animados | Letras que ruedan en la marca y en los botones; fila de cifras que cuentan al aparecer | `texto.js`, `contadores.js` |
-| [guillaumecolombel.fr](https://guillaumecolombel.fr/) | Nuxt + Three.js; su escena 3D no llegó a cargar en el navegador de prueba | Pendiente: falta saber qué efecto le gusta al equipo | — |
+| Elemento | Para qué sirve |
+|---|---|
+| Corte de la piel en 3D (`tres/piel.js`) | Elegir por zona de acción: tocás una capa y ves los protocolos que actúan ahí; al señalar uno se ve su herramienta (láser, aguja, ondas, producto, bisturí) en la profundidad correcta. |
+| Vitrina en 3D (`tres/vitrina.js`, en `protocolos.html`) | Recorrer el catálogo de forma visual: cada objeto es un protocolo (frasco, jeringa, cabezal láser, equipo de ondas, bisturí) y el color indica la categoría. La lista es la vía principal; sin WebGL solo queda la lista. |
+| Carta con precios | Leer precio, duración y zona de un vistazo, como una carta de spa. |
+| Comparador (hasta 3) | Decidir entre protocolos parecidos con precio, seña, sesiones y duración lado a lado. |
+| Ficha de protocolo | Qué hacer antes y después, cuántas sesiones lleva y para quién no es. |
+| Calculadora de seña | Mostrar la regla del 30 % (40 % en cirugías) con un ejemplo propio. |
+| Consulta prequirúrgica en la reserva | Las cirugías no se reservan directo (RF-25). |
 
-Análisis hecho con Playwright (capturas a 1440 px y lectura de los scripts
-que carga cada sitio).
+El catálogo (nombres, precios, duraciones, profesionales) sale de `backend/02_datos.sql`
+con `npm run generar` (corre solo antes de `dev` y `build`). Lo que la base no guarda
+(capa de la piel, sesiones, cuidados) está en `src/datos/fichas.js`.
+
+Skills usadas para el rediseño (en `.claude/skills/`): impeccable, ui-ux-pro-max,
+emil-design-eng, review-animations y design-taste-frontend (que reemplazó a
+redesign-existing-projects en su repositorio).

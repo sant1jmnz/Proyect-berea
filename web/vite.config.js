@@ -11,6 +11,7 @@ export default defineConfig({
     rolldownOptions: {
       input: {
         inicio: resolve(import.meta.dirname, 'index.html'),
+        protocolos: resolve(import.meta.dirname, 'protocolos.html'),
         reservar: resolve(import.meta.dirname, 'reservar.html'),
         miTurno: resolve(import.meta.dirname, 'mi-turno.html'),
       },

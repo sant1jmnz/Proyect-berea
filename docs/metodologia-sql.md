@@ -161,15 +161,17 @@ carpeta no se usó en clase, así que **no cuenta**. Se aceptan además:
   por `#tabla`, `DIV` por la división entera de SQL Server, `START TRANSACTION`/`COMMIT`/`ROLLBACK`.
 - **Funciones de fecha** (`INTERVAL`, `EXTRACT`, `DATE_FORMAT`): la consigna pide "gestión de fechas".
 
-Por eso el backend **no usa** `IF`, `CASE`, `WHILE`, `LOOP`, cursores, `LEAVE`, `FOR UPDATE`,
-`CREATE FUNCTION` ni funciones de texto (salvo `CHAR_LENGTH`). Cómo se reemplazó cada cosa está en
-[`12-contrato-sp.md`](12-contrato-sp.md): las validaciones se escriben con `COALESCE` y subconsultas, los
-cambios llevan `WHERE ... AND v_codigo IS NULL` y la respuesta se arma con `UNION ALL`.
+Por eso el backend **no usa** `CASE`, `WHILE`, `LOOP`, cursores, `LEAVE`, `FOR UPDATE`, `CREATE FUNCTION` ni
+`SELECT ... FROM DUAL`. Las consultas y los reportes se escriben como los scripts de la cátedra (`JOIN`,
+`GROUP BY`, `HAVING`, tablas derivadas, `LEFT JOIN` + `COUNT(columna)`). Solo los stored procedures que
+escriben usan `IF ... THEN` para validar las reglas de negocio (ver [`12-contrato-sp.md`](12-contrato-sp.md)):
+los ejemplos de la cátedra no tienen validaciones con control de flujo, así que es la única construcción que
+se agregó. Si el equipo decide no usarla, hay que mover esas reglas a restricciones de las tablas.
 
 ### Estilo de los reportes (scripts 05 y 06)
 
 Los reportes y sus versiones `_tuneado` se escriben como los scripts de la cátedra (TP9 y profundización 02):
 una pregunta de negocio por consulta, `INNER JOIN` / `LEFT JOIN`, alias siempre con `AS`, una cláusula por
-línea, tablas derivadas en el `FROM` y `CASE WHEN` dentro de `SUM(...)` para contar por estado (en lugar de
+línea, tablas derivadas en el `FROM` y `LEFT JOIN` + `COUNT(columna)` para contar por estado (en lugar de `CASE`, de
 sumar comparaciones o simular el `CASE` con `SELECT ... FROM DUAL`). Los cuatro scripts de TP9 en SQL Server
 (Prod y QA, ejercicios 2 a 5) están en [`catedra/tp9-sql-server/`](catedra/tp9-sql-server/).

@@ -57,7 +57,7 @@ mysql -u root -p < backend/08_usuarios.sql                   # usuarios de las a
 
 Para verificar: `mysql -u root -p < backend/pruebas_estructura.sql` (44 pruebas de las
 restricciones de las tablas) y
-`python3 backend/pruebas/correr_pruebas.py --recargar` (198 casos de los SP; ver
+`python3 backend/pruebas/correr_pruebas.py --recargar` (222 casos de los SP; ver
 [`11-pruebas-bbdd.md`](11-pruebas-bbdd.md)).
 
 ### En Aiven (producción)
@@ -72,9 +72,8 @@ restricciones de las tablas) y
 
 ### Convenciones de los stored procedures
 
-- Los que **escriben** validan sin `IF`: cada regla guarda su código (`52xxx`) en `v_codigo` si no se
-  cumple (`COALESCE` con una subconsulta), los cambios llevan `WHERE ... AND v_codigo IS NULL` y la respuesta
-  es una sola consulta `OK`/`ERROR` unida con `UNION ALL`. Abren una transacción (`COMMIT`/`ROLLBACK`) y tienen
+- Los que **escriben** validan con `IF`: cada regla guarda su código (`52xxx`) y su mensaje en `v_codigo` y
+  `v_mensaje` si no se cumple; si todas se cumplen, se escribe y se responde `OK`, y si no, se responde `ERROR`. Abren una transacción (`COMMIT`/`ROLLBACK`) y tienen
   un `EXIT HANDLER FOR SQLEXCEPTION` para los errores del motor, como en el PPT 006 de la cátedra.
 - Todos devuelven 6 columnas: `estado, codigo, mensaje, id, valor, dato`.
 - **El log solo se escribe desde los SP** (`auditoria.sp_registrar_log`); nunca con `INSERT` a mano.
@@ -144,7 +143,9 @@ las aplicaciones avisan con una franja amarilla y trabajan en **modo contingenci
   stored procedures, con el usuario que ingresó en el log.
 - **Cliente (terminal):** no pide ingreso (la paciente se identifica con el DNI): el catálogo, los
   profesionales y los horarios libres salen de la base, y la reserva paga la seña simulada.
-- **Sin conexión:** las dos siguen con los datos de prueba y la franja amarilla. Los turnos que se cargan
+- **Sin conexión:** las dos siguen con el almacén local de pruebas (`frontend/gestion/almacenlocal.*`: un
+  `datos_local.json` en la carpeta de datos de la aplicación, o la ruta de `DERMALIA_DATOS_LOCAL`, que
+  comparten Gestión y Terminal) y la franja amarilla. Los turnos que se cargan
   quedan en `pendientes.json` y, **al volver la conexión, se envían solos** (`ConexionApp::sincronizar`): los
   que la base no acepta (horario ocupado, paciente que no existe) siguen guardados y se avisa el motivo.
 - Cada pantalla tiene un método `usarBase(Repositorio*)`: con `nullptr` trabaja en memoria como antes.

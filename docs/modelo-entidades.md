@@ -5,7 +5,7 @@ Primer paso del diseño conceptual de la base (consigna en
 los atributos y cardinalidades se van cerrando por grupos (abajo); el diagrama
 de Chen se arma al final.
 
-Mínimo pedido: 13 entidades (las relaciones no cuentan). Este borrador tiene 27.
+Mínimo pedido: 13 entidades (las relaciones no cuentan). El modelo tiene 27 y el script de tablas crea 31 (las 27 entidades, las N:M y los teléfonos).
 
 ## Decisiones tomadas
 
@@ -165,7 +165,7 @@ y *Profesional–Protocolo* ("realiza").
 - Profesional (1,1) **tiene cuenta** (0,1) Usuario
 - Profesional (0,N) **tiene** (1,1) Disponibilidad *(franjas horarias del profesional; sus atributos faltan definir)*
 
-## Grupo 2 (propuesto): pagos y evaluación previa
+## Grupo 2 (cerrado): pagos y evaluación previa
 
 ### Decisiones
 1. **La consulta previa es un turno.** Se agenda y se paga como cualquier
@@ -205,7 +205,7 @@ y *Profesional–Protocolo* ("realiza").
 La paciente y el profesional de la evaluación no se repiten como atributos:
 salen del turno de la consulta.
 
-## Grupo 3 (propuesto): cupones, reglas y tarjetas de regalo
+## Grupo 3 (cerrado): cupones, reglas y tarjetas de regalo
 
 ### Decisiones
 1. **Todo cupón es personal y de un solo uso.** Una promoción para "todas las
@@ -271,7 +271,7 @@ salen del turno de la consulta.
 - Tarjeta de regalo (0,N) **registra** (1,1) Movimiento de tarjeta *(la carga inicial es el atributo `monto_inicial`, no un movimiento)*
 - Movimiento de tarjeta (1,1) **cubre** (0,N) Turno
 
-## Grupo 4 (propuesto): avisos, asistente, cuentas y log
+## Grupo 4 (cerrado): avisos, asistente, cuentas y log
 
 ### Decisiones
 1. **Cada aviso es una fila de `Notificación`.** Guarda a quién va, por qué

@@ -1,269 +1,254 @@
-/* Vitrina del catálogo (inspirada en pixelismo): cada objeto 3D es un
- * protocolo del catálogo. Caen y rebotan en una ventana; pasando el mouse se ve
- * cuál es y cuánto sale, y tocándolo se abre su ficha con el botón para
- * reservarlo. Cuanto más grande el objeto, más caro el protocolo. La forma
- * indica la categoría. Física propia y simple: gravedad, piso, paredes y
- * choques entre esferas. */
+/* Vitrina del catálogo (protocolos.html). Cada objeto es un protocolo y se
+ * parece a lo que se usa en él: frasco (cosmética y masajes), jeringa
+ * (inyectables), cabezal láser, equipo de ondas (aparatología) o bisturí
+ * (cirugía). El color indica la categoría. Quedan apoyados en repisas; al
+ * señalar uno se ve su nombre y precio, y al tocarlo se abre su ficha.
+ * Las etiquetas son botones HTML, así que la vitrina también se maneja con
+ * teclado y lectores de pantalla. La lista del catálogo tiene lo mismo y es
+ * la vía principal: la vitrina es una forma visual de recorrerla. */
 import * as THREE from 'three';
 import { gsap, movimientoReducido } from '../movimiento/gsap.js';
 import { hayWebGL, crearRenderer, entornoDeEstudio, bucleVisible, ajustarTamano } from './escena.js';
 import { pesos } from '../sena.js';
 
-const GRAVEDAD = -14;
-const REBOTE = 0.45;
+export const POR_PAGINA = 12;
 
-// Una forma por categoría (es la misma que muestra el ícono de su chip).
-const FORMAS = {
-  faciales: () => new THREE.SphereGeometry(0.42, 48, 32),
-  aparatologia: () => new THREE.TorusGeometry(0.34, 0.14, 24, 64),
-  medicina: () => new THREE.CapsuleGeometry(0.2, 0.5, 8, 24),
-  cirugias: () => new THREE.OctahedronGeometry(0.44, 0),
+// Color por categoría, de la paleta de Dermalia.
+export const COLOR_CATEGORIA = {
+  faciales: '#E5D2B0',
+  aparatologia: '#8E5A68',
+  medicina: '#A8475F',
+  cirugias: '#5F7F63',
 };
-const RADIO = { faciales: 0.42, aparatologia: 0.48, medicina: 0.45, cirugias: 0.44 };
-const COLORES = ['#F7E8EB', '#A8475F', '#D9C3A0', '#5F7F63', '#E5D2B0', '#FFFDFA'];
+
+const material = (color, extra = {}) => new THREE.MeshPhysicalMaterial({
+  color, roughness: 0.28, clearcoat: 0.8, clearcoatRoughness: 0.15, ...extra,
+});
+const metal = () => new THREE.MeshStandardMaterial({ color: '#D9C3A0', roughness: 0.3, metalness: 0.8 });
+const vidrio = () => new THREE.MeshPhysicalMaterial({ color: '#FFFDFA', roughness: 0.05, transmission: 0.6, thickness: 0.2, transparent: true, opacity: 0.55 });
+
+/* Cada constructor devuelve un grupo de ~1 unidad de alto, apoyado en y = 0. */
+const constructores = {
+  frasco(color) {
+    const g = new THREE.Group();
+    const cuerpo = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.62, 32), material(color));
+    cuerpo.position.y = 0.31;
+    const cuello = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.2, 0.14, 24), material(color));
+    cuello.position.y = 0.69;
+    const tapa = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.2, 24), metal());
+    tapa.position.y = 0.86;
+    g.add(cuerpo, cuello, tapa);
+    return g;
+  },
+  jeringa(color) {
+    const g = new THREE.Group();
+    const cuerpo = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.7, 20), vidrio());
+    cuerpo.position.y = 0.55;
+    const liquido = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.4, 20), material(color));
+    liquido.position.y = 0.45;
+    const embolo = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.4, 10), metal());
+    embolo.position.y = 1.0;
+    const tope = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.03, 16), material('#FFFDFA'));
+    tope.position.y = 1.2;
+    const aletas = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.03, 0.08), material('#FFFDFA'));
+    aletas.position.y = 0.92;
+    const aguja = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.32, 8), metal());
+    aguja.rotation.x = Math.PI;
+    aguja.position.y = 0.04;
+    g.add(cuerpo, liquido, embolo, tope, aletas, aguja);
+    g.rotation.z = 0.35;
+    g.position.y = 0.1;
+    return g;
+  },
+  laser(color) {
+    const g = new THREE.Group();
+    const mango = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.17, 0.75, 28), material(color));
+    mango.position.y = 0.5;
+    const cabezal = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.15, 0.22, 28), material('#FFFDFA'));
+    cabezal.position.y = 0.98;
+    const lente = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 28), new THREE.MeshStandardMaterial({ color: '#A8475F', emissive: '#A8475F', emissiveIntensity: 0.8 }));
+    lente.position.y = 1.1;
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.12, 28), metal());
+    base.position.y = 0.06;
+    g.add(mango, cabezal, lente, base);
+    g.rotation.z = -0.25;
+    return g;
+  },
+  ondas(color) {
+    const g = new THREE.Group();
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.22, 36), material(color));
+    base.position.y = 0.11;
+    g.add(base);
+    [0.2, 0.34, 0.48].forEach((r, i) => {
+      const anillo = new THREE.Mesh(new THREE.TorusGeometry(r, 0.022, 10, 48), new THREE.MeshStandardMaterial({ color: '#D9C3A0', roughness: 0.3, metalness: 0.6, transparent: true, opacity: 1 - i * 0.25 }));
+      anillo.rotation.x = Math.PI / 2;
+      anillo.position.y = 0.4 + i * 0.22;
+      g.add(anillo);
+    });
+    return g;
+  },
+  bisturi(color) {
+    const g = new THREE.Group();
+    const mango = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.7, 0.06), material(color));
+    mango.position.y = 0.38;
+    const hoja = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.3, 4), metal());
+    hoja.scale.set(1, 1, 0.25);
+    hoja.position.y = 0.88;
+    const franja = new THREE.Mesh(new THREE.BoxGeometry(0.105, 0.05, 0.065), metal());
+    franja.position.y = 0.7;
+    g.add(mango, hoja, franja);
+    g.rotation.z = 0.2;
+    return g;
+  },
+};
 
 export function iniciarVitrina({ alElegir } = {}) {
   const contenedor = document.querySelector('[data-vitrina]');
-  if (!contenedor || !hayWebGL()) return { mostrar() {}, resaltar() {}, soltar() {} };
-  const tooltip = contenedor.querySelector('[data-vitrina-tooltip]');
+  const sinEfecto = { mostrar() {}, disponible: false };
+  if (!contenedor || !hayWebGL()) return sinEfecto;
+  const lienzo = contenedor.querySelector('[data-vitrina-lienzo]');
+  const capaEtiquetas = contenedor.querySelector('[data-vitrina-etiquetas]');
+  const reducido = movimientoReducido();
 
-  const renderer = crearRenderer(contenedor);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFShadowMap;
+  const renderer = crearRenderer(lienzo);
   const escena = new THREE.Scene();
-  const camara = new THREE.PerspectiveCamera(30, 1, 0.1, 60);
-  camara.position.set(0, 0.6, 14);
-  camara.lookAt(0, 0, 0);
   escena.environment = entornoDeEstudio(renderer);
+  const camara = new THREE.PerspectiveCamera(28, 1, 0.1, 60);
+  const sol = new THREE.DirectionalLight('#FFF3E8', 2.2);
+  sol.position.set(3, 6, 8);
+  escena.add(sol, new THREE.AmbientLight('#FCF8F2', 0.6));
 
-  const sol = new THREE.DirectionalLight('#FFF3E8', 2.4);
-  sol.position.set(3, 8, 6);
-  sol.castShadow = true;
-  sol.shadow.mapSize.set(1024, 1024);
-  Object.assign(sol.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6 });
-  escena.add(sol, new THREE.AmbientLight('#FCF8F2', 0.5));
-
-  const piso = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.12, color: '#3A2B2B' }));
-  piso.rotation.x = -Math.PI / 2;
-  piso.receiveShadow = true;
-  escena.add(piso);
-
-  const geometrias = Object.fromEntries(Object.entries(FORMAS).map(([k, f]) => [k, f()]));
-  const materialPara = (i) => new THREE.MeshPhysicalMaterial({
-    color: COLORES[i % COLORES.length],
-    roughness: 0.2,
-    clearcoat: 1,
-    clearcoatRoughness: 0.1,
-    iridescence: i % 2 ? 0 : 0.6,
-    sheen: 0.6,
-    sheenColor: new THREE.Color('#A8475F'),
-    emissive: new THREE.Color('#A8475F'),
-    emissiveIntensity: 0,
-  });
-
-  // Límites del mundo visible, se recalculan con el tamaño.
-  const borde = { x: 3, y: -2.6 };
-  ajustarTamano(contenedor, renderer, camara, (w, h) => {
-    const alto = 2 * Math.tan(THREE.MathUtils.degToRad(camara.fov / 2)) * camara.position.z;
-    borde.x = (alto * (w / h)) / 2 - 0.75;
-    borde.y = -alto / 2 + 0.9;
-    piso.position.y = borde.y;
-  });
-
-  let cuerpos = [];
-  const quitar = [];
-  let elegido = null;
+  const tabla = new THREE.MeshStandardMaterial({ color: '#E8DCCF', roughness: 0.7 });
+  let objetos = [];
+  let repisas = [];
   let encima = null;
 
-  function crearCuerpo(protocolo, i) {
-    // El tamaño crece con el precio (raíz cuadrada, para que no se vaya de escala).
-    const escala = 0.85 + Math.sqrt(protocolo.precio / 25000) * 0.45;
-    const malla = new THREE.Mesh(geometrias[protocolo.categoria], materialPara(i));
-    malla.castShadow = true;
-    malla.scale.setScalar(escala);
-    malla.position.set(THREE.MathUtils.randFloatSpread(borde.x * 1.4), 5 + i * 1.2, THREE.MathUtils.randFloatSpread(0.6));
-    malla.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
-    escena.add(malla);
-    const cuerpo = {
-      protocolo,
-      malla,
-      escala,
-      radio: RADIO[protocolo.categoria] * escala,
-      v: new THREE.Vector3(THREE.MathUtils.randFloatSpread(1.5), 0, 0),
-      giro: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(3),
-    };
-    malla.userData.cuerpo = cuerpo;
-    return cuerpo;
-  }
-
-  /* Muestra un objeto por cada protocolo de la lista (ya filtrada). */
-  function mostrar(lista) {
-    // Los que estaban salen volando hacia arriba y desaparecen.
-    cuerpos.forEach((c) => {
-      c.v.set(THREE.MathUtils.randFloatSpread(6), 10 + Math.random() * 4, 0);
-      c.saliendo = true;
-      quitar.push(c);
-      gsap.to(c.malla.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.9, delay: 0.3, ease: 'power2.in' });
-    });
-    elegido = encima = null;
-    tooltip.hidden = true;
-    cuerpos = lista.map((p, i) => crearCuerpo(p, i));
-    if (movimientoReducido()) asentar();
-  }
-
-  /* Hace saltar el objeto de un protocolo (al pasar por su tarjeta de la lista). */
-  function resaltar(id) {
-    const c = cuerpos.find((x) => x.protocolo.id === id);
-    if (!c) return;
-    if (movimientoReducido()) {
-      encima = c;
-      renderer.render(escena, camara);
-      return;
-    }
-    c.v.y = Math.max(c.v.y, 0) + 7;
-    c.giro.y += 6;
-    encima = c;
-  }
-
-  const soltar = () => {
-    elegido = null;
-    if (movimientoReducido()) renderer.render(escena, camara);
+  const limpiar = () => {
+    objetos.forEach((o) => escena.remove(o.grupo));
+    repisas.forEach((r) => { escena.remove(r); r.geometry.dispose(); });
+    objetos = [];
+    repisas = [];
+    capaEtiquetas.replaceChildren();
+    encima = null;
   };
 
-  /* Sin animación: los objetos quedan apoyados en el piso de una vez. */
-  function asentar() {
-    cuerpos.forEach((c, i) => {
-      c.malla.position.set(-borde.x + ((i + 0.5) * (borde.x * 2)) / cuerpos.length, borde.y + c.radio, 0);
+  /* Objetos en filas sobre repisas; columnas según el ancho disponible. */
+  function mostrar(lista) {
+    limpiar();
+    const ancho = lienzo.clientWidth || 600;
+    const columnas = ancho > 760 ? 6 : ancho > 480 ? 4 : 3;
+    const filas = Math.max(1, Math.ceil(lista.length / columnas));
+    const pasoX = 1.7;
+    const pasoY = 2.0;
+    // Altura según las filas: en el celular cada fila necesita lugar para sus etiquetas.
+    const marco = lienzo.parentElement;
+    const alto = ancho > 760 ? Math.max(360, filas * 280) : filas * 230 + 20;
+    if (marco.style.height !== `${alto}px`) marco.style.height = `${alto}px`;
+    lista.forEach((p, i) => {
+      const fila = Math.floor(i / columnas);
+      const col = i % columnas;
+      const enFila = Math.min(columnas, lista.length - fila * columnas);
+      const x = (col - (enFila - 1) / 2) * pasoX;
+      const y = -fila * pasoY;
+      const grupo = (constructores[p.tipo] ?? constructores.frasco)(COLOR_CATEGORIA[p.categoria]);
+      const pivote = new THREE.Group();
+      pivote.add(grupo);
+      pivote.position.set(x, y, 0);
+      grupo.traverse((o) => o.isMesh && (o.userData.indice = i));
+      escena.add(pivote);
+
+      const etiqueta = document.createElement('button');
+      etiqueta.type = 'button';
+      etiqueta.className = 'vitrina__etiqueta';
+      etiqueta.style.width = `${Math.min(150, ancho / columnas - 8)}px`;
+      etiqueta.innerHTML = `<span>${p.nombre}</span><span class="numero">${pesos(p.precio)}</span>`;
+      etiqueta.addEventListener('click', () => alElegir?.(p));
+      etiqueta.addEventListener('pointerenter', () => (encima = i));
+      etiqueta.addEventListener('pointerleave', () => (encima = null));
+      etiqueta.addEventListener('focus', () => (encima = i));
+      etiqueta.addEventListener('blur', () => (encima = null));
+      capaEtiquetas.append(etiqueta);
+
+      const o = { protocolo: p, grupo: pivote, x, y, etiqueta, escala: 1, entrada: 1 };
+      objetos.push(o);
+      if (!reducido) gsap.fromTo(o, { entrada: 0.001 }, { entrada: 1, duration: 0.45, delay: i * 0.03, ease: 'back.out(1.6)' });
     });
-    renderer.render(escena, camara);
+    for (let f = 0; f < filas; f++) {
+      const repisa = new THREE.Mesh(new THREE.BoxGeometry(columnas * pasoX + 0.4, 0.08, 1.1), tabla);
+      repisa.position.set(0, -f * pasoY - 0.05, 0);
+      escena.add(repisa);
+      repisas.push(repisa);
+    }
+    // Encuadre: la cámara mira el centro del grupo y se aleja lo necesario para que entre todo.
+    const altoTotal = (filas - 1) * pasoY + 1.7;
+    const anchoTotal = columnas * pasoX + 0.4;
+    const tanV = Math.tan(THREE.MathUtils.degToRad(camara.fov / 2));
+    const distancia = Math.max((altoTotal / 2 + 0.5) / tanV, (anchoTotal / 2) / (tanV * camara.aspect));
+    camara.position.set(0, -(filas - 1) * pasoY / 2 + 0.5, distancia + 1);
+    camara.lookAt(0, -(filas - 1) * pasoY / 2 + 0.5, 0);
+    escena.updateMatrixWorld(true);
+    ubicarEtiquetas();
+    if (reducido) renderer.render(escena, camara);
   }
 
-  // Puntero: empuja, muestra qué protocolo es y, con un toque, lo elige.
-  const puntero = new THREE.Vector3(99, 99, 0);
+  /* Las etiquetas (botones HTML) van debajo de cada objeto, según su posición en pantalla. */
+  const punto = new THREE.Vector3();
+  function ubicarEtiquetas() {
+    const w = lienzo.clientWidth;
+    const h = lienzo.clientHeight;
+    objetos.forEach((o) => {
+      punto.set(o.x, o.y - 0.1, 0.3).project(camara);
+      o.etiqueta.style.transform = `translate(${((punto.x + 1) / 2) * w}px, ${((1 - punto.y) / 2) * h}px) translate(-50%, 0)`;
+    });
+  }
+
+  ajustarTamano(lienzo, renderer, camara, () => {
+    if (objetos.length) mostrar(objetos.map((o) => o.protocolo));
+  });
+
+  // Puntero: el objeto señalado crece un poco; tocarlo abre su ficha.
   const rayo = new THREE.Raycaster();
-  const plano = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
   const ndc = new THREE.Vector2();
-  const apuntar = (e) => {
-    const r = contenedor.getBoundingClientRect();
+  function objetoBajo(e) {
+    const r = lienzo.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     rayo.setFromCamera(ndc, camara);
-    rayo.ray.intersectPlane(plano, puntero);
-    return rayo.intersectObjects(cuerpos.map((c) => c.malla), false)[0]?.object.userData.cuerpo ?? null;
-  };
+    const malla = rayo.intersectObjects(objetos.map((o) => o.grupo), true)[0]?.object;
+    return malla ? objetos.findIndex((o) => o.grupo.getObjectById(malla.id)) : -1;
+  }
   contenedor.addEventListener('pointermove', (e) => {
-    encima = apuntar(e);
-    contenedor.style.cursor = encima ? 'pointer' : '';
+    if (e.target.closest('.vitrina__etiqueta')) return;
+    const i = objetoBajo(e);
+    encima = i >= 0 ? i : null;
+    contenedor.style.cursor = i >= 0 ? 'pointer' : '';
+    if (reducido) pintarQuieto();
   });
-  contenedor.addEventListener('pointerleave', () => {
-    puntero.set(99, 99, 0);
-    encima = null;
-  });
-  contenedor.addEventListener('pointerdown', (e) => {
-    const tocado = apuntar(e);
-    if (tocado) {
-      elegido = tocado;
-      tocado.v.y += 5;
-      alElegir?.(tocado.protocolo);
-      if (movimientoReducido()) renderer.render(escena, camara);
-      return;
-    }
-    cuerpos.forEach((c) => {
-      const lejos = c.malla.position.distanceTo(puntero);
-      c.v.y += Math.max(3, 11 - lejos * 2);
-      c.v.x += (c.malla.position.x - puntero.x) * 1.5;
-    });
+  contenedor.addEventListener('pointerleave', () => { encima = null; if (reducido) pintarQuieto(); });
+  lienzo.addEventListener('click', (e) => {
+    const i = objetoBajo(e);
+    if (i >= 0) alElegir?.(objetos[i].protocolo);
   });
 
-  // El cartelito con nombre y precio sigue al objeto que está debajo del puntero.
-  const enPantalla = new THREE.Vector3();
-  function moverTooltip() {
-    const c = encima;
-    if (!c || c.saliendo) {
-      tooltip.hidden = true;
-      return;
-    }
-    enPantalla.copy(c.malla.position).add({ x: 0, y: c.radio + 0.25, z: 0 }).project(camara);
-    tooltip.hidden = false;
-    tooltip.textContent = `${c.protocolo.nombre} · ${pesos(c.protocolo.precio)}`;
-    tooltip.style.transform = `translate(${((enPantalla.x + 1) / 2) * contenedor.clientWidth}px, ${((1 - enPantalla.y) / 2) * contenedor.clientHeight}px) translate(-50%, -100%)`;
-  }
-
-  function brillo() {
-    cuerpos.forEach((c) => {
-      const objetivo = c === elegido ? 0.35 : c === encima ? 0.18 : 0;
-      c.malla.material.emissiveIntensity += (objetivo - c.malla.material.emissiveIntensity) * 0.15;
+  function actualizar(t, dt) {
+    objetos.forEach((o, i) => {
+      const objetivo = i === encima ? 1.12 : 1;
+      o.escala += (objetivo - o.escala) * Math.min(1, dt * 12);
+      o.grupo.scale.setScalar(o.escala * o.entrada);
+      o.grupo.rotation.y = reducido ? 0.5 : t * 0.5 + i * 0.7;
+      o.etiqueta.classList.toggle('activa', i === encima);
     });
   }
-
-  const tmp = new THREE.Vector3();
-  function paso(dt) {
-    for (const c of [...cuerpos, ...quitar]) {
-      const p = c.malla.position;
-      c.v.y += GRAVEDAD * dt;
-      if (!c.saliendo) {
-        // Empuje del puntero.
-        tmp.subVectors(p, puntero);
-        const d = tmp.length();
-        if (d < 1.6) c.v.addScaledVector(tmp.normalize(), (1.6 - d) * 40 * dt);
-        // Piso y paredes.
-        if (p.y - c.radio < borde.y) {
-          p.y = borde.y + c.radio;
-          c.v.y = Math.abs(c.v.y) * REBOTE < 0.4 ? 0 : -c.v.y * REBOTE;
-          c.v.x *= 0.9;
-          c.giro.multiplyScalar(0.9);
-        }
-        if (Math.abs(p.x) + c.radio > borde.x) {
-          p.x = Math.sign(p.x) * (borde.x - c.radio);
-          c.v.x *= -REBOTE;
-        }
-        c.v.z += -p.z * 6 * dt;
-        p.z = THREE.MathUtils.clamp(p.z, -0.4, 0.4);
-      }
-      p.addScaledVector(c.v, dt);
-      c.malla.rotation.x += c.giro.x * dt;
-      c.malla.rotation.y += c.giro.y * dt;
-      c.malla.rotation.z += c.giro.z * dt;
-    }
-    // Choques entre objetos (pocos: alcanza con comparar todos contra todos).
-    for (let i = 0; i < cuerpos.length; i++) {
-      for (let j = i + 1; j < cuerpos.length; j++) {
-        const a = cuerpos[i];
-        const b = cuerpos[j];
-        tmp.subVectors(b.malla.position, a.malla.position);
-        const d = tmp.length();
-        const minimo = a.radio + b.radio;
-        if (d > 0 && d < minimo) {
-          tmp.multiplyScalar((minimo - d) / d / 2);
-          a.malla.position.sub(tmp);
-          b.malla.position.add(tmp);
-          const n = tmp.normalize();
-          const relativa = n.dot(b.v) - n.dot(a.v);
-          if (relativa < 0) {
-            a.v.addScaledVector(n, relativa * 0.8);
-            b.v.addScaledVector(n, -relativa * 0.8);
-          }
-        }
-      }
-    }
-    // Los que salieron por arriba se borran.
-    for (let i = quitar.length - 1; i >= 0; i--) {
-      if (quitar[i].malla.position.y > 12 || quitar[i].malla.scale.x < 0.02) {
-        escena.remove(quitar[i].malla);
-        quitar.splice(i, 1);
-      }
-    }
-  }
-
-  if (movimientoReducido()) return { mostrar, resaltar, soltar };
-
-  bucleVisible(contenedor, renderer, (_, dt) => {
-    // Subpasos cortos para que los choques sean estables aunque haya pocos cuadros por segundo.
-    const subpasos = Math.max(2, Math.ceil(dt / (1 / 120)));
-    for (let i = 0; i < subpasos; i++) paso(dt / subpasos);
-    brillo();
+  function pintarQuieto() {
+    actualizar(0, 1);
     renderer.render(escena, camara);
-    moverTooltip();
-  });
+  }
 
-  return { mostrar, resaltar, soltar };
+  if (!reducido) {
+    bucleVisible(lienzo, renderer, (t, dt) => {
+      actualizar(t, dt);
+      renderer.render(escena, camara);
+    });
+  }
+
+  return { mostrar, disponible: true };
 }

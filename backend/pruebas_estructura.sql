@@ -34,7 +34,7 @@ BEGIN
     EXECUTE st;
     DEALLOCATE PREPARE st;
     INSERT INTO pruebas.Resultado (caso, esperado, obtenido, detalle)
-    VALUES (p_caso, IF(p_debe_fallar, 'falla', 'pasa'), IF(v_error IS NULL, 'pasa', 'falla'), v_error);
+    VALUES (p_caso, CASE WHEN p_debe_fallar THEN 'falla' ELSE 'pasa' END, CASE WHEN v_error IS NULL THEN 'pasa' ELSE 'falla' END, v_error);
 END//
 
 DELIMITER ;
@@ -94,14 +94,14 @@ CALL pruebas.probar('Turno con una paciente que no existe', "INSERT INTO agenda.
 -- porque la intercalación por defecto de MySQL 8 no distingue "n" de "ñ").
 INSERT INTO pruebas.Resultado (caso, esperado, obtenido)
 SELECT 'Tildes y eñe se leen igual', 'pasa',
-       IF(CAST(apellido AS BINARY) = CAST('Peñalba Núñez' AS BINARY), 'pasa', 'falla')
+       CASE WHEN CAST(apellido AS BINARY) = CAST('Peñalba Núñez' AS BINARY) THEN 'pasa' ELSE 'falla' END
 FROM personas.Paciente WHERE id_paciente = 1;
 
 ROLLBACK;
 
 -- ---------- Resultado ----------
 
-SELECT n, caso, esperado, obtenido, IF(esperado = obtenido, 'OK', 'ERROR') AS resultado, detalle
+SELECT n, caso, esperado, obtenido, CASE WHEN esperado = obtenido THEN 'OK' ELSE 'ERROR' END AS resultado, detalle
 FROM pruebas.Resultado ORDER BY n;
 
 SELECT COUNT(*) AS casos, SUM(esperado = obtenido) AS ok, SUM(esperado <> obtenido) AS errores

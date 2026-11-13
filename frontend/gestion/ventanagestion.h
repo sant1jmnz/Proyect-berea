@@ -8,18 +8,24 @@
 #ifndef VENTANAGESTION_H
 #define VENTANAGESTION_H
 
+#include "almacenlocal.h"
 #include "datosprueba.h"
 #include "recordatorios.h"
 
+#include <QDateTime>
 #include <QMainWindow>
+
+class QTimer;
 
 class AvisoConexion;
 class ConexionApp;
 class PaginaAvisos;
 class PaginaPacientes;
+class PaginaReportes;
 class PaginaProfesionales;
 class PaginaProtocolos;
 class QLineEdit;
+class Repositorio;
 
 namespace Ui { class VentanaGestion; }
 
@@ -30,7 +36,11 @@ class VentanaGestion : public QMainWindow
 public:
     /* `archivoContingencia` vacío: los turnos sin conexión van a la carpeta de
      * datos de la aplicación (las pruebas pasan un archivo temporal). */
-    explicit VentanaGestion(QWidget *parent = nullptr, const QString &archivoContingencia = QString());
+    /* `datosDeEjemplo`: arranca con los turnos, pacientes y profesionales de DatosPrueba
+     * y no usa el archivo local (lo usan las pruebas). Sin eso, los datos salen de
+     * (y se guardan en) el archivo local de AlmacenLocal. */
+    explicit VentanaGestion(QWidget *parent = nullptr, const QString &archivoContingencia = QString(),
+                            bool datosDeEjemplo = false);
     ~VentanaGestion();
 
 private slots:
@@ -44,6 +54,9 @@ private slots:
     void turnoElegido();             /* muestra el recordatorio del turno de la tabla */
     void protocolosCambiaron();      /* alta, edición o baja en la pantalla Protocolos */
     void cargarTurnoPara(const QString &nombre, const QString &dni, const QString &telefono);
+    void conectarBase();             /* hay conexión: ingreso del personal y datos de la base */
+    void guardarLocal();             /* sin base: deja todo en el archivo local */
+    void sincronizarLocal();         /* si la Terminal cargó o canceló un turno, lo toma */
 
 private:
     void irA(int pagina);
@@ -54,6 +67,14 @@ private:
     QDateTime horarioElegido() const;
     void armarPantallasNuevas();
     QString nuevoCodigoOperacion() const;
+    /* Con la base conectada */
+    bool pedirLogin();
+    void cargarDesdeBase();
+    void cargarHorariosDeBase(const QDate &dia);
+    void refrescarTurnosDeBase(const QString &texto);
+    void confirmarTurnoEnBase(const Protocolo *p, const QDateTime &inicio);
+    bool buscarOCrearPaciente(int *idPaciente);
+    int profesionalElegido() const;
 
     Ui::VentanaGestion *ui;
     QVector<Protocolo> protocolos;
@@ -70,9 +91,20 @@ private:
     PaginaProfesionales *paginaProfesionales = nullptr;
     PaginaPacientes *paginaPacientes = nullptr;
     PaginaAvisos *paginaAvisos = nullptr;
+    PaginaReportes *paginaReportes = nullptr;
+    Repositorio *repositorio = nullptr;   /* stored procedures de la base */
+    bool persistir = false;               /* true: usa el archivo local */
+    QString archivoLocal;
+    QDateTime ultimaVersionLocal;         /* fecha del archivo la última vez que se leyó o escribió */
+    QTimer *relojLocal = nullptr;
+    bool enModoBase = false;              /* true: los datos vienen de la base; false: datos de prueba */
+    int idUsuario = 0;                    /* quién ingresó (va al log de auditoría) */
+    QString rolUsuario;
 
 public:
     ConexionApp *conexionApp() const { return conexion; }
+    bool usaBase() const { return enModoBase; }
+    int usuarioActual() const { return idUsuario; }
     const QVector<Turno> &listaTurnos() const { return turnos; }
 };
 

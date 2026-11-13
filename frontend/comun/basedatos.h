@@ -14,6 +14,7 @@
 #define BASEDATOS_H
 
 #include <QString>
+#include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
 #include <QVector>
@@ -39,6 +40,7 @@ struct Resultado {
     QString error;                 /* mensaje claro para el usuario */
     int codigoSql = 0;             /* 0 si no hubo error de MySQL */
     QVector<QVariantMap> filas;    /* primer conjunto de resultados, por nombre de columna */
+    QStringList columnas;          /* los nombres de las columnas, en el orden del SELECT (el mapa no lo guarda) */
 };
 
 class BaseDatos

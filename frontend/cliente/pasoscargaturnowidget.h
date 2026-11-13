@@ -11,6 +11,8 @@ namespace Ui {
 class PasosCargaTurnoWidget;
 }
 
+class Repositorio;
+
 /**
  * @brief PasosCargaTurnoWidget - Pantallas Cliente 1 a 3 (RF-01, RF-04, RF-08, RF-10)
  * Implementa la interfaz visual del flujo de carga de turno en 3 pasos con botones grandes táctiles.
@@ -24,6 +26,10 @@ public:
     ~PasosCargaTurnoWidget();
 
     void reiniciarFormulario();
+
+    /* Con la base conectada, el catálogo, los profesionales, los horarios libres y la reserva
+     * salen y van a los stored procedures. Sin base se sigue con la grilla fija de prueba. */
+    void usarBase(Repositorio *repositorio);
     void setProtocoloSeleccionado(const QString &nombre, double precio, int duracion);
     void liberarHorario(const QString &fecha, const QString &hora, const QString &profesional);
 
@@ -61,6 +67,27 @@ private:
     QString m_hora;
     QString m_profesional;
 
+    // Con la base
+    Repositorio *m_repo = nullptr;
+    int m_protocoloId = 0;
+    double m_protocoloSena = -1;   // seña que calcula la base; -1 = regla local
+
+    struct ProtoItem {
+        QString nombre;
+        int duracion;
+        double precio;
+        QString categoria;
+        QString desc;
+        int id = 0;
+        double sena = -1;
+    };
+    QList<ProtoItem> m_catalogoBD;
+    void construirTarjetas(const QList<ProtoItem> &catalogo);
+    void cargarProfesionalesDeBase();
+    void armarGrillaDeBase();
+    bool buscarOCrearPaciente(int *idPaciente);
+    void confirmarEnBase();
+
     QList<QPushButton*> m_botonesHorarios;
     QSet<QString> m_horariosReservados;
 
@@ -68,6 +95,7 @@ private:
     void inicializarHorarios();
     void actualizarResumenPaso3();
     void actualizarDisponibilidad();
+    void actualizarFechaMinima();
     QString claveHorario(const QString &hora) const;
 };
 

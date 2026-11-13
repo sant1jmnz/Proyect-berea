@@ -30,7 +30,7 @@ DROP PROCEDURE IF EXISTS auditoria.sp_registrar_log//
 CREATE PROCEDURE auditoria.sp_registrar_log(
     IN p_tipo VARCHAR(50), IN p_id_usuario INT, IN p_id_paciente INT, IN p_origen VARCHAR(50),
     IN p_descripcion VARCHAR(2000), IN p_tabla VARCHAR(100), IN p_id_registro INT,
-    IN p_anterior TEXT, IN p_nuevo TEXT, IN p_exitoso SMALLINT, IN p_ip VARCHAR(45), IN p_registrar SMALLINT)
+    IN p_anterior TEXT, IN p_nuevo TEXT, IN p_exitoso SMALLINT, IN p_ip VARCHAR(45))
 BEGIN
     INSERT INTO auditoria.Log (id_tipo_evento, id_usuario, id_paciente, id_origen, fecha_hora, descripcion,
                                ip_origen, tabla_afectada, id_registro_afectado, valor_anterior, valor_nuevo, exitoso)
@@ -39,25 +39,22 @@ BEGIN
            (SELECT p.id_paciente FROM personas.Paciente p WHERE p.id_paciente = p_id_paciente),
            COALESCE((SELECT o.id_origen FROM agenda.Origen o WHERE o.nombre = p_origen),
                     (SELECT o.id_origen FROM agenda.Origen o WHERE o.nombre = 'sistema')),
-           COALESCE(@ahora_simulado, NOW()), CAST(p_descripcion AS CHAR(500)), p_ip, p_tabla, p_id_registro,
+           COALESCE(@ahora_simulado, NOW()), SUBSTRING(p_descripcion, 1, 500), p_ip, p_tabla, p_id_registro,
            p_anterior, p_nuevo, COALESCE(p_exitoso, 1)
     FROM auditoria.TipoEvento te
-    WHERE te.nombre = p_tipo AND p_registrar = 1;
+    WHERE te.nombre = p_tipo;
 END//
 
 -- Cambia el estado de un pago de seña y, si se pagó con tarjeta de regalo,
 -- devuelve el saldo (movimiento negativo). Lo usan la cancelación, las
 -- inasistencias y las evaluaciones. No devuelve filas: es interno.
 -- p_estado: 'reembolsada', 'reembolsada parcial' o 'retenida'.
+-- Deja el resultado en @reembolso_codigo (NULL = se hizo, 52xxx = no se pudo) y @reembolso_mensaje.
 DROP PROCEDURE IF EXISTS pagos.sp_aplicar_reembolso//
 CREATE PROCEDURE pagos.sp_aplicar_reembolso(
     IN p_id_pago INT, IN p_monto_reembolsado DECIMAL(12,2), IN p_estado VARCHAR(50),
-    IN p_motivo VARCHAR(200), IN p_id_usuario INT, IN p_origen VARCHAR(50), IN p_ejecutar SMALLINT)
+    IN p_motivo VARCHAR(200), IN p_id_usuario INT, IN p_origen VARCHAR(50))
 BEGIN
-    -- SP interno: lo usan otros SP. Con p_ejecutar = 0 no hace nada; así quien lo llama decide,
-    -- sin IF, si se reembolsa o se retiene (llama dos veces, cada una con su condición).
-    -- No devuelve filas (para no mezclarse con la respuesta de quien lo llama): deja el resultado
-    -- en @reembolso_codigo (NULL = se hizo, 0 = no se ejecutó, 52xxx = no se pudo) y @reembolso_mensaje.
     DECLARE v_codigo INT DEFAULT NULL;
     DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
     DECLARE v_monto DECIMAL(12,2);
@@ -65,45 +62,59 @@ BEGIN
     DECLARE v_medio VARCHAR(50);
     DECLARE v_turno INT;
     DECLARE v_paciente INT;
+    DECLARE v_tipo_log VARCHAR(50) DEFAULT 'retencion';
 
-    SET v_codigo = (SELECT 0 FROM DUAL WHERE COALESCE(p_ejecutar, 0) <> 1);
     SELECT ps.monto, ep.nombre, mp.nombre, ps.id_turno, t.id_paciente
       INTO v_monto, v_estado, v_medio, v_turno, v_paciente
       FROM pagos.PagoSena ps
-      JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
-      JOIN pagos.MedioPago mp ON mp.id_medio_pago = ps.id_medio_pago
-      JOIN agenda.Turno t ON t.id_turno = ps.id_turno
+      INNER JOIN pagos.EstadoPago ep ON ps.id_estado_pago = ep.id_estado_pago
+      INNER JOIN pagos.MedioPago mp ON ps.id_medio_pago = mp.id_medio_pago
+      INNER JOIN agenda.Turno t ON ps.id_turno = t.id_turno
      WHERE ps.id_pago = p_id_pago;
 
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El pago de seña no existe' FROM DUAL WHERE v_codigo IS NULL AND (v_monto IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52100 FROM DUAL WHERE v_monto IS NULL));
+    IF v_monto IS NULL THEN
+        SET v_codigo = 52100;
+        SET v_mensaje = 'El pago de seña no existe';
+    END IF;
     -- Solo se resuelve una seña 'pagada'. Única excepción: una seña retenida al vencer
     -- una evaluación puede pasar a 'reembolsada parcial' si la paciente reclama.
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La seña ya fue resuelta (reembolsada o retenida)' FROM DUAL WHERE v_codigo IS NULL AND (v_estado <> 'pagada' AND NOT (v_estado = 'retenida' AND p_estado = 'reembolsada parcial'))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52101 FROM DUAL WHERE v_estado <> 'pagada' AND NOT (v_estado = 'retenida' AND p_estado = 'reembolsada parcial')));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El monto a reembolsar no es válido' FROM DUAL WHERE v_codigo IS NULL AND (p_monto_reembolsado IS NULL OR p_monto_reembolsado < 0 OR p_monto_reembolsado > v_monto)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52102 FROM DUAL WHERE p_monto_reembolsado IS NULL OR p_monto_reembolsado < 0 OR p_monto_reembolsado > v_monto));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Estado de pago inválido' FROM DUAL WHERE v_codigo IS NULL AND (p_estado NOT IN ('reembolsada', 'reembolsada parcial', 'retenida'))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52103 FROM DUAL WHERE p_estado NOT IN ('reembolsada', 'reembolsada parcial', 'retenida')));
+    IF v_codigo IS NULL AND (v_estado <> 'pagada' AND NOT (v_estado = 'retenida' AND p_estado = 'reembolsada parcial')) THEN
+        SET v_codigo = 52101;
+        SET v_mensaje = 'La seña ya fue resuelta (reembolsada o retenida)';
+    END IF;
+    IF v_codigo IS NULL AND (p_monto_reembolsado IS NULL OR p_monto_reembolsado < 0 OR p_monto_reembolsado > v_monto) THEN
+        SET v_codigo = 52102;
+        SET v_mensaje = 'El monto a reembolsar no es válido';
+    END IF;
+    IF v_codigo IS NULL AND (p_estado NOT IN ('reembolsada', 'reembolsada parcial', 'retenida')) THEN
+        SET v_codigo = 52103;
+        SET v_mensaje = 'Estado de pago inválido';
+    END IF;
 
-    UPDATE pagos.PagoSena
-       SET id_estado_pago = (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = p_estado),
-           monto_reembolsado = p_monto_reembolsado,
-           fecha_resolucion = COALESCE(@ahora_simulado, NOW())
-     WHERE id_pago = p_id_pago AND v_codigo IS NULL;
+    IF v_codigo IS NULL THEN
+        UPDATE pagos.PagoSena
+           SET id_estado_pago = (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = p_estado),
+               monto_reembolsado = p_monto_reembolsado,
+               fecha_resolucion = COALESCE(@ahora_simulado, NOW())
+         WHERE id_pago = p_id_pago;
 
-    -- Si la seña se había pagado con tarjeta de regalo, lo reembolsado vuelve a la tarjeta.
-    INSERT INTO pagos.MovimientoTarjeta (id_tarjeta, id_turno, monto, fecha_movimiento)
-    SELECT m.id_tarjeta, v_turno, -p_monto_reembolsado, COALESCE(@ahora_simulado, NOW())
-      FROM pagos.MovimientoTarjeta m
-     WHERE m.id_turno = v_turno AND m.monto > 0
-       AND m.id_movimiento = (SELECT MIN(m2.id_movimiento) FROM pagos.MovimientoTarjeta m2 WHERE m2.id_turno = v_turno AND m2.monto > 0)
-       AND v_codigo IS NULL AND v_medio = 'tarjeta de regalo' AND p_monto_reembolsado > 0;
+        -- Si la seña se había pagado con tarjeta de regalo, lo reembolsado vuelve a la tarjeta.
+        IF v_medio = 'tarjeta de regalo' AND p_monto_reembolsado > 0 THEN
+            INSERT INTO pagos.MovimientoTarjeta (id_tarjeta, id_turno, monto, fecha_movimiento)
+            SELECT m.id_tarjeta, v_turno, -p_monto_reembolsado, COALESCE(@ahora_simulado, NOW())
+              FROM pagos.MovimientoTarjeta m
+             WHERE m.id_turno = v_turno AND m.monto > 0
+               AND m.id_movimiento = (SELECT MIN(m2.id_movimiento) FROM pagos.MovimientoTarjeta m2 WHERE m2.id_turno = v_turno AND m2.monto > 0);
+        END IF;
 
-    CALL auditoria.sp_registrar_log(COALESCE((SELECT 'reembolso' FROM DUAL WHERE p_monto_reembolsado > 0), 'retencion'), p_id_usuario, v_paciente, p_origen,
-        CONCAT(p_motivo, ': reembolsado $', p_monto_reembolsado, ' de $', v_monto, ' (', p_estado, ')'),
-        'pagos.PagoSena', p_id_pago, CONCAT('estado=', v_estado, ';reembolsado=0'),
-        CONCAT('estado=', p_estado, ';reembolsado=', p_monto_reembolsado), 1, NULL, v_codigo IS NULL);
+        IF p_monto_reembolsado > 0 THEN
+            SET v_tipo_log = 'reembolso';
+        END IF;
+        CALL auditoria.sp_registrar_log(v_tipo_log, p_id_usuario, v_paciente, p_origen,
+            CONCAT(p_motivo, ': reembolsado $', p_monto_reembolsado, ' de $', v_monto, ' (', p_estado, ')'),
+            'pagos.PagoSena', p_id_pago, CONCAT('estado=', v_estado, ';reembolsado=0'),
+            CONCAT('estado=', p_estado, ';reembolsado=', p_monto_reembolsado), 1, NULL);
+    END IF;
     SET @reembolso_codigo = v_codigo;
     SET @reembolso_mensaje = v_mensaje;
 END//
@@ -143,31 +154,41 @@ BEGIN
                                      JOIN auditoria.TipoEvento t2 ON t2.id_tipo_evento = l2.id_tipo_evento
                                     WHERE t2.nombre = 'inicio_sesion' AND l2.id_usuario = v_id), '1970-01-01');
 
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Falta el usuario o la contraseña' FROM DUAL WHERE v_codigo IS NULL
-                                         AND (p_usuario IS NULL OR p_usuario = '' OR p_password IS NULL OR p_password = '')));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52010 FROM DUAL WHERE p_usuario IS NULL OR p_usuario = '' OR p_password IS NULL OR p_password = ''));
-    SET v_desc_log = COALESCE(v_desc_log, (SELECT 'Usuario inexistente o inactivo' FROM DUAL WHERE v_codigo IS NULL AND v_id IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Usuario o contraseña incorrectos' FROM DUAL WHERE v_codigo IS NULL AND v_id IS NULL));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52011 FROM DUAL WHERE v_id IS NULL));
-    SET v_desc_log = COALESCE(v_desc_log, (SELECT 'Cuenta bloqueada por intentos fallidos' FROM DUAL WHERE v_codigo IS NULL AND v_fallidos >= 5));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Cuenta bloqueada 15 minutos por demasiados intentos' FROM DUAL WHERE v_codigo IS NULL AND v_fallidos >= 5));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52012 FROM DUAL WHERE v_fallidos >= 5));
-    SET v_desc_log = COALESCE(v_desc_log, (SELECT 'Contraseña incorrecta' FROM DUAL WHERE v_codigo IS NULL AND v_password <> p_password));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Usuario o contraseña incorrectos' FROM DUAL WHERE v_codigo IS NULL AND v_password <> p_password));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52011 FROM DUAL WHERE v_password <> p_password));
+    IF p_usuario IS NULL OR CHAR_LENGTH(TRIM(p_usuario)) = 0 OR p_password IS NULL OR p_password = '' THEN
+        SET v_codigo = 52010;
+        SET v_mensaje = 'Falta el usuario o la contraseña';
+    ELSEIF v_id IS NULL THEN
+        SET v_codigo = 52011;
+        SET v_mensaje = 'Usuario o contraseña incorrectos';
+        SET v_desc_log = 'Usuario inexistente o inactivo';
+    ELSEIF v_fallidos >= 5 THEN
+        SET v_codigo = 52012;
+        SET v_mensaje = 'Cuenta bloqueada 15 minutos por demasiados intentos';
+        SET v_desc_log = 'Cuenta bloqueada por intentos fallidos';
+    ELSEIF v_password <> p_password THEN
+        SET v_codigo = 52011;
+        SET v_mensaje = 'Usuario o contraseña incorrectos';
+        SET v_desc_log = 'Contraseña incorrecta';
+    END IF;
 
-    SELECT id_paciente INTO v_paciente FROM personas.Paciente WHERE id_usuario = v_id AND v_codigo IS NULL;
-    SELECT id_profesional INTO v_profesional FROM personas.Profesional WHERE id_usuario = v_id AND v_codigo IS NULL;
-    -- Si faltan los datos (52010) no se registra nada; si el usuario no existe, el intento queda sin usuario.
-    CALL auditoria.sp_registrar_log('intento_fallido', v_id, NULL, p_origen, v_desc_log, 'seguridad.Usuario', v_id, NULL, NULL, 0, p_ip,
-                                    v_codigo IN (52011, 52012));
-    CALL auditoria.sp_registrar_log('inicio_sesion', v_id, v_paciente, p_origen,
-        CONCAT('Ingreso como ', v_rol), 'seguridad.Usuario', v_id, NULL, NULL, 1, p_ip, v_codigo IS NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Ingreso correcto' AS mensaje, v_id AS id,
-           COALESCE(v_paciente, v_profesional) AS valor, v_rol AS dato
-      FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, (SELECT v_id FROM DUAL WHERE v_codigo = 52012), NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        SELECT id_paciente INTO v_paciente FROM personas.Paciente WHERE id_usuario = v_id;
+        SELECT id_profesional INTO v_profesional FROM personas.Profesional WHERE id_usuario = v_id;
+        CALL auditoria.sp_registrar_log('inicio_sesion', v_id, v_paciente, p_origen,
+            CONCAT('Ingreso como ', v_rol), 'seguridad.Usuario', v_id, NULL, NULL, 1, p_ip);
+        SELECT 'OK' AS estado, 0 AS codigo, 'Ingreso correcto' AS mensaje, v_id AS id,
+               COALESCE(v_paciente, v_profesional) AS valor, v_rol AS dato;
+    ELSE
+        -- Si faltan los datos (52010) no se registra nada; si el usuario no existe, el intento queda sin usuario.
+        IF v_codigo <> 52010 THEN
+            CALL auditoria.sp_registrar_log('intento_fallido', v_id, NULL, p_origen, v_desc_log, 'seguridad.Usuario', v_id, NULL, NULL, 0, p_ip);
+        END IF;
+        IF v_codigo = 52012 THEN
+            SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
+        ELSE
+            SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        END IF;
+    END IF;
 END//
 
 -- Cierre de sesión: solo deja el evento 'cierre_sesion' en el log (la app
@@ -177,11 +198,13 @@ CREATE PROCEDURE seguridad.sp_cerrar_sesion(IN p_id_usuario INT, IN p_origen VAR
 BEGIN
     DECLARE v_existe SMALLINT;
     SET v_existe = EXISTS (SELECT 1 FROM seguridad.Usuario WHERE id_usuario = p_id_usuario);
-    CALL auditoria.sp_registrar_log('cierre_sesion', p_id_usuario, NULL, p_origen, 'Cierre de sesión',
-                                    'seguridad.Usuario', p_id_usuario, NULL, NULL, 1, p_ip, v_existe);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Sesión cerrada' AS mensaje, p_id_usuario AS id, NULL AS valor, NULL AS dato FROM DUAL WHERE v_existe = 1
-    UNION ALL
-    SELECT 'ERROR', 52013, 'El usuario no existe', NULL, NULL, NULL FROM DUAL WHERE v_existe = 0;
+    IF v_existe = 1 THEN
+        CALL auditoria.sp_registrar_log('cierre_sesion', p_id_usuario, NULL, p_origen, 'Cierre de sesión',
+                                        'seguridad.Usuario', p_id_usuario, NULL, NULL, 1, p_ip);
+        SELECT 'OK' AS estado, 0 AS codigo, 'Sesión cerrada' AS mensaje, p_id_usuario AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        SELECT 'ERROR' AS estado, 52013 AS codigo, 'El usuario no existe' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Cuenta opcional de una paciente (RF-15): se vincula con su DNI.
@@ -202,37 +225,51 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, v_msg,
-                                        'seguridad.Usuario', NULL, NULL, NULL, 0, NULL, 1);
+                                        'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
     SELECT id_paciente, id_usuario INTO v_paciente, v_cuenta FROM personas.Paciente WHERE dni = p_dni;
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'No hay una paciente con ese DNI' FROM DUAL WHERE v_codigo IS NULL AND (v_paciente IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52020 FROM DUAL WHERE v_paciente IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Esa paciente ya tiene cuenta' FROM DUAL WHERE v_codigo IS NULL AND (v_cuenta IS NOT NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52021 FROM DUAL WHERE v_cuenta IS NOT NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo' FROM DUAL WHERE v_codigo IS NULL AND (p_nombre_usuario IS NULL OR (CHAR_LENGTH(p_nombre_usuario) BETWEEN 4 AND 50) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52022 FROM DUAL WHERE p_nombre_usuario IS NULL OR (CHAR_LENGTH(p_nombre_usuario) BETWEEN 4 AND 50) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El email no es válido' FROM DUAL WHERE v_codigo IS NULL AND (p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52023 FROM DUAL WHERE p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La contrasena no puede estar vacia' FROM DUAL WHERE v_codigo IS NULL AND (p_password IS NULL OR p_password = '')));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52024 FROM DUAL WHERE p_password IS NULL OR p_password = ''));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Ese usuario o email ya está en uso' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52025 FROM DUAL WHERE EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email)));
+    IF v_codigo IS NULL AND (v_paciente IS NULL) THEN
+        SET v_codigo = 52020;
+        SET v_mensaje = 'No hay una paciente con ese DNI';
+    END IF;
+    IF v_codigo IS NULL AND (v_cuenta IS NOT NULL) THEN
+        SET v_codigo = 52021;
+        SET v_mensaje = 'Esa paciente ya tiene cuenta';
+    END IF;
+    IF v_codigo IS NULL AND (p_nombre_usuario IS NULL OR (CHAR_LENGTH(p_nombre_usuario) BETWEEN 4 AND 50) = 0) THEN
+        SET v_codigo = 52022;
+        SET v_mensaje = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
+    END IF;
+    IF v_codigo IS NULL AND (p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0) THEN
+        SET v_codigo = 52023;
+        SET v_mensaje = 'El email no es válido';
+    END IF;
+    IF v_codigo IS NULL AND (p_password IS NULL OR p_password = '') THEN
+        SET v_codigo = 52024;
+        SET v_mensaje = 'La contrasena no puede estar vacia';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email)) THEN
+        SET v_codigo = 52025;
+        SET v_mensaje = 'Ese usuario o email ya está en uso';
+    END IF;
 
-    START TRANSACTION;
-    INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
-    SELECT (SELECT id_rol FROM seguridad.Rol WHERE nombre = 'paciente'), p_nombre_usuario, p_email, p_password FROM DUAL WHERE v_codigo IS NULL;
-    SELECT MAX(id_usuario) INTO v_usuario FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario;
-    UPDATE personas.Paciente SET id_usuario = v_usuario WHERE id_paciente = v_paciente AND v_codigo IS NULL;
-    CALL auditoria.sp_registrar_log('cuenta_creada', v_usuario, v_paciente, p_origen, 'Cuenta de paciente creada',
-                                    'seguridad.Usuario', v_usuario, NULL, p_nombre_usuario, 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, v_mensaje,
-                                        'seguridad.Usuario', NULL, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Cuenta creada' AS mensaje, v_usuario AS id, NULL AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
+VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'paciente'), p_nombre_usuario, p_email, p_password);
+        SELECT MAX(id_usuario) INTO v_usuario FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario;
+        UPDATE personas.Paciente SET id_usuario = v_usuario WHERE id_paciente = v_paciente;
+        CALL auditoria.sp_registrar_log('cuenta_creada', v_usuario, v_paciente, p_origen, 'Cuenta de paciente creada',
+                                        'seguridad.Usuario', v_usuario, NULL, p_nombre_usuario, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Cuenta creada' AS mensaje, v_usuario AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, v_mensaje,
+                                            'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 
@@ -257,39 +294,55 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, v_msg,
-                                        'personas.Paciente', NULL, NULL, NULL, 0, NULL, 1);
+                                        'personas.Paciente', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
     -- Un dato opcional vacío ('') se toma como no informado (NULL).
-    SET p_email = (SELECT p_email FROM DUAL WHERE p_email <> '');
+    IF p_email = '' THEN
+        SET p_email = NULL;
+    END IF;
+    IF v_codigo IS NULL AND (p_dni IS NULL OR (CHAR_LENGTH(p_dni) BETWEEN 7 AND 8 AND CAST(CAST(p_dni AS UNSIGNED) AS CHAR) = p_dni) = 0) THEN
+        SET v_codigo = 52030;
+        SET v_mensaje = 'El DNI debe tener 7 u 8 dígitos';
+    END IF;
+    IF v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2) THEN
+        SET v_codigo = 52031;
+        SET v_mensaje = 'Nombre y apellido deben tener al menos 2 letras';
+    END IF;
+    IF v_codigo IS NULL AND (p_telefono IS NULL OR (CHAR_LENGTH(p_telefono) BETWEEN 10 AND 13 AND CAST(CAST(p_telefono AS UNSIGNED) AS CHAR) = p_telefono) = 0) THEN
+        SET v_codigo = 52032;
+        SET v_mensaje = 'El teléfono debe tener de 10 a 13 dígitos';
+    END IF;
+    IF v_codigo IS NULL AND (p_fecha_nacimiento IS NULL OR p_fecha_nacimiento >= CURRENT_DATE) THEN
+        SET v_codigo = 52033;
+        SET v_mensaje = 'La fecha de nacimiento no es válida';
+    END IF;
+    IF v_codigo IS NULL AND (p_email IS NOT NULL AND p_email <> '' AND (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0) THEN
+        SET v_codigo = 52034;
+        SET v_mensaje = 'El email no es válido';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM personas.Paciente WHERE dni = p_dni)) THEN
+        SET v_codigo = 52035;
+        SET v_mensaje = 'Ya existe una paciente con ese DNI';
+    END IF;
 
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El DNI debe tener 7 u 8 dígitos' FROM DUAL WHERE v_codigo IS NULL AND (p_dni IS NULL OR (CHAR_LENGTH(p_dni) BETWEEN 7 AND 8 AND CAST(CAST(p_dni AS UNSIGNED) AS CHAR) = p_dni) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52030 FROM DUAL WHERE p_dni IS NULL OR (CHAR_LENGTH(p_dni) BETWEEN 7 AND 8 AND CAST(CAST(p_dni AS UNSIGNED) AS CHAR) = p_dni) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Nombre y apellido deben tener al menos 2 letras' FROM DUAL WHERE v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52031 FROM DUAL WHERE p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El teléfono debe tener de 10 a 13 dígitos' FROM DUAL WHERE v_codigo IS NULL AND (p_telefono IS NULL OR (CHAR_LENGTH(p_telefono) BETWEEN 10 AND 13 AND CAST(CAST(p_telefono AS UNSIGNED) AS CHAR) = p_telefono) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52032 FROM DUAL WHERE p_telefono IS NULL OR (CHAR_LENGTH(p_telefono) BETWEEN 10 AND 13 AND CAST(CAST(p_telefono AS UNSIGNED) AS CHAR) = p_telefono) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La fecha de nacimiento no es válida' FROM DUAL WHERE v_codigo IS NULL AND (p_fecha_nacimiento IS NULL OR p_fecha_nacimiento >= CURRENT_DATE)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52033 FROM DUAL WHERE p_fecha_nacimiento IS NULL OR p_fecha_nacimiento >= CURRENT_DATE));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El email no es válido' FROM DUAL WHERE v_codigo IS NULL AND (p_email IS NOT NULL AND p_email <> '' AND (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52034 FROM DUAL WHERE p_email IS NOT NULL AND p_email <> '' AND (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Ya existe una paciente con ese DNI' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM personas.Paciente WHERE dni = p_dni))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52035 FROM DUAL WHERE EXISTS (SELECT 1 FROM personas.Paciente WHERE dni = p_dni)));
-
-    START TRANSACTION;
-    INSERT INTO personas.Paciente (dni, nombre, apellido, fecha_nacimiento, fecha_alta, email)
-    SELECT p_dni, p_nombre, p_apellido, p_fecha_nacimiento, COALESCE(@ahora_simulado, NOW()), (SELECT p_email FROM DUAL WHERE p_email <> '') FROM DUAL WHERE v_codigo IS NULL;
-    SELECT MAX(id_paciente) INTO v_id FROM personas.Paciente WHERE dni = p_dni;
-    INSERT INTO personas.TelefonoPaciente (id_paciente, telefono) SELECT v_id, p_telefono FROM DUAL WHERE v_codigo IS NULL;
-    CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, v_id, p_origen,
-        'Alta de paciente DNI', 'personas.Paciente', v_id, NULL, p_apellido, 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, v_mensaje,
-                                        'personas.Paciente', NULL, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Paciente creada' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        INSERT INTO personas.Paciente (dni, nombre, apellido, fecha_nacimiento, fecha_alta, email)
+VALUES (p_dni, p_nombre, p_apellido, p_fecha_nacimiento, COALESCE(@ahora_simulado, NOW()), p_email);
+        SELECT MAX(id_paciente) INTO v_id FROM personas.Paciente WHERE dni = p_dni;
+        INSERT INTO personas.TelefonoPaciente (id_paciente, telefono)
+VALUES (v_id, p_telefono);
+        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, v_id, p_origen,
+            'Alta de paciente DNI', 'personas.Paciente', v_id, NULL, p_apellido, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Paciente creada' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, v_mensaje,
+                                            'personas.Paciente', NULL, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Modifica nombre, apellido, email y, si viene, agrega un teléfono nuevo.
@@ -308,42 +361,57 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, v_msg,
-                                        'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL, 1);
+                                        'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
     -- Un dato opcional vacío ('') se toma como no informado (NULL).
-    SET p_telefono_nuevo = (SELECT p_telefono_nuevo FROM DUAL WHERE p_telefono_nuevo <> '');
-    SET p_email = (SELECT p_email FROM DUAL WHERE p_email <> '');
+    IF p_telefono_nuevo = '' THEN
+        SET p_telefono_nuevo = NULL;
+    END IF;
+    IF p_email = '' THEN
+        SET p_email = NULL;
+    END IF;
 
     SELECT nombre INTO v_antes
       FROM personas.Paciente WHERE id_paciente = p_id_paciente;
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La paciente no existe' FROM DUAL WHERE v_codigo IS NULL AND (v_antes IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52036 FROM DUAL WHERE v_antes IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Nombre y apellido deben tener al menos 2 letras' FROM DUAL WHERE v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52031 FROM DUAL WHERE p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El email no es válido' FROM DUAL WHERE v_codigo IS NULL AND (p_email IS NOT NULL AND p_email <> '' AND (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52034 FROM DUAL WHERE p_email IS NOT NULL AND p_email <> '' AND (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El teléfono debe tener de 10 a 13 dígitos' FROM DUAL WHERE v_codigo IS NULL AND (p_telefono_nuevo IS NOT NULL AND p_telefono_nuevo <> '' AND (CHAR_LENGTH(p_telefono_nuevo) BETWEEN 10 AND 13 AND CAST(CAST(p_telefono_nuevo AS UNSIGNED) AS CHAR) = p_telefono_nuevo) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52032 FROM DUAL WHERE p_telefono_nuevo IS NOT NULL AND p_telefono_nuevo <> '' AND (CHAR_LENGTH(p_telefono_nuevo) BETWEEN 10 AND 13 AND CAST(CAST(p_telefono_nuevo AS UNSIGNED) AS CHAR) = p_telefono_nuevo) = 0));
+    IF v_codigo IS NULL AND (v_antes IS NULL) THEN
+        SET v_codigo = 52036;
+        SET v_mensaje = 'La paciente no existe';
+    END IF;
+    IF v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2) THEN
+        SET v_codigo = 52031;
+        SET v_mensaje = 'Nombre y apellido deben tener al menos 2 letras';
+    END IF;
+    IF v_codigo IS NULL AND (p_email IS NOT NULL AND p_email <> '' AND (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0) THEN
+        SET v_codigo = 52034;
+        SET v_mensaje = 'El email no es válido';
+    END IF;
+    IF v_codigo IS NULL AND (p_telefono_nuevo IS NOT NULL AND p_telefono_nuevo <> '' AND (CHAR_LENGTH(p_telefono_nuevo) BETWEEN 10 AND 13 AND CAST(CAST(p_telefono_nuevo AS UNSIGNED) AS CHAR) = p_telefono_nuevo) = 0) THEN
+        SET v_codigo = 52032;
+        SET v_mensaje = 'El teléfono debe tener de 10 a 13 dígitos';
+    END IF;
 
-    START TRANSACTION;
-    UPDATE personas.Paciente
-       SET nombre = p_nombre, apellido = p_apellido, email = (SELECT p_email FROM DUAL WHERE p_email <> '')
-     WHERE id_paciente = p_id_paciente AND v_codigo IS NULL;
-    -- Un teléfono nuevo se agrega (si no estaba).
-    INSERT INTO personas.TelefonoPaciente (id_paciente, telefono)
-    SELECT p_id_paciente, p_telefono_nuevo FROM DUAL
-     WHERE v_codigo IS NULL AND p_telefono_nuevo IS NOT NULL AND p_telefono_nuevo <> ''
-       AND NOT EXISTS (SELECT 1 FROM personas.TelefonoPaciente WHERE id_paciente = p_id_paciente AND telefono = p_telefono_nuevo);
-    CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, 'Datos de la paciente modificados',
-        'personas.Paciente', p_id_paciente, v_antes, p_nombre, 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, v_mensaje,
-                                        'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Paciente modificada' AS mensaje, p_id_paciente AS id, NULL AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        UPDATE personas.Paciente
+           SET nombre = p_nombre, apellido = p_apellido, email = p_email
+         WHERE id_paciente = p_id_paciente;
+        -- Un teléfono nuevo se agrega (si no estaba).
+        IF p_telefono_nuevo IS NOT NULL AND p_telefono_nuevo <> ''
+           AND NOT EXISTS (SELECT 1 FROM personas.TelefonoPaciente WHERE id_paciente = p_id_paciente AND telefono = p_telefono_nuevo) THEN
+            INSERT INTO personas.TelefonoPaciente (id_paciente, telefono)
+            VALUES (p_id_paciente, p_telefono_nuevo);
+        END IF;
+        CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, 'Datos de la paciente modificados',
+            'personas.Paciente', p_id_paciente, v_antes, p_nombre, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Paciente modificada' AS mensaje, p_id_paciente AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, v_mensaje,
+                                            'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Búsqueda por nombre, apellido, DNI o teléfono (RF-13). Con texto vacío o
@@ -389,44 +457,62 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, v_msg,
-                                        'personas.Profesional', NULL, NULL, NULL, 0, NULL, 1);
+                                        'personas.Profesional', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
+    IF v_codigo IS NULL AND (p_matricula IS NULL OR p_matricula = '') THEN
+        SET v_codigo = 52040;
+        SET v_mensaje = 'Falta la matrícula';
+    END IF;
+    IF v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2) THEN
+        SET v_codigo = 52031;
+        SET v_mensaje = 'Nombre y apellido deben tener al menos 2 letras';
+    END IF;
+    IF v_codigo IS NULL AND (p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0) THEN
+        SET v_codigo = 52034;
+        SET v_mensaje = 'El email no es válido';
+    END IF;
+    IF v_codigo IS NULL AND (p_telefono IS NULL OR (CHAR_LENGTH(p_telefono) BETWEEN 10 AND 13 AND CAST(CAST(p_telefono AS UNSIGNED) AS CHAR) = p_telefono) = 0) THEN
+        SET v_codigo = 52032;
+        SET v_mensaje = 'El teléfono debe tener de 10 a 13 dígitos';
+    END IF;
+    IF v_codigo IS NULL AND (p_nombre_usuario IS NULL OR (CHAR_LENGTH(p_nombre_usuario) BETWEEN 4 AND 50) = 0) THEN
+        SET v_codigo = 52022;
+        SET v_mensaje = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
+    END IF;
+    IF v_codigo IS NULL AND (p_password IS NULL OR p_password = '') THEN
+        SET v_codigo = 52024;
+        SET v_mensaje = 'La contrasena no puede estar vacia';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM personas.Profesional WHERE matricula = p_matricula)) THEN
+        SET v_codigo = 52041;
+        SET v_mensaje = 'Ya existe un profesional con esa matrícula';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email)) THEN
+        SET v_codigo = 52025;
+        SET v_mensaje = 'Ese usuario o email ya está en uso';
+    END IF;
 
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Falta la matrícula' FROM DUAL WHERE v_codigo IS NULL AND (p_matricula IS NULL OR p_matricula = '')));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52040 FROM DUAL WHERE p_matricula IS NULL OR p_matricula = ''));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Nombre y apellido deben tener al menos 2 letras' FROM DUAL WHERE v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52031 FROM DUAL WHERE p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El email no es válido' FROM DUAL WHERE v_codigo IS NULL AND (p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52034 FROM DUAL WHERE p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El teléfono debe tener de 10 a 13 dígitos' FROM DUAL WHERE v_codigo IS NULL AND (p_telefono IS NULL OR (CHAR_LENGTH(p_telefono) BETWEEN 10 AND 13 AND CAST(CAST(p_telefono AS UNSIGNED) AS CHAR) = p_telefono) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52032 FROM DUAL WHERE p_telefono IS NULL OR (CHAR_LENGTH(p_telefono) BETWEEN 10 AND 13 AND CAST(CAST(p_telefono AS UNSIGNED) AS CHAR) = p_telefono) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo' FROM DUAL WHERE v_codigo IS NULL AND (p_nombre_usuario IS NULL OR (CHAR_LENGTH(p_nombre_usuario) BETWEEN 4 AND 50) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52022 FROM DUAL WHERE p_nombre_usuario IS NULL OR (CHAR_LENGTH(p_nombre_usuario) BETWEEN 4 AND 50) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La contrasena no puede estar vacia' FROM DUAL WHERE v_codigo IS NULL AND (p_password IS NULL OR p_password = '')));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52024 FROM DUAL WHERE p_password IS NULL OR p_password = ''));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Ya existe un profesional con esa matrícula' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM personas.Profesional WHERE matricula = p_matricula))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52041 FROM DUAL WHERE EXISTS (SELECT 1 FROM personas.Profesional WHERE matricula = p_matricula)));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Ese usuario o email ya está en uso' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52025 FROM DUAL WHERE EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email)));
-
-    START TRANSACTION;
-    INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
-    SELECT (SELECT id_rol FROM seguridad.Rol WHERE nombre = 'profesional'), p_nombre_usuario, p_email, p_password FROM DUAL WHERE v_codigo IS NULL;
-    SELECT MAX(id_usuario) INTO v_usuario FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario;
-    INSERT INTO personas.Profesional (id_usuario, matricula, nombre, apellido, email)
-    SELECT v_usuario, p_matricula, p_nombre, p_apellido, p_email FROM DUAL WHERE v_codigo IS NULL;
-    SELECT MAX(id_profesional) INTO v_id FROM personas.Profesional WHERE matricula = p_matricula;
-    INSERT INTO personas.TelefonoProfesional (id_profesional, telefono) SELECT v_id, p_telefono FROM DUAL WHERE v_codigo IS NULL;
-    CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen,
-        'Alta del profesional',
-        'personas.Profesional', v_id, NULL, p_nombre_usuario, 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, v_mensaje,
-                                        'personas.Profesional', NULL, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Profesional creado' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
+VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'profesional'), p_nombre_usuario, p_email, p_password);
+        SELECT MAX(id_usuario) INTO v_usuario FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario;
+        INSERT INTO personas.Profesional (id_usuario, matricula, nombre, apellido, email)
+VALUES (v_usuario, p_matricula, p_nombre, p_apellido, p_email);
+        SELECT MAX(id_profesional) INTO v_id FROM personas.Profesional WHERE matricula = p_matricula;
+        INSERT INTO personas.TelefonoProfesional (id_profesional, telefono)
+VALUES (v_id, p_telefono);
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen,
+            'Alta del profesional',
+            'personas.Profesional', v_id, NULL, p_nombre_usuario, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Profesional creado' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, v_mensaje,
+                                            'personas.Profesional', NULL, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Modifica los datos del profesional o lo da de baja (p_activo = 0). No se
@@ -436,6 +522,7 @@ CREATE PROCEDURE personas.sp_modificar_profesional(
     IN p_id_profesional INT, IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_email VARCHAR(100),
     IN p_activo SMALLINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
 BEGIN
+    DECLARE v_descripcion VARCHAR(100);
     DECLARE v_codigo INT DEFAULT NULL;
     DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
     DECLARE v_errno INT DEFAULT 0;
@@ -446,42 +533,53 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, v_msg,
-                                        'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL, 1);
+                                        'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
     SELECT apellido INTO v_antes
       FROM personas.Profesional WHERE id_profesional = p_id_profesional;
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El profesional no existe' FROM DUAL WHERE v_codigo IS NULL AND (v_antes IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52042 FROM DUAL WHERE v_antes IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Nombre y apellido deben tener al menos 2 letras' FROM DUAL WHERE v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52031 FROM DUAL WHERE p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El email no es válido' FROM DUAL WHERE v_codigo IS NULL AND (p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52034 FROM DUAL WHERE p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El estado activo debe ser 0 o 1' FROM DUAL WHERE v_codigo IS NULL AND (p_activo IS NULL OR p_activo NOT IN (0, 1))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52043 FROM DUAL WHERE p_activo IS NULL OR p_activo NOT IN (0, 1)));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'No se puede dar de baja: tiene turnos futuros sin cancelar' FROM DUAL WHERE v_codigo IS NULL AND p_activo = 0 AND EXISTS (
-            SELECT 1 FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
-             WHERE t.id_profesional = p_id_profesional AND t.fecha_hora_inicio > COALESCE(@ahora_simulado, NOW())
-               AND e.nombre IN ('pendiente', 'confirmado'))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52044 FROM DUAL WHERE p_activo = 0 AND EXISTS (
-            SELECT 1 FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
-             WHERE t.id_profesional = p_id_profesional AND t.fecha_hora_inicio > COALESCE(@ahora_simulado, NOW())
-               AND e.nombre IN ('pendiente', 'confirmado'))));
+    IF v_codigo IS NULL AND (v_antes IS NULL) THEN
+        SET v_codigo = 52042;
+        SET v_mensaje = 'El profesional no existe';
+    END IF;
+    IF v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 2 OR p_apellido IS NULL OR CHAR_LENGTH(p_apellido) < 2) THEN
+        SET v_codigo = 52031;
+        SET v_mensaje = 'Nombre y apellido deben tener al menos 2 letras';
+    END IF;
+    IF v_codigo IS NULL AND (p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0) THEN
+        SET v_codigo = 52034;
+        SET v_mensaje = 'El email no es válido';
+    END IF;
+    IF v_codigo IS NULL AND (p_activo IS NULL OR p_activo NOT IN (0, 1)) THEN
+        SET v_codigo = 52043;
+        SET v_mensaje = 'El estado activo debe ser 0 o 1';
+    END IF;
 
-    START TRANSACTION;
-    UPDATE personas.Profesional SET nombre = p_nombre, apellido = p_apellido, email = p_email, activo = p_activo
-     WHERE id_profesional = p_id_profesional AND v_codigo IS NULL;
-    CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen,
-        COALESCE((SELECT 'Baja del profesional' FROM DUAL WHERE p_activo = 0), 'Datos del profesional modificados'),
-        'personas.Profesional', p_id_profesional, v_antes,
-        p_apellido, 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, v_mensaje,
-                                        'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Profesional modificado' AS mensaje, p_id_profesional AS id, NULL AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL AND (p_activo = 0 AND EXISTS ( SELECT 1 FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno WHERE t.id_profesional = p_id_profesional AND t.fecha_hora_inicio > COALESCE(@ahora_simulado, NOW()) AND e.nombre IN ('pendiente', 'confirmado'))) THEN
+        SET v_codigo = 52044;
+        SET v_mensaje = 'No se puede dar de baja: tiene turnos futuros sin cancelar';
+    END IF;
+
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        UPDATE personas.Profesional SET nombre = p_nombre, apellido = p_apellido, email = p_email, activo = p_activo
+         WHERE id_profesional = p_id_profesional;
+        SET v_descripcion = 'Datos del profesional modificados';
+        IF p_activo = 0 THEN
+            SET v_descripcion = 'Baja del profesional';
+        END IF;
+        CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen,
+            v_descripcion,
+            'personas.Profesional', p_id_profesional, v_antes,
+            p_apellido, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Profesional modificado' AS mensaje, p_id_profesional AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, v_mensaje,
+                                            'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Carga una franja de disponibilidad. No puede superponerse con otra franja
@@ -501,38 +599,46 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_msg,
-                                        'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL, 1);
+                                        'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
+    IF v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM personas.Profesional WHERE id_profesional = p_id_profesional AND activo = 1)) THEN
+        SET v_codigo = 52045;
+        SET v_mensaje = 'El profesional no existe o está dado de baja';
+    END IF;
+    IF v_codigo IS NULL AND (p_fecha IS NULL OR p_hora_inicio IS NULL OR p_hora_fin IS NULL) THEN
+        SET v_codigo = 52046;
+        SET v_mensaje = 'Faltan la fecha o las horas';
+    END IF;
+    IF v_codigo IS NULL AND (p_hora_fin <= p_hora_inicio) THEN
+        SET v_codigo = 52047;
+        SET v_mensaje = 'La hora de fin debe ser posterior a la de inicio';
+    END IF;
+    IF v_codigo IS NULL AND (p_fecha < DATE(COALESCE(@ahora_simulado, NOW()))) THEN
+        SET v_codigo = 52048;
+        SET v_mensaje = 'No se puede cargar disponibilidad en el pasado';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM personas.Disponibilidad d WHERE d.id_profesional = p_id_profesional AND d.fecha = p_fecha AND d.activa = 1 AND d.hora_inicio < p_hora_fin AND d.hora_fin > p_hora_inicio)) THEN
+        SET v_codigo = 52049;
+        SET v_mensaje = 'La franja se superpone con otra ya cargada';
+    END IF;
 
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El profesional no existe o está dado de baja' FROM DUAL WHERE v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM personas.Profesional WHERE id_profesional = p_id_profesional AND activo = 1))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52045 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM personas.Profesional WHERE id_profesional = p_id_profesional AND activo = 1)));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Faltan la fecha o las horas' FROM DUAL WHERE v_codigo IS NULL AND (p_fecha IS NULL OR p_hora_inicio IS NULL OR p_hora_fin IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52046 FROM DUAL WHERE p_fecha IS NULL OR p_hora_inicio IS NULL OR p_hora_fin IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La hora de fin debe ser posterior a la de inicio' FROM DUAL WHERE v_codigo IS NULL AND (p_hora_fin <= p_hora_inicio)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52047 FROM DUAL WHERE p_hora_fin <= p_hora_inicio));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'No se puede cargar disponibilidad en el pasado' FROM DUAL WHERE v_codigo IS NULL AND (p_fecha < DATE(COALESCE(@ahora_simulado, NOW())))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52048 FROM DUAL WHERE p_fecha < DATE(COALESCE(@ahora_simulado, NOW()))));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La franja se superpone con otra ya cargada' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM personas.Disponibilidad d
-                WHERE d.id_profesional = p_id_profesional AND d.fecha = p_fecha AND d.activa = 1
-                  AND d.hora_inicio < p_hora_fin AND d.hora_fin > p_hora_inicio))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52049 FROM DUAL WHERE EXISTS (SELECT 1 FROM personas.Disponibilidad d
-                WHERE d.id_profesional = p_id_profesional AND d.fecha = p_fecha AND d.activa = 1
-                  AND d.hora_inicio < p_hora_fin AND d.hora_fin > p_hora_inicio)));
-
-    START TRANSACTION;
-    INSERT INTO personas.Disponibilidad (id_profesional, fecha, hora_inicio, hora_fin) SELECT p_id_profesional, p_fecha, p_hora_inicio, p_hora_fin FROM DUAL WHERE v_codigo IS NULL;
-    SELECT MAX(id_disponibilidad) INTO v_id FROM personas.Disponibilidad
-     WHERE id_profesional = p_id_profesional AND fecha = p_fecha AND hora_inicio = p_hora_inicio AND hora_fin = p_hora_fin;
-    CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen,
-        CONCAT('Alta de franja ', p_fecha, ' ', p_hora_inicio, '-', p_hora_fin, ' del profesional ', p_id_profesional),
-        'personas.Disponibilidad', v_id, NULL, p_fecha, 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_mensaje,
-                                        'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Franja cargada' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        INSERT INTO personas.Disponibilidad (id_profesional, fecha, hora_inicio, hora_fin)
+VALUES (p_id_profesional, p_fecha, p_hora_inicio, p_hora_fin);
+        SELECT MAX(id_disponibilidad) INTO v_id FROM personas.Disponibilidad
+         WHERE id_profesional = p_id_profesional AND fecha = p_fecha AND hora_inicio = p_hora_inicio AND hora_fin = p_hora_fin;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen,
+            CONCAT('Alta de franja ', p_fecha, ' ', p_hora_inicio, '-', p_hora_fin, ' del profesional ', p_id_profesional),
+            'personas.Disponibilidad', v_id, NULL, p_fecha, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Franja cargada' AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_mensaje,
+                                            'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Baja (lógica) de una franja. No se puede si hay turnos activos dentro de ella.
@@ -553,34 +659,38 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_msg,
-                                        'personas.Disponibilidad', p_id_disponibilidad, NULL, NULL, 0, NULL, 1);
+                                        'personas.Disponibilidad', p_id_disponibilidad, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
     START TRANSACTION;
     SELECT id_profesional, fecha, hora_inicio, hora_fin, activa INTO v_prof, v_fecha, v_ini, v_fin, v_activa
       FROM personas.Disponibilidad WHERE id_disponibilidad = p_id_disponibilidad;
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La franja no existe' FROM DUAL WHERE v_codigo IS NULL AND (v_prof IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52050 FROM DUAL WHERE v_prof IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La franja ya estaba dada de baja' FROM DUAL WHERE v_codigo IS NULL AND (v_activa = 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52051 FROM DUAL WHERE v_activa = 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Hay turnos sin cancelar dentro de esa franja' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
-                WHERE t.id_profesional = v_prof AND e.nombre IN ('pendiente', 'confirmado')
-                  AND t.fecha_hora_inicio < (v_fecha + INTERVAL (EXTRACT(HOUR FROM v_fin) * 60 + EXTRACT(MINUTE FROM v_fin)) MINUTE) AND t.fecha_hora_fin > (v_fecha + INTERVAL (EXTRACT(HOUR FROM v_ini) * 60 + EXTRACT(MINUTE FROM v_ini)) MINUTE)))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52052 FROM DUAL WHERE EXISTS (SELECT 1 FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
-                WHERE t.id_profesional = v_prof AND e.nombre IN ('pendiente', 'confirmado')
-                  AND t.fecha_hora_inicio < (v_fecha + INTERVAL (EXTRACT(HOUR FROM v_fin) * 60 + EXTRACT(MINUTE FROM v_fin)) MINUTE) AND t.fecha_hora_fin > (v_fecha + INTERVAL (EXTRACT(HOUR FROM v_ini) * 60 + EXTRACT(MINUTE FROM v_ini)) MINUTE))));
+    IF v_codigo IS NULL AND (v_prof IS NULL) THEN
+        SET v_codigo = 52050;
+        SET v_mensaje = 'La franja no existe';
+    END IF;
+    IF v_codigo IS NULL AND (v_activa = 0) THEN
+        SET v_codigo = 52051;
+        SET v_mensaje = 'La franja ya estaba dada de baja';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno WHERE t.id_profesional = v_prof AND e.nombre IN ('pendiente', 'confirmado') AND t.fecha_hora_inicio < (v_fecha + INTERVAL (EXTRACT(HOUR FROM v_fin) * 60 + EXTRACT(MINUTE FROM v_fin)) MINUTE) AND t.fecha_hora_fin > (v_fecha + INTERVAL (EXTRACT(HOUR FROM v_ini) * 60 + EXTRACT(MINUTE FROM v_ini)) MINUTE))) THEN
+        SET v_codigo = 52052;
+        SET v_mensaje = 'Hay turnos sin cancelar dentro de esa franja';
+    END IF;
 
-    UPDATE personas.Disponibilidad SET activa = 0 WHERE id_disponibilidad = p_id_disponibilidad AND v_codigo IS NULL;
-    CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen,
-        CONCAT('Baja de franja ', v_fecha, ' ', v_ini, '-', v_fin, ' del profesional ', v_prof),
-        'personas.Disponibilidad', p_id_disponibilidad, 'activa=1', 'activa=0', 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_mensaje,
-                                        'personas.Disponibilidad', p_id_disponibilidad, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Franja dada de baja' AS mensaje, p_id_disponibilidad AS id, NULL AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        UPDATE personas.Disponibilidad SET activa = 0 WHERE id_disponibilidad = p_id_disponibilidad;
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen,
+            CONCAT('Baja de franja ', v_fecha, ' ', v_ini, '-', v_fin, ' del profesional ', v_prof),
+            'personas.Disponibilidad', p_id_disponibilidad, 'activa=1', 'activa=0', 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Franja dada de baja' AS mensaje, p_id_disponibilidad AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_mensaje,
+                                            'personas.Disponibilidad', p_id_disponibilidad, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Habilita (o quita) un protocolo a un profesional (RF-18).
@@ -588,6 +698,7 @@ DROP PROCEDURE IF EXISTS clinica.sp_asignar_protocolo//
 CREATE PROCEDURE clinica.sp_asignar_protocolo(
     IN p_id_profesional INT, IN p_id_protocolo INT, IN p_habilitar SMALLINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
 BEGIN
+    DECLARE v_accion VARCHAR(20);
     DECLARE v_codigo INT DEFAULT NULL;
     DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
     DECLARE v_errno INT DEFAULT 0;
@@ -597,34 +708,46 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen, v_msg,
-                                        'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 0, NULL, 1);
+                                        'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
+    IF v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM personas.Profesional WHERE id_profesional = p_id_profesional)) THEN
+        SET v_codigo = 52042;
+        SET v_mensaje = 'El profesional no existe';
+    END IF;
+    IF v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM clinica.Protocolo WHERE id_protocolo = p_id_protocolo)) THEN
+        SET v_codigo = 52060;
+        SET v_mensaje = 'El protocolo no existe';
+    END IF;
+    IF v_codigo IS NULL AND (p_habilitar IS NULL OR p_habilitar NOT IN (0, 1)) THEN
+        SET v_codigo = 52043;
+        SET v_mensaje = 'El parámetro habilitar debe ser 0 o 1';
+    END IF;
 
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El profesional no existe' FROM DUAL WHERE v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM personas.Profesional WHERE id_profesional = p_id_profesional))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52042 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM personas.Profesional WHERE id_profesional = p_id_profesional)));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El protocolo no existe' FROM DUAL WHERE v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM clinica.Protocolo WHERE id_protocolo = p_id_protocolo))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52060 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM clinica.Protocolo WHERE id_protocolo = p_id_protocolo)));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El parámetro habilitar debe ser 0 o 1' FROM DUAL WHERE v_codigo IS NULL AND (p_habilitar IS NULL OR p_habilitar NOT IN (0, 1))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52043 FROM DUAL WHERE p_habilitar IS NULL OR p_habilitar NOT IN (0, 1)));
-
-    START TRANSACTION;
-    -- p_habilitar = 1 agrega la relación (si no estaba); 0 la quita.
-    INSERT INTO clinica.ProfesionalProtocolo (id_profesional, id_protocolo)
-    SELECT p_id_profesional, p_id_protocolo FROM DUAL
-     WHERE v_codigo IS NULL AND p_habilitar = 1
-       AND NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo WHERE id_profesional = p_id_profesional AND id_protocolo = p_id_protocolo);
-    DELETE FROM clinica.ProfesionalProtocolo
-     WHERE id_profesional = p_id_profesional AND id_protocolo = p_id_protocolo AND p_habilitar = 0 AND v_codigo IS NULL;
-    CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen,
-        CONCAT(COALESCE((SELECT 'Se habilita' FROM DUAL WHERE p_habilitar = 1), 'Se quita'), ' el protocolo ', p_id_protocolo, ' al profesional ', p_id_profesional),
-        'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen, v_mensaje,
-                                        'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Asignación actualizada' AS mensaje, p_id_profesional AS id, NULL AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        -- p_habilitar = 1 agrega la relación (si no estaba); 0 la quita.
+        IF p_habilitar = 1 THEN
+            SET v_accion = 'Se habilita';
+            IF NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo WHERE id_profesional = p_id_profesional AND id_protocolo = p_id_protocolo) THEN
+                INSERT INTO clinica.ProfesionalProtocolo (id_profesional, id_protocolo)
+                VALUES (p_id_profesional, p_id_protocolo);
+            END IF;
+        ELSE
+            SET v_accion = 'Se quita';
+            DELETE FROM clinica.ProfesionalProtocolo
+             WHERE id_profesional = p_id_profesional AND id_protocolo = p_id_protocolo;
+        END IF;
+        CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen,
+            CONCAT(v_accion, ' el protocolo ', p_id_protocolo, ' al profesional ', p_id_profesional),
+            'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Asignación actualizada' AS mensaje, p_id_profesional AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen, v_mensaje,
+                                            'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Profesionales activos habilitados para TODOS los protocolos pedidos (RF-18).
@@ -634,12 +757,12 @@ CREATE PROCEDURE personas.sp_profesionales_para_protocolos(IN p_protocolo1 INT, 
 BEGIN
     -- Profesionales activos que hacen TODOS los protocolos pedidos (hasta 3; los que no se usan van en NULL).
     DECLARE v_pedidos INT DEFAULT 0;
-    SET v_pedidos = (SELECT COUNT(*) FROM (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL) x);
+    SET v_pedidos = (SELECT COUNT(x.id) FROM (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3) x);
     SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre, pr.matricula
       FROM personas.Profesional pr
      WHERE pr.activo = 1 AND v_pedidos > 0
-       AND NOT EXISTS (SELECT 1 FROM (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL) jt
-                        WHERE NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
+       AND NOT EXISTS (SELECT 1 FROM (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3) jt
+                        WHERE jt.id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
                                            WHERE pp.id_profesional = pr.id_profesional AND pp.id_protocolo = jt.id))
      ORDER BY pr.apellido, pr.nombre;
 END//
@@ -668,33 +791,44 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_msg,
-                                        'clinica.Protocolo', NULL, NULL, NULL, 0, NULL, 1);
+                                        'clinica.Protocolo', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
+    IF v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM clinica.CategoriaProtocolo WHERE id_categoria = p_id_categoria)) THEN
+        SET v_codigo = 52061;
+        SET v_mensaje = 'La categoría no existe';
+    END IF;
+    IF v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 3) THEN
+        SET v_codigo = 52062;
+        SET v_mensaje = 'El nombre debe tener al menos 3 caracteres';
+    END IF;
+    IF v_codigo IS NULL AND (p_precio IS NULL OR p_precio <= 0) THEN
+        SET v_codigo = 52063;
+        SET v_mensaje = 'El precio debe ser mayor a cero';
+    END IF;
+    IF v_codigo IS NULL AND (p_duracion_min IS NULL OR p_duracion_min <= 0 OR p_duracion_min > 600) THEN
+        SET v_codigo = 52064;
+        SET v_mensaje = 'La duración debe estar entre 1 y 600 minutos';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM clinica.Protocolo WHERE nombre = p_nombre)) THEN
+        SET v_codigo = 52065;
+        SET v_mensaje = 'Ya existe un protocolo con ese nombre';
+    END IF;
 
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La categoría no existe' FROM DUAL WHERE v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM clinica.CategoriaProtocolo WHERE id_categoria = p_id_categoria))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52061 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM clinica.CategoriaProtocolo WHERE id_categoria = p_id_categoria)));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El nombre debe tener al menos 3 caracteres' FROM DUAL WHERE v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 3)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52062 FROM DUAL WHERE p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 3));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El precio debe ser mayor a cero' FROM DUAL WHERE v_codigo IS NULL AND (p_precio IS NULL OR p_precio <= 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52063 FROM DUAL WHERE p_precio IS NULL OR p_precio <= 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La duración debe estar entre 1 y 600 minutos' FROM DUAL WHERE v_codigo IS NULL AND (p_duracion_min IS NULL OR p_duracion_min <= 0 OR p_duracion_min > 600)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52064 FROM DUAL WHERE p_duracion_min IS NULL OR p_duracion_min <= 0 OR p_duracion_min > 600));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Ya existe un protocolo con ese nombre' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM clinica.Protocolo WHERE nombre = p_nombre))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52065 FROM DUAL WHERE EXISTS (SELECT 1 FROM clinica.Protocolo WHERE nombre = p_nombre)));
-
-    START TRANSACTION;
-    INSERT INTO clinica.Protocolo (id_categoria, nombre, descripcion, precio, duracion_min)
-    SELECT p_id_categoria, p_nombre, p_descripcion, p_precio, p_duracion_min FROM DUAL WHERE v_codigo IS NULL;
-    SELECT MAX(id_protocolo) INTO v_id FROM clinica.Protocolo WHERE nombre = p_nombre;
-    CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'Alta del protocolo',
-        'clinica.Protocolo', v_id, NULL, CAST(p_precio AS CHAR), 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_mensaje,
-                                        'clinica.Protocolo', NULL, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Protocolo creado' AS mensaje, v_id AS id, p_precio AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        INSERT INTO clinica.Protocolo (id_categoria, nombre, descripcion, precio, duracion_min)
+VALUES (p_id_categoria, p_nombre, p_descripcion, p_precio, p_duracion_min);
+        SELECT MAX(id_protocolo) INTO v_id FROM clinica.Protocolo WHERE nombre = p_nombre;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'Alta del protocolo',
+            'clinica.Protocolo', v_id, NULL, CAST(p_precio AS CHAR), 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Protocolo creado' AS mensaje, v_id AS id, p_precio AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_mensaje,
+                                            'clinica.Protocolo', NULL, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Cambia precio, duración, descripción o lo da de baja (p_activo = 0). Los
@@ -704,6 +838,7 @@ CREATE PROCEDURE clinica.sp_modificar_protocolo(
     IN p_id_protocolo INT, IN p_nombre VARCHAR(100), IN p_descripcion VARCHAR(500), IN p_precio DECIMAL(12,2),
     IN p_duracion_min INT, IN p_activo SMALLINT, IN p_origen VARCHAR(50), IN p_id_usuario INT)
 BEGIN
+    DECLARE v_descripcion VARCHAR(100);
     DECLARE v_codigo INT DEFAULT NULL;
     DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
     DECLARE v_errno INT DEFAULT 0;
@@ -714,38 +849,56 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_msg,
-                                        'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL, 1);
+                                        'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
     SELECT CAST(precio AS CHAR) INTO v_antes
       FROM clinica.Protocolo WHERE id_protocolo = p_id_protocolo;
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El protocolo no existe' FROM DUAL WHERE v_codigo IS NULL AND (v_antes IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52060 FROM DUAL WHERE v_antes IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El nombre debe tener al menos 3 caracteres' FROM DUAL WHERE v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 3)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52062 FROM DUAL WHERE p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 3));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El precio debe ser mayor a cero' FROM DUAL WHERE v_codigo IS NULL AND (p_precio IS NULL OR p_precio <= 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52063 FROM DUAL WHERE p_precio IS NULL OR p_precio <= 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La duración debe estar entre 1 y 600 minutos' FROM DUAL WHERE v_codigo IS NULL AND (p_duracion_min IS NULL OR p_duracion_min <= 0 OR p_duracion_min > 600)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52064 FROM DUAL WHERE p_duracion_min IS NULL OR p_duracion_min <= 0 OR p_duracion_min > 600));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El estado activo debe ser 0 o 1' FROM DUAL WHERE v_codigo IS NULL AND (p_activo IS NULL OR p_activo NOT IN (0, 1))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52043 FROM DUAL WHERE p_activo IS NULL OR p_activo NOT IN (0, 1)));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Ya existe un protocolo con ese nombre' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM clinica.Protocolo WHERE nombre = p_nombre AND id_protocolo <> p_id_protocolo))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52065 FROM DUAL WHERE EXISTS (SELECT 1 FROM clinica.Protocolo WHERE nombre = p_nombre AND id_protocolo <> p_id_protocolo)));
+    IF v_codigo IS NULL AND (v_antes IS NULL) THEN
+        SET v_codigo = 52060;
+        SET v_mensaje = 'El protocolo no existe';
+    END IF;
+    IF v_codigo IS NULL AND (p_nombre IS NULL OR CHAR_LENGTH(p_nombre) < 3) THEN
+        SET v_codigo = 52062;
+        SET v_mensaje = 'El nombre debe tener al menos 3 caracteres';
+    END IF;
+    IF v_codigo IS NULL AND (p_precio IS NULL OR p_precio <= 0) THEN
+        SET v_codigo = 52063;
+        SET v_mensaje = 'El precio debe ser mayor a cero';
+    END IF;
+    IF v_codigo IS NULL AND (p_duracion_min IS NULL OR p_duracion_min <= 0 OR p_duracion_min > 600) THEN
+        SET v_codigo = 52064;
+        SET v_mensaje = 'La duración debe estar entre 1 y 600 minutos';
+    END IF;
+    IF v_codigo IS NULL AND (p_activo IS NULL OR p_activo NOT IN (0, 1)) THEN
+        SET v_codigo = 52043;
+        SET v_mensaje = 'El estado activo debe ser 0 o 1';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM clinica.Protocolo WHERE nombre = p_nombre AND id_protocolo <> p_id_protocolo)) THEN
+        SET v_codigo = 52065;
+        SET v_mensaje = 'Ya existe un protocolo con ese nombre';
+    END IF;
 
-    START TRANSACTION;
-    UPDATE clinica.Protocolo
-       SET nombre = p_nombre, descripcion = p_descripcion, precio = p_precio, duracion_min = p_duracion_min, activo = p_activo
-     WHERE id_protocolo = p_id_protocolo AND v_codigo IS NULL;
-    CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen,
-        COALESCE((SELECT 'Baja del protocolo' FROM DUAL WHERE p_activo = 0), 'Protocolo modificado'), 'clinica.Protocolo', p_id_protocolo, v_antes,
-        CAST(p_precio AS CHAR), 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_mensaje,
-                                        'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Protocolo modificado' AS mensaje, p_id_protocolo AS id, p_precio AS valor, NULL AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        UPDATE clinica.Protocolo
+           SET nombre = p_nombre, descripcion = p_descripcion, precio = p_precio, duracion_min = p_duracion_min, activo = p_activo
+         WHERE id_protocolo = p_id_protocolo;
+        SET v_descripcion = 'Protocolo modificado';
+        IF p_activo = 0 THEN
+            SET v_descripcion = 'Baja del protocolo';
+        END IF;
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen,
+            v_descripcion, 'clinica.Protocolo', p_id_protocolo, v_antes,
+            CAST(p_precio AS CHAR), 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Protocolo modificado' AS mensaje, p_id_protocolo AS id, p_precio AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_mensaje,
+                                            'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Catálogo y buscador por palabra clave (RF-05/06). Con texto vacío o NULL
@@ -785,10 +938,10 @@ BEGIN
     DECLARE v_cancelado INT;
 
     -- Protocolos pedidos: hasta 3 (los que no se usan van en NULL). Todos tienen que existir y estar activos.
-    SET v_pedidos = (SELECT COUNT(*) FROM (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL) x);
+    SET v_pedidos = (SELECT COUNT(x.id) FROM (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3) x);
     SELECT COUNT(*), COALESCE(SUM(p.duracion_min), 0) INTO v_n, v_dur
       FROM clinica.Protocolo p
-     WHERE p.activo = 1 AND p.id_protocolo IN (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL);
+     WHERE p.activo = 1 AND p.id_protocolo IN (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3);
     SELECT id_estado_turno INTO v_cancelado FROM agenda.EstadoTurno WHERE nombre = 'cancelado';
 
         -- Cada franja se parte en turnos de 30 minutos con la tabla de números.
@@ -809,8 +962,8 @@ BEGIN
            AND NOT EXISTS (SELECT 1 FROM agenda.Turno t
                             WHERE t.id_profesional = s.id_profesional AND t.id_estado_turno <> v_cancelado
                               AND t.fecha_hora_inicio < s.inicio + INTERVAL v_dur MINUTE AND t.fecha_hora_fin > s.inicio)
-           AND NOT EXISTS (SELECT 1 FROM (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL) jt
-                            WHERE NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
+           AND NOT EXISTS (SELECT 1 FROM (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3) jt
+                            WHERE jt.id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
                                                WHERE pp.id_profesional = s.id_profesional AND pp.id_protocolo = jt.id))
          ORDER BY s.inicio, pr.apellido;
 END//
@@ -857,71 +1010,84 @@ BEGIN
         GET DIAGNOSTICS CONDITION 1 v_errno = MYSQL_ERRNO, v_msg = MESSAGE_TEXT;
         ROLLBACK;
         CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
-            v_msg, 'agenda.Turno', NULL, NULL, NULL, 0, NULL, 1);
+            v_msg, 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
         SELECT 'ERROR' AS estado, v_errno AS codigo, v_msg AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END;
 
     START TRANSACTION;
     SELECT id_origen INTO v_id_origen FROM agenda.Origen WHERE nombre = p_origen;
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Origen inválido (terminal, web, gestion o sistema)' FROM DUAL WHERE v_codigo IS NULL AND (v_id_origen IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52070 FROM DUAL WHERE v_id_origen IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La paciente no existe' FROM DUAL WHERE v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM personas.Paciente WHERE id_paciente = p_id_paciente))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52071 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM personas.Paciente WHERE id_paciente = p_id_paciente)));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El turno necesita al menos un protocolo' FROM DUAL WHERE v_codigo IS NULL AND (p_protocolo1 IS NULL AND p_protocolo2 IS NULL AND p_protocolo3 IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52072 FROM DUAL WHERE p_protocolo1 IS NULL AND p_protocolo2 IS NULL AND p_protocolo3 IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El turno debe ser en el futuro' FROM DUAL WHERE v_codigo IS NULL AND (p_inicio IS NULL OR p_inicio <= COALESCE(@ahora_simulado, NOW()))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52073 FROM DUAL WHERE p_inicio IS NULL OR p_inicio <= COALESCE(@ahora_simulado, NOW())));
+    IF v_codigo IS NULL AND (v_id_origen IS NULL) THEN
+        SET v_codigo = 52070;
+        SET v_mensaje = 'Origen inválido (terminal, web, gestion o sistema)';
+    END IF;
+    IF v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM personas.Paciente WHERE id_paciente = p_id_paciente)) THEN
+        SET v_codigo = 52071;
+        SET v_mensaje = 'La paciente no existe';
+    END IF;
+    IF v_codigo IS NULL AND (p_protocolo1 IS NULL AND p_protocolo2 IS NULL AND p_protocolo3 IS NULL) THEN
+        SET v_codigo = 52072;
+        SET v_mensaje = 'El turno necesita al menos un protocolo';
+    END IF;
+    IF v_codigo IS NULL AND (p_inicio IS NULL OR p_inicio <= COALESCE(@ahora_simulado, NOW())) THEN
+        SET v_codigo = 52073;
+        SET v_mensaje = 'El turno debe ser en el futuro';
+    END IF;
 
     -- Se bloquea al profesional: dos reservas simultáneas del mismo horario se atienden de a una.
     SELECT id_profesional INTO v_n FROM personas.Profesional WHERE id_profesional = p_id_profesional AND activo = 1;
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El profesional no existe o está dado de baja' FROM DUAL WHERE v_codigo IS NULL AND (v_n = 0 OR v_n IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52074 FROM DUAL WHERE v_n = 0 OR v_n IS NULL));
+    IF v_codigo IS NULL AND (v_n = 0 OR v_n IS NULL) THEN
+        SET v_codigo = 52074;
+        SET v_mensaje = 'El profesional no existe o está dado de baja';
+    END IF;
 
     -- Protocolos pedidos: hasta 3 (los que no se usan van en NULL).
-    SET v_pedidos = (SELECT COUNT(*) FROM (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL) x);
+    SET v_pedidos = (SELECT COUNT(x.id) FROM (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3) x);
     SELECT COUNT(*), COALESCE(SUM(p.duracion_min), 0), COALESCE(SUM(c.requiere_evaluacion), 0), MIN(p.id_protocolo + (c.requiere_evaluacion <> 1) * 1000000)
       INTO v_n, v_dur, v_cirugias, v_cirugia
       FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
      WHERE p.activo = 1
-       AND p.id_protocolo IN (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL);
+       AND p.id_protocolo IN (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3);
     -- La cirugía pedida (si hay): el menor id entre los protocolos que requieren evaluación.
-    SET v_cirugia = (SELECT v_cirugia FROM DUAL WHERE v_cirugia < 1000000);
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Algún protocolo no existe o está dado de baja' FROM DUAL WHERE v_codigo IS NULL AND (v_pedidos = 0 OR v_n <> v_pedidos)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52075 FROM DUAL WHERE v_pedidos = 0 OR v_n <> v_pedidos));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El profesional no realiza alguno de los protocolos pedidos' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL) jt
-                WHERE NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
-                                   WHERE pp.id_profesional = p_id_profesional AND pp.id_protocolo = jt.id)))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52076 FROM DUAL WHERE EXISTS (SELECT 1 FROM (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL) jt
-                WHERE NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp
-                                   WHERE pp.id_profesional = p_id_profesional AND pp.id_protocolo = jt.id))));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'Una cirugía se agenda sola, sin otros protocolos' FROM DUAL WHERE v_codigo IS NULL AND (v_cirugias > 1 OR (v_cirugias = 1 AND v_n > 1))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52077 FROM DUAL WHERE v_cirugias > 1 OR (v_cirugias = 1 AND v_n > 1)));
+    IF v_cirugia >= 1000000 THEN
+        SET v_cirugia = NULL;
+    END IF;
+    IF v_codigo IS NULL AND (v_pedidos = 0 OR v_n <> v_pedidos) THEN
+        SET v_codigo = 52075;
+        SET v_mensaje = 'Algún protocolo no existe o está dado de baja';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3) jt WHERE jt.id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM clinica.ProfesionalProtocolo pp WHERE pp.id_profesional = p_id_profesional AND pp.id_protocolo = jt.id))) THEN
+        SET v_codigo = 52076;
+        SET v_mensaje = 'El profesional no realiza alguno de los protocolos pedidos';
+    END IF;
+    IF v_codigo IS NULL AND (v_cirugias > 1 OR (v_cirugias = 1 AND v_n > 1)) THEN
+        SET v_codigo = 52077;
+        SET v_mensaje = 'Una cirugía se agenda sola, sin otros protocolos';
+    END IF;
     -- Reglas de la consulta previa (solo si el turno es la consulta previa de una cirugía).
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La consulta previa no puede incluir una cirugía' FROM DUAL WHERE v_codigo IS NULL AND p_id_cirugia_consulta IS NOT NULL AND (v_cirugias > 0)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52078 FROM DUAL WHERE p_id_cirugia_consulta IS NOT NULL AND v_cirugias > 0));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La consulta previa debe ser para una cirugía existente' FROM DUAL WHERE v_codigo IS NULL AND p_id_cirugia_consulta IS NOT NULL AND (NOT EXISTS (SELECT 1 FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
-                    WHERE p.id_protocolo = p_id_cirugia_consulta AND p.activo = 1 AND c.requiere_evaluacion = 1))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52079 FROM DUAL WHERE p_id_cirugia_consulta IS NOT NULL AND NOT EXISTS (SELECT 1 FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
-                    WHERE p.id_protocolo = p_id_cirugia_consulta AND p.activo = 1 AND c.requiere_evaluacion = 1)));
+    IF v_codigo IS NULL AND (p_id_cirugia_consulta IS NOT NULL AND (v_cirugias > 0)) THEN
+        SET v_codigo = 52078;
+        SET v_mensaje = 'La consulta previa no puede incluir una cirugía';
+    END IF;
+    IF v_codigo IS NULL AND (p_id_cirugia_consulta IS NOT NULL AND (NOT EXISTS (SELECT 1 FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria WHERE p.id_protocolo = p_id_cirugia_consulta AND p.activo = 1 AND c.requiere_evaluacion = 1))) THEN
+        SET v_codigo = 52079;
+        SET v_mensaje = 'La consulta previa debe ser para una cirugía existente';
+    END IF;
 
     SET v_fin = p_inicio + INTERVAL v_dur MINUTE;
     SELECT id_estado_turno INTO v_cancelado FROM agenda.EstadoTurno WHERE nombre = 'cancelado';
     SELECT id_estado_turno INTO v_pendiente FROM agenda.EstadoTurno WHERE nombre = 'pendiente';
-
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El horario está fuera de la disponibilidad del profesional' FROM DUAL WHERE v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM personas.Disponibilidad d
-                    WHERE d.id_profesional = p_id_profesional AND d.activa = 1 AND d.fecha = DATE(p_inicio)
-                      AND DATE(v_fin) = DATE(p_inicio) AND d.hora_inicio <= TIME(p_inicio) AND d.hora_fin >= TIME(v_fin)))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52080 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM personas.Disponibilidad d
-                    WHERE d.id_profesional = p_id_profesional AND d.activa = 1 AND d.fecha = DATE(p_inicio)
-                      AND DATE(v_fin) = DATE(p_inicio) AND d.hora_inicio <= TIME(p_inicio) AND d.hora_fin >= TIME(v_fin))));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El profesional ya tiene un turno en ese horario' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_profesional = p_id_profesional AND t.id_estado_turno <> v_cancelado
-                  AND t.fecha_hora_inicio < v_fin AND t.fecha_hora_fin > p_inicio))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52081 FROM DUAL WHERE EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_profesional = p_id_profesional AND t.id_estado_turno <> v_cancelado
-                  AND t.fecha_hora_inicio < v_fin AND t.fecha_hora_fin > p_inicio)));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La paciente ya tiene un turno en ese horario' FROM DUAL WHERE v_codigo IS NULL AND (EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_paciente = p_id_paciente AND t.id_estado_turno <> v_cancelado
-                  AND t.fecha_hora_inicio < v_fin AND t.fecha_hora_fin > p_inicio))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52082 FROM DUAL WHERE EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_paciente = p_id_paciente AND t.id_estado_turno <> v_cancelado
-                  AND t.fecha_hora_inicio < v_fin AND t.fecha_hora_fin > p_inicio)));
+    IF v_codigo IS NULL AND (NOT EXISTS (SELECT 1 FROM personas.Disponibilidad d WHERE d.id_profesional = p_id_profesional AND d.activa = 1 AND d.fecha = DATE(p_inicio) AND DATE(v_fin) = DATE(p_inicio) AND d.hora_inicio <= TIME(p_inicio) AND d.hora_fin >= TIME(v_fin))) THEN
+        SET v_codigo = 52080;
+        SET v_mensaje = 'El horario está fuera de la disponibilidad del profesional';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_profesional = p_id_profesional AND t.id_estado_turno <> v_cancelado AND t.fecha_hora_inicio < v_fin AND t.fecha_hora_fin > p_inicio)) THEN
+        SET v_codigo = 52081;
+        SET v_mensaje = 'El profesional ya tiene un turno en ese horario';
+    END IF;
+    IF v_codigo IS NULL AND (EXISTS (SELECT 1 FROM agenda.Turno t WHERE t.id_paciente = p_id_paciente AND t.id_estado_turno <> v_cancelado AND t.fecha_hora_inicio < v_fin AND t.fecha_hora_fin > p_inicio)) THEN
+        SET v_codigo = 52082;
+        SET v_mensaje = 'La paciente ya tiene un turno en ese horario';
+    END IF;
 
     -- Cirugía: hace falta una evaluación apta, de menos de 6 meses y sin usar.
     -- Una cirugía necesita una evaluación apta de menos de 6 meses que no se haya usado.
@@ -932,62 +1098,71 @@ BEGIN
      WHERE v_cirugias = 1 AND tc.id_paciente = p_id_paciente AND ev.id_protocolo = v_cirugia AND r.nombre = 'apto'
        AND ev.fecha_resultado + INTERVAL 6 MONTH >= COALESCE(@ahora_simulado, NOW())
        AND NOT EXISTS (SELECT 1 FROM agenda.Turno t2 WHERE t2.id_evaluacion_previa = ev.id_evaluacion AND t2.id_estado_turno <> v_cancelado);
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'La cirugía necesita una consulta previa con resultado apto de menos de 6 meses' FROM DUAL WHERE v_codigo IS NULL AND v_cirugias = 1 AND (v_eval IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52083 FROM DUAL WHERE v_cirugias = 1 AND v_eval IS NULL));
-
+    IF v_codigo IS NULL AND (v_cirugias = 1 AND (v_eval IS NULL)) THEN
+        SET v_codigo = 52083;
+        SET v_mensaje = 'La cirugía necesita una consulta previa con resultado apto de menos de 6 meses';
+    END IF;
     -- Cupón (opcional): de la paciente, vigente y sin usar.
     -- Cupón (opcional): de la paciente, sin usar y vigente.
     SELECT id_cupon, id_paciente, id_turno, fecha_vencimiento INTO v_cupon, v_cupon_pac, v_cupon_turno, v_cupon_venc
       FROM beneficios.Cupon WHERE codigo = p_codigo_cupon;
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El cupón no existe' FROM DUAL WHERE v_codigo IS NULL AND p_codigo_cupon <> '' AND (v_cupon IS NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52084 FROM DUAL WHERE p_codigo_cupon <> '' AND v_cupon IS NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El cupón es de otra paciente' FROM DUAL WHERE v_codigo IS NULL AND p_codigo_cupon <> '' AND (v_cupon_pac <> p_id_paciente)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52085 FROM DUAL WHERE p_codigo_cupon <> '' AND v_cupon_pac <> p_id_paciente));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El cupón ya fue usado' FROM DUAL WHERE v_codigo IS NULL AND p_codigo_cupon <> '' AND (v_cupon_turno IS NOT NULL)));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52086 FROM DUAL WHERE p_codigo_cupon <> '' AND v_cupon_turno IS NOT NULL));
-    SET v_mensaje = COALESCE(v_mensaje, (SELECT 'El cupón está vencido' FROM DUAL WHERE v_codigo IS NULL AND p_codigo_cupon <> '' AND (v_cupon_venc <= COALESCE(@ahora_simulado, NOW()))));
-    SET v_codigo = COALESCE(v_codigo, (SELECT 52087 FROM DUAL WHERE p_codigo_cupon <> '' AND v_cupon_venc <= COALESCE(@ahora_simulado, NOW())));
+    IF v_codigo IS NULL AND (p_codigo_cupon <> '' AND (v_cupon IS NULL)) THEN
+        SET v_codigo = 52084;
+        SET v_mensaje = 'El cupón no existe';
+    END IF;
+    IF v_codigo IS NULL AND (p_codigo_cupon <> '' AND (v_cupon_pac <> p_id_paciente)) THEN
+        SET v_codigo = 52085;
+        SET v_mensaje = 'El cupón es de otra paciente';
+    END IF;
+    IF v_codigo IS NULL AND (p_codigo_cupon <> '' AND (v_cupon_turno IS NOT NULL)) THEN
+        SET v_codigo = 52086;
+        SET v_mensaje = 'El cupón ya fue usado';
+    END IF;
+    IF v_codigo IS NULL AND (p_codigo_cupon <> '' AND (v_cupon_venc <= COALESCE(@ahora_simulado, NOW()))) THEN
+        SET v_codigo = 52087;
+        SET v_mensaje = 'El cupón está vencido';
+    END IF;
 
-    INSERT INTO agenda.Turno (id_paciente, id_profesional, id_estado_turno, id_origen, id_evaluacion_previa,
-                              fecha_hora_inicio, fecha_hora_fin, fecha_creacion)
-    SELECT p_id_paciente, p_id_profesional, v_pendiente, v_id_origen, v_eval, p_inicio, v_fin, COALESCE(@ahora_simulado, NOW()) FROM DUAL WHERE v_codigo IS NULL;
-    SELECT MAX(id_turno) INTO v_id_turno FROM agenda.Turno
-     WHERE id_paciente = p_id_paciente AND id_profesional = p_id_profesional AND fecha_hora_inicio = p_inicio;
-
-    INSERT INTO agenda.TurnoProtocolo (id_turno, id_protocolo, precio_aplicado)
-    SELECT v_id_turno, p.id_protocolo, p.precio
-      FROM clinica.Protocolo p
-     WHERE p.id_protocolo IN (SELECT p_protocolo1 AS id FROM DUAL WHERE p_protocolo1 IS NOT NULL UNION SELECT p_protocolo2 FROM DUAL WHERE p_protocolo2 IS NOT NULL UNION SELECT p_protocolo3 FROM DUAL WHERE p_protocolo3 IS NOT NULL) AND v_codigo IS NULL;
-
-    UPDATE beneficios.Cupon SET id_turno = v_id_turno WHERE id_cupon = v_cupon AND v_codigo IS NULL;
-    CALL auditoria.sp_registrar_log('cupon_validado', p_id_usuario, p_id_paciente, p_origen,
-        CONCAT('Cupón ', p_codigo_cupon, ' aplicado al turno ', v_id_turno), 'beneficios.Cupon', v_cupon, NULL, NULL, 1, NULL,
-        v_codigo IS NULL AND v_cupon IS NOT NULL);
-
-    -- Si es la consulta previa de una cirugía, queda una evaluación pendiente.
-    INSERT INTO clinica.EvaluacionPrevia (id_turno, id_protocolo, id_resultado)
-    SELECT v_id_turno, p_id_cirugia_consulta, (SELECT id_resultado FROM clinica.ResultadoEvaluacion WHERE nombre = 'pendiente')
-      FROM DUAL WHERE v_codigo IS NULL AND p_id_cirugia_consulta IS NOT NULL;
-
-    -- Al agendar la cirugía se devuelve la seña de su consulta previa.
-    SELECT ps.id_pago, ps.monto INTO v_pago_consulta, v_monto_consulta
-      FROM clinica.EvaluacionPrevia ev JOIN pagos.PagoSena ps ON ps.id_turno = ev.id_turno
-      JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago AND ep.nombre = 'pagada'
-     WHERE ev.id_evaluacion = v_eval;
-    CALL pagos.sp_aplicar_reembolso(v_pago_consulta, v_monto_consulta, 'reembolsada',
-                                    'Devolución de la consulta previa al agendar la cirugía', p_id_usuario, p_origen,
-                                    v_codigo IS NULL AND v_pago_consulta IS NOT NULL);
-
-    CALL auditoria.sp_registrar_log('alta_turno', p_id_usuario, p_id_paciente, p_origen,
-        CONCAT('Turno ', v_id_turno, ' con el profesional ', p_id_profesional, ' el ', p_inicio),
-        'agenda.Turno', v_id_turno, NULL, CAST(p_inicio AS CHAR), 1, NULL, v_codigo IS NULL);
-    COMMIT;
-    CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
-            v_mensaje, 'agenda.Turno', NULL, NULL, NULL, 0, NULL, v_codigo IS NOT NULL);
-    SELECT 'OK' AS estado, 0 AS codigo, 'Turno agendado' AS mensaje, v_id_turno AS id,
-           ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = v_id_turno), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = v_id_turno), 0) / 100, 0) AS valor, CAST((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = v_id_turno), 0) / 100, 2)) AS CHAR) AS dato FROM DUAL WHERE v_codigo IS NULL
-    UNION ALL
-    SELECT 'ERROR', v_codigo, v_mensaje, NULL, NULL, NULL FROM DUAL WHERE v_codigo IS NOT NULL;
+    IF v_codigo IS NULL THEN
+        INSERT INTO agenda.Turno (id_paciente, id_profesional, id_estado_turno, id_origen, id_evaluacion_previa,
+                                  fecha_hora_inicio, fecha_hora_fin, fecha_creacion)
+VALUES (p_id_paciente, p_id_profesional, v_pendiente, v_id_origen, v_eval, p_inicio, v_fin, COALESCE(@ahora_simulado, NOW()));
+        SELECT MAX(id_turno) INTO v_id_turno FROM agenda.Turno
+         WHERE id_paciente = p_id_paciente AND id_profesional = p_id_profesional AND fecha_hora_inicio = p_inicio;
+        INSERT INTO agenda.TurnoProtocolo (id_turno, id_protocolo, precio_aplicado)
+        SELECT v_id_turno, p.id_protocolo, p.precio
+          FROM clinica.Protocolo p
+         WHERE p.id_protocolo IN (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3);
+        UPDATE beneficios.Cupon SET id_turno = v_id_turno WHERE id_cupon = v_cupon;
+        IF v_cupon IS NOT NULL THEN
+            CALL auditoria.sp_registrar_log('cupon_validado', p_id_usuario, p_id_paciente, p_origen,
+                CONCAT('Cupón ', p_codigo_cupon, ' aplicado al turno ', v_id_turno), 'beneficios.Cupon', v_cupon, NULL, NULL, 1, NULL);
+        END IF;
+        -- Si es la consulta previa de una cirugía, queda una evaluación pendiente.
+        IF p_id_cirugia_consulta IS NOT NULL THEN
+            INSERT INTO clinica.EvaluacionPrevia (id_turno, id_protocolo, id_resultado)
+            VALUES (v_id_turno, p_id_cirugia_consulta, (SELECT id_resultado FROM clinica.ResultadoEvaluacion WHERE nombre = 'pendiente'));
+        END IF;
+        -- Al agendar la cirugía se devuelve la seña de su consulta previa.
+        SELECT ps.id_pago, ps.monto INTO v_pago_consulta, v_monto_consulta
+          FROM clinica.EvaluacionPrevia ev JOIN pagos.PagoSena ps ON ps.id_turno = ev.id_turno
+          JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago AND ep.nombre = 'pagada'
+         WHERE ev.id_evaluacion = v_eval;
+        IF v_pago_consulta IS NOT NULL THEN
+            CALL pagos.sp_aplicar_reembolso(v_pago_consulta, v_monto_consulta, 'reembolsada',
+                'Devolución de la consulta previa al agendar la cirugía', p_id_usuario, p_origen);
+        END IF;
+        CALL auditoria.sp_registrar_log('alta_turno', p_id_usuario, p_id_paciente, p_origen,
+            CONCAT('Turno ', v_id_turno, ' con el profesional ', p_id_profesional, ' el ', p_inicio),
+            'agenda.Turno', v_id_turno, NULL, CAST(p_inicio AS CHAR), 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Turno agendado' AS mensaje, v_id_turno AS id,
+               ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = v_id_turno), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = v_id_turno), 0) / 100, 0) AS valor, CAST((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = v_id_turno), 0) / 100, 2)) AS CHAR) AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
+                v_mensaje, 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 -- Busca turnos por DNI, teléfono, nombre o apellido (RF-12, RF-13, RF-16).

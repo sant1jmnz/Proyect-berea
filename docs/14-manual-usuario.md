@@ -11,8 +11,10 @@ Para instalar o mantener el sistema, ver el [manual técnico](13-manual-tecnico.
 > no tienen pantalla propia (ver [`15-guia-por-semana.md`](15-guia-por-semana.md)): mientras tanto se usan
 > desde Workbench con los `CALL` de [`12-contrato-sp.md`](12-contrato-sp.md).
 >
-> Las pantallas de este manual son las del programa. Mientras no estén conectadas a la base
-> real, trabajan con datos de ejemplo (turnos de María Sosa, Carla Gómez, Lucía Fernández).
+> Las pantallas de este manual son las del programa. Con la base conectada se ve lo que hay en la base.
+> Sin conexión, Gestión y la terminal trabajan con un almacén local de pruebas (un archivo en la PC, que
+> comparten las dos aplicaciones), con datos de ejemplo como los turnos de María Sosa, Carla Gómez y
+> Lucía Fernández.
 
 ## 1. Para la paciente (terminal táctil)
 

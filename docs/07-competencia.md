@@ -2,7 +2,7 @@
 
 Informe de la Semana 4 del plan de la cátedra (`plan-4to-bimestre.md`):
 benchmarking, matriz comparativa de funcionalidades y costos, y la propuesta
-única de valor (PUV) de Dermalia. Lo consulté el **3 de noviembre de 2026**.
+única de valor (PUV) de Dermalia. Lo consulté el **3 de noviembre de 2026** y lo amplié el **13 de noviembre de 2026** con una segunda búsqueda (ver sección 5).
 
 **Regla de este informe:** cada precio o función de un competidor lleva su
 fuente. Lo que no se pudo confirmar dice **"a verificar"** y no se supone. Los
@@ -32,11 +32,11 @@ el servicio.
 
 | Sistema | Qué es | Precio de lista consultado | Fuente |
 |---|---|---|---|
-| **AgendaPro** | Software de agenda y gestión (clientes, finanzas, inventario), con versión para Argentina. Lo usan más de 135.000 profesionales según su web | **No publicado en la página argentina** consultada. Una reseña de terceros dice "desde USD 19 por mes" en el plan básico (dato de terceros, **a verificar**) | [agendapro.com/ar](https://agendapro.com/ar/negocios/software-para-negocios), [reseña de Medesk](https://www.medesk.net/es/blog/agenda-pro-review/) |
-| **Fresha** | Agenda y marketplace para salones y estética | Desde **USD 19,95/mes** (un profesional) o **USD 14,95/mes por profesional** en el plan de equipo. Además **20% de comisión (mínimo USD 6)** por cada paciente nueva que llega por su marketplace, costo de procesar tarjetas y complementos: programa de fidelidad USD 59,95/mes, reportes USD 9,95/mes | [Capterra](https://www.capterra.com/p/142138/Shedul-com/pricing/), [Costbench](https://www.costbench.com/software/salon-spa/fresha/) |
-| **Booksy** | Agenda para belleza y bienestar | **USD 29,99/mes + USD 20/mes por cada integrante adicional**; procesar tarjetas 2,49% + USD 0,10; marketing ("Boost") desde USD 49,99/mes | [Booksy (EE. UU.)](https://biz.booksy.com/en-us/pricing), [Koalendar](https://koalendar.com/blog/booksy-pricing) |
-| **Doctoralia (plan profesional)** | Agenda médica con reserva online 24 h y varias consultas | **EUR 69/mes por especialista** y **EUR 129/mes para clínicas** (precios de España en Capterra; **el de Argentina, a verificar**) | [Capterra](https://www.capterra.com/p/253301/Doctoralia-Pro/pricing/) |
-| **XIAgenda** (Argentina) | Agenda para consultorios | Desde **USD 15 por profesional por mes** (plan Esencial) | [Comparasoftware](https://www.comparasoftware.com/xiagenda) |
+| **AgendaPro** | Software de agenda y gestión (clientes, finanzas, inventario), con versión para Argentina. Lo usan más de 135.000 profesionales según su web | Su página de registro argentina dice que los planes van **desde $13.900 ARS por mes, según la cantidad de profesionales**; hay prueba gratis de 14 días y cuatro planes (Individual, Básico, Premium y Pro). El precio de cada plan y el de 20 profesionales **siguen sin confirmarse**. Los mensajes de WhatsApp son un complemento aparte (paquete de 50 desde $5.900 ARS). La cifra "USD 19" de una reseña de terceros queda descartada: la página oficial da precio en pesos | [Registro AgendaPro Argentina](https://agendapro.com/ar/registra-tu-negocio), [Planes AgendaPro Argentina](https://agendapro.com/ar/planes-int), [reseña de Medesk](https://www.medesk.net/es/blog/agenda-pro-review/) |
+| **Fresha** | Agenda y marketplace para salones y estética | Desde **USD 19,95/mes** (un profesional) o **USD 14,95/mes por profesional** en el plan de equipo. Además **20% de comisión (mínimo USD 6)** por cada paciente nueva que llega por su marketplace, costo de procesar tarjetas y complementos: programa de fidelidad USD 59,95/mes, reportes USD 9,95/mes. Los precios de suscripción se repiten en varias fuentes de 2026, pero otras cuentan que antes era gratis y que hoy hay planes pagos solo en algunas regiones: **conviene confirmarlo en la web de Fresha**. Depósitos y protección por inasistencia funcionan con *Fresha Payments* (opcional, con costo de procesamiento) | [Capterra](https://www.capterra.com/p/142138/Shedul-com/pricing/), [Costbench](https://www.costbench.com/software/salon-spa/fresha/), [GlossGenius](https://glossgenius.com/blog/fresha-pricing) |
+| **Booksy** | Agenda para belleza y bienestar | **USD 29,99/mes + USD 20/mes por cada integrante adicional**; procesar tarjetas 2,49% + USD 0,10; marketing ("Boost") desde USD 49,99/mes. **Las fuentes no coinciden:** la reseña de USD 29,99 es de 2022; otra fuente dice que Boost no tiene cuota mensual y cobra **30% de la primera visita de la clienta nueva (tope USD 100)**; y la tasa de cobro figura como 2,49% + USD 0,20 o 2,69% + USD 0,30 según la página. Hay que confirmarlo en la web de Booksy | [Planes de Booksy](https://biz.booksy.com/en-us/pricing-plans), [Pagos de Booksy](https://biz.booksy.com/blog/booksy-payment-types), [Koalendar](https://koalendar.com/blog/booksy-pricing) |
+| **Doctoralia (plan profesional)** | Agenda médica con reserva online 24 h y varias consultas | Precios de **España**, en euros y sin IVA: plan *Starter* **EUR 89/mes** y plan *Plus* **EUR 129/mes** (cada plan incluye el anterior). Antes figuraba EUR 69 por especialista: **quedó desactualizado o corresponde a otra fecha**. Los pagos online pasan por un socio y llevan comisión. **El precio de Argentina no se encontró** | [Pabau](https://pabau.com/es/blog/precios-de-doctoralia-pro/), [Capterra](https://www.capterra.com/p/253301/Doctoralia-Pro/pricing/) |
+| **XIAgenda** (Argentina) | Agenda para consultorios | Desde **USD 15** (Capterra lo lista como tarifa plana con prueba gratis). Que sea **por profesional**, y el plan Esencial, vienen de Comparasoftware: **a verificar** en su web oficial | [Capterra](https://www.capterra.co.uk/software/1109063/XIAgenda), [Comparasoftware](https://www.comparasoftware.com/xiagenda) |
 
 ### Lo que cuesta para el tamaño de Dermalia
 
@@ -48,8 +48,8 @@ ejemplo). Con los precios de lista de arriba, **sin impuestos ni complementos**:
 | Fresha (plan de equipo) | 20 × USD 14,95 | USD 299 | USD 3.588 |
 | Booksy | USD 29,99 + 19 × USD 20 | USD 410 | USD 4.919 |
 | XIAgenda (Esencial) | 20 × USD 15 | USD 300 | USD 3.600 |
-| Doctoralia (clínicas) | EUR 129 (precio de España) | EUR 129 | EUR 1.548 |
-| AgendaPro | a verificar | a verificar | a verificar |
+| Doctoralia (plan Plus) | EUR 129 + IVA (precio de España) | EUR 129 | EUR 1.548 |
+| AgendaPro | desde $13.900 ARS por mes según profesionales; el total para 20 no se publica | a verificar | a verificar |
 
 Dos aclaraciones para no engañarse: (1) Doctoralia para clínicas parece más
 barato, pero está en euros, es el precio de otro país y no sabemos qué incluye;
@@ -67,10 +67,10 @@ columnas de competidores resumen lo que pude confirmar de cada uno.
 | Agenda con horarios disponibles en tiempo real | Sí (RF-04) | Sí (agenda, según su web) | a verificar | a verificar | Sí (reserva online 24 h) |
 | Varios profesionales y varios protocolos en un turno | Sí (RF-01, RF-18) | a verificar | a verificar | a verificar | Sí (varias consultas) |
 | Terminal táctil en el local para que la paciente cargue su turno | **Sí** (apartado Cliente) | a verificar | a verificar | a verificar | a verificar |
-| Seña con porcentaje por categoría y reembolso según el plazo | **Sí**, 30% / 40% en cirugías, 100% con más de 24 h (RF-10) | a verificar | a verificar | a verificar | a verificar |
+| Seña con porcentaje por categoría y reembolso según el plazo | **Sí**, 30% / 40% en cirugías, 100% con más de 24 h (RF-10) | a verificar | Depósito y protección por inasistencia: Sí (con Fresha Payments); por categoría y reembolso por plazo: a verificar | Depósito total, parcial o fijo y cargo por cancelación: Sí; por categoría y reembolso por plazo: a verificar | a verificar |
 | **Consulta previa obligatoria para cirugías**, con evaluación apta que vale 6 meses y retención del 10% / 50% (RF-25) | **Sí** | a verificar | a verificar | a verificar | a verificar |
 | Cupones por fidelidad (visitas o gasto) con **código y QR que cambian cada 5 minutos** | **Sí** (RF-22, RF-24) | a verificar | Programa de fidelidad (complemento de USD 59,95/mes) | a verificar | a verificar |
-| Tarjetas de regalo por monto, con saldo, que se gastan en varios turnos | **Sí** (RF-23) | a verificar | a verificar | a verificar | a verificar |
+| Tarjetas de regalo por monto, con saldo, que se gastan en varios turnos | **Sí** (RF-23) | a verificar | Tarjetas de regalo: Sí (según una guía de precios de terceros) | Venta online de tarjetas de regalo, con saldo al pagar: Sí | a verificar |
 | Asistente de IA que no recibe datos personales y deriva a una persona | **Sí** (RF-14, RNF-06, RNF-10) | a verificar | a verificar | a verificar | a verificar |
 | Registro de auditoría (quién, qué, cuándo) consultable por fechas | **Sí** (RF-20) | a verificar | a verificar | a verificar | a verificar |
 | Modo contingencia sin internet | **Sí** (RNF-09) | a verificar | a verificar | a verificar | a verificar |
@@ -115,6 +115,16 @@ Por qué un inversor o el instituto lo elegiría:
    que solo escriben los stored procedures.
 
 ## 5. Limitaciones del informe
+
+- **Segunda búsqueda (13 de noviembre de 2026).** Se buscaron de nuevo precios y funciones de los cinco
+  competidores. Quedó confirmado: AgendaPro publica precios en pesos desde $13.900 por mes; Fresha y Booksy
+  ofrecen depósitos y tarjetas de regalo; los precios de Fresha ($19,95 y $14,95) se repiten en varias fuentes.
+  **No** quedó confirmado: el precio de AgendaPro para 20 profesionales, el precio de Doctoralia en Argentina, si
+  XIAgenda cobra por profesional, y los costos actuales de Booksy. Esta búsqueda trajo resúmenes de buscador, no
+  una lectura de cada página oficial ni una demo, así que cada dato dudoso dice dónde confirmarlo.
+- Ninguna fuente consultada menciona **consulta previa obligatoria para cirugías, cupones con QR rotativo, terminal
+  táctil ni modo sin internet** en estos cinco productos. Eso no prueba que no los tengan: por eso esas filas
+  siguen en "a verificar".
 
 - Los precios salen de páginas oficiales y de sitios de comparación (Capterra,
   Costbench, Comparasoftware) vistos a través de un buscador, no de una demo.

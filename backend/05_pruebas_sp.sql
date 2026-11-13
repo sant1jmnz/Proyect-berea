@@ -41,25 +41,38 @@ CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-11-30', '2026-09-01'
 -- @caso sp_reporte_turnos_por_periodo_profesional.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
 -- @espera igual
 CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-09-01', '2026-11-30', NULL);
-SELECT DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m') AS periodo,
-           pr.id_profesional,
-           pr.apellido AS profesional, pr.nombre AS profesional_nombre,
-           COUNT(*) AS turnos,
-           SUM(e.nombre = 'realizado') AS realizados,
-           SUM(e.nombre = 'cancelado') AS cancelados,
-           SUM(e.nombre = 'ausente') AS ausentes,
-           SUM(e.nombre IN ('pendiente', 'confirmado')) AS vigentes,
-           ROUND(SUM(((EXTRACT(HOUR FROM t.fecha_hora_fin) - EXTRACT(HOUR FROM t.fecha_hora_inicio)) * 60 + EXTRACT(MINUTE FROM t.fecha_hora_fin) - EXTRACT(MINUTE FROM t.fecha_hora_inicio))) / 60, 1) AS horas_agendadas,
-           SUM(COALESCE((SELECT (SELECT SUM(tp.precio_aplicado) FROM agenda.TurnoProtocolo tp WHERE tp.id_turno = t.id_turno)
-                    FROM DUAL WHERE e.nombre = 'realizado'
-                   ), 0)) AS facturado
-      FROM agenda.Turno t
-      JOIN personas.Profesional pr ON pr.id_profesional = t.id_profesional
-      JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
-     WHERE DATE(t.fecha_hora_inicio) BETWEEN '2026-09-01' AND '2026-11-30'
-       AND (NULL IS NULL OR t.id_profesional = NULL)
-     GROUP BY DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m'), pr.id_profesional, pr.apellido, pr.nombre
-     ORDER BY periodo, profesional, profesional_nombre;
+SELECT
+    DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m') AS periodo,
+    pr.id_profesional AS id_profesional,
+    pr.apellido AS profesional,
+    pr.nombre AS profesional_nombre,
+    COUNT(*) AS turnos,
+    COUNT(tr.id_turno) AS realizados,
+    COUNT(tc.id_turno) AS cancelados,
+    COUNT(ta.id_turno) AS ausentes,
+    COUNT(tv.id_turno) AS vigentes,
+    ROUND(SUM(TIMESTAMPDIFF(MINUTE, t.fecha_hora_inicio, t.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
+    COALESCE(SUM(f.total), 0) AS facturado
+FROM agenda.Turno t
+INNER JOIN personas.Profesional pr ON t.id_profesional = pr.id_profesional
+LEFT JOIN agenda.Turno tr ON t.id_turno = tr.id_turno
+     AND tr.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'realizado')
+LEFT JOIN agenda.Turno tc ON t.id_turno = tc.id_turno
+     AND tc.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'cancelado')
+LEFT JOIN agenda.Turno ta ON t.id_turno = ta.id_turno
+     AND ta.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'ausente')
+LEFT JOIN agenda.Turno tv ON t.id_turno = tv.id_turno
+     AND tv.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre IN ('pendiente', 'confirmado'))
+LEFT JOIN (
+    SELECT tp.id_turno AS id_turno, SUM(tp.precio_aplicado) AS total
+    FROM agenda.TurnoProtocolo tp
+    GROUP BY tp.id_turno
+) AS f ON tr.id_turno = f.id_turno
+WHERE t.fecha_hora_inicio >= '2026-09-01'
+  AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
+  AND (NULL IS NULL OR t.id_profesional = NULL)
+GROUP BY DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m'), pr.id_profesional, pr.apellido, pr.nombre
+ORDER BY periodo, profesional, profesional_nombre;
 
 -- @caso sp_reporte_ingresos_sena.1 | Éxito | Reporte 2 con un rango que tiene datos: devuelve 12 filas
 -- @espera filas 12
@@ -78,18 +91,22 @@ CALL pagos.sp_reporte_ingresos_sena('2026-11-30', '2026-09-01');
 -- @caso sp_reporte_ingresos_sena.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
 -- @espera igual
 CALL pagos.sp_reporte_ingresos_sena('2026-09-01', '2026-11-30');
-SELECT DATE_FORMAT(ps.fecha_pago, '%Y-%m') AS periodo,
-           (SELECT mp.nombre FROM pagos.MedioPago mp WHERE mp.id_medio_pago = ps.id_medio_pago) AS medio_pago,
-           COUNT(*) AS pagos,
-           SUM(ps.monto) AS cobrado,
-           SUM(COALESCE(ps.monto_reembolsado, 0)) AS reembolsado,
-           SUM(COALESCE((SELECT ps.monto - COALESCE(ps.monto_reembolsado, 0) FROM DUAL WHERE ep.nombre IN ('retenida', 'reembolsada parcial')), 0)) AS retenido,
-           SUM(ps.monto - COALESCE(ps.monto_reembolsado, 0)) AS neto
-      FROM pagos.PagoSena ps
-      JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
-     WHERE DATE(ps.fecha_pago) BETWEEN '2026-09-01' AND '2026-11-30'
-     GROUP BY DATE_FORMAT(ps.fecha_pago, '%Y-%m'), ps.id_medio_pago
-     ORDER BY periodo, medio_pago;
+SELECT
+    DATE_FORMAT(ps.fecha_pago, '%Y-%m') AS periodo,
+    mp.nombre AS medio_pago,
+    COUNT(*) AS pagos,
+    SUM(ps.monto) AS cobrado,
+    SUM(IFNULL(ps.monto_reembolsado, 0)) AS reembolsado,
+    COALESCE(SUM(pr.monto - IFNULL(pr.monto_reembolsado, 0)), 0) AS retenido,
+    SUM(ps.monto - IFNULL(ps.monto_reembolsado, 0)) AS neto
+FROM pagos.PagoSena ps
+INNER JOIN pagos.MedioPago mp ON ps.id_medio_pago = mp.id_medio_pago
+LEFT JOIN pagos.PagoSena pr ON ps.id_pago = pr.id_pago
+     AND pr.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre IN ('retenida', 'reembolsada parcial'))
+WHERE ps.fecha_pago >= '2026-09-01'
+  AND ps.fecha_pago < '2026-11-30' + INTERVAL 1 DAY
+GROUP BY DATE_FORMAT(ps.fecha_pago, '%Y-%m'), ps.id_medio_pago, mp.nombre
+ORDER BY periodo, medio_pago;
 
 -- @caso sp_reporte_cancelaciones_inasistencias.1 | Éxito | Reporte 3 con un rango que tiene datos: devuelve 9 filas
 -- @espera filas 9
@@ -108,25 +125,38 @@ CALL agenda.sp_reporte_cancelaciones_inasistencias('2026-11-30', '2026-09-01', '
 -- @caso sp_reporte_cancelaciones_inasistencias.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
 -- @espera igual
 CALL agenda.sp_reporte_cancelaciones_inasistencias('2026-09-01', '2026-11-30', 'mes');
-SELECT x.periodo, x.origen,
-           COUNT(*) AS turnos,
-           SUM(x.estado = 'cancelado') AS cancelados,
-           SUM(x.estado = 'cancelado' AND x.estado_sena = 'reembolsada') AS cancelados_con_aviso,
-           SUM(x.estado = 'cancelado' AND x.estado_sena = 'retenida') AS cancelados_tarde,
-           SUM(x.estado = 'ausente') AS ausentes,
-           ROUND(100 * SUM(x.estado IN ('cancelado', 'ausente')) / COUNT(*), 1) AS tasa_perdida_pct,
-           COALESCE(SUM((SELECT x.monto - COALESCE(x.reembolsado, 0) FROM DUAL WHERE x.estado IN ('cancelado', 'ausente') AND x.estado_sena IN ('retenida', 'reembolsada parcial')
-                            )), 0) AS sena_retenida
-      FROM (SELECT COALESCE((SELECT DATE_FORMAT(t.fecha_hora_inicio, '%x-S%v') FROM DUAL WHERE 0), DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m')) AS periodo,
-                   o.nombre AS origen, e.nombre AS estado, ep.nombre AS estado_sena, ps.monto, ps.monto_reembolsado AS reembolsado
-              FROM agenda.Turno t
-              JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
-              JOIN agenda.Origen o ON o.id_origen = t.id_origen
-              LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
-              LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
-             WHERE t.fecha_hora_inicio >= '2026-09-01' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY) x
-     GROUP BY x.periodo, x.origen
-     ORDER BY x.periodo, x.origen;
+SELECT
+    DATE_FORMAT(t.fecha_hora_inicio, fm.formato) AS periodo,
+    o.nombre AS origen,
+    COUNT(*) AS turnos,
+    COUNT(tc.id_turno) AS cancelados,
+    COUNT(pa.id_pago) AS cancelados_con_aviso,
+    COUNT(pt.id_pago) AS cancelados_tarde,
+    COUNT(ta.id_turno) AS ausentes,
+    ROUND(100 * (COUNT(tc.id_turno) + COUNT(ta.id_turno)) / COUNT(*), 1) AS tasa_perdida_pct,
+    COALESCE(SUM(pr.monto - IFNULL(pr.monto_reembolsado, 0)), 0) AS sena_retenida
+FROM agenda.Turno t
+INNER JOIN (
+    SELECT 1 AS es_semana, '%x-S%v' AS formato
+    UNION ALL
+    SELECT 0 AS es_semana, '%Y-%m' AS formato
+) AS fm ON fm.es_semana = IFNULL('mes' = 'semana', 0)
+INNER JOIN agenda.Origen o ON t.id_origen = o.id_origen
+LEFT JOIN agenda.Turno tc ON t.id_turno = tc.id_turno
+     AND tc.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'cancelado')
+LEFT JOIN agenda.Turno ta ON t.id_turno = ta.id_turno
+     AND ta.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'ausente')
+LEFT JOIN pagos.PagoSena pa ON tc.id_turno = pa.id_turno
+     AND pa.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 'reembolsada')
+LEFT JOIN pagos.PagoSena pt ON tc.id_turno = pt.id_turno
+     AND pt.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 'retenida')
+LEFT JOIN pagos.PagoSena pr ON t.id_turno = pr.id_turno
+     AND (tc.id_turno IS NOT NULL OR ta.id_turno IS NOT NULL)
+     AND pr.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre IN ('retenida', 'reembolsada parcial'))
+WHERE t.fecha_hora_inicio >= '2026-09-01'
+  AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
+GROUP BY DATE_FORMAT(t.fecha_hora_inicio, fm.formato), o.nombre
+ORDER BY periodo, origen;
 
 -- @caso sp_reporte_evaluaciones_cirugias.1 | Éxito | Reporte 4 con un rango que tiene datos: devuelve 13 filas
 -- @espera filas 13
@@ -145,23 +175,29 @@ CALL clinica.sp_reporte_evaluaciones_cirugias('2026-12-31', '2026-01-01');
 -- @caso sp_reporte_evaluaciones_cirugias.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
 -- @espera igual
 CALL clinica.sp_reporte_evaluaciones_cirugias('2026-01-01', '2026-12-31');
-SELECT cir.nombre AS cirugia,
-           r.nombre AS resultado,
-           COUNT(*) AS evaluaciones,
-           COUNT(tc.id_turno) AS con_cirugia_agendada,
-           SUM(r.nombre = 'apto' AND tc.id_turno IS NULL AND ev.fecha_resultado + INTERVAL 6 MONTH < COALESCE(@ahora_simulado, NOW())) AS vencidas_sin_cirugia,
-           SUM(ev.fecha_reclamo IS NOT NULL) AS reclamos,
-           COALESCE(SUM((SELECT ps.monto - COALESCE(ps.monto_reembolsado, 0) FROM DUAL WHERE ep.nombre IN ('retenida', 'reembolsada parcial'))), 0) AS consulta_retenida
-      FROM clinica.EvaluacionPrevia ev
-      JOIN clinica.Protocolo cir ON cir.id_protocolo = ev.id_protocolo
-      JOIN clinica.ResultadoEvaluacion r ON r.id_resultado = ev.id_resultado
-      JOIN agenda.Turno t ON t.id_turno = ev.id_turno
-      LEFT JOIN agenda.Turno tc ON tc.id_evaluacion_previa = ev.id_evaluacion
-      LEFT JOIN pagos.PagoSena ps ON ps.id_turno = ev.id_turno
-      LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
-     WHERE t.fecha_hora_inicio >= '2026-01-01' AND t.fecha_hora_inicio < '2026-12-31' + INTERVAL 1 DAY
-     GROUP BY cir.id_protocolo, cir.nombre, r.id_resultado, r.nombre
-     ORDER BY cirugia, resultado;
+SELECT
+    cir.nombre AS cirugia,
+    r.nombre AS resultado,
+    COUNT(*) AS evaluaciones,
+    COUNT(tc.id_turno) AS con_cirugia_agendada,
+    COUNT(rv.id_resultado) AS vencidas_sin_cirugia,
+    COUNT(ev.fecha_reclamo) AS reclamos,
+    COALESCE(SUM(pr.monto - IFNULL(pr.monto_reembolsado, 0)), 0) AS consulta_retenida
+FROM clinica.EvaluacionPrevia ev
+INNER JOIN clinica.Protocolo cir ON ev.id_protocolo = cir.id_protocolo
+INNER JOIN clinica.ResultadoEvaluacion r ON ev.id_resultado = r.id_resultado
+INNER JOIN agenda.Turno t ON ev.id_turno = t.id_turno
+LEFT JOIN agenda.Turno tc ON ev.id_evaluacion = tc.id_evaluacion_previa
+LEFT JOIN clinica.ResultadoEvaluacion rv ON ev.id_resultado = rv.id_resultado
+     AND rv.nombre = 'apto'
+     AND tc.id_turno IS NULL
+     AND ev.fecha_resultado + INTERVAL 6 MONTH < IFNULL(@ahora_simulado, NOW())
+LEFT JOIN pagos.PagoSena pr ON ev.id_turno = pr.id_turno
+     AND pr.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre IN ('retenida', 'reembolsada parcial'))
+WHERE t.fecha_hora_inicio >= '2026-01-01'
+  AND t.fecha_hora_inicio < '2026-12-31' + INTERVAL 1 DAY
+GROUP BY cir.id_protocolo, cir.nombre, r.id_resultado, r.nombre
+ORDER BY cirugia, resultado;
 
 -- @caso sp_reporte_protocolos_mas_pedidos.1 | Éxito | Reporte 5 con un rango que tiene datos: devuelve 5 filas
 -- @espera filas 5
@@ -230,24 +266,41 @@ CALL agenda.sp_reporte_ocupacion_profesional('2026-11-30', '2026-09-01');
 -- @caso sp_reporte_ocupacion_profesional.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
 -- @espera igual
 CALL agenda.sp_reporte_ocupacion_profesional('2026-09-01', '2026-11-30');
-SELECT pr.id_profesional, pr.apellido AS profesional, pr.nombre AS profesional_nombre,
-           ROUND(COALESCE(d.horas, 0), 1) AS horas_disponibles,
-           ROUND(COALESCE(o.horas, 0), 1) AS horas_ocupadas,
-           COALESCE(o.turnos, 0) AS turnos,
-           ROUND(100 * COALESCE(o.horas, 0) / (SELECT d.horas FROM DUAL WHERE d.horas <> 0), 1) AS ocupacion_pct
-      FROM personas.Profesional pr
-      LEFT JOIN (SELECT dd.id_profesional, SUM((EXTRACT(HOUR FROM dd.hora_fin) - EXTRACT(HOUR FROM dd.hora_inicio)) * 60 + EXTRACT(MINUTE FROM dd.hora_fin) - EXTRACT(MINUTE FROM dd.hora_inicio)) / 60 AS horas
-                   FROM personas.Disponibilidad dd
-                  WHERE dd.activa = 1 AND dd.fecha BETWEEN '2026-09-01' AND '2026-11-30'
-                  GROUP BY dd.id_profesional) d ON d.id_profesional = pr.id_profesional
-      LEFT JOIN (SELECT t.id_profesional, COUNT(*) AS turnos, SUM(((EXTRACT(HOUR FROM t.fecha_hora_fin) - EXTRACT(HOUR FROM t.fecha_hora_inicio)) * 60 + EXTRACT(MINUTE FROM t.fecha_hora_fin) - EXTRACT(MINUTE FROM t.fecha_hora_inicio))) / 60 AS horas
-                   FROM agenda.Turno t
-                   JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre <> 'cancelado'
-                  WHERE t.fecha_hora_inicio >= '2026-09-01' AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
-                  GROUP BY t.id_profesional) o ON o.id_profesional = pr.id_profesional
-     WHERE '2026-09-01' IS NOT NULL AND '2026-11-30' IS NOT NULL AND '2026-09-01' <= '2026-11-30'
-       AND (d.horas IS NOT NULL OR o.horas IS NOT NULL)
-     ORDER BY ocupacion_pct DESC, profesional;
+SELECT
+    pr.id_profesional AS id_profesional,
+    pr.apellido AS profesional,
+    pr.nombre AS profesional_nombre,
+    ROUND(IFNULL(d.horas, 0), 1) AS horas_disponibles,
+    ROUND(IFNULL(o.horas, 0), 1) AS horas_ocupadas,
+    IFNULL(o.turnos, 0) AS turnos,
+    ROUND(100 * IFNULL(o.horas, 0) / d.horas, 1) AS ocupacion_pct
+FROM personas.Profesional pr
+LEFT JOIN (
+    SELECT
+        dd.id_profesional AS id_profesional,
+        SUM(TIMESTAMPDIFF(MINUTE, dd.hora_inicio, dd.hora_fin)) / 60 AS horas
+    FROM personas.Disponibilidad dd
+    WHERE dd.activa = 1
+      AND dd.fecha BETWEEN '2026-09-01' AND '2026-11-30'
+    GROUP BY dd.id_profesional
+) AS d ON pr.id_profesional = d.id_profesional
+LEFT JOIN (
+    SELECT
+        t.id_profesional AS id_profesional,
+        COUNT(*) AS turnos,
+        SUM(TIMESTAMPDIFF(MINUTE, t.fecha_hora_inicio, t.fecha_hora_fin)) / 60 AS horas
+    FROM agenda.Turno t
+    INNER JOIN agenda.EstadoTurno e ON t.id_estado_turno = e.id_estado_turno
+    WHERE e.nombre <> 'cancelado'
+      AND t.fecha_hora_inicio >= '2026-09-01'
+      AND t.fecha_hora_inicio < '2026-11-30' + INTERVAL 1 DAY
+    GROUP BY t.id_profesional
+) AS o ON pr.id_profesional = o.id_profesional
+WHERE '2026-09-01' IS NOT NULL
+  AND '2026-11-30' IS NOT NULL
+  AND '2026-09-01' <= '2026-11-30'
+  AND (d.horas IS NOT NULL OR o.horas IS NOT NULL)
+ORDER BY ocupacion_pct DESC, profesional;
 
 -- @caso sp_reporte_cupones.1 | Éxito | Reporte 7 con un rango que tiene datos: devuelve 14 filas
 -- @espera filas 14
@@ -266,20 +319,35 @@ CALL beneficios.sp_reporte_cupones('2026-12-31', '2026-01-01');
 -- @caso sp_reporte_cupones.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
 -- @espera igual
 CALL beneficios.sp_reporte_cupones('2026-01-01', '2026-12-31');
-SELECT r.id_regla, r.nombre AS regla, tr.nombre AS tipo, r.porcentaje_descuento AS descuento_pct,
-           COUNT(*) AS emitidos,
-           SUM(c.id_turno IS NOT NULL) AS usados,
-           SUM(c.id_turno IS NULL AND c.fecha_vencimiento <= COALESCE(@ahora_simulado, NOW())) AS vencidos_sin_usar,
-           SUM(c.id_turno IS NULL AND c.fecha_vencimiento > COALESCE(@ahora_simulado, NOW())) AS vigentes,
-           ROUND(100 * SUM(c.id_turno IS NOT NULL) / COUNT(*), 1) AS tasa_uso_pct,
-           COALESCE(SUM(pt.total * c.porcentaje_descuento / 100), 0) AS descuento_otorgado
-      FROM beneficios.Cupon c
-      JOIN beneficios.ReglaBeneficio r ON r.id_regla = c.id_regla
-      JOIN beneficios.TipoRegla tr ON tr.id_tipo_regla = r.id_tipo_regla
-      LEFT JOIN (SELECT tp.id_turno, SUM(tp.precio_aplicado) AS total FROM agenda.TurnoProtocolo tp GROUP BY tp.id_turno) pt ON pt.id_turno = c.id_turno
-     WHERE c.fecha_emision >= '2026-01-01' AND c.fecha_emision < '2026-12-31' + INTERVAL 1 DAY
-     GROUP BY r.id_regla, r.nombre, tr.nombre, r.porcentaje_descuento
-     ORDER BY emitidos DESC, regla;
+SELECT
+    r.id_regla AS id_regla,
+    r.nombre AS regla,
+    tr.nombre AS tipo,
+    r.porcentaje_descuento AS descuento_pct,
+    COUNT(*) AS emitidos,
+    COUNT(c.id_turno) AS usados,
+    COUNT(cv.id_cupon) AS vencidos_sin_usar,
+    COUNT(cg.id_cupon) AS vigentes,
+    ROUND(100 * COUNT(c.id_turno) / COUNT(*), 1) AS tasa_uso_pct,
+    IFNULL(SUM(pt.total * c.porcentaje_descuento / 100), 0) AS descuento_otorgado
+FROM beneficios.Cupon c
+INNER JOIN beneficios.ReglaBeneficio r ON c.id_regla = r.id_regla
+INNER JOIN beneficios.TipoRegla tr ON r.id_tipo_regla = tr.id_tipo_regla
+LEFT JOIN beneficios.Cupon cv ON c.id_cupon = cv.id_cupon
+     AND cv.id_turno IS NULL
+     AND cv.fecha_vencimiento <= IFNULL(@ahora_simulado, NOW())
+LEFT JOIN beneficios.Cupon cg ON c.id_cupon = cg.id_cupon
+     AND cg.id_turno IS NULL
+     AND cg.fecha_vencimiento > IFNULL(@ahora_simulado, NOW())
+LEFT JOIN (
+    SELECT tp.id_turno AS id_turno, SUM(tp.precio_aplicado) AS total
+    FROM agenda.TurnoProtocolo tp
+    GROUP BY tp.id_turno
+) AS pt ON c.id_turno = pt.id_turno
+WHERE c.fecha_emision >= '2026-01-01'
+  AND c.fecha_emision < '2026-12-31' + INTERVAL 1 DAY
+GROUP BY r.id_regla, r.nombre, tr.nombre, r.porcentaje_descuento
+ORDER BY emitidos DESC, regla;
 
 -- @caso sp_reporte_tarjetas_regalo.1 | Éxito | Reporte 8 con un rango que tiene datos: devuelve 22 filas
 -- @espera filas 22
@@ -298,23 +366,123 @@ CALL pagos.sp_reporte_tarjetas_regalo('2026-12-31', '2026-01-01');
 -- @caso sp_reporte_tarjetas_regalo.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores)
 -- @espera igual
 CALL pagos.sp_reporte_tarjetas_regalo('2026-01-01', '2026-12-31');
-SELECT t.id_tarjeta, CAST(t.codigo AS CHAR(7)) AS codigo, t.comprador_nombre, mp.nombre AS medio_compra,
-           DATE(t.fecha_compra) AS fecha_compra, DATE(t.fecha_vencimiento) AS vence,
-           t.monto_inicial,
-           COALESCE(SUM((m.monto > 0) * m.monto), 0) AS gastado,
-           COALESCE(-SUM((m.monto < 0) * m.monto), 0) AS devuelto,
-           t.monto_inicial - COALESCE(SUM(m.monto), 0) AS saldo,
-           COUNT(m.id_movimiento) AS movimientos,
-           MAX(m.fecha_movimiento) AS ultimo_uso,
-           COALESCE((SELECT 'vencida' FROM DUAL WHERE t.fecha_vencimiento <= COALESCE(@ahora_simulado, NOW())),
-                    (SELECT 'agotada' FROM DUAL WHERE t.monto_inicial - COALESCE(SUM(m.monto), 0) <= 0),
-                    (SELECT 'sin uso' FROM DUAL WHERE COUNT(m.id_movimiento) = 0), 'en uso') AS situacion
-      FROM pagos.TarjetaRegalo t
-      JOIN pagos.MedioPago mp ON mp.id_medio_pago = t.id_medio_pago
-      LEFT JOIN pagos.MovimientoTarjeta m ON m.id_tarjeta = t.id_tarjeta
-     WHERE t.fecha_compra >= '2026-01-01' AND t.fecha_compra < '2026-12-31' + INTERVAL 1 DAY
-     GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
-     ORDER BY t.fecha_compra, t.id_tarjeta;
+SELECT u.id_tarjeta, u.codigo, u.comprador_nombre, u.medio_compra, u.fecha_compra, u.vence,
+       u.monto_inicial, u.gastado, u.devuelto, u.saldo, u.movimientos, u.ultimo_uso, u.situacion
+FROM (
+    SELECT g.*, 'vencida' AS situacion
+    FROM (
+        SELECT
+            t.id_tarjeta AS id_tarjeta,
+            CAST(t.codigo AS CHAR(7)) AS codigo,
+            t.comprador_nombre AS comprador_nombre,
+            mp.nombre AS medio_compra,
+            DATE(t.fecha_compra) AS fecha_compra,
+            DATE(t.fecha_vencimiento) AS vence,
+            t.monto_inicial AS monto_inicial,
+            COALESCE(SUM(mg.monto), 0) AS gastado,
+            COALESCE(-SUM(md.monto), 0) AS devuelto,
+            t.monto_inicial - IFNULL(SUM(m.monto), 0) AS saldo,
+            COUNT(m.id_movimiento) AS movimientos,
+            MAX(m.fecha_movimiento) AS ultimo_uso,
+            t.fecha_vencimiento AS fecha_vencimiento
+        FROM pagos.TarjetaRegalo t
+        INNER JOIN pagos.MedioPago mp ON t.id_medio_pago = mp.id_medio_pago
+        LEFT JOIN pagos.MovimientoTarjeta m ON t.id_tarjeta = m.id_tarjeta
+        LEFT JOIN pagos.MovimientoTarjeta mg ON m.id_movimiento = mg.id_movimiento AND mg.monto > 0
+        LEFT JOIN pagos.MovimientoTarjeta md ON m.id_movimiento = md.id_movimiento AND md.monto < 0
+        WHERE t.fecha_compra >= '2026-01-01'
+          AND t.fecha_compra < '2026-12-31' + INTERVAL 1 DAY
+        GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
+    ) AS g
+    WHERE g.fecha_vencimiento <= IFNULL(@ahora_simulado, NOW())
+    UNION ALL
+    SELECT g.*, 'agotada' AS situacion
+    FROM (
+        SELECT
+            t.id_tarjeta AS id_tarjeta,
+            CAST(t.codigo AS CHAR(7)) AS codigo,
+            t.comprador_nombre AS comprador_nombre,
+            mp.nombre AS medio_compra,
+            DATE(t.fecha_compra) AS fecha_compra,
+            DATE(t.fecha_vencimiento) AS vence,
+            t.monto_inicial AS monto_inicial,
+            COALESCE(SUM(mg.monto), 0) AS gastado,
+            COALESCE(-SUM(md.monto), 0) AS devuelto,
+            t.monto_inicial - IFNULL(SUM(m.monto), 0) AS saldo,
+            COUNT(m.id_movimiento) AS movimientos,
+            MAX(m.fecha_movimiento) AS ultimo_uso,
+            t.fecha_vencimiento AS fecha_vencimiento
+        FROM pagos.TarjetaRegalo t
+        INNER JOIN pagos.MedioPago mp ON t.id_medio_pago = mp.id_medio_pago
+        LEFT JOIN pagos.MovimientoTarjeta m ON t.id_tarjeta = m.id_tarjeta
+        LEFT JOIN pagos.MovimientoTarjeta mg ON m.id_movimiento = mg.id_movimiento AND mg.monto > 0
+        LEFT JOIN pagos.MovimientoTarjeta md ON m.id_movimiento = md.id_movimiento AND md.monto < 0
+        WHERE t.fecha_compra >= '2026-01-01'
+          AND t.fecha_compra < '2026-12-31' + INTERVAL 1 DAY
+        GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
+    ) AS g
+    WHERE g.fecha_vencimiento > IFNULL(@ahora_simulado, NOW())
+      AND g.saldo <= 0
+    UNION ALL
+    SELECT g.*, 'sin uso' AS situacion
+    FROM (
+        SELECT
+            t.id_tarjeta AS id_tarjeta,
+            CAST(t.codigo AS CHAR(7)) AS codigo,
+            t.comprador_nombre AS comprador_nombre,
+            mp.nombre AS medio_compra,
+            DATE(t.fecha_compra) AS fecha_compra,
+            DATE(t.fecha_vencimiento) AS vence,
+            t.monto_inicial AS monto_inicial,
+            COALESCE(SUM(mg.monto), 0) AS gastado,
+            COALESCE(-SUM(md.monto), 0) AS devuelto,
+            t.monto_inicial - IFNULL(SUM(m.monto), 0) AS saldo,
+            COUNT(m.id_movimiento) AS movimientos,
+            MAX(m.fecha_movimiento) AS ultimo_uso,
+            t.fecha_vencimiento AS fecha_vencimiento
+        FROM pagos.TarjetaRegalo t
+        INNER JOIN pagos.MedioPago mp ON t.id_medio_pago = mp.id_medio_pago
+        LEFT JOIN pagos.MovimientoTarjeta m ON t.id_tarjeta = m.id_tarjeta
+        LEFT JOIN pagos.MovimientoTarjeta mg ON m.id_movimiento = mg.id_movimiento AND mg.monto > 0
+        LEFT JOIN pagos.MovimientoTarjeta md ON m.id_movimiento = md.id_movimiento AND md.monto < 0
+        WHERE t.fecha_compra >= '2026-01-01'
+          AND t.fecha_compra < '2026-12-31' + INTERVAL 1 DAY
+        GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
+    ) AS g
+    WHERE g.fecha_vencimiento > IFNULL(@ahora_simulado, NOW())
+      AND g.saldo > 0
+      AND g.movimientos = 0
+    UNION ALL
+    SELECT g.*, 'en uso' AS situacion
+    FROM (
+        SELECT
+            t.id_tarjeta AS id_tarjeta,
+            CAST(t.codigo AS CHAR(7)) AS codigo,
+            t.comprador_nombre AS comprador_nombre,
+            mp.nombre AS medio_compra,
+            DATE(t.fecha_compra) AS fecha_compra,
+            DATE(t.fecha_vencimiento) AS vence,
+            t.monto_inicial AS monto_inicial,
+            COALESCE(SUM(mg.monto), 0) AS gastado,
+            COALESCE(-SUM(md.monto), 0) AS devuelto,
+            t.monto_inicial - IFNULL(SUM(m.monto), 0) AS saldo,
+            COUNT(m.id_movimiento) AS movimientos,
+            MAX(m.fecha_movimiento) AS ultimo_uso,
+            t.fecha_vencimiento AS fecha_vencimiento
+        FROM pagos.TarjetaRegalo t
+        INNER JOIN pagos.MedioPago mp ON t.id_medio_pago = mp.id_medio_pago
+        LEFT JOIN pagos.MovimientoTarjeta m ON t.id_tarjeta = m.id_tarjeta
+        LEFT JOIN pagos.MovimientoTarjeta mg ON m.id_movimiento = mg.id_movimiento AND mg.monto > 0
+        LEFT JOIN pagos.MovimientoTarjeta md ON m.id_movimiento = md.id_movimiento AND md.monto < 0
+        WHERE t.fecha_compra >= '2026-01-01'
+          AND t.fecha_compra < '2026-12-31' + INTERVAL 1 DAY
+        GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
+    ) AS g
+    WHERE g.fecha_vencimiento > IFNULL(@ahora_simulado, NOW())
+      AND g.saldo > 0
+      AND g.movimientos > 0
+) AS u
+ORDER BY u.fecha_compra, u.id_tarjeta;
 CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-09-01', '2026-11-30', 1);
 
 -- ======================================================================
@@ -399,25 +567,25 @@ SELECT @pacA IS NOT NULL AND @prof IS NOT NULL;
 
 -- @caso sp_registrar_log.1 | Éxito | Escribe una fila con tipo, usuario, origen y fecha del reloj del sistema
 -- @espera nada
-CALL auditoria.sp_registrar_log('inicio_sesion', 1, NULL, 'gestion', 'prueba log 1', 'seguridad.Usuario', 1, NULL, NULL, 1, '10.1.1.1', 1);
+CALL auditoria.sp_registrar_log('inicio_sesion', 1, NULL, 'gestion', 'prueba log 1', 'seguridad.Usuario', 1, NULL, NULL, 1, '10.1.1.1');
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion = 'prueba log 1' AND id_usuario = 1 AND fecha_hora = @ahora_simulado AND exitoso = 1) = 1) AS verificacion;
 
 -- @caso sp_registrar_log.2 | Sin coincidencias | Un tipo de evento que no existe no escribe nada ni da error
 -- @espera nada
-CALL auditoria.sp_registrar_log('evento_inventado', 1, NULL, 'gestion', 'prueba log 2', NULL, NULL, NULL, NULL, 1, NULL, 1);
+CALL auditoria.sp_registrar_log('evento_inventado', 1, NULL, 'gestion', 'prueba log 2', NULL, NULL, NULL, NULL, 1, NULL);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion = 'prueba log 2') = 0) AS verificacion;
 
 -- @caso sp_registrar_log.3 | Nulos y límites | Usuario inexistente y origen desconocido: el log queda con usuario NULL y origen sistema; exitoso NULL vale 1
 -- @espera nada
-CALL auditoria.sp_registrar_log('inicio_sesion', 99999999, NULL, 'marte', 'prueba log 3', NULL, NULL, NULL, NULL, NULL, NULL, 1);
+CALL auditoria.sp_registrar_log('inicio_sesion', 99999999, NULL, 'marte', 'prueba log 3', NULL, NULL, NULL, NULL, NULL, NULL);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN agenda.Origen o ON o.id_origen = l.id_origen WHERE l.descripcion = 'prueba log 3' AND l.id_usuario IS NULL AND o.nombre = 'sistema' AND l.exitoso = 1) = 1) AS verificacion;
 
 -- @caso sp_registrar_log.4 | Consistencia | La descripción se recorta a 500 caracteres y exitoso=0 se conserva
 -- @espera nada
-CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, 'web', 'prueba log 4 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', NULL, NULL, NULL, NULL, 0, NULL, 1);
+CALL auditoria.sp_registrar_log('intento_fallido', NULL, NULL, 'web', 'prueba log 4 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', NULL, NULL, NULL, NULL, 0, NULL);
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log WHERE descripcion LIKE 'prueba log 4 %' AND CHAR_LENGTH(descripcion) = 500 AND exitoso = 0) = 1) AS verificacion;
 
@@ -1134,33 +1302,33 @@ SELECT id_pago INTO @pago5 FROM pagos.PagoSena WHERE id_turno = @t5;
 
 -- @caso sp_aplicar_reembolso.3 | Nulos y límites | Monto NULL o mayor al pagado (52102) y estado inventado (52103); con el pago todavía "pagada"
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, NULL, 'retenida', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, NULL, 'retenida', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52102) AS verificacion;
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, 99999999, 'retenida', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, 99999999, 'retenida', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52102) AS verificacion;
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, 100, 'inventado', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, 100, 'inventado', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52103) AS verificacion;
 
 -- @caso sp_aplicar_reembolso.1 | Éxito | Reembolso parcial de la seña del turno 5 (interno: lo usan otros SP)
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, 10000, 'reembolsada parcial', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, 10000, 'reembolsada parcial', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT ((SELECT ep.nombre = 'reembolsada parcial' AND ps.monto_reembolsado = 10000 FROM pagos.PagoSena ps JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago WHERE ps.id_pago = @pago5)) AS verificacion;
 
 -- @caso sp_aplicar_reembolso.2 | Sin coincidencias | Pago inexistente: deja el código 52100 en @reembolso_codigo
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(99999999, 1, 'retenida', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(99999999, 1, 'retenida', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52100) AS verificacion;
 
 -- @caso sp_aplicar_reembolso.4 | Consistencia | Un pago ya resuelto no se puede resolver de nuevo (52101) y su monto no cambia
 -- @espera nada
-CALL pagos.sp_aplicar_reembolso(@pago5, 5000, 'retenida', 'prueba', 1, 'gestion', 1);
+CALL pagos.sp_aplicar_reembolso(@pago5, 5000, 'retenida', 'prueba', 1, 'gestion');
 -- @espera verdadero
 SELECT (@reembolso_codigo = 52101) AS verificacion;
 -- @espera verdadero
@@ -1565,7 +1733,7 @@ CALL notificaciones.sp_notificaciones_pendientes(501);
 
 -- @caso sp_notificaciones_pendientes.4 | Consistencia | Con límite 500 la cantidad es igual al conteo directo de avisos pendientes ya vencidos
 SELECT COUNT(*) INTO @pend FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion AND e.nombre = 'pendiente' WHERE n.fecha_programada <= @ahora_simulado;
-SELECT COALESCE((SELECT @pend FROM DUAL WHERE @pend <= 500), 500) INTO @pend_esperado;
+SELECT MIN(x.valor) INTO @pend_esperado FROM (SELECT @pend AS valor UNION ALL SELECT 500) AS x;
 -- @espera verdadero
 SELECT (@pend > 50) AS verificacion;
 SET @ahora_simulado = '2026-11-03 09:00:00';

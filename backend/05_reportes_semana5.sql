@@ -24,6 +24,8 @@ DELIMITER //
 -- REPORTE 1: Turnos por periodo (mes) y profesional
 -- Cuantos turnos hubo, como terminaron, cuantas horas se agendaron y cuanto se
 -- facturo (a precio de lista) en los realizados. p_id_profesional NULL = todos.
+-- Cada estado se cuenta con LEFT JOIN + COUNT(columna): COUNT(*) cuenta todos los
+-- turnos y COUNT(tr.id_turno) solo los que encontraron su estado (los NULL no se cuentan).
 -- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_turnos_por_periodo_profesional//
@@ -36,20 +38,27 @@ BEGIN
         pr.apellido AS profesional,
         pr.nombre AS profesional_nombre,
         COUNT(*) AS turnos,
-        SUM(CASE WHEN e.nombre = 'realizado' THEN 1 ELSE 0 END) AS realizados,
-        SUM(CASE WHEN e.nombre = 'cancelado' THEN 1 ELSE 0 END) AS cancelados,
-        SUM(CASE WHEN e.nombre = 'ausente' THEN 1 ELSE 0 END) AS ausentes,
-        SUM(CASE WHEN e.nombre IN ('pendiente', 'confirmado') THEN 1 ELSE 0 END) AS vigentes,
+        COUNT(tr.id_turno) AS realizados,
+        COUNT(tc.id_turno) AS cancelados,
+        COUNT(ta.id_turno) AS ausentes,
+        COUNT(tv.id_turno) AS vigentes,
         ROUND(SUM(TIMESTAMPDIFF(MINUTE, t.fecha_hora_inicio, t.fecha_hora_fin)) / 60, 1) AS horas_agendadas,
-        SUM(CASE WHEN e.nombre = 'realizado' THEN IFNULL(f.total, 0) ELSE 0 END) AS facturado
+        COALESCE(SUM(f.total), 0) AS facturado
     FROM agenda.Turno t
     INNER JOIN personas.Profesional pr ON t.id_profesional = pr.id_profesional
-    INNER JOIN agenda.EstadoTurno e ON t.id_estado_turno = e.id_estado_turno
+    LEFT JOIN agenda.Turno tr ON t.id_turno = tr.id_turno
+         AND tr.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'realizado')
+    LEFT JOIN agenda.Turno tc ON t.id_turno = tc.id_turno
+         AND tc.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'cancelado')
+    LEFT JOIN agenda.Turno ta ON t.id_turno = ta.id_turno
+         AND ta.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'ausente')
+    LEFT JOIN agenda.Turno tv ON t.id_turno = tv.id_turno
+         AND tv.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre IN ('pendiente', 'confirmado'))
     LEFT JOIN (
         SELECT tp.id_turno AS id_turno, SUM(tp.precio_aplicado) AS total
         FROM agenda.TurnoProtocolo tp
         GROUP BY tp.id_turno
-    ) AS f ON t.id_turno = f.id_turno
+    ) AS f ON tr.id_turno = f.id_turno
     WHERE t.fecha_hora_inicio >= p_desde
       AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
       AND (p_id_profesional IS NULL OR t.id_profesional = p_id_profesional)
@@ -59,8 +68,9 @@ END//
 
 -- =============================================================================
 -- REPORTE 2: Ingresos por sena, reembolsos y retenciones, por mes y medio de pago
--- Lo retenido es lo que el instituto se queda de las senas ya resueltas.
--- Pipeline: FROM (INNER JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
+-- Lo retenido es lo que el instituto se queda de las senas ya resueltas: se suma
+-- solo en los pagos que encuentran su estado 'retenida' o 'reembolsada parcial'.
+-- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS pagos.sp_reporte_ingresos_sena//
 CREATE PROCEDURE pagos.sp_reporte_ingresos_sena(IN p_desde DATE, IN p_hasta DATE)
@@ -71,12 +81,12 @@ BEGIN
         COUNT(*) AS pagos,
         SUM(ps.monto) AS cobrado,
         SUM(IFNULL(ps.monto_reembolsado, 0)) AS reembolsado,
-        SUM(CASE WHEN ep.nombre IN ('retenida', 'reembolsada parcial')
-                 THEN ps.monto - IFNULL(ps.monto_reembolsado, 0) ELSE 0 END) AS retenido,
+        COALESCE(SUM(pr.monto - IFNULL(pr.monto_reembolsado, 0)), 0) AS retenido,
         SUM(ps.monto - IFNULL(ps.monto_reembolsado, 0)) AS neto
     FROM pagos.PagoSena ps
-    INNER JOIN pagos.EstadoPago ep ON ps.id_estado_pago = ep.id_estado_pago
     INNER JOIN pagos.MedioPago mp ON ps.id_medio_pago = mp.id_medio_pago
+    LEFT JOIN pagos.PagoSena pr ON ps.id_pago = pr.id_pago
+         AND pr.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre IN ('retenida', 'reembolsada parcial'))
     WHERE ps.fecha_pago >= p_desde
       AND ps.fecha_pago < p_hasta + INTERVAL 1 DAY
     GROUP BY DATE_FORMAT(ps.fecha_pago, '%Y-%m'), ps.id_medio_pago, mp.nombre
@@ -87,44 +97,47 @@ END//
 -- REPORTE 3: Cancelaciones e inasistencias (los "turnos perdidos" de la MML)
 -- p_agrupar: 'mes' (por defecto) o 'semana'. Por origen: cuantos turnos se
 -- perdieron, la tasa de perdida y la plata de senas retenida.
--- Pipeline: FROM (tabla derivada con 5 tablas) -> GROUP BY -> SELECT -> ORDER BY
+-- El formato del periodo sale de una tabla derivada de dos filas (semana / mes) y el
+-- WHERE se queda con la fila que corresponde al parametro. Los estados se cuentan con
+-- LEFT JOIN + COUNT(columna), como en el reporte 1.
+-- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_cancelaciones_inasistencias//
 CREATE PROCEDURE agenda.sp_reporte_cancelaciones_inasistencias(
     IN p_desde DATE, IN p_hasta DATE, IN p_agrupar VARCHAR(10))
 BEGIN
     SELECT
-        x.periodo AS periodo,
-        x.origen AS origen,
+        DATE_FORMAT(t.fecha_hora_inicio, fm.formato) AS periodo,
+        o.nombre AS origen,
         COUNT(*) AS turnos,
-        SUM(CASE WHEN x.estado = 'cancelado' THEN 1 ELSE 0 END) AS cancelados,
-        SUM(CASE WHEN x.estado = 'cancelado' AND x.estado_sena = 'reembolsada' THEN 1 ELSE 0 END) AS cancelados_con_aviso,
-        SUM(CASE WHEN x.estado = 'cancelado' AND x.estado_sena = 'retenida' THEN 1 ELSE 0 END) AS cancelados_tarde,
-        SUM(CASE WHEN x.estado = 'ausente' THEN 1 ELSE 0 END) AS ausentes,
-        ROUND(100 * SUM(CASE WHEN x.estado IN ('cancelado', 'ausente') THEN 1 ELSE 0 END) / COUNT(*), 1) AS tasa_perdida_pct,
-        SUM(CASE WHEN x.estado IN ('cancelado', 'ausente')
-                  AND x.estado_sena IN ('retenida', 'reembolsada parcial')
-                 THEN x.monto - IFNULL(x.reembolsado, 0) ELSE 0 END) AS sena_retenida
-    FROM (
-        SELECT
-            CASE WHEN p_agrupar = 'semana'
-                 THEN DATE_FORMAT(t.fecha_hora_inicio, '%x-S%v')
-                 ELSE DATE_FORMAT(t.fecha_hora_inicio, '%Y-%m') END AS periodo,
-            o.nombre AS origen,
-            e.nombre AS estado,
-            ep.nombre AS estado_sena,
-            ps.monto AS monto,
-            ps.monto_reembolsado AS reembolsado
-        FROM agenda.Turno t
-        INNER JOIN agenda.EstadoTurno e ON t.id_estado_turno = e.id_estado_turno
-        INNER JOIN agenda.Origen o ON t.id_origen = o.id_origen
-        LEFT JOIN pagos.PagoSena ps ON t.id_turno = ps.id_turno
-        LEFT JOIN pagos.EstadoPago ep ON ps.id_estado_pago = ep.id_estado_pago
-        WHERE t.fecha_hora_inicio >= p_desde
-          AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
-    ) AS x
-    GROUP BY x.periodo, x.origen
-    ORDER BY x.periodo, x.origen;
+        COUNT(tc.id_turno) AS cancelados,
+        COUNT(pa.id_pago) AS cancelados_con_aviso,
+        COUNT(pt.id_pago) AS cancelados_tarde,
+        COUNT(ta.id_turno) AS ausentes,
+        ROUND(100 * (COUNT(tc.id_turno) + COUNT(ta.id_turno)) / COUNT(*), 1) AS tasa_perdida_pct,
+        COALESCE(SUM(pr.monto - IFNULL(pr.monto_reembolsado, 0)), 0) AS sena_retenida
+    FROM agenda.Turno t
+    INNER JOIN (
+        SELECT 1 AS es_semana, '%x-S%v' AS formato
+        UNION ALL
+        SELECT 0 AS es_semana, '%Y-%m' AS formato
+    ) AS fm ON fm.es_semana = IFNULL(p_agrupar = 'semana', 0)
+    INNER JOIN agenda.Origen o ON t.id_origen = o.id_origen
+    LEFT JOIN agenda.Turno tc ON t.id_turno = tc.id_turno
+         AND tc.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'cancelado')
+    LEFT JOIN agenda.Turno ta ON t.id_turno = ta.id_turno
+         AND ta.id_estado_turno IN (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'ausente')
+    LEFT JOIN pagos.PagoSena pa ON tc.id_turno = pa.id_turno
+         AND pa.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 'reembolsada')
+    LEFT JOIN pagos.PagoSena pt ON tc.id_turno = pt.id_turno
+         AND pt.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 'retenida')
+    LEFT JOIN pagos.PagoSena pr ON t.id_turno = pr.id_turno
+         AND (tc.id_turno IS NOT NULL OR ta.id_turno IS NOT NULL)
+         AND pr.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre IN ('retenida', 'reembolsada parcial'))
+    WHERE t.fecha_hora_inicio >= p_desde
+      AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
+    GROUP BY DATE_FORMAT(t.fecha_hora_inicio, fm.formato), o.nombre
+    ORDER BY periodo, origen;
 END//
 
 -- =============================================================================
@@ -132,6 +145,8 @@ END//
 -- Por cirugia y resultado: cuantas evaluaciones, cuantas terminaron en una
 -- cirugia agendada, cuantas vencieron sin agendar, cuantos reclamos y cuanta plata
 -- de consultas retuvo el instituto. Se cuentan las consultas del rango.
+-- COUNT(columna) no cuenta los NULL: COUNT(tc.id_turno) = evaluaciones con cirugia
+-- agendada y COUNT(ev.fecha_reclamo) = evaluaciones con reclamo.
 -- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS clinica.sp_reporte_evaluaciones_cirugias//
@@ -142,20 +157,20 @@ BEGIN
         r.nombre AS resultado,
         COUNT(*) AS evaluaciones,
         COUNT(tc.id_turno) AS con_cirugia_agendada,
-        SUM(CASE WHEN r.nombre = 'apto'
-                  AND tc.id_turno IS NULL
-                  AND ev.fecha_resultado + INTERVAL 6 MONTH < IFNULL(@ahora_simulado, NOW())
-                 THEN 1 ELSE 0 END) AS vencidas_sin_cirugia,
-        SUM(CASE WHEN ev.fecha_reclamo IS NOT NULL THEN 1 ELSE 0 END) AS reclamos,
-        SUM(CASE WHEN ep.nombre IN ('retenida', 'reembolsada parcial')
-                 THEN ps.monto - IFNULL(ps.monto_reembolsado, 0) ELSE 0 END) AS consulta_retenida
+        COUNT(rv.id_resultado) AS vencidas_sin_cirugia,
+        COUNT(ev.fecha_reclamo) AS reclamos,
+        COALESCE(SUM(pr.monto - IFNULL(pr.monto_reembolsado, 0)), 0) AS consulta_retenida
     FROM clinica.EvaluacionPrevia ev
     INNER JOIN clinica.Protocolo cir ON ev.id_protocolo = cir.id_protocolo
     INNER JOIN clinica.ResultadoEvaluacion r ON ev.id_resultado = r.id_resultado
     INNER JOIN agenda.Turno t ON ev.id_turno = t.id_turno
     LEFT JOIN agenda.Turno tc ON ev.id_evaluacion = tc.id_evaluacion_previa
-    LEFT JOIN pagos.PagoSena ps ON ev.id_turno = ps.id_turno
-    LEFT JOIN pagos.EstadoPago ep ON ps.id_estado_pago = ep.id_estado_pago
+    LEFT JOIN clinica.ResultadoEvaluacion rv ON ev.id_resultado = rv.id_resultado
+         AND rv.nombre = 'apto'
+         AND tc.id_turno IS NULL
+         AND ev.fecha_resultado + INTERVAL 6 MONTH < IFNULL(@ahora_simulado, NOW())
+    LEFT JOIN pagos.PagoSena pr ON ev.id_turno = pr.id_turno
+         AND pr.id_estado_pago IN (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre IN ('retenida', 'reembolsada parcial'))
     WHERE t.fecha_hora_inicio >= p_desde
       AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
     GROUP BY cir.id_protocolo, cir.nombre, r.id_resultado, r.nombre
@@ -235,6 +250,7 @@ END//
 
 -- =============================================================================
 -- REPORTE 6: Ocupacion por profesional = horas con turno / horas de disponibilidad
+-- Si el profesional no tiene horas de disponibilidad, la division por cero da NULL y no se informa el porcentaje.
 -- Pipeline: FROM (Profesional + 2 tablas derivadas con LEFT JOIN) -> WHERE -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_ocupacion_profesional//
@@ -247,9 +263,7 @@ BEGIN
         ROUND(IFNULL(d.horas, 0), 1) AS horas_disponibles,
         ROUND(IFNULL(o.horas, 0), 1) AS horas_ocupadas,
         IFNULL(o.turnos, 0) AS turnos,
-        CASE WHEN IFNULL(d.horas, 0) = 0
-             THEN NULL
-             ELSE ROUND(100 * IFNULL(o.horas, 0) / d.horas, 1) END AS ocupacion_pct
+        ROUND(100 * IFNULL(o.horas, 0) / d.horas, 1) AS ocupacion_pct
     FROM personas.Profesional pr
     LEFT JOIN (
         SELECT
@@ -283,7 +297,8 @@ END//
 -- REPORTE 7: Uso de cupones y reglas de beneficio, por regla
 -- Cupones emitidos en el rango: cuantos se usaron, cuantos vencieron sin usar,
 -- cuantos siguen vigentes, tasa de uso y descuento total otorgado.
--- Pipeline: FROM (INNER JOIN + LEFT JOIN a tabla derivada) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
+-- COUNT(c.id_turno) cuenta los cupones usados (los sin usar tienen id_turno NULL).
+-- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS beneficios.sp_reporte_cupones//
 CREATE PROCEDURE beneficios.sp_reporte_cupones(IN p_desde DATE, IN p_hasta DATE)
@@ -294,16 +309,20 @@ BEGIN
         tr.nombre AS tipo,
         r.porcentaje_descuento AS descuento_pct,
         COUNT(*) AS emitidos,
-        SUM(CASE WHEN c.id_turno IS NOT NULL THEN 1 ELSE 0 END) AS usados,
-        SUM(CASE WHEN c.id_turno IS NULL AND c.fecha_vencimiento <= IFNULL(@ahora_simulado, NOW())
-                 THEN 1 ELSE 0 END) AS vencidos_sin_usar,
-        SUM(CASE WHEN c.id_turno IS NULL AND c.fecha_vencimiento > IFNULL(@ahora_simulado, NOW())
-                 THEN 1 ELSE 0 END) AS vigentes,
-        ROUND(100 * SUM(CASE WHEN c.id_turno IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) AS tasa_uso_pct,
+        COUNT(c.id_turno) AS usados,
+        COUNT(cv.id_cupon) AS vencidos_sin_usar,
+        COUNT(cg.id_cupon) AS vigentes,
+        ROUND(100 * COUNT(c.id_turno) / COUNT(*), 1) AS tasa_uso_pct,
         IFNULL(SUM(pt.total * c.porcentaje_descuento / 100), 0) AS descuento_otorgado
     FROM beneficios.Cupon c
     INNER JOIN beneficios.ReglaBeneficio r ON c.id_regla = r.id_regla
     INNER JOIN beneficios.TipoRegla tr ON r.id_tipo_regla = tr.id_tipo_regla
+    LEFT JOIN beneficios.Cupon cv ON c.id_cupon = cv.id_cupon
+         AND cv.id_turno IS NULL
+         AND cv.fecha_vencimiento <= IFNULL(@ahora_simulado, NOW())
+    LEFT JOIN beneficios.Cupon cg ON c.id_cupon = cg.id_cupon
+         AND cg.id_turno IS NULL
+         AND cg.fecha_vencimiento > IFNULL(@ahora_simulado, NOW())
     LEFT JOIN (
         SELECT tp.id_turno AS id_turno, SUM(tp.precio_aplicado) AS total
         FROM agenda.TurnoProtocolo tp
@@ -318,35 +337,130 @@ END//
 -- =============================================================================
 -- REPORTE 8: Saldo y uso de las tarjetas de regalo compradas en el rango
 -- El codigo se muestra recortado: el codigo completo funciona como un billete.
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
+-- La situacion sale de cuatro consultas con condiciones que no se pisan (vencida,
+-- agotada, sin uso, en uso) unidas con UNION ALL.
+-- Pipeline: FROM (tabla derivada con INNER JOIN + LEFT JOIN) -> UNION ALL -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS pagos.sp_reporte_tarjetas_regalo//
 CREATE PROCEDURE pagos.sp_reporte_tarjetas_regalo(IN p_desde DATE, IN p_hasta DATE)
 BEGIN
-    SELECT
-        t.id_tarjeta AS id_tarjeta,
-        CAST(t.codigo AS CHAR(7)) AS codigo,
-        t.comprador_nombre AS comprador_nombre,
-        mp.nombre AS medio_compra,
-        DATE(t.fecha_compra) AS fecha_compra,
-        DATE(t.fecha_vencimiento) AS vence,
-        t.monto_inicial AS monto_inicial,
-        SUM(CASE WHEN m.monto > 0 THEN m.monto ELSE 0 END) AS gastado,
-        SUM(CASE WHEN m.monto < 0 THEN -m.monto ELSE 0 END) AS devuelto,
-        t.monto_inicial - IFNULL(SUM(m.monto), 0) AS saldo,
-        COUNT(m.id_movimiento) AS movimientos,
-        MAX(m.fecha_movimiento) AS ultimo_uso,
-        CASE WHEN t.fecha_vencimiento <= IFNULL(@ahora_simulado, NOW()) THEN 'vencida'
-             WHEN t.monto_inicial - IFNULL(SUM(m.monto), 0) <= 0 THEN 'agotada'
-             WHEN COUNT(m.id_movimiento) = 0 THEN 'sin uso'
-             ELSE 'en uso' END AS situacion
-    FROM pagos.TarjetaRegalo t
-    INNER JOIN pagos.MedioPago mp ON t.id_medio_pago = mp.id_medio_pago
-    LEFT JOIN pagos.MovimientoTarjeta m ON t.id_tarjeta = m.id_tarjeta
-    WHERE t.fecha_compra >= p_desde
-      AND t.fecha_compra < p_hasta + INTERVAL 1 DAY
-    GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
-    ORDER BY t.fecha_compra, t.id_tarjeta;
+    SELECT u.id_tarjeta, u.codigo, u.comprador_nombre, u.medio_compra, u.fecha_compra, u.vence,
+           u.monto_inicial, u.gastado, u.devuelto, u.saldo, u.movimientos, u.ultimo_uso, u.situacion
+    FROM (
+        SELECT g.*, 'vencida' AS situacion
+        FROM (
+            SELECT
+                t.id_tarjeta AS id_tarjeta,
+                CAST(t.codigo AS CHAR(7)) AS codigo,
+                t.comprador_nombre AS comprador_nombre,
+                mp.nombre AS medio_compra,
+                DATE(t.fecha_compra) AS fecha_compra,
+                DATE(t.fecha_vencimiento) AS vence,
+                t.monto_inicial AS monto_inicial,
+                COALESCE(SUM(mg.monto), 0) AS gastado,
+                COALESCE(-SUM(md.monto), 0) AS devuelto,
+                t.monto_inicial - IFNULL(SUM(m.monto), 0) AS saldo,
+                COUNT(m.id_movimiento) AS movimientos,
+                MAX(m.fecha_movimiento) AS ultimo_uso,
+                t.fecha_vencimiento AS fecha_vencimiento
+            FROM pagos.TarjetaRegalo t
+            INNER JOIN pagos.MedioPago mp ON t.id_medio_pago = mp.id_medio_pago
+            LEFT JOIN pagos.MovimientoTarjeta m ON t.id_tarjeta = m.id_tarjeta
+            LEFT JOIN pagos.MovimientoTarjeta mg ON m.id_movimiento = mg.id_movimiento AND mg.monto > 0
+            LEFT JOIN pagos.MovimientoTarjeta md ON m.id_movimiento = md.id_movimiento AND md.monto < 0
+            WHERE t.fecha_compra >= p_desde
+              AND t.fecha_compra < p_hasta + INTERVAL 1 DAY
+            GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
+        ) AS g
+        WHERE g.fecha_vencimiento <= IFNULL(@ahora_simulado, NOW())
+        UNION ALL
+        SELECT g.*, 'agotada' AS situacion
+        FROM (
+            SELECT
+                t.id_tarjeta AS id_tarjeta,
+                CAST(t.codigo AS CHAR(7)) AS codigo,
+                t.comprador_nombre AS comprador_nombre,
+                mp.nombre AS medio_compra,
+                DATE(t.fecha_compra) AS fecha_compra,
+                DATE(t.fecha_vencimiento) AS vence,
+                t.monto_inicial AS monto_inicial,
+                COALESCE(SUM(mg.monto), 0) AS gastado,
+                COALESCE(-SUM(md.monto), 0) AS devuelto,
+                t.monto_inicial - IFNULL(SUM(m.monto), 0) AS saldo,
+                COUNT(m.id_movimiento) AS movimientos,
+                MAX(m.fecha_movimiento) AS ultimo_uso,
+                t.fecha_vencimiento AS fecha_vencimiento
+            FROM pagos.TarjetaRegalo t
+            INNER JOIN pagos.MedioPago mp ON t.id_medio_pago = mp.id_medio_pago
+            LEFT JOIN pagos.MovimientoTarjeta m ON t.id_tarjeta = m.id_tarjeta
+            LEFT JOIN pagos.MovimientoTarjeta mg ON m.id_movimiento = mg.id_movimiento AND mg.monto > 0
+            LEFT JOIN pagos.MovimientoTarjeta md ON m.id_movimiento = md.id_movimiento AND md.monto < 0
+            WHERE t.fecha_compra >= p_desde
+              AND t.fecha_compra < p_hasta + INTERVAL 1 DAY
+            GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
+        ) AS g
+        WHERE g.fecha_vencimiento > IFNULL(@ahora_simulado, NOW())
+          AND g.saldo <= 0
+        UNION ALL
+        SELECT g.*, 'sin uso' AS situacion
+        FROM (
+            SELECT
+                t.id_tarjeta AS id_tarjeta,
+                CAST(t.codigo AS CHAR(7)) AS codigo,
+                t.comprador_nombre AS comprador_nombre,
+                mp.nombre AS medio_compra,
+                DATE(t.fecha_compra) AS fecha_compra,
+                DATE(t.fecha_vencimiento) AS vence,
+                t.monto_inicial AS monto_inicial,
+                COALESCE(SUM(mg.monto), 0) AS gastado,
+                COALESCE(-SUM(md.monto), 0) AS devuelto,
+                t.monto_inicial - IFNULL(SUM(m.monto), 0) AS saldo,
+                COUNT(m.id_movimiento) AS movimientos,
+                MAX(m.fecha_movimiento) AS ultimo_uso,
+                t.fecha_vencimiento AS fecha_vencimiento
+            FROM pagos.TarjetaRegalo t
+            INNER JOIN pagos.MedioPago mp ON t.id_medio_pago = mp.id_medio_pago
+            LEFT JOIN pagos.MovimientoTarjeta m ON t.id_tarjeta = m.id_tarjeta
+            LEFT JOIN pagos.MovimientoTarjeta mg ON m.id_movimiento = mg.id_movimiento AND mg.monto > 0
+            LEFT JOIN pagos.MovimientoTarjeta md ON m.id_movimiento = md.id_movimiento AND md.monto < 0
+            WHERE t.fecha_compra >= p_desde
+              AND t.fecha_compra < p_hasta + INTERVAL 1 DAY
+            GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
+        ) AS g
+        WHERE g.fecha_vencimiento > IFNULL(@ahora_simulado, NOW())
+          AND g.saldo > 0
+          AND g.movimientos = 0
+        UNION ALL
+        SELECT g.*, 'en uso' AS situacion
+        FROM (
+            SELECT
+                t.id_tarjeta AS id_tarjeta,
+                CAST(t.codigo AS CHAR(7)) AS codigo,
+                t.comprador_nombre AS comprador_nombre,
+                mp.nombre AS medio_compra,
+                DATE(t.fecha_compra) AS fecha_compra,
+                DATE(t.fecha_vencimiento) AS vence,
+                t.monto_inicial AS monto_inicial,
+                COALESCE(SUM(mg.monto), 0) AS gastado,
+                COALESCE(-SUM(md.monto), 0) AS devuelto,
+                t.monto_inicial - IFNULL(SUM(m.monto), 0) AS saldo,
+                COUNT(m.id_movimiento) AS movimientos,
+                MAX(m.fecha_movimiento) AS ultimo_uso,
+                t.fecha_vencimiento AS fecha_vencimiento
+            FROM pagos.TarjetaRegalo t
+            INNER JOIN pagos.MedioPago mp ON t.id_medio_pago = mp.id_medio_pago
+            LEFT JOIN pagos.MovimientoTarjeta m ON t.id_tarjeta = m.id_tarjeta
+            LEFT JOIN pagos.MovimientoTarjeta mg ON m.id_movimiento = mg.id_movimiento AND mg.monto > 0
+            LEFT JOIN pagos.MovimientoTarjeta md ON m.id_movimiento = md.id_movimiento AND md.monto < 0
+            WHERE t.fecha_compra >= p_desde
+              AND t.fecha_compra < p_hasta + INTERVAL 1 DAY
+            GROUP BY t.id_tarjeta, t.codigo, t.comprador_nombre, mp.nombre, t.fecha_compra, t.fecha_vencimiento, t.monto_inicial
+        ) AS g
+        WHERE g.fecha_vencimiento > IFNULL(@ahora_simulado, NOW())
+          AND g.saldo > 0
+          AND g.movimientos > 0
+    ) AS u
+    ORDER BY u.fecha_compra, u.id_tarjeta;
 END//
 
 -- =============================================================================

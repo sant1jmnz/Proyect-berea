@@ -7,6 +7,9 @@ namespace Ui {
 class BuscadorWidget;
 }
 
+class Repositorio;
+class QTimer;
+
 /**
  * @brief BuscadorWidget - Pantalla 4 compartida (Cliente 4 y Gestión 4)
  * Diseñado e implementado por Bautista como widget modular para que Santiago lo reutilice en Gestión.
@@ -20,6 +23,9 @@ public:
     ~BuscadorWidget();
 
     void refrescarBusqueda();
+
+    /* Con la base conectada, el catálogo sale de la base (stored procedure) en vez de la lista fija. */
+    void usarBase(Repositorio *repositorio);
 
 signals:
     void protocoloSeleccionado(const QString &nombre, double precio, int duracion);
@@ -37,9 +43,14 @@ private:
         double precio;
         QString categoria;
         QString descripcion;
+        double sena = -1;      /* seña calculada por la base; -1 = usar la regla local */
     };
 
     QList<ProtocoloItem> m_catalogo;
+    Repositorio *m_repo = nullptr;
+    QTimer *m_temporizadorConsulta = nullptr;   /* registra la búsqueda sin resultados cuando se deja de escribir */
+    QString m_consultaPendiente;
+    QString m_ultimaConsultaRegistrada;
 
     void inicializarCatalogo();
     void filtrarResultados(const QString &termino);

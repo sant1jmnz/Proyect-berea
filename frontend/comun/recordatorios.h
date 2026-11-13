@@ -26,6 +26,7 @@ struct Aviso {
     int intentos = 0;
     QString mensaje;
     QString detalleError;      /* solo si falló */
+    int id = 0;                /* id de la notificación en la base (0 = dato de prueba) */
 };
 
 namespace Recordatorios {
@@ -58,6 +59,8 @@ public:
                            const QDateTime &ahora, bool telegramVinculado = false);
 
     const QVector<Aviso> &todos() const { return avisos; }
+    /* Con la base conectada, los avisos se leen de las notificaciones y reemplazan a los de prueba. */
+    void reemplazar(const QVector<Aviso> &nuevos) { avisos = nuevos; }
     /* Avisos pendientes cuya hora ya llegó. */
     QVector<int> pendientesA(const QDateTime &ahora) const;
     /* Un aviso pasa a "enviado" o a "fallido"; cada intento se cuenta. */

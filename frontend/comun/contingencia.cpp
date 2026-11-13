@@ -85,3 +85,9 @@ bool Contingencia::escribir(const QVector<TurnoPendiente> &turnos) const
     f.write(QJsonDocument(arreglo).toJson());
     return f.commit();
 }
+
+/* Deja guardados solo los turnos que la base no pudo recibir. */
+bool Contingencia::reemplazar(const QVector<TurnoPendiente> &turnos)
+{
+    return escribir(turnos);
+}

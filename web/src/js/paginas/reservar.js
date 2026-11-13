@@ -1,6 +1,6 @@
 import { iniciarComun } from '../movimiento/comun.js';
 import { gsap, movimientoReducido } from '../movimiento/gsap.js';
-import { protocolos, categoriaDe } from '../../datos/protocolos.js';
+import { protocolos, categorias, categoriaDe, buscarProtocolos, protocoloPorId, CONSULTA_PREQUIRURGICA } from '../../datos/protocolos.js';
 import { proximosDias, horariosDe, guardarReserva } from '../../datos/reservas.js';
 import { horariosDeBase, reservarEnBase } from '../../datos/api.js';
 import { calcularSena, pesos } from '../sena.js';
@@ -16,6 +16,7 @@ const fechaLarga = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'num
 const diaCorto = new Intl.DateTimeFormat('es-AR', { weekday: 'short' });
 const mesCorto = new Intl.DateTimeFormat('es-AR', { month: 'short' });
 const reducido = movimientoReducido();
+const duracionTexto = (min) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ''}` : `${min} min`);
 
 const MARCA = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12 4 4 8-9"/></svg>';
 
@@ -45,6 +46,9 @@ function pintarResumen() {
   const hayCirugia = c.lista.some((p) => categoriaDe(p).esCirugia);
   $('[data-resumen-regla]').textContent = `${hayCirugia ? '40 % en cirugías, 30 % en el resto' : '30 % del total'}. Te la devolvemos si cancelás con más de 24 h.`;
 
+  const barra = $('[data-barra-total]');
+  barra.hidden = estado.paso === 'listo' || c.lista.length === 0;
+  $('[data-barra-sena]').textContent = pesos(c.sena);
   const sena = $('[data-resumen-sena]');
   const total = $('[data-resumen-total]');
   if (reducido) {
@@ -68,33 +72,87 @@ function pintarResumen() {
 /* ---------- Paso 1: protocolos ---------- */
 
 const opciones = $('[data-opciones-protocolo]');
-opciones.innerHTML = protocolos.map((p) => `
-  <li>
-    <button type="button" class="opcion" data-protocolo="${p.id}" aria-pressed="false">
-      <span class="opcion__marca">${MARCA}</span>
-      <span>
-        <span class="opcion__nombre">${p.nombre}</span>
-        <span class="opcion__meta"><span class="numero">${p.duracionMin} min</span> · ${categoriaDe(p).nombre}</span>
-      </span>
-      <span class="opcion__precio numero">${pesos(p.precio)}</span>
-    </button>
-  </li>`).join('');
+const chipsProtocolo = $('[data-chips-protocolo]');
+const buscarProtocolo = $('[data-buscar-protocolo]');
+const avisoCirugia = $('[data-aviso-cirugia]');
+const filtro = { texto: '', categoria: 'todas' };
+
+chipsProtocolo.innerHTML = [{ id: 'todas', nombre: 'Todos' }, ...categorias]
+  .map((c) => `<button type="button" class="chip" data-categoria="${c.id}" aria-pressed="${c.id === 'todas'}">${c.nombre}</button>`)
+  .join('');
+
+function pintarOpciones() {
+  const lista = buscarProtocolos(filtro);
+  $('[data-sin-protocolos]').hidden = lista.length > 0;
+  opciones.innerHTML = lista.map((p) => `
+    <li>
+      <button type="button" class="opcion" data-protocolo="${p.id}" aria-pressed="${estado.elegidos.has(p.id)}">
+        <span class="opcion__marca">${MARCA}</span>
+        <span>
+          <span class="opcion__nombre">${p.nombre}</span>
+          <span class="opcion__meta"><span class="numero">${duracionTexto(p.duracionMin)}</span> · ${categoriaDe(p).nombre}</span>
+        </span>
+        <span class="opcion__precio numero">${pesos(p.precio)}</span>
+      </button>
+    </li>`).join('');
+}
+
+buscarProtocolo.addEventListener('input', () => {
+  filtro.texto = buscarProtocolo.value;
+  pintarOpciones();
+});
+chipsProtocolo.addEventListener('click', (e) => {
+  const boton = e.target.closest('[data-categoria]');
+  if (!boton) return;
+  filtro.categoria = boton.dataset.categoria;
+  chipsProtocolo.querySelectorAll('.chip').forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
+  pintarOpciones();
+});
+
+/* Toda cirugía necesita una consulta prequirúrgica antes (RF-25): no se reserva directo. */
+function avisarCirugia(p) {
+  const consulta = protocoloPorId(CONSULTA_PREQUIRURGICA);
+  avisoCirugia.innerHTML = `
+    <p><strong>${p.nombre}</strong> empieza con una consulta prequirúrgica de <span class="numero">${pesos(consulta.precio)}</span>, con su propia seña.
+    Solo se agenda la cirugía si la evaluación da "apto". Si seguís con la cirugía, el valor de la consulta se devuelve.</p>
+    <button type="button" class="boton boton--chico boton--primario" data-sumar-consulta>Reservar la consulta prequirúrgica</button>`;
+  avisoCirugia.hidden = false;
+}
+
+function alternar(id) {
+  const elegido = !estado.elegidos.has(id);
+  if (elegido) estado.elegidos.add(id);
+  else estado.elegidos.delete(id);
+  $('[data-siguiente="2"]').disabled = estado.elegidos.size === 0;
+  const boton = opciones.querySelector(`[data-protocolo="${id}"]`);
+  boton?.setAttribute('aria-pressed', String(elegido));
+  if (boton && elegido && !reducido) gsap.from(boton.querySelector('.opcion__marca path'), { drawSVG: 0, duration: 0.4 });
+  pintarDuracion();
+  pintarResumen();
+}
 
 opciones.addEventListener('click', (e) => {
   const boton = e.target.closest('[data-protocolo]');
   if (!boton) return;
   const id = boton.dataset.protocolo;
-  const elegido = !estado.elegidos.has(id);
-  if (elegido) estado.elegidos.add(id);
-  else estado.elegidos.delete(id);
-  boton.setAttribute('aria-pressed', String(elegido));
-  if (!reducido) {
-    gsap.fromTo(boton, { scale: 0.97 }, { scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.5)' });
-    if (elegido) gsap.from(boton.querySelector('.opcion__marca path'), { drawSVG: 0, duration: 0.5, ease: 'power2.out' });
+  const p = protocoloPorId(id);
+  if (categoriaDe(p).esCirugia) {
+    avisarCirugia(p);
+    return;
   }
-  $('[data-siguiente="2"]').disabled = estado.elegidos.size === 0;
-  pintarReloj();
-  pintarResumen();
+  avisoCirugia.hidden = true;
+  alternar(id);
+});
+
+avisoCirugia.addEventListener('click', (e) => {
+  if (!e.target.closest('[data-sumar-consulta]')) return;
+  avisoCirugia.hidden = true;
+  if (!estado.elegidos.has(CONSULTA_PREQUIRURGICA)) alternar(CONSULTA_PREQUIRURGICA);
+  filtro.categoria = 'todas';
+  filtro.texto = '';
+  buscarProtocolo.value = '';
+  chipsProtocolo.querySelectorAll('.chip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.categoria === 'todas')));
+  pintarOpciones();
 });
 
 /* ---------- Paso 2: día y horario ---------- */
@@ -137,7 +195,7 @@ contDias.addEventListener('click', (e) => {
   contDias.querySelectorAll('.dia').forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
   $('[data-siguiente="3"]').disabled = true;
   pintarHoras();
-  pintarReloj();
+  pintarDuracion();
   pintarResumen();
 });
 
@@ -148,51 +206,25 @@ contHoras.addEventListener('click', (e) => {
   contHoras.querySelectorAll('.hora').forEach((b) => b.setAttribute('aria-pressed', String(b === boton)));
   if (!reducido) gsap.fromTo(boton, { scale: 0.85 }, { scale: 1, duration: 0.7, ease: 'elastic.out(1.1, 0.35)' });
   $('[data-siguiente="3"]').disabled = false;
-  pintarReloj();
+  pintarDuracion();
   pintarResumen();
 });
 pintarHoras();
 
-/* Reloj del paso 2: agujas en la hora elegida y un arco con la duración total. */
-const reloj = {
-  arco: $('[data-reloj-arco]'),
-  hora: $('[data-reloj-hora]'),
-  minuto: $('[data-reloj-minuto]'),
-  texto: $('[data-reloj-texto]'),
-};
-$('[data-reloj-marcas]').innerHTML = Array.from({ length: 12 }, (_, i) => {
-  const a = (i / 12) * Math.PI * 2;
-  const r1 = i % 3 ? 66 : 62;
-  return `<line x1="${80 + Math.sin(a) * r1}" y1="${80 - Math.cos(a) * r1}" x2="${80 + Math.sin(a) * 70}" y2="${80 - Math.cos(a) * 70}"/>`;
-}).join('');
-gsap.set(reloj.arco, { drawSVG: '0% 0%' });
-gsap.set([reloj.hora, reloj.minuto], { svgOrigin: '80 80' });
+const duracionEl = $('[data-duracion]');
 
-const duracionTexto = (min) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ''}` : `${min} min`);
-
-function pintarReloj() {
+function pintarDuracion() {
   if (!estado.hora) {
-    reloj.texto.textContent = 'Elegí un horario y acá vas a ver cuánto dura tu turno.';
-    gsap.to(reloj.arco, { drawSVG: '0% 0%', duration: reducido ? 0 : 0.5 });
+    duracionEl.textContent = 'Elegí un horario y acá vas a ver cuánto dura tu turno.';
     return;
   }
   const [h, m] = estado.hora.split(':').map(Number);
   const { duracion } = cuentas();
-  const inicio = ((h % 12) + m / 60) / 12;
-  const fin = inicio + duracion / 60 / 12;
-  const finHora = new Date(2000, 0, 1, h, m + duracion);
-  reloj.texto.textContent = `De ${estado.hora} a ${String(finHora.getHours()).padStart(2, '0')}:${String(finHora.getMinutes()).padStart(2, '0')} h · ${duracionTexto(duracion)}`;
-  const d = reducido ? 0 : 1.1;
-  gsap.to(reloj.hora, { rotation: ((h % 12) + m / 60) * 30, duration: d, ease: 'elastic.out(1, 0.6)' });
-  gsap.to(reloj.minuto, { rotation: 360 + m * 6, duration: d, ease: 'elastic.out(1, 0.6)' });
-  gsap.to(reloj.arco, { drawSVG: `${inicio * 100}% ${Math.min(fin, 1) * 100}%`, duration: d, ease: 'power3.inOut' });
+  const fin = new Date(2000, 0, 1, h, m + duracion);
+  duracionEl.textContent = `De ${estado.hora} a ${String(fin.getHours()).padStart(2, '0')}:${String(fin.getMinutes()).padStart(2, '0')} h · ${duracionTexto(duracion)}`;
 }
 
 /* ---------- Navegación entre pasos ---------- */
-
-const linea = $('[data-indicador-linea]');
-if (!reducido) gsap.set(linea, { drawSVG: '0%' });
-else linea.setAttribute('x2', '0');
 
 function pintarIndicador(paso) {
   document.querySelectorAll('[data-indicador]').forEach((li) => {
@@ -205,9 +237,7 @@ function pintarIndicador(paso) {
       gsap.from(li.querySelector('.indicador__circulo path'), { drawSVG: 0, duration: 0.6, delay: 0.2 });
     }
   });
-  const avance = paso === 'listo' ? 100 : (paso - 1) * 50;
-  if (reducido) linea.setAttribute('x2', String(avance));
-  else gsap.to(linea, { drawSVG: `${avance}%`, duration: 0.9, ease: 'power2.inOut' });
+  document.querySelector('.indicador').style.setProperty('--avance', `${paso === 'listo' ? 100 : (paso - 1) * 50}%`);
 }
 
 function irA(paso) {
@@ -216,6 +246,7 @@ function irA(paso) {
   const adelante = paso === 'listo' || paso > estado.paso;
   estado.paso = paso;
   pintarIndicador(paso);
+  $('[data-barra-total]').hidden = paso === 'listo' || estado.elegidos.size === 0;
   const enfocar = () => (siguiente.querySelector('h2') ?? siguiente).focus?.({ preventScroll: true });
   if (reducido) {
     actual.hidden = true;
@@ -351,38 +382,29 @@ async function confirmar() {
   $('[data-calendar]').href = enlaceCalendar(inicio, c.duracion, nombres);
   document.querySelector('[data-resumen]').hidden = true;
   irA('listo');
-  if (!reducido) setTimeout(celebrar, 500);
+  if (!reducido) celebrar();
 }
 
 function celebrar() {
   const panel = $('[data-panel="listo"]');
-  gsap.from(panel.querySelectorAll('.listo__check circle, .listo__check path'), { drawSVG: 0, duration: 1, stagger: 0.25, ease: 'power2.inOut' });
-  const cont = $('[data-petalos]');
-  const colores = ['#A8475F', '#F7E8EB', '#D9C3A0', '#E5D2B0', '#8E3A50'];
-  for (let i = 0; i < 46; i++) {
-    const p = document.createElement('span');
-    p.className = 'petalo';
-    p.style.background = colores[i % colores.length];
-    cont.append(p);
-    gsap.set(p, { rotationX: gsap.utils.random(0, 360), rotationY: gsap.utils.random(0, 360), scale: gsap.utils.random(0.6, 1.2) });
-    gsap.to(p, {
-      physics2D: { velocity: gsap.utils.random(320, 720), angle: gsap.utils.random(-150, -30), gravity: 700 },
-      rotationX: `+=${gsap.utils.random(360, 1080)}`,
-      rotationY: `+=${gsap.utils.random(180, 720)}`,
-      duration: gsap.utils.random(2.2, 3.2),
-      ease: 'none',
-      onComplete: () => p.remove(),
-    });
-    gsap.to(p, { autoAlpha: 0, duration: 0.6, delay: 1.8 });
-  }
+  gsap.from(panel.querySelectorAll('.listo__check circle, .listo__check path'), { drawSVG: 0, duration: 0.8, stagger: 0.2, ease: 'power2.inOut' });
 }
 
-// Si llegaste desde una ficha del inicio (?protocolo=...), ya viene elegido.
+// Si llegaste desde una ficha (?protocolo=...), ya viene elegido.
 const preelegido = new URLSearchParams(location.search).get('protocolo');
-if (protocolos.some((p) => p.id === preelegido)) {
+const previo = protocoloPorId(preelegido);
+if (previo && !categoriaDe(previo).esCirugia) {
   estado.elegidos.add(preelegido);
-  $(`[data-protocolo="${preelegido}"]`).setAttribute('aria-pressed', 'true');
   $('[data-siguiente="2"]').disabled = false;
 }
 
+// La barra del celular lleva al siguiente paso.
+$('[data-barra-continuar]').addEventListener('click', () => {
+  const siguiente = estado.paso === 1 ? 2 : estado.paso === 2 ? 3 : null;
+  const boton = siguiente && $(`[data-siguiente="${siguiente}"]`);
+  if (boton && !boton.disabled) irA(siguiente);
+  else if (estado.paso === 3) formulario.requestSubmit();
+});
+
+pintarOpciones();
 pintarResumen();

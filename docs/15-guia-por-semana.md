@@ -103,8 +103,9 @@ Cada uno tiene que **correr la prueba de lo que trae** (`DERMALIA_DB_USER=root c
 3. **Pantallas para cupones por QR, tarjetas de regalo y consulta previa de cirugías:** la base los resuelve
    (tienen stored procedures probados) pero Gestión, Cliente y el sitio todavía no tienen una pantalla para
    cada uno. La carga de un turno acepta el cupón en el sitio (campo "Cupón") y en la API.
-4. **El sitio solo reserva los 4 protocolos del maquetado** (se relacionan con la base por nombre); la base tiene 30.
-   Para mostrar todos hay que rehacer el catálogo del sitio, que tiene el modelo 3D por capas de la piel.
+4. **El catálogo del sitio y la base tienen los mismos 44 protocolos** (`protocolos.html` los lista con comparador;
+   la reserva los relaciona con la base por nombre). Si se agrega uno a la base, hay que agregarlo también al catálogo
+   del sitio.
 5. **Proteger las contraseñas** (hoy se guardan tal cual, decisión del equipo para este trabajo).
 6. **Verificar la competencia:** las celdas "a verificar" de `docs/07-competencia.md`.
 7. **Diapositivas / Canva del pitch** y **revisión cruzada** con otro equipo.
@@ -116,7 +117,7 @@ Cada integrante tiene que poder contestar, de los dos bloques:
 
 1. ¿Por qué son 9 schemas y qué tabla es la principal? (`Turno`, 150 filas.)
 2. ¿Por qué el estado y el saldo no se guardan? (3FN: son derivados.) ¿Dónde se calcula la seña?
-3. ¿Qué pasa si dos personas reservan el mismo horario a la vez? (`FOR UPDATE` sobre el profesional + transacción.)
+3. ¿Qué pasa si dos personas reservan el mismo horario a la vez? (`sp_alta_turno` valida dentro de una transacción que no haya otro turno del profesional ni de la paciente en ese horario. No usa `FOR UPDATE` porque la cátedra no lo enseña: dos reservas exactamente simultáneas podrían pasar la validación a la vez, y esa limitación hay que decirla en la defensa.)
 4. ¿Cómo evita la base que se pise un turno? ¿Y que se use un cupón dos veces?
 5. ¿Qué hace el `EXIT HANDLER` y por qué los SP devuelven siempre 6 columnas?
 6. ¿Cómo se llena el log y por qué nunca a mano?

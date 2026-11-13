@@ -27,8 +27,9 @@ Los cinco casos dieron **Aprobado** (13 de octubre de 2026):
 ## Supuestos y notas
 
 - En CP-05 los horarios dependen de la fecha en que se corre la prueba.
-- El nombre exige entre 2 y 60 letras, pero no obliga a escribir el apellido
-  (es la misma regla que usa Cliente).
+- El nombre exige entre 2 y 60 caracteres (solo letras, espacios, apóstrofes y guiones, sin
+  símbolos repetidos) y, desde la revisión del 12 de noviembre, **nombre y apellido** (al menos
+  dos palabras). El campo ya no deja tipear números ni símbolos. Es la misma regla que usa Cliente.
 - La seña y la cancelación se prueban en los casos CP-06 y CP-07 de abajo.
 
 ## Casos agregados (Semanas 2 y 3): cancelación, protocolos, disponibilidad y contingencia

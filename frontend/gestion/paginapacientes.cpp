@@ -1,5 +1,7 @@
 #include "paginapacientes.h"
 
+#include "repositorio.h"
+
 #include "validaciones.h"
 
 #include <QDateEdit>
@@ -28,7 +30,7 @@ QStringList PaginaPacientes::revisar(const Paciente &p, const QVector<Paciente> 
 {
     QStringList errores;
     QString error;
-    if (!Validaciones::nombreValido(p.nombre, &error))
+    if (!Validaciones::nombreApellidoValido(p.nombre, &error))
         errores << "• " + error;
     if (!Validaciones::dniValido(p.dni, &error))
         errores << "• " + error;
@@ -38,13 +40,10 @@ QStringList PaginaPacientes::revisar(const Paciente &p, const QVector<Paciente> 
                 errores << "• Ya hay una paciente con ese DNI (" + existentes[i].nombre + ").";
     if (!Validaciones::telefonoValido(p.telefono, &error))
         errores << "• " + error;
-    if (!p.email.trimmed().isEmpty()) {
-        static const QRegularExpression correo("^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$");
-        if (!correo.match(p.email.trimmed()).hasMatch())
-            errores << "• El email no tiene un formato válido (ej: nombre@correo.com).";
-    }
-    if (!p.nacimiento.isValid() || p.nacimiento >= hoy)
-        errores << "• La fecha de nacimiento tiene que ser anterior a hoy.";
+    if (!Validaciones::emailValido(p.email, false, &error))
+        errores << "• " + error;
+    if (!Validaciones::fechaNacimientoValida(p.nacimiento, hoy, &error))
+        errores << "• " + error;
     return errores;
 }
 
@@ -107,6 +106,8 @@ PaginaPacientes::PaginaPacientes(QVector<Paciente> *pacientes, QWidget *parent)
     auto *formDer = new QFormLayout;
     editNombre = new QLineEdit;
     editNombre->setPlaceholderText("Nombre y apellido");
+    editNombre->setMaxLength(60);
+    editNombre->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));   // sin números ni símbolos
     editDni = new QLineEdit;
     editDni->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{0,8}"), this));
     editTelefono = new QLineEdit;
@@ -114,9 +115,12 @@ PaginaPacientes::PaginaPacientes(QVector<Paciente> *pacientes, QWidget *parent)
     editTelefono->setValidator(new QRegularExpressionValidator(QRegularExpression("\\+?[\\d \\-()]{0,20}"), this));
     editEmail = new QLineEdit;
     editEmail->setPlaceholderText("Opcional");
+    editEmail->setMaxLength(100);
+    editEmail->setValidator(new QRegularExpressionValidator(Validaciones::filtroEmail(), this));   // sin espacios
     editNacimiento = new QDateEdit(QDate(1990, 1, 1));
     editNacimiento->setCalendarPopup(true);
     editNacimiento->setMaximumDate(QDate::currentDate().addDays(-1));
+    editNacimiento->setMinimumDate(QDate::currentDate().addYears(-120));
     editNacimiento->setDisplayFormat("dd/MM/yyyy");
     lblCuenta = new QLabel;
     lblCuenta->setProperty("rol", "nota");
@@ -217,12 +221,42 @@ void PaginaPacientes::guardar()
         return;
     }
     const bool esAlta = editada < 0;
+    if (repo && !esAlta) {   /* sp_modificar_paciente no cambia el DNI ni el nacimiento: no se aparenta que se guardaron */
+        const Paciente &original = (*datos)[editada];
+        QStringList noModificables;
+        if (original.dni != p.dni)
+            noModificables << "• El DNI no se puede modificar. Si está mal, dá de alta a la paciente con el DNI correcto.";
+        if (original.nacimiento != p.nacimiento)
+            noModificables << "• La fecha de nacimiento no se puede modificar desde acá.";
+        if (!noModificables.isEmpty()) {
+            QMessageBox::warning(this, "Revisá los datos", noModificables.join("\n"));
+            return;
+        }
+    }
+    if (repo) {   /* con la base, primero se guarda ahí */
+        const int ultimo = p.nombre.lastIndexOf(' ');   /* "Nombre Apellido": el apellido es la última palabra */
+        const QString nombre = ultimo > 0 ? p.nombre.left(ultimo) : p.nombre;
+        const QString apellido = ultimo > 0 ? p.nombre.mid(ultimo + 1) : p.nombre;
+        Respuesta r;
+        if (esAlta) {
+            r = repo->altaPaciente(p.dni, nombre, apellido, p.nacimiento, p.email, p.telefono, "gestion", idUsuario);
+            p.id = r.id;
+        } else {
+            p.id = (*datos)[editada].id;
+            r = repo->modificarPaciente(p.id, nombre, apellido, p.email, p.telefono, "gestion", idUsuario);
+        }
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo guardar", r.mensaje);
+            return;
+        }
+    }
     if (esAlta) {
         datos->append(p);
         editada = datos->size() - 1;
     } else {
         (*datos)[editada] = p;
     }
+    emit cambiaron();
     filtrar();
     lblModo->setText("Modificar paciente");
     btnTurno->setEnabled(true);

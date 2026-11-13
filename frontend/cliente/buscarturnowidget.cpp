@@ -1,4 +1,5 @@
 #include "buscarturnowidget.h"
+#include "repositorio.h"
 #include "reembolso.h"
 #include "ui_buscarturnowidget.h"
 #include "validaciones.h"
@@ -19,27 +20,38 @@ BuscarTurnoWidget::BuscarTurnoWidget(QWidget *parent) :
     ui->txtDniTel->setMaxLength(14);
     ui->txtDniTel->setValidator(new QRegularExpressionValidator(QRegularExpression("^\\+?[0-9]{0,13}$"), this));
 
-    inicializarTurnos();
+    /* Arranca sin turnos: aparecen los que se cargan desde el formulario (o los de la base). */
 }
 
 BuscarTurnoWidget::~BuscarTurnoWidget() {
     delete ui;
 }
 
-void BuscarTurnoWidget::inicializarTurnos() {
-    QDate fechaFutura = QDate::currentDate().addDays(3);
-    m_turnos.append({
-        "Luciana Gómez", "38123456", "1155443322",
-        "Láser Diodo Facial", fechaFutura.toString("dd/MM/yyyy"), "10:00",
-        "Dra. Sofía Martínez", 6600.0, "Pagada", "Confirmado"
-    });
+void BuscarTurnoWidget::usarBase(Repositorio *repositorio) {
+    m_repo = repositorio;
+    m_turnos.clear();   // los turnos cargados en memoria se reemplazan por los de la base
+}
 
-    QDate fechaManiana = QDate::currentDate().addDays(1);
-    m_turnos.append({
-        "Mariana Fernández", "40987654", "1144332211",
-        "Peeling Químico Médico", fechaManiana.toString("dd/MM/yyyy"), "15:00",
-        "Dr. Lucas Benítez", 5400.0, "Pagada", "Confirmado"
-    });
+// Con la base: trae los turnos del DNI o teléfono ingresado (sp_buscar_turnos).
+void BuscarTurnoWidget::cargarDeBase(const QString &criterio) {
+    m_turnos.clear();
+    for (const TurnoBD &t : m_repo->buscarTurnos(Validaciones::normalizar(criterio))) {
+        TurnoItem item;
+        item.id = t.id;
+        // la base arma "Apellido, Nombre"; la pantalla muestra "Nombre Apellido"
+        const int coma = t.paciente.indexOf(", ");
+        item.paciente = coma < 0 ? t.paciente : t.paciente.mid(coma + 2) + " " + t.paciente.left(coma);
+        item.dni = t.dni;
+        item.telefono = t.telefono;
+        item.protocolo = t.protocolos;
+        item.fecha = t.inicio.toString("dd/MM/yyyy");
+        item.hora = t.inicio.toString("HH:mm");
+        item.profesional = t.profesional;
+        item.seniaMonto = t.sena;
+        item.seniaEstado = t.estadoSena.left(1).toUpper() + t.estadoSena.mid(1);
+        item.estado = t.estado.left(1).toUpper() + t.estado.mid(1);   // Confirmado, Pendiente, Realizado, Cancelado...
+        m_turnos.append(item);
+    }
 }
 
 void BuscarTurnoWidget::agregarTurnoDesdeFormulario(const QString &paciente, const QString &dni,
@@ -86,17 +98,21 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
         return;
     }
 
+    if (m_repo)
+        cargarDeBase(criterio);
+
     QList<int> encontrados;
     for (int indice = 0; indice < m_turnos.size(); ++indice) {
         const auto &t = m_turnos.at(indice);
-        const QString buscado = Validaciones::normalizar(criterio);
-        if (t.dni == buscado || t.telefono == buscado) {
+        QString buscado = Validaciones::normalizar(criterio);
+        buscado.remove('+');   // el teléfono se guarda solo con dígitos; "+54..." tiene que encontrar igual el turno
+        if (t.dni == buscado || t.telefono == buscado || Validaciones::normalizar(t.telefono).remove('+') == buscado) {
             encontrados.append(indice);
         }
     }
 
     if (encontrados.isEmpty()) {
-        QLabel *lblNo = new QLabel(QString("No se encontraron turnos agendados para '%1'.").arg(criterio), this);
+        QLabel *lblNo = new QLabel(QString("No se encontraron turnos agendados para '%1'.").arg(criterio.toHtmlEscaped()), this);
         lblNo->setAlignment(Qt::AlignCenter);
         lblNo->setStyleSheet("color: #777; font-size: 14px; margin: 30px;");
         ui->layoutTurnos->addWidget(lblNo);
@@ -110,7 +126,7 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
 
             // Cabecera: Protocolo y badge de estado
             QHBoxLayout *hlHeader = new QHBoxLayout();
-            QLabel *lblProto = new QLabel(QString("<b style='font-size:16px; color:#8e2a59;'>%1</b>").arg(t.protocolo), card);
+            QLabel *lblProto = new QLabel(QString("<b style='font-size:16px; color:#8e2a59;'>%1</b>").arg(t.protocolo.toHtmlEscaped()), card);
 
             QLabel *lblEstadoBadge = new QLabel(QString(" %1 ").arg(t.estado), card);
             if (t.estado == "Confirmado") {
@@ -129,11 +145,11 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
                                                      "📅 <b>Fecha y Hora:</b> <span style='font-size:14px; color:#333;'><b>%4 a las %5 hs</b></span><br/>"
                                                      "🩺 <b>Profesional:</b> %6<br/>"
                                                      "💳 <b>Seña abonada:</b> $%7 (Estado: <b>%8</b>)")
-                                             .arg(t.paciente, t.dni, t.telefono)
+                                             .arg(t.paciente.toHtmlEscaped(), t.dni.toHtmlEscaped(), t.telefono.toHtmlEscaped())
                                              .arg(t.fecha, t.hora)
-                                             .arg(t.profesional)
+                                             .arg(t.profesional.toHtmlEscaped())
                                              .arg(QString::number(t.seniaMonto, 'f', 0))
-                                             .arg(t.seniaEstado), card);
+                                             .arg(t.seniaEstado.toHtmlEscaped()), card);
             lblDetalles->setTextFormat(Qt::RichText);
             lblDetalles->setStyleSheet("font-size: 13px; line-height: 1.4;");
             vl->addWidget(lblDetalles);
@@ -145,14 +161,15 @@ void BuscarTurnoWidget::mostrarResultados(const QString &criterio) {
             QLabel *lblRec = new QLabel(QString("🔔 <b>Recordatorio activo en sistema (RF-11):</b><br/>"
                                                 "Te esperamos el día %1 a las %2 hs en Av. Rivadavia 6500, Flores, CABA. "
                                                 "Protocolo: %3 con %4.")
-                                        .arg(t.fecha, t.hora, t.protocolo, t.profesional), cardRec);
+                                        .arg(t.fecha, t.hora, t.protocolo.toHtmlEscaped(), t.profesional.toHtmlEscaped()), cardRec);
             lblRec->setWordWrap(true);
             lblRec->setStyleSheet("color: #2e5b1e; font-size: 12px;");
             vlRec->addWidget(lblRec);
             vl->addWidget(cardRec);
 
             // Botón de cancelación con validación de 24 horas (RF-12, RF-10)
-            if (t.estado != "Cancelado") {
+            const bool seCancela = t.estado == "Confirmado" || t.estado == "Pendiente" || (!m_repo && t.estado != "Cancelado");
+            if (seCancela) {
                 QHBoxLayout *hlBtn = new QHBoxLayout();
                 hlBtn->addStretch();
 
@@ -191,6 +208,20 @@ void BuscarTurnoWidget::onCancelarTurno() {
 
     if (reply == QMessageBox::Yes) {
         TurnoItem &turno = m_turnos[indice];
+        if (m_repo) {   // la base aplica la regla de las 24 horas y devuelve la seña
+            const Respuesta r = m_repo->cancelarTurno(turno.id, "terminal");
+            if (!r.ok) {
+                QMessageBox::warning(this, "No se pudo cancelar", r.mensaje);
+                return;
+            }
+            emit turnoCancelado(turno.fecha, turno.hora, turno.profesional);
+            QMessageBox::information(this, "Turno Cancelado",
+                                     r.dato == "reembolsada"
+                                         ? "Turno cancelado exitosamente.\nPor cancelarse con más de 24 hs de anticipación, aplica reembolso del 100% de la seña (RF-10)."
+                                         : "Turno cancelado exitosamente.\nQuedan menos de 24 hs para el turno: la seña no se reembolsa (RF-10).");
+            mostrarResultados(ui->txtDniTel->text().trimmed());
+            return;
+        }
         const QDate fecha = QDate::fromString(turno.fecha, "dd/MM/yyyy");
         const QTime hora = QTime::fromString(turno.hora, "HH:mm");
         const bool reembolsable = Reembolso::aTiempo(QDateTime(fecha, hora), QDateTime::currentDateTime());

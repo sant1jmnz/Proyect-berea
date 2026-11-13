@@ -1,16 +1,30 @@
 #include "buscadorwidget.h"
 #include "ui_buscadorwidget.h"
+#include "repositorio.h"
 #include <QLabel>
 #include <QPushButton>
 #include <QDesktopServices>
 #include <QUrl>
 #include <QMessageBox>
+#include <QTimer>
 
 BuscadorWidget::BuscadorWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::BuscadorWidget)
 {
     ui->setupUi(this);
+
+    ui->txtBuscar->setMaxLength(60);
+
+    m_temporizadorConsulta = new QTimer(this);
+    m_temporizadorConsulta->setSingleShot(true);
+    m_temporizadorConsulta->setInterval(900);
+    connect(m_temporizadorConsulta, &QTimer::timeout, this, [this]() {
+        if (!m_repo || m_consultaPendiente.isEmpty() || m_consultaPendiente == m_ultimaConsultaRegistrada)
+            return;
+        m_ultimaConsultaRegistrada = m_consultaPendiente;
+        m_repo->registrarConsultaAsistente(0, "terminal", m_consultaPendiente, QString(), true);
+    });
 
     inicializarCatalogo();
     filtrarResultados("");
@@ -31,6 +45,11 @@ void BuscadorWidget::inicializarCatalogo() {
     };
 }
 
+void BuscadorWidget::usarBase(Repositorio *repositorio) {
+    m_repo = repositorio;
+    refrescarBusqueda();
+}
+
 void BuscadorWidget::refrescarBusqueda() {
     filtrarResultados(ui->txtBuscar->text());
 }
@@ -49,7 +68,25 @@ void BuscadorWidget::filtrarResultados(const QString &termino) {
     QString t = termino.trimmed().toLower();
     QList<ProtocoloItem> filtrados;
 
+    if (m_repo) {   // con la base: la búsqueda por palabra clave la hace sp_listar_protocolos
+        for (const ProtocoloBD &d : m_repo->listarProtocolos(termino.trimmed())) {
+            ProtocoloItem item = { d.nombre, d.duracionMin, double(d.precio), d.categoria, d.descripcion };
+            item.sena = d.sena;   // 0 es válido (seña sin cargo); -1 usa la regla local
+            filtrados.append(item);
+        }
+        // RF-07: lo que no se encuentra queda registrado como consulta derivada al WhatsApp.
+        // Se espera a que la paciente termine de escribir y no se repite la misma consulta
+        // (antes se registraba una por cada letra tipeada).
+        if (filtrados.isEmpty() && t.size() >= 3) {
+            m_consultaPendiente = termino.trimmed();
+            m_temporizadorConsulta->start();
+        } else {
+            m_temporizadorConsulta->stop();
+        }
+    }
     for (const auto &p : m_catalogo) {
+        if (m_repo)
+            break;   // ya se llenó con los datos de la base
         if (t.isEmpty() || p.nombre.toLower().contains(t) ||
             p.descripcion.toLower().contains(t) ||
             p.categoria.toLower().contains(t)) {
@@ -73,8 +110,8 @@ void BuscadorWidget::filtrarResultados(const QString &termino) {
             QVBoxLayout *vl = new QVBoxLayout(card);
 
             QHBoxLayout *hlHeader = new QHBoxLayout();
-            QLabel *lblNombre = new QLabel(QString("<b style='font-size:15px;'>%1</b>").arg(p.nombre), card);
-            QLabel *lblCat = new QLabel(QString("<span style='background-color:#fbebf1; color:#8e2a59; font-weight:bold; padding:4px 8px; border-radius:6px;'>%1</span>").arg(p.categoria), card);
+            QLabel *lblNombre = new QLabel(QString("<b style='font-size:15px;'>%1</b>").arg(p.nombre.toHtmlEscaped()), card);
+            QLabel *lblCat = new QLabel(QString("<span style='background-color:#fbebf1; color:#8e2a59; font-weight:bold; padding:4px 8px; border-radius:6px;'>%1</span>").arg(p.categoria.toHtmlEscaped()), card);
 
             hlHeader->addWidget(lblNombre);
             hlHeader->addStretch();
@@ -88,11 +125,14 @@ void BuscadorWidget::filtrarResultados(const QString &termino) {
 
             double senia = p.precio * 0.30;
             if (senia < 5000.0) senia = 5000.0;
+            if (p.sena >= 0)
+                senia = p.sena;   // la base calcula la seña con el porcentaje de la categoría
 
             QHBoxLayout *hlFooter = new QHBoxLayout();
-            QLabel *lblInfo = new QLabel(QString("⏱ Duración: <b>%1 min</b>   |   💰 Precio: <b style='color:#2e7d32; font-size:14px;'>$%2</b>   |   💳 Seña (30%, mín $5.000): <b style='color:#8e2a59;'>$%3</b>")
+            QLabel *lblInfo = new QLabel(QString("⏱ Duración: <b>%1 min</b>   |   💰 Precio: <b style='color:#2e7d32; font-size:14px;'>$%2</b>   |   💳 %3: <b style='color:#8e2a59;'>$%4</b>")
                                          .arg(p.duracion)
                                          .arg(QString::number(p.precio, 'f', 0))
+                                         .arg(p.sena >= 0 ? "Seña" : "Seña (30%, mín $5.000)")   // con la base la regla es la de la categoría
                                          .arg(QString::number(senia, 'f', 0)), card);
             hlFooter->addWidget(lblInfo);
             hlFooter->addStretch();

@@ -8,10 +8,10 @@ namespace DatosPrueba {
 QVector<Categoria> categorias()
 {
     return {
-        { "Faciales y corporales", 30, false },
-        { "Aparatología", 30, false },
-        { "Medicina estética", 30, false },
-        { "Cirugías", 40, true },
+        { "Faciales y corporales", 30, false, 1 },   /* el último número es el id en la base */
+        { "Aparatología", 30, false, 2 },
+        { "Medicina estética", 30, false, 3 },
+        { "Cirugías", 40, true, 4 },
     };
 }
 
@@ -102,6 +102,8 @@ QString texto(EstadoTurno estado)
     case EstadoTurno::Confirmado: return "Confirmado";
     case EstadoTurno::Realizado: return "Realizado";
     case EstadoTurno::Cancelado: return "Cancelado";
+    case EstadoTurno::Pendiente: return "Pendiente";
+    case EstadoTurno::Ausente: return "Ausente";
     }
     return {};
 }

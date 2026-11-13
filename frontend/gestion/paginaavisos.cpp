@@ -1,5 +1,9 @@
 #include "paginaavisos.h"
 
+#include "validaciones.h"
+
+#include "repositorio.h"
+
 #include <QApplication>
 #include <QClipboard>
 #include <QDesktopServices>
@@ -103,8 +107,11 @@ void PaginaAvisos::abrirWhatsApp()
     QDesktopServices::openUrl(QUrl(enlace));
     const auto r = QMessageBox::question(this, "¿Se envió?",
         "Se abrió WhatsApp con el mensaje (el enlace también quedó copiado).\n¿Lo enviaste?");
-    if (r == QMessageBox::Yes)
+    if (r == QMessageBox::Yes) {
+        if (repo && a.id > 0)
+            repo->marcarNotificacion(a.id, "enviada");
         avisos->marcarEnviado(fila, QDateTime::currentDateTime());
+    }
     recargar();
     tabla->selectRow(fila);
 }
@@ -115,10 +122,18 @@ void PaginaAvisos::marcarFallido()
     if (fila < 0 || fila >= avisos->todos().size())
         return;
     bool ok = false;
-    const QString motivo = QInputDialog::getText(this, "Aviso fallido", "¿Qué pasó?", QLineEdit::Normal,
-                                                 "La paciente no tiene WhatsApp", &ok);
-    if (!ok)
-        return;
+    QString motivo = "La paciente no tiene WhatsApp";
+    for (;;) {   /* el motivo es obligatorio: se vuelve a pedir hasta que sea válido o se cancele */
+        motivo = QInputDialog::getText(this, "Aviso fallido", "¿Qué pasó?", QLineEdit::Normal, motivo, &ok);
+        if (!ok)
+            return;
+        QString error;
+        if (Validaciones::textoObligatorioValido(motivo, 200, "el motivo", &error))
+            break;
+        QMessageBox::warning(this, "Dato incorrecto", error);
+    }
+    if (repo && avisos->todos()[fila].id > 0)
+        repo->marcarNotificacion(avisos->todos()[fila].id, "fallida", motivo.simplified());
     avisos->marcarFallido(fila, motivo.simplified());
     recargar();
     tabla->selectRow(fila);

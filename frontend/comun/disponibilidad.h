@@ -15,6 +15,7 @@ struct Franja {
     QTime desde;
     QTime hasta;
     bool activa = true;
+    int id = 0;                /* id de la franja en la base (0 = dato de prueba) */
 };
 
 namespace Disponibilidad {

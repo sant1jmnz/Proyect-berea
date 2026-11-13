@@ -1,5 +1,7 @@
 #include "paginaprotocolos.h"
 
+#include "repositorio.h"
+
 #include "sena.h"
 #include "validaciones.h"
 
@@ -11,6 +13,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QRegularExpressionValidator>
 #include <QStyle>
 #include <QTableWidget>
@@ -27,6 +30,11 @@ static QString pesos(double monto)
 static bool leerPrecio(const QString &texto, double *valor)
 {
     QString t = texto.trimmed();
+    /* Con puntos solo se aceptan miles bien puestos (25.000 o 1.250.000); ni "1.2.3" ni "12.34". */
+    static const QRegularExpression conMiles("^-?\\d{1,3}(\\.\\d{3})+(,\\d{1,2})?$");
+    static const QRegularExpression sinMiles("^-?\\d+(,\\d{1,2})?$");
+    if (!conMiles.match(t).hasMatch() && !sinMiles.match(t).hasMatch())
+        return false;
     t.remove('.');
     t.replace(',', '.');
     bool ok = false;
@@ -43,6 +51,8 @@ QStringList PaginaProtocolos::revisar(const QString &nombre, const QString &prec
     const QString n = nombre.simplified();
     if (n.size() < 3 || n.size() > 100)
         errores << "• El nombre debe tener entre 3 y 100 caracteres.";
+    else if (!n.contains(QRegularExpression("\\p{L}{3}")))
+        errores << "• El nombre tiene que incluir letras (ej: Limpieza facial profunda), no solo números o símbolos.";
     for (int i = 0; i < existentes.size(); ++i)
         if (i != indiceEditado && existentes[i].nombre.compare(n, Qt::CaseInsensitive) == 0)
             errores << "• Ya existe un protocolo con ese nombre.";
@@ -116,6 +126,7 @@ PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *pare
     editDuracion->setObjectName("editDuracion");
     editDuracion->setPlaceholderText("45");
     editDuracion->setValidator(new QRegularExpressionValidator(QRegularExpression("-?\\d{0,4}"), this));
+    editDuracion->setMaxLength(5);
     lblSena = new QLabel;
     lblSena->setProperty("rol", "nota");
     form->addRow("Nombre", editNombre);
@@ -236,6 +247,17 @@ void PaginaProtocolos::guardar()
     p.duracionMin = editDuracion->text().trimmed().toInt();
 
     const bool esAlta = editado < 0;
+    if (repo) {   /* con la base, primero se guarda ahí: ella aplica las reglas */
+        const Respuesta r = esAlta
+            ? repo->altaProtocolo(p.categoria.id, p.nombre, p.descripcion, p.precio, p.duracionMin, "gestion", idUsuario)
+            : repo->modificarProtocolo(p.id, p.nombre, p.descripcion, p.precio, p.duracionMin, p.activo, "gestion", idUsuario);
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo guardar", r.mensaje);
+            return;
+        }
+        if (esAlta)
+            p.id = r.id;
+    }
     if (esAlta) {
         p.activo = true;
         datos->append(p);
@@ -259,6 +281,13 @@ void PaginaProtocolos::cambiarEstado()
             QString("¿Dar de baja \"%1\"? Deja de ofrecerse, pero los turnos ya cargados lo conservan.").arg(p.nombre));
         if (r != QMessageBox::Yes)
             return;
+    }
+    if (repo) {
+        const Respuesta r = repo->modificarProtocolo(p.id, p.nombre, p.descripcion, p.precio, p.duracionMin, !p.activo, "gestion", idUsuario);
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo cambiar el estado", r.mensaje);
+            return;
+        }
     }
     p.activo = !p.activo;
     btnEstado->setText(p.activo ? "Dar de baja" : "Reactivar");

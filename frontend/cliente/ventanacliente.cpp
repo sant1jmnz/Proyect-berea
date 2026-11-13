@@ -8,6 +8,7 @@
 
 #include <QCalendarWidget>
 #include <QGraphicsDropShadowEffect>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -24,6 +25,14 @@ enum Pagina { PagInicio, PagProtocolo, PagHorario, PagConfirmar, PagBuscador, Pa
 
 /* Primer año en que se pueden sacar turnos. */
 static const int ANIO_INICIAL = 2026;
+
+/* Primer mes que se puede elegir: el actual (los meses que ya pasaron quedan bloqueados),
+ * y nunca antes de enero de 2026. */
+static QDate primerMesElegible()
+{
+    const QDate hoy = QDate::currentDate();
+    return std::max(QDate(ANIO_INICIAL, 1, 1), QDate(hoy.year(), hoy.month(), 1));
+}
 
 static QString pesos(int monto)
 {
@@ -99,9 +108,9 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo)
     connect(ui->btnVolver3, &QPushButton::clicked, this, [this] { irA(PagHorario); });
     connect(ui->btnConfirmar, &QPushButton::clicked, this, &VentanaCliente::confirmar);
 
-    /* Calendario: desde 2026; si se elige un día que ya pasó, se ofrece el mismo día del año que viene. */
+    /* Calendario: solo desde el mes actual (y desde 2026); si se elige un día ya pasado de este mes, se ofrece el mismo día del año que viene. */
     notaHorarioOriginal = ui->lblNotaHorario->text();
-    ui->calendario->setMinimumDate(QDate(ANIO_INICIAL, 1, 1));
+    ui->calendario->setMinimumDate(primerMesElegible());   /* meses pasados bloqueados; para ese mes, se usa el año que viene */
     ui->calendario->setSelectedDate(QDate::currentDate());
     marcarDiasPasados();
     connect(ui->calendario, &QCalendarWidget::selectionChanged, this, &VentanaCliente::diaElegido);
@@ -225,7 +234,7 @@ void VentanaCliente::marcarDiasPasados()
     QTextCharFormat gris;
     gris.setForeground(QColor(176, 164, 158));
     const QDate hoy = QDate::currentDate();
-    for (QDate dia(ANIO_INICIAL, 1, 1); dia < hoy; dia = dia.addDays(1))
+    for (QDate dia = primerMesElegible(); dia < hoy; dia = dia.addDays(1))
         ui->calendario->setDateTextFormat(dia, gris);
 }
 
@@ -461,6 +470,7 @@ void VentanaCliente::buscarMiTurno()
     if (elegido < 0)   /* ninguno vigente: se muestra el más reciente */
         elegido = *std::max_element(encontrados.cbegin(), encontrados.cend(),
                                     [&](int a, int b) { return turnos[a].inicio < turnos[b].inicio; });
+    buscadoActual = buscado;
     mostrarTurno(elegido, vigentes);
 }
 
@@ -496,22 +506,54 @@ void VentanaCliente::mostrarTurno(int indice, int vigentes)
     ui->tarjetaMiTurno->setVisible(true);
 }
 
-/* RF-10: más de 24 h de anticipación y seña pagada → se devuelve el 100%; si no, queda retenida. */
+/* Texto de un turno para elegirlo en la lista de cancelación. */
+static QString descripcionTurno(const Turno &t)
+{
+    return QString("%1 · %2 de %3 · %4 hs · seña %5")
+        .arg(t.protocolo, fechaLarga(t.inicio.date()), QString::number(t.inicio.date().year()),
+             t.inicio.toString("HH:mm"), t.senaPagada ? "pagada" : "sin pagar");
+}
+
+/* Cancelar: si la persona tiene más de un turno vigente, primero elige cuál; después confirma.
+ * RF-10: más de 24 h de anticipación y seña pagada → se devuelve el 100%; si no, queda retenida. */
 void VentanaCliente::cancelarMiTurno()
 {
-    const Turno visto = (turnoMostrado >= 0 && turnoMostrado < turnos.size()) ? turnos[turnoMostrado] : Turno();
     recargarLocal();   /* puede haber cambiado desde que se mostró */
-    if (turnoMostrado < 0 || turnoMostrado >= turnos.size() || turnos[turnoMostrado].inicio != visto.inicio
-        || turnos[turnoMostrado].dni != visto.dni) {
-        ocultarTurno();
-        return;
-    }
-    Turno &t = turnos[turnoMostrado];
-    if (t.estado != EstadoTurno::Confirmado && t.estado != EstadoTurno::Pendiente) {
-        QMessageBox::information(this, "No se puede cancelar", "Solo se cancelan turnos pendientes o confirmados.");
-        return;
-    }
     const QDateTime ahora = QDateTime::currentDateTime();
+    QVector<int> vigentes;   /* turnos de quien buscó que todavía se pueden cancelar */
+    for (int i = 0; i < turnos.size(); ++i) {
+        const Turno &t = turnos[i];
+        if ((t.dni == buscadoActual || soloDigitos(t.telefono) == buscadoActual)
+            && (t.estado == EstadoTurno::Confirmado || t.estado == EstadoTurno::Pendiente) && t.inicio > ahora)
+            vigentes << i;
+    }
+    std::sort(vigentes.begin(), vigentes.end(), [this](int a, int b) { return turnos[a].inicio < turnos[b].inicio; });
+    if (vigentes.isEmpty()) {
+        QMessageBox::information(this, "Nada para cancelar", "No tenés turnos vigentes para cancelar.");
+        buscarMiTurno();
+        return;
+    }
+
+    int elegido = vigentes.first();
+    if (vigentes.size() > 1) {   /* varios turnos: se elige cuál cancelar */
+        QStringList opciones;
+        for (int i = 0; i < vigentes.size(); ++i)
+            opciones << QString("%1) %2").arg(i + 1).arg(descripcionTurno(turnos[vigentes[i]]));
+        QInputDialog eleccion(this);
+        eleccion.setWindowTitle("¿Qué turno querés cancelar?");
+        eleccion.setLabelText(QString("Tenés %1 turnos. Elegí el que querés cancelar:").arg(vigentes.size()));
+        eleccion.setComboBoxItems(opciones);
+        eleccion.setOkButtonText("Seguir");
+        eleccion.setCancelButtonText("Volver");
+        if (eleccion.exec() != QDialog::Accepted)
+            return;
+        const int posicion = opciones.indexOf(eleccion.textValue());
+        if (posicion < 0)
+            return;
+        elegido = vigentes[posicion];
+    }
+
+    Turno &t = turnos[elegido];
     const int devolver = Reembolso::monto(t.sena, t.senaPagada, t.inicio, ahora);
     QString regla;
     if (!t.senaPagada)
@@ -522,8 +564,7 @@ void VentanaCliente::cancelarMiTurno()
         regla = QString("Faltan %1 horas o menos: la seña (%2) no se devuelve.").arg(Reembolso::HORAS_LIMITE).arg(pesos(t.sena));
 
     const auto respuesta = QMessageBox::question(this, "Cancelar turno",
-        QString("¿Querés cancelar tu turno de %1 del %2?\n\n%3")
-            .arg(t.protocolo, t.inicio.toString("dd/MM/yyyy HH:mm"), regla));
+        QString("¿Querés cancelar este turno?\n\n%1\n\n%2").arg(descripcionTurno(t), regla));
     if (respuesta != QMessageBox::Yes)
         return;
 
@@ -531,7 +572,7 @@ void VentanaCliente::cancelarMiTurno()
     t.reembolsado = devolver;
     guardarLocal();
     actualizarHorarios();              /* el horario vuelve a estar libre */
-    mostrarTurno(turnoMostrado, 0);
     QMessageBox::information(this, "Turno cancelado",
                              devolver > 0 ? QString("Turno cancelado. Se te devolvieron %1.").arg(pesos(devolver)) : "Turno cancelado.");
+    buscarMiTurno();                   /* muestra el próximo turno que le queda, o el cancelado si no tiene más */
 }

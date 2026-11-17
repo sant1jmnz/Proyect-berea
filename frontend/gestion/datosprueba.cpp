@@ -15,18 +15,22 @@ QVector<Categoria> categorias()
     };
 }
 
+/* El catálogo de los 44 protocolos, el mismo de la base y del sitio web
+ * (comun/fichas.generado.json, que arma web/scripts/generar-catalogo.mjs). */
 QVector<Protocolo> protocolos()
 {
     const QVector<Categoria> c = categorias();
-    const Categoria faciales = c[0];
-    const Categoria aparatologia = c[1];
-    const Categoria medicinaEstetica = c[2];
-    return {
-        { "Limpieza facial profunda", 60, 25000, faciales },
-        { "Peeling químico", 45, 40000, faciales },
-        { "Mesoterapia facial", 45, 55000, medicinaEstetica },
-        { "Depilación láser (zona chica)", 30, 18000, aparatologia },
-    };
+    QVector<Protocolo> lista;
+    for (const ResumenTratamiento::ProtocoloDelCatalogo &p : ResumenTratamiento::catalogo()) {
+        Categoria categoria = c[0];
+        for (const Categoria &cat : c)
+            if (cat.id == p.idCategoria)
+                categoria = cat;
+        Protocolo protocolo = { p.nombre, p.duracionMin, p.precio, categoria };
+        protocolo.descripcion = p.descripcion;
+        lista << protocolo;   /* id = 0: es un dato local; con la base se usa el id de la base */
+    }
+    return lista;
 }
 
 /* El instituto no abre los domingos: esos turnos pasan al lunes. */
@@ -106,6 +110,41 @@ QString texto(EstadoTurno estado)
     case EstadoTurno::Ausente: return "Ausente";
     }
     return {};
+}
+
+bool esCatalogoViejo(const QVector<Protocolo> &guardados)
+{
+    const QStringList viejos = { "Limpieza facial profunda|25000", "Peeling químico|40000",
+                                 "Mesoterapia facial|55000", "Depilación láser (zona chica)|18000" };
+    if (guardados.isEmpty() || guardados.size() > viejos.size())
+        return false;
+    for (const Protocolo &p : guardados)
+        if (!viejos.contains(p.nombre + "|" + QString::number(p.precio)))
+            return false;
+    return true;
+}
+
+Tratamiento comoTratamiento(const Protocolo &p)
+{
+    Tratamiento t;
+    t.id = p.id;
+    t.nombre = p.nombre;
+    t.categoria = p.categoria.nombre;
+    t.descripcion = p.descripcion;
+    t.precio = p.precio;
+    t.duracionMin = p.duracionMin;
+    t.porcentajeSena = p.categoria.porcentajeSena;
+    t.esCirugia = p.categoria.requiereEvaluacion;
+    return t;
+}
+
+QVector<Tratamiento> comoTratamientos(const QVector<Protocolo> &protocolos)
+{
+    QVector<Tratamiento> lista;
+    for (const Protocolo &p : protocolos)
+        if (p.activo)
+            lista << comoTratamiento(p);
+    return lista;
 }
 
 }

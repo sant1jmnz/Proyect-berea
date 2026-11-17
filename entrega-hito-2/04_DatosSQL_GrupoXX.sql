@@ -1652,7 +1652,9 @@ INSERT INTO auditoria.TipoEvento (id_tipo_evento, nombre, descripcion) VALUES
   (26, 'evaluacion_reclamo', 'Reclamo de una evaluación vencida'),
   (27, 'evaluacion_vencida', 'Evaluación apta que venció a los 6 meses'),
   (28, 'notificacion_enviada', 'Aviso enviado o fallido'),
-  (29, 'consulta_asistente', 'Pregunta al asistente de IA');
+  (29, 'consulta_asistente', 'Pregunta al asistente de IA'),
+  (30, 'alta_usuario', 'La administración creó un usuario del personal'),
+  (31, 'cambio_clave', 'Cambio de contraseña');
 
 -- Turnos (sin evaluación previa todavía: la FK es circular)
 INSERT INTO agenda.Turno (id_turno, id_paciente, id_profesional, id_estado_turno, id_origen, fecha_hora_inicio, fecha_hora_fin, fecha_creacion) VALUES

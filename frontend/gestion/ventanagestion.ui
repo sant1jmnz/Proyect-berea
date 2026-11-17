@@ -2837,7 +2837,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
              <item>
               <widget class="QLabel" name="lblReglaSena">
                <property name="text">
-                <string>30% del protocolo, mínimo $5.000; se descuenta del total al pagar. Se reembolsa si se cancela con más de 24 h de anticipación (RF-10).</string>
+                <string>30% del protocolo (40% en cirugías); se descuenta del total al pagar. Se reembolsa si se cancela con más de 24 h de anticipación (RF-10).</string>
                </property>
                <property name="wordWrap">
                 <bool>true</bool>

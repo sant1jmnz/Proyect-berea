@@ -18,6 +18,8 @@ Responsable: Bautista. **Los resultados salen de las pruebas automáticas**:
 | **CP-C07 RF-10 Elegir qué turno cancelar** | Verificar que con varios turnos se elige cuál | Dos turnos del mismo DNI | 1. **Cancelar mi turno**.<br>2. Elegir el segundo de la lista y confirmar.<br>3. Repetir y tocar **Volver**. | 2: se cancela solo el elegido. 3: no se cancela nada. | Aprobado si se cancela exactamente el elegido. |
 | **CP-C08 RF-10 Cancelar con 24 h o menos** | Verificar que la seña no se devuelve | Turno con menos de 24 h por delante | 1. Cancelar el turno. | Se avisa que la seña no se devuelve. | Aprobado si la seña no se reembolsa. |
 | **CP-C09 RNF-09 Sin base** | Verificar que la terminal sigue andando sin base y comparte los turnos con Gestión | Sin conexión | 1. Sacar un turno y cerrar la terminal.<br>2. Volver a abrirla y buscarlo.<br>3. Cargar un turno desde Gestión en el mismo horario. | 2: el turno sigue ahí. 3: ese horario deja de ofrecerse en la terminal. | Aprobado si el turno persiste y el horario se comparte. |
+| **CP-C10 RF-05/06 Precios y resumen** | Verificar que el buscador filtra el catálogo real y muestra el resumen | Terminal en "Consultar precios" | 1. Escribir `laser`.<br>2. Tocar *Ver resumen* en una cirugía.<br>3. En el paso 1, elegir un protocolo y tocar *Ver resumen*. | 1: aparecen solo las depilaciones láser, con el precio de la base. 2: la ficha avisa la consulta prequirúrgica. 3: la ficha tiene descripción, sesiones, zona, capa, antes, después y "no es para vos si", igual que la web. | Aprobado si los tres pasos dan lo esperado. |
+| **CP-C11 RF-15 Cuenta de la paciente** | Verificar que se crea la cuenta, se ingresa y se sale | Base conectada | 1. *Ingresar* → *Crear una cuenta* con datos válidos.<br>2. Ir al paso 3 de sacar turno.<br>3. Tocar "Hola, …" y salir.<br>4. *Ingresar* con `recepcion1`.<br>5. Crear otra cuenta con el mismo DNI. | 1: queda ingresada y la cuenta está en la base. 2: nombre, DNI y teléfono ya están escritos. 3: se borran sus datos. 4: avisa que es una cuenta del personal. 5: avisa que ya tiene cuenta. | Aprobado si los cinco pasos dan lo esperado. |
 
 ## Resultados reales
 
@@ -34,6 +36,8 @@ Corrida del **17 de noviembre de 2026** con MySQL 8.0.46: todas las pruebas dier
 | CP-C07 | `cancelarConVariosTurnosPideElegirCual`, `cancelarConVariosTurnosYVolverNoCancelaNada` | Aprobado |
 | CP-C08 | `reembolso_menosDe24HorasNoDevuelve` y `reembolso_exactamente24HorasNoAlcanza` (regla compartida, `prueba_gestion.cpp`) | Aprobado |
 | CP-C09 | `losTurnosSeGuardanYSeVenAlReabrir`, `horarioQueOcupoGestionNoSeOfrece` | Aprobado |
+| CP-C10 | `buscador_buscaSinImportarTildesNiMayusculas`, `resumen_cadaProtocoloTieneSuFichaComoEnLaWeb`, `resumen_seAbreDesdeProtocolosYDesdeElBuscador` (`prueba_gestion.cpp`; el buscador y el resumen son los mismos en la terminal) | Aprobado |
+| CP-C11 | `terminal_cuentaDeLaPaciente` (`prueba_cliente_base.cpp`) | Aprobado |
 
 ## Supuestos y notas
 

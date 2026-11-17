@@ -45,6 +45,7 @@ Después, en este orden (cada archivo supone los anteriores):
 ```bash
 mysql -u root -p < backend/codigobasededatossolotablas.sql   # schemas y tablas (borra y recrea todo)
 mysql -u root -p < backend/02_datos.sql                      # catálogos y datos de ejemplo
+mysql -u root -p < backend/02b_numero.sql                    # tabla auxiliar de números (la usan horarios libres y cupones)
 mysql -u root -p < backend/03_sp_semana3.sql                 # login, ABM, horarios, alta de turno
 mysql -u root -p < backend/04_sp_semana4.sql                 # seña, cancelación, cirugías, cupones, tarjetas, avisos
 mysql -u root -p < backend/05_reportes_semana5.sql           # 8 reportes + auditoría
@@ -58,8 +59,16 @@ mysql -u root -p < backend/08_usuarios.sql                   # usuarios de las a
 
 Para verificar: `mysql -u root -p < backend/pruebas_estructura.sql` (44 pruebas de las
 restricciones de las tablas) y
-`python3 backend/pruebas/correr_pruebas.py --recargar` (230 casos de los SP; ver
+`python3 backend/pruebas/correr_pruebas.py --recargar` (239 casos de los SP; ver
 [`11-pruebas-bbdd.md`](11-pruebas-bbdd.md)).
+
+### Usuarios y varias PCs
+
+Los usuarios del personal están en `seguridad.Usuario`: los crea la administración desde la
+pantalla *Usuarios* de Gestión (`seguridad.sp_alta_usuario`). Para entrar con el mismo usuario
+desde otra PC, esa PC tiene que conectarse a **la misma base** (`DERMALIA_DB_HOST` apuntando al
+servidor, por ejemplo Aiven). Si cada PC tiene su propio MySQL local, cada una tiene sus propios
+usuarios y turnos.
 
 ### En Aiven (producción)
 

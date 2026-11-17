@@ -65,6 +65,17 @@ Respuesta Repositorio::login(const QString &usuario, const QString &clave, const
     return aRespuesta(base.llamar("seguridad.sp_login", { usuario, clave, textoONulo(ip), origen }));
 }
 
+Respuesta Repositorio::cerrarSesion(int idUsuario, const QString &origen)
+{
+    return aRespuesta(base.llamar("seguridad.sp_cerrar_sesion", { idONulo(idUsuario), origen, QVariant() }));
+}
+
+Respuesta Repositorio::crearCuentaPaciente(const QString &dni, const QString &usuario, const QString &email,
+                                           const QString &clave, const QString &origen)
+{
+    return aRespuesta(base.llamar("seguridad.sp_crear_cuenta_paciente", { dni, usuario, email, clave, origen }));
+}
+
 Respuesta Repositorio::altaPaciente(const QString &dni, const QString &nombre, const QString &apellido, const QDate &nacimiento,
                                     const QString &email, const QString &telefono, const QString &origen, int idUsuario)
 {
@@ -337,6 +348,22 @@ Resultado Repositorio::movimientosTarjeta(const QString &codigo)
 Resultado Repositorio::listarEvaluaciones(bool soloPendientes)
 {
     return base.llamar("clinica.sp_listar_evaluaciones", { soloPendientes ? 1 : 0 });
+}
+
+Resultado Repositorio::listarUsuarios()
+{
+    return base.llamar("seguridad.sp_listar_usuarios", {});
+}
+
+Respuesta Repositorio::altaUsuario(int idAdmin, const QString &usuario, const QString &email, const QString &clave,
+                                   const QString &rol, const QString &origen)
+{
+    return aRespuesta(base.llamar("seguridad.sp_alta_usuario", { idONulo(idAdmin), usuario, email, clave, rol, origen }));
+}
+
+Respuesta Repositorio::cambiarClave(int idUsuario, const QString &actual, const QString &nueva, const QString &origen)
+{
+    return aRespuesta(base.llamar("seguridad.sp_cambiar_clave", { idONulo(idUsuario), actual, nueva, origen }));
 }
 
 Respuesta Repositorio::resolverEvaluacion(int idEvaluacion, const QString &resultado, const QString &observaciones,

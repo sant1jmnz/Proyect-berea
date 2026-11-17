@@ -34,6 +34,10 @@ DialogoLogin::DialogoLogin(Repositorio *repositorio, QWidget *parent)
     capa->addWidget(lblError);
     capa->addWidget(btnIngresar);
     capa->addWidget(btnCancelar);
+    auto *ayuda = new QLabel("¿No tenés usuario? Lo crea la administración, en la pantalla Usuarios.");
+    ayuda->setWordWrap(true);
+    ayuda->setProperty("rol", "nota");
+    capa->addWidget(ayuda);
 
     connect(btnIngresar, &QPushButton::clicked, this, &DialogoLogin::on_btnIngresar_clicked);
     connect(editClave, &QLineEdit::returnPressed, this, &DialogoLogin::on_btnIngresar_clicked);

@@ -5,11 +5,13 @@
 #include "avisoconexion.h"
 #include "conexionapp.h"
 #include "datosbase.h"
+#include "dialogocuenta.h"
 #include "repositorio.h"
 #include "reembolso.h"
 #include "sena.h"
 #include "validaciones.h"
 
+#include <QApplication>
 #include <QCalendarWidget>
 #include <QGraphicsDropShadowEffect>
 #include <QInputDialog>
@@ -98,17 +100,59 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
         QMessageBox::information(this, "Ayuda",
             "Sacar un turno: elegí el protocolo, después el horario y confirmá.\n"
             "Buscar mi turno: con tu DNI o tu teléfono; desde ahí lo podés cancelar.\n"
+            "Ingresar (arriba): tu cuenta es opcional; con ella no escribís tus datos y ves tus turnos al instante.\n"
+            "Ver resumen: qué es cada tratamiento, cuántas sesiones lleva y qué hacer antes y después.\n"
             "Si necesitás una mano, acercate a la recepción.");
     });
 
     /* Las tres opciones de la pantalla de inicio. */
     connect(ui->btnSacarTurno, &QPushButton::clicked, this, [this] { irA(PagProtocolo); });
     connect(ui->btnVerPrecios, &QPushButton::clicked, this, [this] { irA(PagBuscador); });
-    connect(ui->btnMiTurno, &QPushButton::clicked, this, [this] { irA(PagMiTurno); });
+    connect(ui->btnMiTurno, &QPushButton::clicked, this, [this] {
+        irA(PagMiTurno);
+        if (sesion.activa() && !mostrarTurnosDe(sesion.dni))   /* con cuenta, sus turnos aparecen solos */
+            ocultarTurno();
+    });
+
+    /* Cuenta de la paciente, arriba a la derecha: solo con la base (ahí se guardan las cuentas). */
+    btnCuenta = new QPushButton("Ingresar");
+    btnCuenta->setObjectName("btnCuenta");
+    btnCuenta->setCursor(Qt::PointingHandCursor);
+    btnCuenta->setToolTip("Ingresá o creá tu cuenta (es opcional)");
+    btnCuenta->hide();
+    ui->layoutBarra->insertWidget(ui->layoutBarra->indexOf(ui->btnAyuda), btnCuenta);
+    connect(btnCuenta, &QPushButton::clicked, this, &VentanaCliente::tocarCuenta);
+    relojSesion = new QTimer(this);
+    relojSesion->setSingleShot(true);
+    relojSesion->setInterval(3 * 60 * 1000);
+    connect(relojSesion, &QTimer::timeout, this, [this] {
+        cerrarSesion();
+        irA(PagInicio);
+    });
+    qApp->installEventFilter(this);
 
     /* Los 3 pasos de sacar un turno (RF-01): Continuar avanza, Volver retrocede. */
     connect(ui->btnVolver1, &QPushButton::clicked, this, [this] { irA(PagInicio); });
     connect(ui->btnContinuar1, &QPushButton::clicked, this, &VentanaCliente::continuarProtocolo);
+    /* Paso 1: "Ver resumen" del tratamiento elegido (el mismo resumen que la web). */
+    auto *btnResumen = new QPushButton("Ver resumen");
+    btnResumen->setObjectName("btnResumen1");
+    btnResumen->setCursor(Qt::PointingHandCursor);
+    btnResumen->setEnabled(false);
+    ui->botonesProtocolo->insertWidget(ui->botonesProtocolo->indexOf(ui->btnVolver1), btnResumen);
+    connect(ui->listaProtocolos, &QListWidget::itemSelectionChanged, this, [this, btnResumen] {
+        btnResumen->setEnabled(protocoloElegido() != nullptr);
+    });
+    connect(btnResumen, &QPushButton::clicked, this, [this] {
+        const Protocolo *p = protocoloElegido();
+        if (!p)
+            return;
+        int precioConsulta = 0;
+        for (const Protocolo &otro : std::as_const(protocolos))
+            if (otro.nombre.startsWith("Consulta prequir"))
+                precioConsulta = otro.precio;
+        ResumenTratamiento::mostrar(this, DatosPrueba::comoTratamiento(*p), precioConsulta);
+    });
     connect(ui->btnVolver2, &QPushButton::clicked, this, [this] { irA(PagProtocolo); });
     connect(ui->btnContinuar2, &QPushButton::clicked, this, &VentanaCliente::continuarHorario);
     connect(ui->btnVolver3, &QPushButton::clicked, this, [this] { irA(PagHorario); });
@@ -209,7 +253,8 @@ void VentanaCliente::cargarProtocolos()
     QString error;
     if (enModoBase)   /* catálogo de la base (sp_listar_protocolos) */
         DatosBase::cargarProtocolos(*repositorio, protocolos, &error);
-    else if (AlmacenLocal::leer(archivoLocal, &guardados) && !guardados.protocolos.isEmpty())
+    else if (AlmacenLocal::leer(archivoLocal, &guardados) && !guardados.protocolos.isEmpty()
+             && !DatosPrueba::esCatalogoViejo(guardados.protocolos))
         protocolos = guardados.protocolos;
     ui->listaProtocolos->clear();
     protocolosVisibles.clear();
@@ -221,6 +266,7 @@ void VentanaCliente::cargarProtocolos()
                                          .arg(protocolos[i].nombre).arg(protocolos[i].duracionMin).arg(pesos(protocolos[i].precio)));
     }
     ui->listaProtocolos->setCurrentRow(-1);
+    ui->buscador->setCatalogo(DatosPrueba::comoTratamientos(protocolos));   /* "Consultar precios" usa el mismo catálogo */
 }
 
 const Protocolo *VentanaCliente::protocoloElegido() const
@@ -456,6 +502,7 @@ void VentanaCliente::reiniciarCarga()
     ui->listaProtocolos->clearSelection();
     ui->listaProtocolos->setCurrentRow(-1);
     ui->btnSena->setChecked(false);
+    completarConLaCuenta();
     ajustandoFecha = true;
     ui->calendario->setSelectedDate(QDate::currentDate());
     ajustandoFecha = false;
@@ -486,6 +533,16 @@ void VentanaCliente::buscarMiTurno()
         return;
     }
     const QString buscado = soloDigitos(texto);
+    ultimoBuscado = buscado;
+    if (!mostrarTurnosDe(buscado)) {
+        ocultarTurno();
+        QMessageBox::information(this, "Sin turnos", QString("No encontramos turnos para %1.").arg(buscado));
+    }
+}
+
+/* Muestra el próximo turno vigente de ese DNI o teléfono o, si no hay, el último que tuvo. */
+bool VentanaCliente::mostrarTurnosDe(const QString &buscado)
+{
     const QDateTime ahora = QDateTime::currentDateTime();
     recargarLocal();
     if (enModoBase) {   /* sp_buscar_turnos: los turnos de ese DNI o teléfono */
@@ -497,11 +554,8 @@ void VentanaCliente::buscarMiTurno()
     for (int i = 0; i < turnos.size(); ++i)
         if (turnos[i].dni == buscado || soloDigitos(turnos[i].telefono) == buscado)
             encontrados << i;
-    if (encontrados.isEmpty()) {
-        ocultarTurno();
-        QMessageBox::information(this, "Sin turnos", QString("No encontramos turnos para %1.").arg(buscado));
-        return;
-    }
+    if (encontrados.isEmpty())
+        return false;
     const auto vigente = [&](int i) {
         return (turnos[i].estado == EstadoTurno::Confirmado || turnos[i].estado == EstadoTurno::Pendiente)
                && turnos[i].inicio > ahora;
@@ -520,6 +574,7 @@ void VentanaCliente::buscarMiTurno()
                                     [&](int a, int b) { return turnos[a].inicio < turnos[b].inicio; });
     buscadoActual = buscado;
     mostrarTurno(elegido, vigentes);
+    return true;
 }
 
 void VentanaCliente::mostrarTurno(int indice, int vigentes)
@@ -660,6 +715,59 @@ void VentanaCliente::conectarBase()
     cargarProtocolos();
     actualizarHorarios();
     ocultarTurno();
+
+    btnCuenta->show();
+
+    /* Gestión y la Terminal usan la misma base: cada 3 segundos se mira si cambió algo. */
+    if (!relojBase) {
+        relojBase = new QTimer(this);
+        relojBase->setInterval(3000);
+        connect(relojBase, &QTimer::timeout, this, &VentanaCliente::sincronizarBase);
+    }
+    relojBase->start();
+}
+
+/* Si Gestión cambió el catálogo, o alguien cargó o canceló un turno, se actualiza
+ * lo que se está viendo sin perder lo que la paciente ya eligió. */
+void VentanaCliente::sincronizarBase()
+{
+    if (!enModoBase || QApplication::activeModalWidget())
+        return;   /* con un cartel abierto se espera a la próxima vuelta */
+    QString error;
+
+    /* Catálogo: precios, altas y bajas de protocolos. */
+    QVector<Protocolo> catalogo;
+    if (DatosBase::cargarProtocolos(*repositorio, catalogo, &error)
+        && DatosBase::resumen(catalogo) != DatosBase::resumen(protocolos)) {
+        const Protocolo *p = protocoloElegido();
+        const int idElegido = p ? p->id : 0;
+        cargarProtocolos();
+        for (int fila = 0; fila < protocolosVisibles.size(); ++fila)
+            if (idElegido != 0 && protocolos[protocolosVisibles[fila]].id == idElegido)
+                ui->listaProtocolos->setCurrentRow(fila);
+    }
+
+    /* Turnos: si cambiaron, se recalculan los horarios libres y "mi turno". */
+    QVector<Turno> agenda;
+    if (!DatosBase::cargarTurnos(*repositorio, QDate::currentDate(), 60, agenda, &error))
+        return;
+    const QString resumen = DatosBase::resumen(agenda);
+    if (resumen == resumenAgenda)
+        return;
+    resumenAgenda = resumen;
+
+    const QListWidgetItem *horario = ui->listaHorarios->currentItem();
+    const QString horarioElegido = horario && horario->isSelected() ? horario->text() : QString();
+    actualizarHorarios();
+    const QList<QListWidgetItem *> iguales = ui->listaHorarios->findItems(horarioElegido, Qt::MatchExactly);
+    if (!horarioElegido.isEmpty() && !iguales.isEmpty())
+        ui->listaHorarios->setCurrentItem(iguales.first());
+
+    /* "Buscar mi turno": si la paciente ya buscó (aunque todavía no tuviera turnos), se vuelve
+     * a buscar; así aparece el turno que le cargó la recepción o cambia el estado si se canceló. */
+    const bool mirandoMiTurno = ui->paginas->currentIndex() == PagMiTurno || turnoMostrado >= 0;
+    if (mirandoMiTurno && !ultimoBuscado.isEmpty() && !mostrarTurnosDe(ultimoBuscado))
+        ocultarTurno();
 }
 
 /* Horarios libres del día para el protocolo elegido, con el profesional que atiende. */
@@ -764,3 +872,72 @@ bool VentanaCliente::confirmarEnBase(const Protocolo *p, const QDateTime &inicio
     QMessageBox::information(this, "Turno confirmado", mensaje);
     return true;
 }
+
+
+/* ---------------------------------------------------------------------------
+ * Cuenta de la paciente (opcional, RF-15)
+ * --------------------------------------------------------------------------- */
+
+/* Sin sesión abre "Ingresar / Crear cuenta"; con sesión pregunta si se quiere salir. */
+void VentanaCliente::tocarCuenta()
+{
+    if (!repositorio)
+        return;
+    if (sesion.activa()) {
+        const auto r = QMessageBox::question(this, "Tu cuenta",
+            QString("Ingresaste como %1.\n¿Querés salir de tu cuenta?").arg(sesion.nombre));
+        if (r == QMessageBox::Yes)
+            cerrarSesion();
+        return;
+    }
+    DialogoCuenta dialogo(repositorio, this);
+    if (dialogo.exec() == QDialog::Accepted)
+        empezarSesion(dialogo.sesion());
+}
+
+void VentanaCliente::empezarSesion(const SesionPaciente &nueva)
+{
+    sesion = nueva;
+    btnCuenta->setText("Hola, " + sesion.nombre.section(' ', 0, 0));
+    btnCuenta->setToolTip("Tocá para salir de tu cuenta");
+    completarConLaCuenta();
+    relojSesion->start();
+}
+
+void VentanaCliente::cerrarSesion()
+{
+    if (!sesion.activa())
+        return;
+    if (repositorio)
+        repositorio->cerrarSesion(sesion.idUsuario, "terminal");   /* queda en el log */
+    sesion = SesionPaciente();
+    relojSesion->stop();
+    btnCuenta->setText("Ingresar");
+    btnCuenta->setToolTip("Ingresá o creá tu cuenta (es opcional)");
+    ui->editNombre->clear();
+    ui->editDni->clear();
+    ui->editTelefono->clear();
+    ui->editBuscarTurno->clear();
+    buscadoActual.clear();
+    ultimoBuscado.clear();
+    ocultarTurno();
+}
+
+void VentanaCliente::completarConLaCuenta()
+{
+    if (!sesion.activa())
+        return;
+    ui->editNombre->setText(sesion.nombre);
+    ui->editDni->setText(sesion.dni);
+    ui->editTelefono->setText(sesion.telefono);
+    ui->editBuscarTurno->setText(sesion.dni);
+}
+
+bool VentanaCliente::eventFilter(QObject *objeto, QEvent *evento)
+{
+    if (sesion.activa() && (evento->type() == QEvent::MouseButtonPress || evento->type() == QEvent::KeyPress
+                            || evento->type() == QEvent::TouchBegin))
+        relojSesion->start();   /* vuelve a contar los 3 minutos */
+    return QMainWindow::eventFilter(objeto, evento);
+}
+

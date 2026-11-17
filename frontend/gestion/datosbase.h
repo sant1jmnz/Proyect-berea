@@ -27,6 +27,12 @@ bool cargarAvisos(Repositorio &repo, const QDate &hoy, int dias, RegistroAvisos 
 /* Una fila de turno de la base → Turno de las pantallas. */
 Turno aTurno(const TurnoBD &t);
 
+/* Un texto que resume la lista: si entre dos lecturas cambia, algo cambió en la base.
+ * Lo usan Gestión y la Terminal para actualizarse solas cada pocos segundos. */
+QString resumen(const QVector<Turno> &turnos);
+QString resumen(const QVector<Paciente> &pacientes);
+QString resumen(const QVector<Protocolo> &protocolos);
+
 }
 
 #endif

@@ -22,6 +22,7 @@ class ConexionApp;
 class PaginaAvisos;
 class PaginaCupones;
 class PaginaEvaluaciones;
+class PaginaUsuarios;
 class PaginaTarjetas;
 class PaginaPacientes;
 class PaginaReportes;
@@ -60,6 +61,7 @@ private slots:
     void conectarBase();             /* hay conexión: ingreso del personal y datos de la base */
     void guardarLocal();             /* sin base: deja todo en el archivo local */
     void sincronizarLocal();         /* si la Terminal cargó o canceló un turno, lo toma */
+    void sincronizarBase();          /* con la base: trae lo que cambiaron la Terminal u otra PC */
 
 private:
     void irA(int pagina);
@@ -75,6 +77,7 @@ private:
     void cargarDesdeBase();
     void cargarHorariosDeBase(const QDate &dia);
     void refrescarTurnosDeBase(const QString &texto);
+    void mostrarTurnos();            /* dibuja la tabla de turnos con lo que hay en `turnos` */
     void confirmarTurnoEnBase(const Protocolo *p, const QDateTime &inicio);
     bool buscarOCrearPaciente(int *idPaciente);
     int profesionalElegido() const;
@@ -98,11 +101,13 @@ private:
     PaginaCupones *paginaCupones = nullptr;
     PaginaTarjetas *paginaTarjetas = nullptr;
     PaginaEvaluaciones *paginaEvaluaciones = nullptr;
+    PaginaUsuarios *paginaUsuarios = nullptr;
     Repositorio *repositorio = nullptr;   /* stored procedures de la base */
     bool persistir = false;               /* true: usa el archivo local */
     QString archivoLocal;
     QDateTime ultimaVersionLocal;         /* fecha del archivo la última vez que se leyó o escribió */
     QTimer *relojLocal = nullptr;
+    QTimer *relojBase = nullptr;          /* cada 3 segundos mira si la base cambió */
     bool enModoBase = false;              /* true: los datos vienen de la base; false: datos de prueba */
     int idUsuario = 0;                    /* quién ingresó (va al log de auditoría) */
     QString rolUsuario;

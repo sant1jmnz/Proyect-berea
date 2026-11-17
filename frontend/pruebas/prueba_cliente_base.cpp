@@ -169,6 +169,35 @@ private slots:
         w.findChild<QPushButton *>("btnBuscarTurno")->click();
         auto *estado = w.findChild<QLabel *>("lblEstadoTurno");
         QVERIFY(estado->text() != "Cancelado");
+
+        // Una paciente que buscó y todavía no tenía turnos: cuando la recepción le carga
+        // uno, aparece solo en la pantalla, sin volver a tocar Buscar.
+        const QString dniSinTurnos = QString::number(40000000 + QRandomGenerator::global()->bounded(9999999));
+        const Respuesta otra = repo.altaPaciente(dniSinTurnos, "Sin", "Turnos", QDate(1995, 1, 20), QString(),
+                                                 "1122221111", "terminal");
+        QVERIFY2(otra.ok, qPrintable(otra.mensaje));
+        w.findChild<QLineEdit *>("editBuscarTurno")->setText(dniSinTurnos);
+        contestar("OK");   // "No encontramos turnos"
+        w.findChild<QPushButton *>("btnBuscarTurno")->click();
+        auto *tarjeta = w.findChild<QWidget *>("tarjetaMiTurno");
+        QVERIFY(!tarjeta->isVisible());
+        QDateTime otroInicio;
+        int otroProfesional = 0;
+        for (int d = 5; d <= 40 && otroProfesional == 0; ++d)
+            for (const HorarioLibre &h : repo.horariosLibres(QDate::currentDate().addDays(d), { idProtocolo }))
+                if (otroProfesional == 0) {
+                    otroInicio = h.inicio;
+                    otroProfesional = h.idProfesional;
+                }
+        const Respuesta nuevo = repo.altaTurno(otra.id, otroProfesional, otroInicio, { idProtocolo }, "terminal");
+        QVERIFY2(nuevo.ok, qPrintable(nuevo.mensaje));
+        QTRY_VERIFY_WITH_TIMEOUT(tarjeta->isVisible(), 8000);
+        QVERIFY(repo.cancelarTurno(nuevo.id, "terminal").ok);
+
+        // Vuelve al turno de la primera paciente para probar la cancelación desde Gestión.
+        w.findChild<QLineEdit *>("editBuscarTurno")->setText(dni);
+        w.findChild<QPushButton *>("btnBuscarTurno")->click();
+        QVERIFY(estado->text() != "Cancelado");
         for (int id : reservados)
             QVERIFY(repo.cancelarTurno(id, "terminal").ok);
         QTRY_COMPARE_WITH_TIMEOUT(estado->text(), QString("Cancelado"), 8000);

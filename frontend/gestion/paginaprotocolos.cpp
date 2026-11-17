@@ -144,8 +144,12 @@ PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *pare
     btnEstado->setObjectName("btnEstado");
     btnEstado->setProperty("peligro", true);
     auto *btnLimpiar = new QPushButton("Nuevo protocolo");
+    btnResumen = new QPushButton("Ver resumen");
+    btnResumen->setObjectName("btnResumenProtocolo");
+    btnResumen->setEnabled(false);
     botones->addWidget(btnGuardar);
     botones->addWidget(btnLimpiar);
+    botones->addWidget(btnResumen);
     botones->addStretch();
     botones->addWidget(btnEstado);
     capa->addLayout(botones);
@@ -154,6 +158,16 @@ PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *pare
     connect(btnGuardar, &QPushButton::clicked, this, &PaginaProtocolos::guardar);
     connect(btnEstado, &QPushButton::clicked, this, &PaginaProtocolos::cambiarEstado);
     connect(btnLimpiar, &QPushButton::clicked, this, &PaginaProtocolos::limpiar);
+    /* El mismo resumen que muestra la web para ese tratamiento. */
+    connect(btnResumen, &QPushButton::clicked, this, [this] {
+        if (editado < 0)
+            return;
+        int precioConsulta = 0;
+        for (const Protocolo &p : std::as_const(*datos))
+            if (p.nombre.startsWith("Consulta prequir"))
+                precioConsulta = p.precio;
+        ResumenTratamiento::mostrar(this, DatosPrueba::comoTratamiento((*datos)[editado]), precioConsulta);
+    });
     connect(tabla, &QTableWidget::itemSelectionChanged, this, &PaginaProtocolos::elegirFila);
     auto actualizarSena = [this] {
         const Categoria c = DatosPrueba::categorias().value(comboCategoria->currentIndex());
@@ -214,6 +228,7 @@ void PaginaProtocolos::elegirFila()
     lblModo->setText("Modificar protocolo");
     btnEstado->setText(p.activo ? "Dar de baja" : "Reactivar");
     btnEstado->setEnabled(true);
+    btnResumen->setEnabled(true);
 }
 
 void PaginaProtocolos::limpiar()
@@ -227,6 +242,7 @@ void PaginaProtocolos::limpiar()
     lblModo->setText("Nuevo protocolo");
     btnEstado->setText("Dar de baja");
     btnEstado->setEnabled(false);
+    btnResumen->setEnabled(false);
     editNombre->setFocus();
 }
 

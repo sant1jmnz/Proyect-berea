@@ -55,7 +55,7 @@ private:
     QLineEdit *editNombre, *editPrecio, *editDuracion;
     QComboBox *comboCategoria;
     QLabel *lblSena, *lblModo;
-    QPushButton *btnGuardar, *btnEstado;
+    QPushButton *btnGuardar, *btnEstado, *btnResumen;
     QVector<int> filaADato;
 };
 

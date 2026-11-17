@@ -634,7 +634,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                 <item>
                  <widget class="QLabel" name="lblComoDetalle3">
                   <property name="text">
-                   <string>30 % del valor, mínimo $5.000. El pago es simulado: no se pide tarjeta.</string>
+                   <string>30 % del valor (40 % en cirugías). El pago es simulado: no se pide tarjeta.</string>
                   </property>
                   <property name="wordWrap">
                    <bool>true</bool>
@@ -1648,7 +1648,7 @@ mi turno</string>
              <item>
               <widget class="QLabel" name="lblReglaSena">
                <property name="text">
-                <string>30 % del protocolo, mínimo $5.000. Se descuenta del total y se devuelve si cancelás con más de 24 h.</string>
+                <string>30 % del protocolo (40 % en cirugías). Se descuenta del total y se devuelve si cancelás con más de 24 h.</string>
                </property>
                <property name="wordWrap">
                 <bool>true</bool>

@@ -222,4 +222,29 @@ bool cargarAvisos(Repositorio &repo, const QDate &hoy, int dias, RegistroAvisos 
     return true;
 }
 
+QString resumen(const QVector<Turno> &turnos)
+{
+    QString texto;
+    for (const Turno &t : turnos)
+        texto += QString("%1|%2|%3|%4|%5;").arg(t.id).arg(int(t.estado)).arg(t.inicio.toString(Qt::ISODate))
+                     .arg(t.senaPagada).arg(t.reembolsado);
+    return texto;
+}
+
+QString resumen(const QVector<Paciente> &pacientes)
+{
+    QString texto;
+    for (const Paciente &p : pacientes)
+        texto += p.dni + "|" + p.nombre + "|" + p.telefono + "|" + p.email + ";";
+    return texto;
+}
+
+QString resumen(const QVector<Protocolo> &protocolos)
+{
+    QString texto;
+    for (const Protocolo &p : protocolos)
+        texto += QString("%1|%2|%3|%4|%5;").arg(p.id).arg(p.nombre).arg(p.precio).arg(p.duracionMin).arg(p.activo);
+    return texto;
+}
+
 }

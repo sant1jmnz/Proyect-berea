@@ -1,0 +1,15 @@
+# Bitácora del equipo — martes 17 de noviembre de 2026
+
+**Integrantes:** Santiago Jiménez y Bautista Casero · Proyecto Informático I
+
+Hoy el objetivo fue que los dos programas de escritorio, Gestión y la terminal de la paciente, trabajen de verdad sobre la base de datos MySQL y no con datos de prueba. Empezamos cargando la base en la PC del colegio. Como la cuenta no tiene permisos de administrador, no podíamos usar `sudo`, pero MySQL ya estaba corriendo, así que cargamos los scripts en orden desde la terminal de Ubuntu. En la primera carga apareció el error de que no existía la tabla `agenda.Numero`: nos faltaba el script `02b_numero.sql`, que usan los horarios libres y los cupones. Lo agregamos al orden de carga y lo anotamos en el manual técnico.
+
+Después compilamos con el CMake que trae Qt, porque `ctest` tampoco estaba instalado. La compilación falló porque nuestra conexión usaba el nombre interno del tipo de MariaDB y la PC tiene la librería de MySQL. Lo resolvimos guardando la conexión como `void*` y convirtiéndola a `MYSQL*` en `basedatos.cpp`, y desde ahí compila con las dos librerías.
+
+Con los programas andando vimos que lo que se cargaba en uno no aparecía en el otro. Agregamos que Gestión y la terminal miren la base cada tres segundos y actualicen la pantalla sin perder lo que estaba elegido. Al probarlo con capturas descubrimos que Gestión en realidad no estaba en la base: si se cancelaba el ingreso, seguía con datos de prueba sin avisar. Ahora muestra una franja amarilla que lo dice y un botón para ingresar, y abajo se ve quién ingresó.
+
+También sumamos la pantalla Usuarios. No hay registro libre para el personal porque ve los datos de las pacientes, así que la administración crea los usuarios en la base y cada uno puede cambiar su contraseña. En la terminal, en cambio, agregamos arriba a la derecha el botón Ingresar, con el que la paciente puede crear una cuenta opcional. Con la cuenta, sus datos aparecen escritos al sacar turno y sus turnos se ven solos; si nadie toca la terminal durante tres minutos, la sesión se cierra.
+
+Por último, cada tratamiento tiene ahora un botón Ver resumen con la misma ficha que la página web, porque los textos se generan del mismo archivo. Al hacerlo encontramos que el buscador de precios mostraba siempre tres resultados fijos con precios viejos; ahora busca en el catálogo real, sin importar tildes ni mayúsculas. En una rama aparte también avanzamos con el sitio web: cuentas de paciente, cupones y tarjetas reales, y las mismas validaciones que en Qt.
+
+Todas las pruebas quedaron aprobadas: los 239 casos de los stored procedures y las 6 pruebas de los programas, con la base y sin ella. Actualizamos el manual de usuario, los casos de prueba y las capturas. Aprendimos que una misma librería puede llamarse distinto según el sistema, que hay que avisar con claridad cuando un programa no está guardando en la base y que cada dato tiene que salir de una sola fuente. Queda pendiente subir la base a Aiven para usar los mismos usuarios desde cualquier PC y juntar la rama del sitio web con la nuestra.

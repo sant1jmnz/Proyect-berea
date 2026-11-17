@@ -116,12 +116,15 @@ devuelven 0 filas y no dan error.
 | `pagos.sp_registrar_sena` (SP) | `p_id_turno INT, p_medio_pago VARCHAR(50), p_codigo_tarjeta VARCHAR(50), p_id_usuario INT, p_origen VARCHAR(50), p_codigo_operacion VARCHAR(50)` | Registra la seña (pago simulado, sin pasarela) y confirma el turno. Devuelve: id = pago, valor = monto de la seña, dato = código de operación 'SIM-...'. Si se paga con tarjeta de regalo hay que pasar su código; el turno no puede tener cupón (un cupón y una tarjeta no van juntos). |
 | `pagos.sp_saldo_tarjeta` (SP) | `p_codigo VARCHAR(50), p_id_usuario INT, p_origen VARCHAR(50)` | Saldo y vigencia de una tarjeta. Un código inexistente queda en el log (intentos fallidos, modelo grupo 3 decisión 9) y no devuelve filas. |
 
-### Pantallas de Gestión (`backend/09_sp_pantallas.sql`): listados de cupones y consultas previas
+### Pantallas de Gestión (`backend/09_sp_pantallas.sql`): listados de cupones y consultas previas, y usuarios del personal
 
 | SP | Parámetros | Qué devuelve |
 |---|---|---|
 | `beneficios.sp_listar_cupones` (SP) | `p_dni VARCHAR(20)` | Cupones de la paciente: `id_cupon, codigo, regla, porcentaje_descuento, fecha_emision, fecha_vencimiento, usado, vigente, id_paciente, apellido, nombre`. DNI inexistente, NULL o vacío: 0 filas. |
 | `clinica.sp_listar_evaluaciones` (SP) | `p_solo_pendientes SMALLINT` | Evaluaciones previas de cirugía: `id_evaluacion, dni, apellido, nombre, protocolo, fecha_consulta, estado_turno, resultado, observaciones, fecha_resultado, vence, fecha_reclamo`. Con 1, solo las que no tienen resultado. |
+| `seguridad.sp_listar_usuarios` (SP) | — | El personal con usuario (no las cuentas de pacientes): `id_usuario, nombre_usuario, email, rol, activo, fecha_creacion`. |
+| `seguridad.sp_alta_usuario` (SP) | `p_id_admin INT, p_nombre_usuario VARCHAR(50), p_email VARCHAR(100), p_password VARCHAR(255), p_rol VARCHAR(50), p_origen VARCHAR(50)` | Crea un usuario de recepción o de administración. Solo lo puede pedir un usuario activo con rol administrador. Devuelve en `id` el usuario nuevo y en `dato` el rol. Queda en el log como `alta_usuario`. |
+| `seguridad.sp_cambiar_clave` (SP) | `p_id_usuario INT, p_clave_actual VARCHAR(255), p_clave_nueva VARCHAR(255), p_origen VARCHAR(50)` | Cambia la contraseña de quien ingresó; hay que saber la actual. Queda en el log como `cambio_clave`. |
 
 ### Semana 5 (`backend/05_reportes_semana5.sql`): 8 reportes y auditoría
 
@@ -154,6 +157,10 @@ Son los números que devuelve la columna `codigo` cuando `estado = 'ERROR'`. Los
 | 52011 | Usuario o contraseña incorrectos |
 | 52012 | Cuenta bloqueada 15 minutos por demasiados intentos |
 | 52013 | El usuario no existe |
+| 52014 | Solo la administración puede crear usuarios |
+| 52015 | El rol tiene que ser recepcion o administrador |
+| 52016 | La contraseña debe tener de 6 a 50 caracteres |
+| 52017 | La contraseña actual no es correcta |
 | 52020 | No hay una paciente con ese DNI |
 | 52021 | Esa paciente ya tiene cuenta |
 | 52022 | El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo |

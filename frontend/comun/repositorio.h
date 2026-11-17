@@ -82,6 +82,10 @@ public:
 
     /* ---- seguridad ---- */
     Respuesta login(const QString &usuario, const QString &clave, const QString &ip, const QString &origen);
+    Respuesta cerrarSesion(int idUsuario, const QString &origen);
+    /* Cuenta opcional de la paciente (RF-15): se vincula con su DNI. */
+    Respuesta crearCuentaPaciente(const QString &dni, const QString &usuario, const QString &email,
+                                  const QString &clave, const QString &origen);
 
     /* ---- pacientes ---- */
     Respuesta altaPaciente(const QString &dni, const QString &nombre, const QString &apellido, const QDate &nacimiento,
@@ -148,6 +152,12 @@ public:
 
     /* ---- evaluación previa de cirugías (RF-25) ---- */
     Resultado listarEvaluaciones(bool soloPendientes);
+
+    /* Usuarios del personal (09_sp_pantallas.sql): solo la administración crea usuarios. */
+    Resultado listarUsuarios();
+    Respuesta altaUsuario(int idAdmin, const QString &usuario, const QString &email, const QString &clave,
+                          const QString &rol, const QString &origen);
+    Respuesta cambiarClave(int idUsuario, const QString &actual, const QString &nueva, const QString &origen);
     Respuesta resolverEvaluacion(int idEvaluacion, const QString &resultado, const QString &observaciones,
                                  const QString &origen, int idUsuario = 0);   /* valor = seña devuelta */
     Respuesta reclamarEvaluacion(int idEvaluacion, const QString &origen, int idUsuario = 0);

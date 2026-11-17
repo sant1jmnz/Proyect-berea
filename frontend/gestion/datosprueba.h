@@ -8,6 +8,7 @@
 #define DATOSPRUEBA_H
 
 #include "disponibilidad.h"
+#include "resumentratamiento.h"
 
 #include <QDateTime>
 #include <QString>
@@ -88,6 +89,14 @@ QVector<Paciente> pacientes();
 QStringList horariosDelDia();
 
 QString texto(EstadoTurno estado);
+
+/* true si el archivo local tiene el catálogo viejo de prueba (4 protocolos con precios de 2025):
+ * en ese caso se usa el catálogo actual. Si se agregaron o cambiaron protocolos, se respetan. */
+bool esCatalogoViejo(const QVector<Protocolo> &guardados);
+
+/* Los protocolos activos, como los usa el resumen y el buscador de precios (comun/). */
+QVector<Tratamiento> comoTratamientos(const QVector<Protocolo> &protocolos);
+Tratamiento comoTratamiento(const Protocolo &p);
 
 }
 

@@ -53,7 +53,9 @@ set(COMUN
     comun/repositorio.h
     comun/recordatorios.cpp  # recordatorio de turno y registro de avisos (RF-11)
     comun/recordatorios.h
-    gestion/recursos.qrc)   # íconos y tipografías
+    comun/resumentratamiento.cpp   # resumen de cada tratamiento, igual al de la web
+    comun/resumentratamiento.h
+    gestion/recursos.qrc)   # íconos, tipografías y las fichas de los tratamientos
 
 # Apartado Gestión (PC de recepción): con la base usa los stored procedures;
 # sin base, trabaja con el archivo local de esta PC.
@@ -83,7 +85,9 @@ add_executable(dermalia_gestion
     gestion/paginacupones.cpp
     gestion/paginacupones.h
     gestion/paginatarjetas.cpp
+    gestion/paginausuarios.cpp
     gestion/paginatarjetas.h
+    gestion/paginausuarios.h
     gestion/paginaevaluaciones.cpp
     gestion/paginaevaluaciones.h
     ${COMUN})
@@ -96,6 +100,8 @@ con_mysql(dermalia_gestion)
 add_executable(dermalia_cliente
     cliente/main.cpp
     cliente/ventanacliente.cpp
+    cliente/dialogocuenta.cpp
+    cliente/dialogocuenta.h
     cliente/ventanacliente.h
     cliente/ventanacliente.ui
     gestion/datosprueba.cpp   # estructuras y catálogo inicial (los mismos de Gestión)
@@ -152,7 +158,9 @@ if(Qt6Test_FOUND)
         gestion/paginacupones.cpp
         gestion/paginacupones.h
         gestion/paginatarjetas.cpp
+        gestion/paginausuarios.cpp
         gestion/paginatarjetas.h
+        gestion/paginausuarios.h
         gestion/paginaevaluaciones.cpp
         gestion/paginaevaluaciones.h
         ${COMUN})
@@ -202,7 +210,9 @@ if(Qt6Test_FOUND)
         gestion/paginacupones.cpp
         gestion/paginacupones.h
         gestion/paginatarjetas.cpp
+        gestion/paginausuarios.cpp
         gestion/paginatarjetas.h
+        gestion/paginausuarios.h
         gestion/paginaevaluaciones.cpp
         gestion/paginaevaluaciones.h
         ${COMUN})
@@ -216,6 +226,8 @@ if(Qt6Test_FOUND)
     add_executable(prueba_ventanacliente
         pruebas/prueba_ventanacliente.cpp
         cliente/ventanacliente.cpp
+        cliente/dialogocuenta.cpp
+        cliente/dialogocuenta.h
         cliente/ventanacliente.h
         cliente/ventanacliente.ui
         gestion/datosprueba.cpp
@@ -234,6 +246,8 @@ if(Qt6Test_FOUND)
     add_executable(prueba_cliente_base
         pruebas/prueba_cliente_base.cpp
         cliente/ventanacliente.cpp
+        cliente/dialogocuenta.cpp
+        cliente/dialogocuenta.h
         cliente/ventanacliente.h
         cliente/ventanacliente.ui
         gestion/datosprueba.cpp

@@ -15,13 +15,16 @@
 #include <QRandomGenerator>
 #include <QTableWidget>
 #include <QTemporaryDir>
+#include <QTimeEdit>
 #include <QCalendarWidget>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDateEdit>
 
 #include "avisoconexion.h"
+#include "basedatos.h"
 #include "conexionapp.h"
+#include "datosbase.h"
 #include "repositorio.h"
 #include "ventanagestion.h"
 
@@ -29,12 +32,17 @@ namespace {
 
 // Contesta los próximos cuadros de diálogo en orden: a los QInputDialog les escribe la
 // respuesta de la lista y acepta; a los QMessageBox les aprieta Yes u Ok.
-void responderDialogos(QStringList respuestas)
+// Cada llamada nueva deja sin efecto a la anterior (si quedó esperando un cuadro que no apareció).
+int tandaActual = 0;
+
+void contestarTanda(QStringList respuestas, int tanda)
 {
-    QTimer::singleShot(30, [respuestas]() mutable {
+    QTimer::singleShot(30, [respuestas, tanda]() mutable {
+        if (tanda != tandaActual)
+            return;   // ya empezó otra tanda de respuestas
         QWidget *dialogo = QApplication::activeModalWidget();
         if (!dialogo) {
-            responderDialogos(respuestas);   // todavía no apareció: reintenta
+            contestarTanda(respuestas, tanda);   // todavía no apareció: reintenta
             return;
         }
         if (auto *entrada = qobject_cast<QInputDialog *>(dialogo)) {
@@ -49,8 +57,13 @@ void responderDialogos(QStringList respuestas)
                 mensaje->close();
         }
         if (!respuestas.isEmpty() || qobject_cast<QInputDialog *>(dialogo))
-            QTimer::singleShot(50, [respuestas]() { responderDialogos(respuestas); });
+            QTimer::singleShot(50, [respuestas, tanda]() { contestarTanda(respuestas, tanda); });
     });
+}
+
+void responderDialogos(const QStringList &respuestas)
+{
+    contestarTanda(respuestas, ++tandaActual);
 }
 
 }  // namespace
@@ -66,6 +79,33 @@ private slots:
         qputenv("DERMALIA_USUARIO", "recepcion1");
         qputenv("DERMALIA_CLAVE", "dermalia2026");
         QLocale::setDefault(QLocale(QLocale::Spanish, QLocale::Argentina));   // como main.cpp: $30.000
+    }
+
+    // Si no se ingresa con el usuario, la franja avisa que nada va a la base, y con
+    // "Ingresar" se vuelve a pedir el usuario: ahí sí se trabaja con la base.
+    void ventana_sinIngresoAvisaYDejaIngresarDespues()
+    {
+        BaseDatos prueba(ConfigBD::desdeEntorno());
+        if (!prueba.conectar())
+            QSKIP("Sin base de datos (definir DERMALIA_DB_USER, etc.).");
+        qputenv("DERMALIA_CLAVE", "clave-equivocada");
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        w.show();
+        auto *franja = w.findChild<AvisoConexion *>("avisoConexion");
+        QTRY_VERIFY_WITH_TIMEOUT(franja->isVisible(), 5000);
+        QVERIFY(!w.usaBase());
+        QVERIFY2(franja->texto().contains("NO se guarda en la base"), qPrintable(franja->texto()));
+
+        qputenv("DERMALIA_CLAVE", "dermalia2026");
+        QPushButton *ingresar = nullptr;
+        for (QPushButton *b : franja->findChildren<QPushButton *>())
+            if (b->text() == "Ingresar")
+                ingresar = b;
+        QVERIFY(ingresar);
+        ingresar->click();
+        QTRY_VERIFY_WITH_TIMEOUT(w.usaBase(), 5000);
+        QVERIFY(!franja->isVisible());
     }
 
     // Con la base conectada, las pantallas muestran los datos de la base.
@@ -257,6 +297,198 @@ private slots:
         QTest::keyClick(buscar, Qt::Key_Return);
         QCOMPARE(tabla->item(0, 5)->text(), QString("Cancelado"));
         QVERIFY2(tabla->item(0, 6)->text().contains("reembolsada"), qPrintable(tabla->item(0, 6)->text()));
+    }
+
+    // La Terminal (otro programa) reserva y después se cancela en la base: Gestión,
+    // abierta al mismo tiempo, lo muestra sola en pocos segundos, sin tocar nada.
+    void ventana_seActualizaSolaConLosCambiosDeLaBase()
+    {
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        QTest::qWait(1500);
+        if (!w.usaBase())
+            QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
+        BaseDatos base(ConfigBD::desdeEntorno());
+        QVERIFY(base.conectar());
+        Repositorio repo(base);
+
+        // Un horario libre del primer protocolo activo, al menos 3 días adelante.
+        QVector<Protocolo> catalogo;
+        QString error;
+        QVERIFY(DatosBase::cargarProtocolos(repo, catalogo, &error));
+        int idProtocolo = 0;
+        HorarioLibre libre;
+        for (const Protocolo &p : catalogo) {
+            if (!p.activo)
+                continue;
+            for (int d = 3; d <= 30 && idProtocolo == 0; ++d) {
+                const QVector<HorarioLibre> lista = repo.horariosLibres(QDate::currentDate().addDays(d), { p.id });
+                if (!lista.isEmpty()) {
+                    idProtocolo = p.id;
+                    libre = lista.first();
+                }
+            }
+            if (idProtocolo != 0)
+                break;
+        }
+        if (idProtocolo == 0)
+            QSKIP("No hay horarios libres en los próximos 30 días.");
+
+        const QString dni = QString::number(60000000 + int(QRandomGenerator::global()->bounded(9999999)));
+        const Respuesta paciente = repo.altaPaciente(dni, "Desde", "Terminal", QDate(1993, 8, 9), QString(),
+                                                     "1166665555", "terminal");
+        QVERIFY2(paciente.ok, qPrintable(paciente.mensaje));
+        const Respuesta turno = repo.altaTurno(paciente.id, libre.idProfesional, libre.inicio, { idProtocolo }, "terminal");
+        QVERIFY2(turno.ok, qPrintable(turno.mensaje));
+
+        // Aparece en la tabla de turnos de Gestión sin buscar nada.
+        auto *tabla = w.findChild<QTableWidget *>("tablaTurnos");
+        auto filaDelDni = [&] {
+            for (int f = 0; f < tabla->rowCount(); ++f)
+                if (tabla->item(f, 1) && tabla->item(f, 1)->text() == dni)
+                    return f;
+            return -1;
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(filaDelDni() >= 0, 8000);
+
+        // Se cancela desde la Terminal: el estado cambia solo en Gestión.
+        QVERIFY(repo.cancelarTurno(turno.id, "terminal").ok);
+        QTRY_COMPARE_WITH_TIMEOUT(tabla->item(filaDelDni(), 5)->text(), QString("Cancelado"), 8000);
+    }
+
+    // Cada pestaña que carga datos los deja en la base (no solo en la pantalla):
+    // Protocolos (alta y cambio de precio), Pacientes, Profesionales (franja) y Avisos.
+    void ventana_cadaPestaniaGuardaEnLaBase()
+    {
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        QTest::qWait(1500);
+        if (!w.usaBase())
+            QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
+        BaseDatos base(ConfigBD::desdeEntorno());
+        QVERIFY(base.conectar());
+        Repositorio repo(base);
+        QString letras;
+        for (int i = 0; i < 6; ++i)
+            letras += QChar('a' + QRandomGenerator::global()->bounded(26));
+
+        // Protocolos: alta y después cambio de precio.
+        QWidget *protocolos = w.findChild<QWidget *>("pagProtocolos");
+        const QString nombre = "Prueba " + letras;
+        protocolos->findChild<QLineEdit *>("editNombre")->setText(nombre);
+        protocolos->findChild<QLineEdit *>("editPrecio")->setText("50000");
+        protocolos->findChild<QLineEdit *>("editDuracion")->setText("45");
+        responderDialogos({});
+        protocolos->findChild<QPushButton *>("btnGuardar")->click();
+        QVector<ProtocoloBD> enLaBase = repo.listarProtocolos(nombre);
+        QCOMPARE(enLaBase.size(), 1);
+        QCOMPARE(enLaBase.first().precio, 50000);
+        protocolos->findChild<QLineEdit *>("editPrecio")->setText("60000");
+        responderDialogos({});
+        protocolos->findChild<QPushButton *>("btnGuardar")->click();
+        enLaBase = repo.listarProtocolos(nombre);
+        QCOMPARE(enLaBase.first().precio, 60000);
+
+        // Pacientes: alta.
+        QWidget *pacientes = w.findChild<QWidget *>("pagPacientes");
+        const QString dni = QString::number(50000000 + int(QRandomGenerator::global()->bounded(9999999)));
+        pacientes->findChild<QLineEdit *>("editNombrePaciente")->setText("Paciente Pestania");
+        pacientes->findChild<QLineEdit *>("editDniPaciente")->setText(dni);
+        pacientes->findChild<QLineEdit *>("editTelefonoPaciente")->setText("1133332222");
+        pacientes->findChild<QDateEdit *>("editNacimientoPaciente")->setDate(QDate(1988, 4, 12));
+        responderDialogos({});
+        pacientes->findChild<QPushButton *>("btnGuardarPaciente")->click();
+        bool pacienteGuardada = false;
+        for (const QVariantMap &fila : repo.buscarPaciente(dni).filas)
+            pacienteGuardada = pacienteGuardada || fila.value("dni").toString() == dni;
+        QVERIFY(pacienteGuardada);
+
+        // Profesionales: una franja de atención nueva.
+        QWidget *profesionales = w.findChild<QWidget *>("pagProfesionales");
+        profesionales->findChild<QListWidget *>("listaProfesionales")->setCurrentRow(0);
+        const QDate dia = QDate::currentDate().addDays(200 + QRandomGenerator::global()->bounded(300));
+        profesionales->findChild<QDateEdit *>("editDia")->setDate(dia);
+        profesionales->findChild<QTimeEdit *>("editDesde")->setTime(QTime(10, 0));
+        profesionales->findChild<QTimeEdit *>("editHasta")->setTime(QTime(12, 0));
+        profesionales->findChild<QPushButton *>("btnFranja")->click();   // no muestra ningún cartel si sale bien
+        bool franjaGuardada = false;
+        for (const QVariantMap &fila : repo.listarDisponibilidad(dia).filas)
+            franjaGuardada = franjaGuardada || (fila.value("fecha").toString() == dia.toString("yyyy-MM-dd")
+                                                && fila.value("hora_inicio").toString() == "10:00:00");
+        QVERIFY(franjaGuardada);
+
+        // Avisos: un recordatorio pendiente se marca como fallido con un motivo.
+        QWidget *avisos = w.findChild<QWidget *>("pagAvisos");
+        auto *tablaAvisos = avisos->findChild<QTableWidget *>("tablaAvisos");
+        int pendiente = -1;
+        for (int f = 0; f < tablaAvisos->rowCount() && pendiente < 0; ++f)
+            if (tablaAvisos->item(f, 2)->text() == "Pendiente")
+                pendiente = f;
+        if (pendiente >= 0) {
+            tablaAvisos->selectRow(pendiente);
+            const QString motivo = "Prueba de la pestania " + letras;
+            responderDialogos({ motivo });
+            for (QPushButton *b : avisos->findChildren<QPushButton *>())
+                if (b->text() == "Marcar como fallido")
+                    b->click();
+            bool avisoGuardado = false;
+            const QDate hoy = QDate::currentDate();
+            for (const QVariantMap &fila : repo.listarNotificaciones(hoy.addDays(-90), hoy.addDays(90)).filas)
+                avisoGuardado = avisoGuardado || fila.value("detalle_error").toString() == motivo;
+            QVERIFY(avisoGuardado);
+        }
+    }
+
+    // Usuarios: la administración crea un usuario de recepción, que queda en la base y
+    // sirve para ingresar; ese usuario cambia su contraseña. La recepción no puede crear usuarios.
+    void ventana_usuariosSeCreanEnLaBaseYCambianSuClave()
+    {
+        qputenv("DERMALIA_USUARIO", "admin");
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        QTest::qWait(1500);
+        qputenv("DERMALIA_USUARIO", "recepcion1");
+        if (!w.usaBase())
+            QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
+        BaseDatos base(ConfigBD::desdeEntorno());
+        QVERIFY(base.conectar());
+        Repositorio repo(base);
+
+        QWidget *usuarios = w.findChild<QWidget *>("pagUsuarios");
+        auto *tabla = usuarios->findChild<QTableWidget *>("tablaUsuarios");
+        const int antes = tabla->rowCount();
+        QVERIFY(antes >= 3);
+        QVERIFY(usuarios->findChild<QPushButton *>("btnCrearUsuario")->isEnabled());
+
+        QString letras;
+        for (int i = 0; i < 6; ++i)
+            letras += QChar('a' + QRandomGenerator::global()->bounded(26));
+        const QString usuario = "recepcion." + letras;
+        usuarios->findChild<QLineEdit *>("editUsuarioNuevo")->setText(usuario);
+        usuarios->findChild<QLineEdit *>("editEmailUsuario")->setText(usuario + "@dermalia.example");
+        usuarios->findChild<QLineEdit *>("editClaveUsuario")->setText("primera1");
+        usuarios->findChild<QLineEdit *>("editRepetirClave")->setText("primera1");
+        responderDialogos({});
+        usuarios->findChild<QPushButton *>("btnCrearUsuario")->click();
+        QCOMPARE(tabla->rowCount(), antes + 1);
+        const Respuesta ingreso = repo.login(usuario, "primera1", "127.0.0.1", "gestion");
+        QVERIFY2(ingreso.ok, qPrintable(ingreso.mensaje));
+        QCOMPARE(ingreso.dato, QString("recepcion"));
+
+        // Ese usuario ingresa a Gestión: no puede crear usuarios, pero sí cambiar su contraseña.
+        qputenv("DERMALIA_USUARIO", usuario.toUtf8());
+        qputenv("DERMALIA_CLAVE", "primera1");
+        VentanaGestion otra(nullptr, carpeta.filePath("q.json"), true);
+        QTest::qWait(1500);
+        qputenv("DERMALIA_USUARIO", "recepcion1");
+        qputenv("DERMALIA_CLAVE", "dermalia2026");
+        QVERIFY(otra.usaBase());
+        QWidget *suyos = otra.findChild<QWidget *>("pagUsuarios");
+        QVERIFY(!suyos->findChild<QPushButton *>("btnCrearUsuario")->isEnabled());
+        responderDialogos({ "primera1", "segunda2", "segunda2", "" });
+        suyos->findChild<QPushButton *>("btnCambiarClave")->click();
+        QVERIFY(repo.login(usuario, "segunda2", "127.0.0.1", "gestion").ok);
+        QVERIFY(!repo.login(usuario, "primera1", "127.0.0.1", "gestion").ok);
     }
 };
 

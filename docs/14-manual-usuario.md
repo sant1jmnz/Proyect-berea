@@ -5,7 +5,9 @@ instituto) y la **recepción** (en la PC, con el programa de Gestión); la **adm
 consulta reportes y auditoría desde Gestión. Para instalar o mantener el sistema, ver el
 [manual técnico](13-manual-tecnico.md).
 
-> **Con base y sin base.** Con la base de datos conectada, todo lo que se ve sale de la base.
+> **Con base y sin base.** Con la base de datos conectada, todo lo que se ve sale de la base, y
+> Gestión y la terminal se actualizan solas cada 3 segundos: un turno que se saca o se cancela en
+> un programa aparece en el otro sin tocar nada.
 > Si la base no responde, aparece una franja amarilla y los dos programas siguen andando con
 > un archivo local de esta PC (lo comparten Gestión y la terminal). Los turnos que se cargan
 > así se mandan solos a la base cuando vuelve la conexión.
@@ -21,9 +23,29 @@ consulta reportes y auditoría desde Gestión. Para instalar o mantener el siste
 Tres opciones: **Sacar un turno**, **Consultar precios** y **Buscar o cancelar mi turno**.
 Desde cualquier pantalla, el botón **Inicio** de arriba vuelve acá.
 
+### Tu cuenta (opcional)
+
+Arriba a la derecha está **Ingresar**. Sin cuenta se puede sacar turno igual, con el DNI; con
+cuenta, la terminal ya sabe tus datos (no los escribís) y *Buscar mi turno* te muestra tus turnos solo.
+
+![Ingresar](capturas/cliente-06-ingresar.png)
+
+- **Ingresar:** usuario y contraseña. Arriba aparece "Hola, (tu nombre)".
+- **¿No tenés cuenta?** Tocá *Crear una cuenta*: nombre y apellido, DNI, teléfono, fecha de nacimiento,
+  email, usuario y contraseña (dos veces). La cuenta queda guardada en la base y quedás ingresada.
+  Si ya te atendiste en el instituto, usá el mismo DNI y teléfono que diste: si el teléfono no
+  coincide, la terminal te pide que lo actualices en la recepción.
+- **Salir:** tocá "Hola, (tu nombre)" y confirmá. Como la terminal es compartida, si nadie la toca
+  por 3 minutos la sesión se cierra sola.
+- Las cuentas del personal (recepción, administración) no sirven acá: se usan en Gestión.
+
+![Crear una cuenta](capturas/cliente-07-crear-cuenta.png)
+
 ### Sacar un turno (3 pasos)
 
-**1. Elegí tu protocolo.** Tocá el tratamiento: se ve la duración y el precio. *Continuar*.
+**1. Elegí tu protocolo.** Tocá el tratamiento: se ve la duración y el precio. *Ver resumen* muestra
+qué es, cuántas sesiones lleva, la zona, en qué capa de la piel actúa, qué hacer antes y después y
+para quién no es: el mismo resumen que la ficha del sitio web. *Continuar*.
 
 ![Paso 1: elegir el protocolo](capturas/cliente-01-protocolo.png)
 
@@ -53,8 +75,11 @@ Al confirmar ves el código de la seña (`SIM-…`) y el programa te lleva a tu 
 
 ![Buscador de precios](capturas/cliente-04-precios.png)
 
-Escribí el nombre de un tratamiento y aparecen el precio y la duración. Si no encuentra nada,
-ofrece consultar por WhatsApp con el instituto.
+Escribí una palabra (no importan las mayúsculas ni las tildes: "laser" encuentra "láser") y aparecen
+los tratamientos que coinciden, con el precio, la duración y *Ver resumen*. Sin escribir nada se ven
+todos. Si no aparece lo que buscás, *Consultar por WhatsApp* abre WhatsApp con tu consulta.
+
+![Resumen de un tratamiento](capturas/cliente-resumen.png)
 
 ### Buscar o cancelar mi turno
 
@@ -86,6 +111,15 @@ cancelar de una lista; después confirmás.
 Al abrir el programa pide el **usuario y la contraseña** del personal: cada acción queda en el
 registro de auditoría a nombre de quien ingresó. El menú de la izquierda lleva a cada pantalla.
 
+![Ingreso a Gestión](capturas/gestion-00-ingreso.png)
+
+- Con los datos de ejemplo cargados, se puede entrar como `recepcion1` (recepción) o `admin`
+  (administración), las dos con la contraseña `dermalia2026`. En el instituto real hay que cambiarlas
+  (pantalla *Usuarios*, *Cambiar mi contraseña*).
+- No hay registro libre: los usuarios los crea la **administración** (ver *Usuarios*, más abajo).
+- Si se toca *Seguir con datos de prueba*, aparece una franja amarilla avisando que **nada de lo
+  que se cargue va a la base**; con *Ingresar* se vuelve a pedir el usuario.
+
 ### Inicio
 
 ![Inicio de Gestión](capturas/gestion-01-inicio.png)
@@ -112,7 +146,8 @@ regla de las 24 horas).
 ![Protocolos](capturas/gestion-06-protocolos.png)
 
 - **Protocolos:** alta, cambio de precio y duración, y baja. Los turnos ya reservados conservan el
-  precio con el que se sacaron.
+  precio con el que se sacaron. *Ver resumen* muestra la ficha del tratamiento elegido (la misma de la
+  web y de la terminal). El *Buscador de precios* de Gestión es el mismo de la terminal.
 
 ![Profesionales](capturas/gestion-07-profesionales.png)
 
@@ -159,6 +194,17 @@ WhatsApp con *Abrir WhatsApp con el mensaje*.
 - *Vencer las de más de 6 meses*: la tarea del día (normalmente la corre el sistema solo).
 - *Ver solo las que esperan resultado* deja solo las pendientes.
 
+### Usuarios
+
+![Usuarios](capturas/gestion-14-usuarios.png)
+
+- La **administración** crea los usuarios del personal: usuario, email, contraseña y si es de
+  recepción o de administración. El usuario queda guardado en la base, así que sirve para ingresar
+  desde **cualquier PC conectada a esa misma base**.
+- La recepción ve la lista pero no puede crear usuarios.
+- *Cambiar mi contraseña* (cualquiera que ingresó): pide la actual y dos veces la nueva.
+- Los profesionales se dan de alta en *Profesionales*, con su matrícula.
+
 ### Sin conexión
 
 Si aparece la franja amarilla **"sin conexión con la base de datos"**, el programa sigue andando:
@@ -190,7 +236,8 @@ Parámetros y columnas de cada uno: [`12-contrato-sp.md`](12-contrato-sp.md).
 
 ## 5. Preguntas frecuentes
 
-- **¿Puedo reservar sin cuenta?** Sí, con el DNI. La cuenta es opcional y da cupones, avisos e historial.
+- **¿Puedo reservar sin cuenta?** Sí, con el DNI. La cuenta es opcional: se crea en la terminal con
+  *Ingresar* → *Crear una cuenta*, y con ella no hace falta escribir los datos cada vez.
 - **¿Qué es un cupón?** Un descuento personal de un solo uso. Se gana por visitas, por gasto o en
   promociones. Tiene un código y un QR con un token que **cambia cada 5 minutos**: no sirve una
   captura vieja.

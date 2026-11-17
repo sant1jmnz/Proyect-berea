@@ -3,6 +3,7 @@
  * profesionales y qué protocolo hace cada uno. Se corre solo antes de dev y build. */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fichaDe } from '../src/datos/fichas.js';
 
 const raiz = resolve(import.meta.dirname, '..');
 const sql = readFileSync(resolve(raiz, '../backend/02_datos.sql'), 'utf8');
@@ -62,4 +63,18 @@ export const protocolosBase = ${JSON.stringify(protocolos, null, 2)};
 export const profesionalesBase = ${JSON.stringify(profesionales, null, 2)};
 `;
 writeFileSync(resolve(raiz, 'src/datos/catalogo.generado.js'), salida);
+
+/* El mismo resumen de cada tratamiento para las aplicaciones Qt (Gestión y la terminal):
+ * la descripción de la base y la ficha de fichas.js, así los tres muestran lo mismo.
+ * También es el catálogo que usan los programas cuando no hay conexión con la base. */
+const nombreCapa = { epidermis: 'Epidermis', dermis: 'Dermis', hipodermis: 'Hipodermis' };
+const fichasQt = protocolos.map((p) => {
+  const f = fichaDe(p.idBase);
+  return { idBase: p.idBase, idCategoria: categorias.find((c) => c.id === p.categoria).idBase, nombre: p.nombre,
+           descripcion: p.descripcion, precio: p.precio, duracionMin: p.duracionMin, sesiones: f.sesiones, zona: f.zona,
+           capa: nombreCapa[f.capa], preparacion: f.preparacion, despues: f.despues, noApto: f.noApto };
+});
+writeFileSync(resolve(raiz, '../frontend/comun/fichas.generado.json'),
+  JSON.stringify({ aviso: 'GENERADO por web/scripts/generar-catalogo.mjs desde backend/02_datos.sql y web/src/datos/fichas.js. No editar a mano.',
+                   protocolos: fichasQt }, null, 2) + '\n');
 console.log(`Catálogo: ${protocolos.length} protocolos, ${categorias.length} categorías, ${profesionales.length} profesionales.`);

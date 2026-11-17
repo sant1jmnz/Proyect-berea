@@ -8,3 +8,6 @@ build/
 dermalia.ini
 pendientes.json
 __pycache__/
+
+# Secretos locales del sitio (ver web/.env.ejemplo): nunca se suben
+.env

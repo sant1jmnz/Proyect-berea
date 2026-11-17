@@ -35,8 +35,19 @@ void AvisoConexion::mostrarSinConexion(const QString &motivo, int pendientes)
     estaSinConexion = true;
     motivoActual = motivo;
     pendientesActuales = pendientes;
+    btnReintentar->setText("Reintentar");
     btnReintentar->show();
     refrescar();
+    show();
+}
+
+void AvisoConexion::mostrarSinIngreso(const QString &motivo)
+{
+    estaSinConexion = true;
+    lblMensaje->setText("⚠ " + motivo + " Mientras tanto se ven datos de prueba y lo que cargues "
+                        "NO se guarda en la base.");
+    btnReintentar->setText("Ingresar");
+    btnReintentar->show();
     show();
 }
 
@@ -45,6 +56,7 @@ void AvisoConexion::mostrarConectado(int pendientes)
     estaSinConexion = false;
     motivoActual.clear();
     pendientesActuales = pendientes;
+    btnReintentar->setText("Reintentar");
     btnReintentar->hide();
     refrescar();
     setVisible(pendientes > 0);   /* conectado y sin nada pendiente: no hace falta avisar */

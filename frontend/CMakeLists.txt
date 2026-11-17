@@ -83,7 +83,9 @@ add_executable(dermalia_gestion
     gestion/paginacupones.cpp
     gestion/paginacupones.h
     gestion/paginatarjetas.cpp
+    gestion/paginausuarios.cpp
     gestion/paginatarjetas.h
+    gestion/paginausuarios.h
     gestion/paginaevaluaciones.cpp
     gestion/paginaevaluaciones.h
     ${COMUN})
@@ -152,7 +154,9 @@ if(Qt6Test_FOUND)
         gestion/paginacupones.cpp
         gestion/paginacupones.h
         gestion/paginatarjetas.cpp
+        gestion/paginausuarios.cpp
         gestion/paginatarjetas.h
+        gestion/paginausuarios.h
         gestion/paginaevaluaciones.cpp
         gestion/paginaevaluaciones.h
         ${COMUN})
@@ -202,7 +206,9 @@ if(Qt6Test_FOUND)
         gestion/paginacupones.cpp
         gestion/paginacupones.h
         gestion/paginatarjetas.cpp
+        gestion/paginausuarios.cpp
         gestion/paginatarjetas.h
+        gestion/paginausuarios.h
         gestion/paginaevaluaciones.cpp
         gestion/paginaevaluaciones.h
         ${COMUN})

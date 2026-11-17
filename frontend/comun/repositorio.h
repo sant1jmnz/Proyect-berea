@@ -148,6 +148,12 @@ public:
 
     /* ---- evaluación previa de cirugías (RF-25) ---- */
     Resultado listarEvaluaciones(bool soloPendientes);
+
+    /* Usuarios del personal (09_sp_pantallas.sql): solo la administración crea usuarios. */
+    Resultado listarUsuarios();
+    Respuesta altaUsuario(int idAdmin, const QString &usuario, const QString &email, const QString &clave,
+                          const QString &rol, const QString &origen);
+    Respuesta cambiarClave(int idUsuario, const QString &actual, const QString &nueva, const QString &origen);
     Respuesta resolverEvaluacion(int idEvaluacion, const QString &resultado, const QString &observaciones,
                                  const QString &origen, int idUsuario = 0);   /* valor = seña devuelta */
     Respuesta reclamarEvaluacion(int idEvaluacion, const QString &origen, int idUsuario = 0);

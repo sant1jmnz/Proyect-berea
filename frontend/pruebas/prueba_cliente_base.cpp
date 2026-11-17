@@ -6,6 +6,7 @@
 #include <QtTest>
 #include <QApplication>
 #include <QCalendarWidget>
+#include <QDateEdit>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
@@ -201,6 +202,98 @@ private slots:
         for (int id : reservados)
             QVERIFY(repo.cancelarTurno(id, "terminal").ok);
         QTRY_COMPARE_WITH_TIMEOUT(estado->text(), QString("Cancelado"), 8000);
+    }
+
+    // Cuenta de la paciente: se crea desde "Ingresar" (arriba a la derecha), queda en la base,
+    // completa sus datos al sacar turno, se sale y se vuelve a entrar. La cuenta del personal
+    // no sirve en la terminal y no se puede crear una segunda cuenta con el mismo DNI.
+    void terminal_cuentaDeLaPaciente()
+    {
+        BaseDatos base(ConfigBD::desdeEntorno());
+        if (!base.conectar())
+            QSKIP("Sin base de datos (definir DERMALIA_DB_USER, etc.).");
+        Repositorio repo(base);
+
+        VentanaCliente w(nullptr, carpeta.filePath("local3.json"), carpeta.filePath("pendientes3.json"));
+        w.show();
+        QTRY_VERIFY_WITH_TIMEOUT(w.usaBase(), 5000);
+        auto *btnCuenta = w.findChild<QPushButton *>("btnCuenta");
+        QVERIFY(btnCuenta->isVisible());
+        QCOMPARE(btnCuenta->text(), QString("Ingresar"));
+
+        QString letras;
+        for (int i = 0; i < 6; ++i)
+            letras += QChar('a' + QRandomGenerator::global()->bounded(26));
+        const QString usuario = "paciente." + letras;
+        const QString dni = QString::number(30000000 + QRandomGenerator::global()->bounded(9999999));
+
+        // Crear la cuenta (paciente nueva): queda ingresada.
+        QTimer::singleShot(100, [&] {
+            QWidget *d = QApplication::activeModalWidget();
+            d->findChild<QPushButton *>("btnIrACrearCuenta")->click();
+            d->findChild<QLineEdit *>("editNombreCuenta")->setText("Sofía Cuenta");
+            d->findChild<QLineEdit *>("editDniCuenta")->setText(dni);
+            d->findChild<QLineEdit *>("editTelefonoCuenta")->setText("1145678901");
+            d->findChild<QDateEdit *>("editNacimientoCuenta")->setDate(QDate(1992, 3, 4));
+            d->findChild<QLineEdit *>("editEmailCuenta")->setText(usuario + "@correo.example");
+            d->findChild<QLineEdit *>("editNuevoUsuarioCuenta")->setText(usuario);
+            d->findChild<QLineEdit *>("editNuevaClaveCuenta")->setText("miclave1");
+            d->findChild<QLineEdit *>("editRepetirClaveCuenta")->setText("miclave1");
+            d->findChild<QPushButton *>("btnCrearCuenta")->click();
+            if (QApplication::activeModalWidget() == d)   // si no se cerró, la prueba falla abajo
+                d->close();
+        });
+        btnCuenta->click();
+        QVERIFY(w.sesionActual().activa());
+        QCOMPARE(w.sesionActual().dni, dni);
+        QCOMPARE(btnCuenta->text(), QString("Hola, Sofía"));
+        QCOMPARE(w.findChild<QLineEdit *>("editNombre")->text(), QString("Sofía Cuenta"));   // ya no la escribe
+        QCOMPARE(w.findChild<QLineEdit *>("editDni")->text(), dni);
+        const Respuesta enLaBase = repo.login(usuario, "miclave1", QString(), "terminal");
+        QVERIFY2(enLaBase.ok, qPrintable(enLaBase.mensaje));
+        QCOMPARE(enLaBase.dato, QString("paciente"));
+
+        // Salir: se borran sus datos de la pantalla.
+        contestar("Yes");
+        btnCuenta->click();
+        QVERIFY(!w.sesionActual().activa());
+        QCOMPARE(btnCuenta->text(), QString("Ingresar"));
+        QVERIFY(w.findChild<QLineEdit *>("editDni")->text().isEmpty());
+
+        // Otra vez "Ingresar": con la cuenta del personal no deja; con la suya, sí.
+        QString errorPersonal, errorSegunda;
+        QTimer::singleShot(100, [&] {
+            QWidget *d = QApplication::activeModalWidget();
+            d->findChild<QLineEdit *>("editUsuarioCuenta")->setText("recepcion1");
+            d->findChild<QLineEdit *>("editClaveCuenta")->setText("dermalia2026");
+            d->findChild<QPushButton *>("btnIngresarCuenta")->click();
+            errorPersonal = d->findChild<QLabel *>("lblErrorIngreso")->text();
+            // Una segunda cuenta con el mismo DNI no se puede crear.
+            d->findChild<QPushButton *>("btnIrACrearCuenta")->click();
+            d->findChild<QLineEdit *>("editNombreCuenta")->setText("Sofía Cuenta");
+            d->findChild<QLineEdit *>("editDniCuenta")->setText(dni);
+            d->findChild<QLineEdit *>("editTelefonoCuenta")->setText("1145678901");
+            d->findChild<QLineEdit *>("editEmailCuenta")->setText("otra." + usuario + "@correo.example");
+            d->findChild<QLineEdit *>("editNuevoUsuarioCuenta")->setText("otra." + usuario);
+            d->findChild<QLineEdit *>("editNuevaClaveCuenta")->setText("miclave1");
+            d->findChild<QLineEdit *>("editRepetirClaveCuenta")->setText("miclave1");
+            d->findChild<QPushButton *>("btnCrearCuenta")->click();
+            errorSegunda = d->findChild<QLabel *>("lblErrorAlta")->text();
+            d->findChild<QPushButton *>("btnVolverAIngresar")->click();
+            d->findChild<QLineEdit *>("editUsuarioCuenta")->setText(usuario);
+            d->findChild<QLineEdit *>("editClaveCuenta")->setText("miclave1");
+            d->findChild<QPushButton *>("btnIngresarCuenta")->click();
+            if (QApplication::activeModalWidget() == d)
+                d->close();
+        });
+        btnCuenta->click();
+        QVERIFY2(errorPersonal.contains("personal"), qPrintable(errorPersonal));
+        QVERIFY2(errorSegunda.contains("Ya tenés una cuenta"), qPrintable(errorSegunda));
+        QVERIFY(w.sesionActual().activa());
+
+        // "Buscar mi turno" con la cuenta: busca solo por su DNI (no tiene turnos todavía).
+        w.findChild<QPushButton *>("btnMiTurno")->click();
+        QCOMPARE(w.findChild<QLineEdit *>("editBuscarTurno")->text(), dni);
     }
 };
 

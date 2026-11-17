@@ -65,6 +65,17 @@ Respuesta Repositorio::login(const QString &usuario, const QString &clave, const
     return aRespuesta(base.llamar("seguridad.sp_login", { usuario, clave, textoONulo(ip), origen }));
 }
 
+Respuesta Repositorio::cerrarSesion(int idUsuario, const QString &origen)
+{
+    return aRespuesta(base.llamar("seguridad.sp_cerrar_sesion", { idONulo(idUsuario), origen, QVariant() }));
+}
+
+Respuesta Repositorio::crearCuentaPaciente(const QString &dni, const QString &usuario, const QString &email,
+                                           const QString &clave, const QString &origen)
+{
+    return aRespuesta(base.llamar("seguridad.sp_crear_cuenta_paciente", { dni, usuario, email, clave, origen }));
+}
+
 Respuesta Repositorio::altaPaciente(const QString &dni, const QString &nombre, const QString &apellido, const QDate &nacimiento,
                                     const QString &email, const QString &telefono, const QString &origen, int idUsuario)
 {

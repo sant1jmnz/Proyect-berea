@@ -33,11 +33,11 @@ que volver a correr el script y subir los dos archivos generados.
 
 **Cuenta de la paciente (sitio web).** Usa `seguridad.sp_crear_cuenta_paciente` y `seguridad.sp_login`, que ya existían.
 Como `sp_login` compara la contraseña "tal cual", la API del sitio (`web/api/servidor.js`) le manda un **hash**
-(scrypt con el usuario y un pimiento como sal) en lugar de la contraseña: en la base no queda la clave de una
-paciente en texto plano. La sesión es un token firmado (HMAC) de 12 horas. Variables: `DERMALIA_PIMIENTO` (no
-cambiarla una vez que hay cuentas, porque invalidaría las contraseñas) y `DERMALIA_SECRETO` (si falta, las sesiones se
+(scrypt con el usuario y un secreto propio de la API) en lugar de la contraseña: en la base no queda la clave de una
+paciente en texto plano. La sesión es un token firmado (HMAC) de 12 horas. Variables: `DERMALIA_SECRETO_CLAVES` (no
+cambiarlo una vez que hay cuentas, porque invalidaría las contraseñas) y `DERMALIA_SECRETO_SESIONES` (si falta, las sesiones se
 cierran al reiniciar la API). Se guardan en `web/.env` (no se sube a Git; la plantilla es `web/.env.ejemplo`) y
-`npm run api` lo lee solo. Todos los equipos que usen la misma base necesitan el mismo `DERMALIA_PIMIENTO`: se
+`npm run api` lo lee solo. Todos los equipos que usen la misma base necesitan el mismo `DERMALIA_SECRETO_CLAVES`: se
 comparte por un canal privado, nunca en el repositorio. Para quedarse con la cuenta de un DNI que ya existe hay que escribir además el
 teléfono que dejó al reservar. Las cuentas del personal (Gestión) siguen como estaban.
 

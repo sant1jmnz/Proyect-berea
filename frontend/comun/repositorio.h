@@ -133,6 +133,26 @@ public:
     /* Agenda de un período (inclusive en ambos extremos). */
     QVector<TurnoBD> listarTurnos(const QDate &desde, const QDate &hasta);
 
+    /* ---- cupones (RF-17, RF-22) ---- */
+    Resultado listarCupones(const QString &dni);
+    Respuesta emitirCupones(const QString &origen);                      /* valor = cuántos se emitieron */
+    Respuesta tokenCupon(const QString &codigo, int idPaciente);         /* dato = token, valor = segundos que le quedan */
+    Respuesta validarCupon(const QString &codigo, const QString &token, int idPaciente,
+                           const QString &origen, int idUsuario = 0);    /* valor = % de descuento */
+
+    /* ---- tarjetas de regalo (RF-23) ---- */
+    Respuesta comprarTarjeta(double monto, const QString &medioPago, const QString &comprador,
+                             const QString &telefono, const QString &origen, int idUsuario = 0);   /* dato = código */
+    Resultado saldoTarjeta(const QString &codigo, const QString &origen, int idUsuario = 0);
+    Resultado movimientosTarjeta(const QString &codigo);
+
+    /* ---- evaluación previa de cirugías (RF-25) ---- */
+    Resultado listarEvaluaciones(bool soloPendientes);
+    Respuesta resolverEvaluacion(int idEvaluacion, const QString &resultado, const QString &observaciones,
+                                 const QString &origen, int idUsuario = 0);   /* valor = seña devuelta */
+    Respuesta reclamarEvaluacion(int idEvaluacion, const QString &origen, int idUsuario = 0);
+    Respuesta vencerEvaluaciones(const QString &origen);                  /* valor = cuántas vencieron */
+
     /* ---- reportes y auditoría: devuelven las filas tal cual ---- */
     Resultado reporte(const QString &sp, const QDate &desde, const QDate &hasta, const QVariantList &extra = {});
     Resultado auditoria(const QDate &desde, const QDate &hasta, const QString &tipoEvento = QString(),

@@ -88,6 +88,15 @@ cancelar de una lista; después confirmás.
 Al abrir el programa pide el **usuario y la contraseña** del personal: cada acción queda en el
 registro de auditoría a nombre de quien ingresó. El menú de la izquierda lleva a cada pantalla.
 
+![Ingreso a Gestión](capturas/gestion-00-ingreso.png)
+
+- Con los datos de ejemplo cargados, se puede entrar como `recepcion1` (recepción) o `admin`
+  (administración), las dos con la contraseña `dermalia2026`. En el instituto real hay que cambiarlas
+  (pantalla *Usuarios*, *Cambiar mi contraseña*).
+- No hay registro libre: los usuarios los crea la **administración** (ver *Usuarios*, más abajo).
+- Si se toca *Seguir con datos de prueba*, aparece una franja amarilla avisando que **nada de lo
+  que se cargue va a la base**; con *Ingresar* se vuelve a pedir el usuario.
+
 ### Inicio
 
 ![Inicio de Gestión](capturas/gestion-01-inicio.png)
@@ -160,6 +169,17 @@ WhatsApp con *Abrir WhatsApp con el mensaje*.
 - *Registrar reclamo*: para una evaluación vencida que la paciente reclama.
 - *Vencer las de más de 6 meses*: la tarea del día (normalmente la corre el sistema solo).
 - *Ver solo las que esperan resultado* deja solo las pendientes.
+
+### Usuarios
+
+![Usuarios](capturas/gestion-14-usuarios.png)
+
+- La **administración** crea los usuarios del personal: usuario, email, contraseña y si es de
+  recepción o de administración. El usuario queda guardado en la base, así que sirve para ingresar
+  desde **cualquier PC conectada a esa misma base**.
+- La recepción ve la lista pero no puede crear usuarios.
+- *Cambiar mi contraseña* (cualquiera que ingresó): pide la actual y dos veces la nueva.
+- Los profesionales se dan de alta en *Profesionales*, con su matrícula.
 
 ### Sin conexión
 

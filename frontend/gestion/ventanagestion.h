@@ -22,6 +22,7 @@ class ConexionApp;
 class PaginaAvisos;
 class PaginaCupones;
 class PaginaEvaluaciones;
+class PaginaUsuarios;
 class PaginaTarjetas;
 class PaginaPacientes;
 class PaginaReportes;
@@ -100,6 +101,7 @@ private:
     PaginaCupones *paginaCupones = nullptr;
     PaginaTarjetas *paginaTarjetas = nullptr;
     PaginaEvaluaciones *paginaEvaluaciones = nullptr;
+    PaginaUsuarios *paginaUsuarios = nullptr;
     Repositorio *repositorio = nullptr;   /* stored procedures de la base */
     bool persistir = false;               /* true: usa el archivo local */
     QString archivoLocal;

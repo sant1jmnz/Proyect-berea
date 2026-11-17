@@ -763,6 +763,66 @@ SELECT ((SELECT r.nombre FROM seguridad.Usuario u JOIN seguridad.Rol r ON r.id_r
 -- @espera verdadero
 SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'cuenta_creada' AND l.id_paciente = @pacA AND l.exitoso = 1) = 1) AS verificacion;
 
+-- @caso sp_alta_usuario.1 | Éxito | La administración (usuario 1) crea un usuario de recepción, que después puede ingresar
+-- @espera ok
+CALL seguridad.sp_alta_usuario(1, 'recepcion.prueba', 'recepcion.prueba@test.example', 'secreta1', 'recepcion', 'gestion');
+-- @espera ok
+CALL seguridad.sp_login('recepcion.prueba', 'secreta1', '10.0.0.9', 'gestion');
+
+-- @caso sp_alta_usuario.2 | Sin coincidencias | Lo pide alguien que no es de la administración (52014), rol que no es del personal (52015), usuario repetido (52025)
+-- @espera error 52014
+CALL seguridad.sp_alta_usuario(2, 'otra.recepcion', 'otra.recepcion@test.example', 'secreta1', 'recepcion', 'gestion');
+-- @espera error 52015
+CALL seguridad.sp_alta_usuario(1, 'otra.recepcion', 'otra.recepcion@test.example', 'secreta1', 'paciente', 'gestion');
+-- @espera error 52025
+CALL seguridad.sp_alta_usuario(1, 'recepcion.prueba', 'distinto@test.example', 'secreta1', 'recepcion', 'gestion');
+
+-- @caso sp_alta_usuario.3 | Nulos y límites | Administrador NULL, usuario de 3 letras, email corto y contraseña de 5 caracteres
+-- @espera error 52014
+CALL seguridad.sp_alta_usuario(NULL, 'otra.recepcion', 'otra.recepcion@test.example', 'secreta1', 'recepcion', 'gestion');
+-- @espera error 52022
+CALL seguridad.sp_alta_usuario(1, 'abc', 'otra.recepcion@test.example', 'secreta1', 'recepcion', 'gestion');
+-- @espera error 52023
+CALL seguridad.sp_alta_usuario(1, 'otra.recepcion', 'a@b', 'secreta1', 'recepcion', 'gestion');
+-- @espera error 52016
+CALL seguridad.sp_alta_usuario(1, 'otra.recepcion', 'otra.recepcion@test.example', '12345', 'recepcion', 'gestion');
+
+-- @caso sp_alta_usuario.4 | Consistencia | El usuario nuevo tiene rol recepcion, aparece en sp_listar_usuarios y el alta está en el log
+-- @espera verdadero
+SELECT ((SELECT r.nombre FROM seguridad.Usuario u JOIN seguridad.Rol r ON r.id_rol = u.id_rol WHERE u.nombre_usuario = 'recepcion.prueba') = 'recepcion') AS verificacion;
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'alta_usuario' AND l.exitoso = 1 AND l.id_usuario = 1) = 1) AS verificacion;
+
+-- @caso sp_listar_usuarios.1 | Éxito | Lista el personal: los 24 cargados hasta acá más el de la prueba anterior, sin cuentas de pacientes
+-- @espera filas 25
+CALL seguridad.sp_listar_usuarios();
+
+-- @caso sp_cambiar_clave.1 | Éxito | El usuario de la prueba cambia su contraseña y ingresa con la nueva
+-- @espera ok
+CALL seguridad.sp_cambiar_clave((SELECT id_usuario FROM seguridad.Usuario WHERE nombre_usuario = 'recepcion.prueba'), 'secreta1', 'nueva.clave', 'gestion');
+-- @espera ok
+CALL seguridad.sp_login('recepcion.prueba', 'nueva.clave', '10.0.0.9', 'gestion');
+
+-- @caso sp_cambiar_clave.2 | Sin coincidencias | Contraseña actual equivocada (52017) y usuario que no existe (52013)
+-- @espera error 52017
+CALL seguridad.sp_cambiar_clave(2, 'no-es-esta', 'otra.clave', 'gestion');
+-- @espera error 52013
+CALL seguridad.sp_cambiar_clave(99999, 'dermalia2026', 'otra.clave', 'gestion');
+
+-- @caso sp_cambiar_clave.3 | Nulos y límites | Usuario NULL, contraseña actual NULL y contraseña nueva de 5 caracteres
+-- @espera error 52013
+CALL seguridad.sp_cambiar_clave(NULL, 'dermalia2026', 'otra.clave', 'gestion');
+-- @espera error 52017
+CALL seguridad.sp_cambiar_clave(2, NULL, 'otra.clave', 'gestion');
+-- @espera error 52016
+CALL seguridad.sp_cambiar_clave(2, 'dermalia2026', '12345', 'gestion');
+
+-- @caso sp_cambiar_clave.4 | Consistencia | La contraseña vieja ya no sirve y el cambio está en el log
+-- @espera error 52011
+CALL seguridad.sp_login('recepcion.prueba', 'secreta1', '10.0.0.9', 'gestion');
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'cambio_clave' AND l.exitoso = 1) = 1) AS verificacion;
+
 -- ======================================================================
 -- F. PACIENTES
 -- ======================================================================
@@ -2032,13 +2092,13 @@ SELECT ((SELECT COUNT(*) FROM notificaciones.Notificacion n WHERE n.id_turno IS 
 -- P. AUDITORÍA (al final: ya hay mucha actividad en el log)
 -- ======================================================================
 
--- @caso sp_reporte_auditoria.1 | Éxito | Los inicios de sesión del día (2 reales y 2 que escribió la prueba del log)
+-- @caso sp_reporte_auditoria.1 | Éxito | Los inicios de sesión del día (2 reales, 2 que escribió la prueba del log y 2 de las pruebas de usuarios)
 CALL auditoria.sp_reporte_auditoria('2026-11-03', '2026-11-03', 'inicio_sesion', NULL, NULL, NULL, NULL);
 SELECT COUNT(*) INTO @n_ini FROM auditoria.Log l JOIN auditoria.TipoEvento t ON t.id_tipo_evento = l.id_tipo_evento WHERE t.nombre = 'inicio_sesion' AND DATE(l.fecha_hora) = '2026-11-03';
--- @espera filas 4
+-- @espera filas 6
 CALL auditoria.sp_reporte_auditoria('2026-11-03', '2026-11-03', 'inicio_sesion', NULL, NULL, NULL, NULL);
 -- @espera verdadero
-SELECT (@n_ini = 4) AS verificacion;
+SELECT (@n_ini = 6) AS verificacion;
 
 -- @caso sp_reporte_auditoria.2 | Sin coincidencias | Un rango en el pasado y un usuario inexistente: 0 filas
 -- @espera vacio

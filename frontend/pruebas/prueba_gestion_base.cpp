@@ -32,12 +32,17 @@ namespace {
 
 // Contesta los próximos cuadros de diálogo en orden: a los QInputDialog les escribe la
 // respuesta de la lista y acepta; a los QMessageBox les aprieta Yes u Ok.
-void responderDialogos(QStringList respuestas)
+// Cada llamada nueva deja sin efecto a la anterior (si quedó esperando un cuadro que no apareció).
+int tandaActual = 0;
+
+void contestarTanda(QStringList respuestas, int tanda)
 {
-    QTimer::singleShot(30, [respuestas]() mutable {
+    QTimer::singleShot(30, [respuestas, tanda]() mutable {
+        if (tanda != tandaActual)
+            return;   // ya empezó otra tanda de respuestas
         QWidget *dialogo = QApplication::activeModalWidget();
         if (!dialogo) {
-            responderDialogos(respuestas);   // todavía no apareció: reintenta
+            contestarTanda(respuestas, tanda);   // todavía no apareció: reintenta
             return;
         }
         if (auto *entrada = qobject_cast<QInputDialog *>(dialogo)) {
@@ -52,8 +57,13 @@ void responderDialogos(QStringList respuestas)
                 mensaje->close();
         }
         if (!respuestas.isEmpty() || qobject_cast<QInputDialog *>(dialogo))
-            QTimer::singleShot(50, [respuestas]() { responderDialogos(respuestas); });
+            QTimer::singleShot(50, [respuestas, tanda]() { contestarTanda(respuestas, tanda); });
     });
+}
+
+void responderDialogos(const QStringList &respuestas)
+{
+    contestarTanda(respuestas, ++tandaActual);
 }
 
 }  // namespace
@@ -427,6 +437,58 @@ private slots:
                 avisoGuardado = avisoGuardado || fila.value("detalle_error").toString() == motivo;
             QVERIFY(avisoGuardado);
         }
+    }
+
+    // Usuarios: la administración crea un usuario de recepción, que queda en la base y
+    // sirve para ingresar; ese usuario cambia su contraseña. La recepción no puede crear usuarios.
+    void ventana_usuariosSeCreanEnLaBaseYCambianSuClave()
+    {
+        qputenv("DERMALIA_USUARIO", "admin");
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        QTest::qWait(1500);
+        qputenv("DERMALIA_USUARIO", "recepcion1");
+        if (!w.usaBase())
+            QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
+        BaseDatos base(ConfigBD::desdeEntorno());
+        QVERIFY(base.conectar());
+        Repositorio repo(base);
+
+        QWidget *usuarios = w.findChild<QWidget *>("pagUsuarios");
+        auto *tabla = usuarios->findChild<QTableWidget *>("tablaUsuarios");
+        const int antes = tabla->rowCount();
+        QVERIFY(antes >= 3);
+        QVERIFY(usuarios->findChild<QPushButton *>("btnCrearUsuario")->isEnabled());
+
+        QString letras;
+        for (int i = 0; i < 6; ++i)
+            letras += QChar('a' + QRandomGenerator::global()->bounded(26));
+        const QString usuario = "recepcion." + letras;
+        usuarios->findChild<QLineEdit *>("editUsuarioNuevo")->setText(usuario);
+        usuarios->findChild<QLineEdit *>("editEmailUsuario")->setText(usuario + "@dermalia.example");
+        usuarios->findChild<QLineEdit *>("editClaveUsuario")->setText("primera1");
+        usuarios->findChild<QLineEdit *>("editRepetirClave")->setText("primera1");
+        responderDialogos({});
+        usuarios->findChild<QPushButton *>("btnCrearUsuario")->click();
+        QCOMPARE(tabla->rowCount(), antes + 1);
+        const Respuesta ingreso = repo.login(usuario, "primera1", "127.0.0.1", "gestion");
+        QVERIFY2(ingreso.ok, qPrintable(ingreso.mensaje));
+        QCOMPARE(ingreso.dato, QString("recepcion"));
+
+        // Ese usuario ingresa a Gestión: no puede crear usuarios, pero sí cambiar su contraseña.
+        qputenv("DERMALIA_USUARIO", usuario.toUtf8());
+        qputenv("DERMALIA_CLAVE", "primera1");
+        VentanaGestion otra(nullptr, carpeta.filePath("q.json"), true);
+        QTest::qWait(1500);
+        qputenv("DERMALIA_USUARIO", "recepcion1");
+        qputenv("DERMALIA_CLAVE", "dermalia2026");
+        QVERIFY(otra.usaBase());
+        QWidget *suyos = otra.findChild<QWidget *>("pagUsuarios");
+        QVERIFY(!suyos->findChild<QPushButton *>("btnCrearUsuario")->isEnabled());
+        responderDialogos({ "primera1", "segunda2", "segunda2", "" });
+        suyos->findChild<QPushButton *>("btnCambiarClave")->click();
+        QVERIFY(repo.login(usuario, "segunda2", "127.0.0.1", "gestion").ok);
+        QVERIFY(!repo.login(usuario, "primera1", "127.0.0.1", "gestion").ok);
     }
 };
 

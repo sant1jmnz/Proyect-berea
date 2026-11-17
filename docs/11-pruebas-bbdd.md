@@ -4,7 +4,7 @@ Pruebas funcionales de los **stored procedures** de Dermalia, con el formato que
 pide la consigna (`docs/consigna-bbdd.md`, punto 6b) y la plantilla de la cátedra
 (`docs/catedra/semana-3-casos-de-prueba-funcional.md`).
 
-**Resultado: 230 casos, 230 aprobados, 0 con fallas** (MySQL 8.0.46, base
+**Resultado: 239 casos, 239 aprobados, 0 con fallas** (MySQL 8.0.46, base
 recién cargada con `backend/01` a `06` y `09`).
 
 ## Cómo se corren
@@ -91,7 +91,7 @@ regla y de notificación, resultado de evaluación) tienen los valores que defin
 (entre 3 y 5), no 20: no tendría sentido inventar estados. Conviene confirmar este criterio con el
 docente.
 
-## Detalle de los 230 casos
+## Detalle de los 239 casos
 
 | Caso | Tipo | Descripción | Resultado |
 |---|---|---|---|
@@ -163,6 +163,15 @@ docente.
 | sp_crear_cuenta_paciente.2 | Sin coincidencias | DNI inexistente (52020), cuenta ya creada (52021), usuario o email repetidos (52025) | OK |
 | sp_crear_cuenta_paciente.3 | Nulos y límites | DNI NULL, usuario de menos de 4 letras, email de menos de 5 letras y contraseña vacía | OK |
 | sp_crear_cuenta_paciente.4 | Consistencia | El usuario nuevo tiene rol paciente, la paciente quedó vinculada y el alta está en el log | OK |
+| sp_alta_usuario.1 | Éxito | La administración (usuario 1) crea un usuario de recepción, que después puede ingresar | OK |
+| sp_alta_usuario.2 | Sin coincidencias | Lo pide alguien que no es de la administración (52014), rol que no es del personal (52015), usuario repetido (52025) | OK |
+| sp_alta_usuario.3 | Nulos y límites | Administrador NULL, usuario de 3 letras, email corto y contraseña de 5 caracteres | OK |
+| sp_alta_usuario.4 | Consistencia | El usuario nuevo tiene rol recepcion, aparece en sp_listar_usuarios y el alta está en el log | OK |
+| sp_listar_usuarios.1 | Éxito | Lista el personal: los 24 cargados hasta acá más el de la prueba anterior, sin cuentas de pacientes | OK |
+| sp_cambiar_clave.1 | Éxito | El usuario de la prueba cambia su contraseña y ingresa con la nueva | OK |
+| sp_cambiar_clave.2 | Sin coincidencias | Contraseña actual equivocada (52017) y usuario que no existe (52013) | OK |
+| sp_cambiar_clave.3 | Nulos y límites | Usuario NULL, contraseña actual NULL y contraseña nueva de 5 caracteres | OK |
+| sp_cambiar_clave.4 | Consistencia | La contraseña vieja ya no sirve y el cambio está en el log | OK |
 | sp_alta_paciente.1 | Éxito | Alta con todos los datos válidos: queda la paciente y su teléfono | OK |
 | sp_alta_paciente.2 | Sin coincidencias | DNI repetido: error 52035 y no se crea otra fila | OK |
 | sp_alta_paciente.3 | Nulos y límites | DNI NULL o de 6 y 9 dígitos, nombre de 1 letra, teléfono corto, fecha futura, email de menos de 5 letras | OK |
@@ -321,7 +330,7 @@ docente.
 | sp_listar_notificaciones.2 | Sin coincidencias | Un rango sin avisos: 0 filas | OK |
 | sp_listar_notificaciones.3 | Nulos y límites | Fechas NULL o invertidas: 0 filas | OK |
 | sp_listar_notificaciones.4 | Consistencia | Cada aviso trae su turno cuando lo tiene | OK |
-| sp_reporte_auditoria.1 | Éxito | Los inicios de sesión del día (2 reales y 2 que escribió la prueba del log) | OK |
+| sp_reporte_auditoria.1 | Éxito | Los inicios de sesión del día (2 reales, 2 que escribió la prueba del log y 2 de las pruebas de usuarios) | OK |
 | sp_reporte_auditoria.2 | Sin coincidencias | Un rango en el pasado y un usuario inexistente: 0 filas | OK |
 | sp_reporte_auditoria.3 | Nulos y límites | Fechas NULL o rango invertido: 0 filas; el último día se incluye completo | OK |
 | sp_reporte_auditoria.4 | Consistencia | Los filtros coinciden con un SELECT directo: solo fallos del tipo "intento_fallido" desde la web | OK |
@@ -333,8 +342,8 @@ Además de los casos de SQL, las aplicaciones se prueban contra el MySQL real (s
 | Prueba | Qué recorre |
 |---|---|
 | `frontend/pruebas/prueba_base.cpp` | La capa `Repositorio`: catálogo, ingreso, paciente nueva, horario libre, turno, seña, búsqueda y cancelación con reembolso |
-| `frontend/pruebas/prueba_gestion_base.cpp` | La ventana de Gestión conectada: lee los datos, carga un turno con seña (diálogos incluidos), lo busca y lo cancela; las pantallas Reportes, Cupones, Tarjetas de regalo y Consultas previas; y la sincronización de la contingencia |
-| `frontend/pruebas/prueba_cliente_base.cpp` | La terminal (`dermalia_cliente`): protocolo y horario de la base, alta de una paciente nueva, reserva con seña simulada, búsqueda por DNI y cancelación |
+| `frontend/pruebas/prueba_gestion_base.cpp` | La ventana de Gestión conectada: lee los datos, carga un turno con seña (diálogos incluidos), lo busca y lo cancela; las pantallas Reportes, Cupones, Tarjetas de regalo y Consultas previas; que cada pestaña (Protocolos, Pacientes, Profesionales, Avisos) guarde en la base; la pantalla Usuarios (la administración crea un usuario, ese usuario ingresa y cambia su contraseña); el aviso cuando no se ingresó con usuario; que se actualice sola cuando otro programa cambia la base; y la sincronización de la contingencia |
+| `frontend/pruebas/prueba_cliente_base.cpp` | La terminal (`dermalia_cliente`): protocolo y horario de la base, alta de una paciente nueva, reserva con seña simulada, búsqueda por DNI y cancelación; y que se actualice sola cuando Gestión carga o cancela turnos |
 | `web/api/servidor.test.js` | La API del sitio: catálogo, horarios, reserva (con y sin fecha de nacimiento), superposición rechazada, búsqueda y cancelación |
 | Recorrido en navegador (Playwright) | Reservar en el sitio, verlo en "Mi turno" y cancelarlo: la base queda con el turno cancelado y la seña reembolsada |
 

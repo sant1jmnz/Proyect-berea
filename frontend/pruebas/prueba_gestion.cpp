@@ -374,8 +374,8 @@ private slots:
         auto *menu = w.findChild<QListWidget *>("menu");
         auto *paginas = w.findChild<QStackedWidget *>("paginas");
         QVERIFY(menu && paginas);
-        QCOMPARE(menu->count(), 12);       // ...Avisos, Cupones, Tarjetas, Consultas previas y Reportes
-        QCOMPARE(paginas->count(), 14);
+        QCOMPARE(menu->count(), 13);       // ...Avisos, Cupones, Tarjetas, Consultas previas, Reportes y Usuarios
+        QCOMPARE(paginas->count(), 15);
         for (int fila = 0; fila < menu->count(); ++fila) {   // cada opción del menú abre su pantalla
             menu->setCurrentRow(fila);
             QVERIFY2(paginas->currentWidget() != nullptr, qPrintable(menu->item(fila)->text()));

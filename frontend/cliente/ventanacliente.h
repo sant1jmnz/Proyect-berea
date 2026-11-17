@@ -8,6 +8,8 @@
 
 #include "datosprueba.h"
 
+#include "dialogocuenta.h"
+
 #include <QMainWindow>
 #include <QVector>
 
@@ -17,6 +19,7 @@ class Repositorio;
 
 namespace Ui { class VentanaCliente; }
 
+class QPushButton;
 class QTimer;
 
 class VentanaCliente : public QMainWindow
@@ -33,6 +36,11 @@ public:
     const QVector<Turno> &turnosCargados() const { return turnos; }
     bool usaBase() const { return enModoBase; }
     ConexionApp *conexionApp() const { return conexion; }
+    const SesionPaciente &sesionActual() const { return sesion; }
+
+protected:
+    /* Cualquier toque reinicia el tiempo de la sesión de la paciente. */
+    bool eventFilter(QObject *objeto, QEvent *evento) override;
 
 private:
     void irA(int pagina);
@@ -63,6 +71,12 @@ private:
     bool confirmarEnBase(const Protocolo *p, const QDateTime &inicio);
     bool buscarOCrearPaciente(int *idPaciente);
 
+    /* Cuenta de la paciente (opcional) */
+    void tocarCuenta();
+    void empezarSesion(const SesionPaciente &nueva);
+    void cerrarSesion();
+    void completarConLaCuenta();   /* nombre, DNI y teléfono de la cuenta en el paso 3 y en "mi turno" */
+
     Ui::VentanaCliente *ui;
     QVector<Protocolo> protocolos;
     QVector<int> protocolosVisibles;   /* fila de la lista → índice en `protocolos` */
@@ -79,6 +93,9 @@ private:
     Repositorio *repositorio = nullptr;
     bool enModoBase = false;           /* true: los datos salen de la base */
     QTimer *relojBase = nullptr;
+    QPushButton *btnCuenta = nullptr;  /* arriba a la derecha: "Ingresar" o "Hola, María" */
+    SesionPaciente sesion;
+    QTimer *relojSesion = nullptr;     /* la terminal es compartida: sin tocar nada, la sesión se cierra */
     QString resumenAgenda;             /* para saber si los turnos de la base cambiaron */
 };
 

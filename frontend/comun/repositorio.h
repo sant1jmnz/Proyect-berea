@@ -82,6 +82,10 @@ public:
 
     /* ---- seguridad ---- */
     Respuesta login(const QString &usuario, const QString &clave, const QString &ip, const QString &origen);
+    Respuesta cerrarSesion(int idUsuario, const QString &origen);
+    /* Cuenta opcional de la paciente (RF-15): se vincula con su DNI. */
+    Respuesta crearCuentaPaciente(const QString &dni, const QString &usuario, const QString &email,
+                                  const QString &clave, const QString &origen);
 
     /* ---- pacientes ---- */
     Respuesta altaPaciente(const QString &dni, const QString &nombre, const QString &apellido, const QDate &nacimiento,

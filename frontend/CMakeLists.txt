@@ -100,6 +100,8 @@ con_mysql(dermalia_gestion)
 add_executable(dermalia_cliente
     cliente/main.cpp
     cliente/ventanacliente.cpp
+    cliente/dialogocuenta.cpp
+    cliente/dialogocuenta.h
     cliente/ventanacliente.h
     cliente/ventanacliente.ui
     gestion/datosprueba.cpp   # estructuras y catálogo inicial (los mismos de Gestión)
@@ -224,6 +226,8 @@ if(Qt6Test_FOUND)
     add_executable(prueba_ventanacliente
         pruebas/prueba_ventanacliente.cpp
         cliente/ventanacliente.cpp
+        cliente/dialogocuenta.cpp
+        cliente/dialogocuenta.h
         cliente/ventanacliente.h
         cliente/ventanacliente.ui
         gestion/datosprueba.cpp
@@ -242,6 +246,8 @@ if(Qt6Test_FOUND)
     add_executable(prueba_cliente_base
         pruebas/prueba_cliente_base.cpp
         cliente/ventanacliente.cpp
+        cliente/dialogocuenta.cpp
+        cliente/dialogocuenta.h
         cliente/ventanacliente.h
         cliente/ventanacliente.ui
         gestion/datosprueba.cpp

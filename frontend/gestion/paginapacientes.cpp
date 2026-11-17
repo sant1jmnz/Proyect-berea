@@ -105,19 +105,24 @@ PaginaPacientes::PaginaPacientes(QVector<Paciente> *pacientes, QWidget *parent)
     auto *formIzq = new QFormLayout;
     auto *formDer = new QFormLayout;
     editNombre = new QLineEdit;
+    editNombre->setObjectName("editNombrePaciente");
     editNombre->setPlaceholderText("Nombre y apellido");
     editNombre->setMaxLength(60);
     editNombre->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));   // sin números ni símbolos
     editDni = new QLineEdit;
+    editDni->setObjectName("editDniPaciente");
     editDni->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{0,8}"), this));
     editTelefono = new QLineEdit;
+    editTelefono->setObjectName("editTelefonoPaciente");
     editTelefono->setPlaceholderText("11 5555-0102");
     editTelefono->setValidator(new QRegularExpressionValidator(QRegularExpression("\\+?[\\d \\-()]{0,20}"), this));
     editEmail = new QLineEdit;
+    editEmail->setObjectName("editEmailPaciente");
     editEmail->setPlaceholderText("Opcional");
     editEmail->setMaxLength(100);
     editEmail->setValidator(new QRegularExpressionValidator(Validaciones::filtroEmail(), this));   // sin espacios
     editNacimiento = new QDateEdit(QDate(1990, 1, 1));
+    editNacimiento->setObjectName("editNacimientoPaciente");
     editNacimiento->setCalendarPopup(true);
     editNacimiento->setMaximumDate(QDate::currentDate().addDays(-1));
     editNacimiento->setMinimumDate(QDate::currentDate().addYears(-120));
@@ -138,6 +143,7 @@ PaginaPacientes::PaginaPacientes(QVector<Paciente> *pacientes, QWidget *parent)
 
     auto *botones = new QHBoxLayout;
     auto *btnGuardar = new QPushButton("Guardar");
+    btnGuardar->setObjectName("btnGuardarPaciente");
     btnGuardar->setProperty("primario", true);
     auto *btnNueva = new QPushButton("Nueva paciente");
     btnTurno = new QPushButton("Cargar turno para esta paciente");

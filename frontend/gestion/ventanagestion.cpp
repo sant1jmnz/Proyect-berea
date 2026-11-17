@@ -10,6 +10,7 @@
 #include "paginacupones.h"
 #include "paginaevaluaciones.h"
 #include "paginatarjetas.h"
+#include "paginausuarios.h"
 #include "paginapacientes.h"
 #include "paginaprofesionales.h"
 #include "paginaprotocolos.h"
@@ -38,13 +39,13 @@
 enum Pagina { PagInicio, PagProtocolo, PagHorario, PagConfirmar, PagBuscador, PagBuscarTurnos,
               /* se agregan por código en armarPantallasNuevas() */
               PagProtocolos, PagProfesionales, PagPacientes, PagAvisos, PagCupones, PagTarjetas,
-              PagEvaluaciones, PagReportes };
+              PagEvaluaciones, PagReportes, PagUsuarios };
 
 /* A qué página lleva cada fila del menú lateral. Los pasos 2 y 3 no están
  * en el menú: se llega con "Continuar". */
 static const int paginaDeMenu[] = { PagInicio, PagProtocolo, PagBuscador, PagBuscarTurnos,
                                     PagProtocolos, PagProfesionales, PagPacientes, PagAvisos, PagCupones,
-                                    PagTarjetas, PagEvaluaciones, PagReportes };
+                                    PagTarjetas, PagEvaluaciones, PagReportes, PagUsuarios };
 enum { MenuCargarTurno = 1, MenuBuscarTurnos = 3, MenuPacientes = 6 };
 /* Columnas de `tablaTurnos`. */
 enum { ColPaciente, ColDni, ColTelefono, ColProtocolo, ColFecha, ColEstado, ColSena };
@@ -247,7 +248,7 @@ void VentanaGestion::sincronizarLocal()
 void VentanaGestion::armarPantallasNuevas()
 {
     for (const char *texto : { "Protocolos", "Profesionales", "Pacientes", "Avisos", "Cupones",
-                               "Tarjetas de regalo", "Consultas previas", "Reportes" })
+                               "Tarjetas de regalo", "Consultas previas", "Reportes", "Usuarios" })
         ui->menu->addItem(texto);
 
     paginaProtocolos = new PaginaProtocolos(&protocolos);
@@ -258,6 +259,8 @@ void VentanaGestion::armarPantallasNuevas()
     paginaTarjetas = new PaginaTarjetas;
     paginaEvaluaciones = new PaginaEvaluaciones;
     paginaReportes = new PaginaReportes;
+    paginaUsuarios = new PaginaUsuarios;
+    paginaUsuarios->setObjectName("pagUsuarios");
     paginaReportes->setObjectName("pagReportes");
     paginaProtocolos->setObjectName("pagProtocolos");
     paginaProfesionales->setObjectName("pagProfesionales");
@@ -269,7 +272,8 @@ void VentanaGestion::armarPantallasNuevas()
     for (QWidget *pagina : { static_cast<QWidget *>(paginaProtocolos), static_cast<QWidget *>(paginaProfesionales),
                              static_cast<QWidget *>(paginaPacientes), static_cast<QWidget *>(paginaAvisos),
                              static_cast<QWidget *>(paginaCupones), static_cast<QWidget *>(paginaTarjetas),
-                             static_cast<QWidget *>(paginaEvaluaciones), static_cast<QWidget *>(paginaReportes) })
+                             static_cast<QWidget *>(paginaEvaluaciones), static_cast<QWidget *>(paginaReportes),
+                             static_cast<QWidget *>(paginaUsuarios) })
         ui->paginas->addWidget(pagina);   /* quedan en el orden de Pagina */
 
     connect(paginaProtocolos, &PaginaProtocolos::cambiaron, this, &VentanaGestion::protocolosCambiaron);
@@ -764,6 +768,7 @@ void VentanaGestion::cargarDesdeBase()
     enModoBase = true;
     franja->hide();
     ui->lblUsuario->setText(rolUsuario == "administrador" ? "Administración" : "Recepción");
+    ui->avatarUsuario->setText(rolUsuario == "administrador" ? "A" : "R");
     paginaProtocolos->usarBase(repositorio, idUsuario);
     paginaProfesionales->usarBase(repositorio, idUsuario);
     paginaPacientes->usarBase(repositorio, idUsuario);
@@ -772,6 +777,7 @@ void VentanaGestion::cargarDesdeBase()
     paginaCupones->usarBase(repositorio, idUsuario);
     paginaTarjetas->usarBase(repositorio, idUsuario);
     paginaEvaluaciones->usarBase(repositorio, idUsuario);
+    paginaUsuarios->usarBase(repositorio, idUsuario, rolUsuario);
 
     cargarProtocolos();
     paginaProtocolos->recargar();

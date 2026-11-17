@@ -3287,7 +3287,7 @@ DELIMITER ;
 -- Origen: 09_sp_pantallas.sql
 -- ---------------------------------------------------------------------
 
--- Dermalia: stored procedures para las pantallas de Cupones y de Consultas previas (MySQL 8).
+-- Dermalia: stored procedures para las pantallas de Cupones, Consultas previas y Usuarios (MySQL 8).
 -- Se corre después de 04_sp_semana4.sql:
 --   mysql -u root -p < backend/09_sp_pantallas.sql
 --
@@ -3366,6 +3366,150 @@ BEGIN
         OR e.id_resultado IS NULL
         OR r.nombre = 'pendiente'
      ORDER BY t.fecha_hora_inicio DESC;
+END//
+
+-- =============================================================================
+-- Usuarios del personal (pantalla Usuarios de Gestión).
+-- No hay registro libre: el personal entra a los datos de las pacientes, así que
+-- solo la administración crea usuarios. Cada uno queda en la base y sirve para
+-- ingresar desde cualquier PC conectada a esa base.
+-- =============================================================================
+
+-- Lista el personal (no las cuentas de pacientes). activo = 1 si puede ingresar.
+DROP PROCEDURE IF EXISTS seguridad.sp_listar_usuarios//
+CREATE PROCEDURE seguridad.sp_listar_usuarios()
+BEGIN
+    DECLARE codigo_error INT DEFAULT 0;
+    DECLARE mensaje_error VARCHAR(255) DEFAULT '';
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1
+            codigo_error = MYSQL_ERRNO,
+            mensaje_error = MESSAGE_TEXT;
+        SELECT 'ERROR' AS estado, codigo_error AS codigo, mensaje_error AS mensaje;
+    END;
+
+    SELECT u.id_usuario, u.nombre_usuario, u.email, r.nombre AS rol, u.activo, u.fecha_creacion
+      FROM seguridad.Usuario u
+      INNER JOIN seguridad.Rol r ON u.id_rol = r.id_rol
+     WHERE r.nombre <> 'paciente'
+     ORDER BY r.nombre, u.nombre_usuario;
+END//
+
+-- Alta de un usuario del personal. p_id_admin es quien lo crea: tiene que ser
+-- un usuario activo con rol administrador. p_rol: 'recepcion' o 'administrador'
+-- (los profesionales se dan de alta en la pantalla Profesionales, con su matrícula).
+DROP PROCEDURE IF EXISTS seguridad.sp_alta_usuario//
+CREATE PROCEDURE seguridad.sp_alta_usuario(
+    IN p_id_admin INT, IN p_nombre_usuario VARCHAR(50), IN p_email VARCHAR(100),
+    IN p_password VARCHAR(255), IN p_rol VARCHAR(50), IN p_origen VARCHAR(50))
+BEGIN
+    DECLARE v_codigo INT DEFAULT NULL;
+    DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
+    DECLARE codigo_error INT DEFAULT 0;
+    DECLARE mensaje_error VARCHAR(500) DEFAULT '';
+    DECLARE v_es_admin SMALLINT DEFAULT 0;
+    DECLARE v_id_rol INT DEFAULT NULL;
+    DECLARE v_usuario INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1
+            codigo_error = MYSQL_ERRNO,
+            mensaje_error = MESSAGE_TEXT;
+        ROLLBACK;
+        CALL auditoria.sp_registrar_log('alta_usuario', p_id_admin, NULL, p_origen, mensaje_error,
+                                        'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, codigo_error AS codigo, mensaje_error AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END;
+
+    SET v_es_admin = EXISTS (SELECT 1 FROM seguridad.Usuario u INNER JOIN seguridad.Rol r ON u.id_rol = r.id_rol
+                              WHERE u.id_usuario = p_id_admin AND u.activo = 1 AND r.nombre = 'administrador');
+    SELECT id_rol INTO v_id_rol FROM seguridad.Rol
+     WHERE nombre = p_rol AND (nombre = 'recepcion' OR nombre = 'administrador');
+
+    IF v_es_admin = 0 THEN
+        SET v_codigo = 52014;
+        SET v_mensaje = 'Solo la administración puede crear usuarios';
+    ELSEIF v_id_rol IS NULL THEN
+        SET v_codigo = 52015;
+        SET v_mensaje = 'El rol tiene que ser recepcion o administrador';
+    ELSEIF p_nombre_usuario IS NULL OR (CHAR_LENGTH(p_nombre_usuario) BETWEEN 4 AND 50) = 0 THEN
+        SET v_codigo = 52022;
+        SET v_mensaje = 'El usuario debe tener de 4 a 50 letras minúsculas, números, punto, guion o guion bajo';
+    ELSEIF p_email IS NULL OR (CHAR_LENGTH(p_email) BETWEEN 5 AND 100) = 0 THEN
+        SET v_codigo = 52023;
+        SET v_mensaje = 'El email no es válido';
+    ELSEIF p_password IS NULL OR (CHAR_LENGTH(p_password) BETWEEN 6 AND 50) = 0 THEN
+        SET v_codigo = 52016;
+        SET v_mensaje = 'La contraseña debe tener de 6 a 50 caracteres';
+    ELSEIF EXISTS (SELECT 1 FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario OR email = p_email) THEN
+        SET v_codigo = 52025;
+        SET v_mensaje = 'Ese usuario o email ya está en uso';
+    END IF;
+
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
+        VALUES (v_id_rol, p_nombre_usuario, p_email, p_password);
+        SELECT id_usuario INTO v_usuario FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario;
+        CALL auditoria.sp_registrar_log('alta_usuario', p_id_admin, NULL, p_origen, 'Usuario del personal creado',
+                                        'seguridad.Usuario', v_usuario, NULL, p_nombre_usuario, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Usuario creado' AS mensaje, v_usuario AS id, NULL AS valor, p_rol AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('alta_usuario', p_id_admin, NULL, p_origen, v_mensaje,
+                                        'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
+END//
+
+-- Cambio de la propia contraseña: hay que saber la actual.
+DROP PROCEDURE IF EXISTS seguridad.sp_cambiar_clave//
+CREATE PROCEDURE seguridad.sp_cambiar_clave(
+    IN p_id_usuario INT, IN p_clave_actual VARCHAR(255), IN p_clave_nueva VARCHAR(255), IN p_origen VARCHAR(50))
+BEGIN
+    DECLARE v_codigo INT DEFAULT NULL;
+    DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
+    DECLARE codigo_error INT DEFAULT 0;
+    DECLARE mensaje_error VARCHAR(500) DEFAULT '';
+    DECLARE v_password VARCHAR(255) DEFAULT NULL;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1
+            codigo_error = MYSQL_ERRNO,
+            mensaje_error = MESSAGE_TEXT;
+        ROLLBACK;
+        SELECT 'ERROR' AS estado, codigo_error AS codigo, mensaje_error AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END;
+
+    SELECT password INTO v_password FROM seguridad.Usuario WHERE id_usuario = p_id_usuario AND activo = 1;
+
+    IF v_password IS NULL THEN
+        SET v_codigo = 52013;
+        SET v_mensaje = 'El usuario no existe';
+    ELSEIF p_clave_actual IS NULL OR v_password <> p_clave_actual THEN
+        SET v_codigo = 52017;
+        SET v_mensaje = 'La contraseña actual no es correcta';
+    ELSEIF p_clave_nueva IS NULL OR (CHAR_LENGTH(p_clave_nueva) BETWEEN 6 AND 50) = 0 THEN
+        SET v_codigo = 52016;
+        SET v_mensaje = 'La contraseña debe tener de 6 a 50 caracteres';
+    END IF;
+
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        UPDATE seguridad.Usuario SET password = p_clave_nueva WHERE id_usuario = p_id_usuario;
+        CALL auditoria.sp_registrar_log('cambio_clave', p_id_usuario, NULL, p_origen, 'Cambio de contraseña',
+                                        'seguridad.Usuario', p_id_usuario, NULL, NULL, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Contraseña cambiada' AS mensaje, p_id_usuario AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        CALL auditoria.sp_registrar_log('cambio_clave', p_id_usuario, NULL, p_origen, v_mensaje,
+                                        'seguridad.Usuario', p_id_usuario, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
 END//
 
 DELIMITER ;

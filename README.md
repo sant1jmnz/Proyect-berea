@@ -318,7 +318,7 @@ scripts de `backend/`, que son la fuente única):
 | `03_ModeloSQL_Grupo<N>.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
 | `04_DatosSQL_Grupo<N>.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
 | `05_Backend_Grupo<N>.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
-| `06_PruebasSQL.xlsx` | Punto 6: 230 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
+| `06_PruebasSQL.xlsx` | Punto 6: 239 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
 | `Diagrama_Chen_Grupo<N>.png`, `Diagrama_Codd_Grupo<N>.png` | Diagramas conceptual y lógico, con fondo blanco |
 
 El orden correcto es 03, 04 y 05, y la secuencia completa se puede repetir. El backend usa solo lo que
@@ -330,7 +330,7 @@ enseña el material de la cátedra y pide la consigna: la lista de lo que se ree
 El trabajo del 4° bimestre está armado en la rama `claude/awesome-hopper-20z4z2`; cada semana se
 trae lo que toca a la rama de cada uno (ver [`docs/15-guia-por-semana.md`](docs/15-guia-por-semana.md)).
 Ya hecho y probado en esa rama: base con datos, stored procedures, 8 reportes, auditoría, tuning medido y
-230 casos de prueba; **Gestión, la terminal y el sitio web conectados a la base** (con pruebas de integración
+239 casos de prueba; **Gestión, la terminal y el sitio web conectados a la base** (con pruebas de integración
 contra MySQL real); modo contingencia que se sincroniza; usuarios de la base con permisos mínimos; informe de
 competencia, presupuesto, pitch de 5 a 7 minutos y manuales.
 

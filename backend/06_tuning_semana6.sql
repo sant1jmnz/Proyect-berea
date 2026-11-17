@@ -21,6 +21,9 @@
 -- Cada tabla temporal se usa una sola vez por consulta: MySQL no deja usar dos
 -- veces la misma tabla temporal en una misma sentencia.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 DELIMITER //
 
 -- =============================================================================

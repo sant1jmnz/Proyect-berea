@@ -18,6 +18,9 @@
 -- tiene que pasar; el corredor automático las verifica solo.
 -- Un reloj simulado (@ahora_simulado) permite probar vencimientos y plazos de 24 horas.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 SET @ahora_simulado = '2026-11-03 09:00:00';
 
 -- ======================================================================
@@ -484,6 +487,64 @@ FROM (
 ) AS u
 ORDER BY u.fecha_compra, u.id_tarjeta;
 CALL agenda.sp_reporte_turnos_por_periodo_profesional('2026-09-01', '2026-11-30', 1);
+
+-- ======================================================================
+-- A2. LISTADOS DE LAS PANTALLAS NUEVAS (09_sp_pantallas.sql, solo leen)
+-- ======================================================================
+
+-- @caso sp_listar_cupones.1 | Éxito | La paciente 36861630 tiene 3 cupones
+-- @espera filas 3
+CALL beneficios.sp_listar_cupones('36861630');
+
+-- @caso sp_listar_cupones.2 | Sin coincidencias | Un DNI que no existe: 0 filas, sin error
+-- @espera vacio
+CALL beneficios.sp_listar_cupones('99999999');
+
+-- @caso sp_listar_cupones.3 | Nulos y límites | DNI NULL y vacío: 0 filas, sin error
+-- @espera vacio
+CALL beneficios.sp_listar_cupones(NULL);
+-- @espera vacio
+CALL beneficios.sp_listar_cupones('');
+
+-- @caso sp_listar_cupones.4 | Consistencia | Igual a un SELECT directo
+-- @espera igual
+CALL beneficios.sp_listar_cupones('36861630');
+SELECT c.id_cupon, c.codigo, r.nombre AS regla, c.porcentaje_descuento, c.fecha_emision, c.fecha_vencimiento,
+       (c.id_turno IS NOT NULL) AS usado, (c.fecha_vencimiento > COALESCE(@ahora_simulado, NOW())) AS vigente,
+       p.id_paciente, p.apellido, p.nombre
+  FROM beneficios.Cupon c
+  INNER JOIN beneficios.ReglaBeneficio r ON c.id_regla = r.id_regla
+  INNER JOIN personas.Paciente p ON c.id_paciente = p.id_paciente
+ WHERE p.dni = '36861630'
+ ORDER BY c.fecha_vencimiento DESC;
+
+-- @caso sp_listar_evaluaciones.1 | Éxito | Todas las evaluaciones de ejemplo: 24
+-- @espera filas 24
+CALL clinica.sp_listar_evaluaciones(0);
+
+-- @caso sp_listar_evaluaciones.2 | Éxito | Solo las pendientes de resultado: 3
+-- @espera filas 3
+CALL clinica.sp_listar_evaluaciones(1);
+
+-- @caso sp_listar_evaluaciones.3 | Nulos y límites | NULL se toma como "todas" (24), sin error
+-- @espera filas 24
+CALL clinica.sp_listar_evaluaciones(NULL);
+
+-- @caso sp_listar_evaluaciones.4 | Consistencia | Las pendientes son las mismas que en un SELECT directo
+-- @espera igual
+CALL clinica.sp_listar_evaluaciones(1);
+SELECT e.id_evaluacion, p.dni, p.apellido, p.nombre, pr.nombre AS protocolo,
+       t.fecha_hora_inicio AS fecha_consulta, et.nombre AS estado_turno,
+       COALESCE(r.nombre, 'pendiente') AS resultado, e.observaciones,
+       e.fecha_resultado, e.fecha_resultado + INTERVAL 6 MONTH AS vence, e.fecha_reclamo
+  FROM clinica.EvaluacionPrevia e
+  INNER JOIN agenda.Turno t ON e.id_turno = t.id_turno
+  INNER JOIN agenda.EstadoTurno et ON t.id_estado_turno = et.id_estado_turno
+  INNER JOIN personas.Paciente p ON t.id_paciente = p.id_paciente
+  INNER JOIN clinica.Protocolo pr ON e.id_protocolo = pr.id_protocolo
+  LEFT JOIN clinica.ResultadoEvaluacion r ON e.id_resultado = r.id_resultado
+ WHERE e.id_resultado IS NULL OR r.nombre = 'pendiente'
+ ORDER BY t.fecha_hora_inicio DESC;
 
 -- ======================================================================
 -- B. REPORTES TUNEADOS (tienen que devolver exactamente lo mismo que el original)
@@ -1055,7 +1116,7 @@ CALL clinica.sp_listar_protocolos(NULL, 99999999, 0);
 -- @espera igual
 CALL clinica.sp_listar_protocolos('Aparatología', NULL, 0);
 SELECT p.id_protocolo, p.nombre, p.descripcion, c.id_categoria, c.nombre AS categoria, p.precio, p.duracion_min, c.porcentaje_sena, ROUND(p.precio * c.porcentaje_sena / 100, 0) AS sena, c.requiere_evaluacion, p.activo FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria WHERE p.activo = 1 AND (p.nombre = 'Aparatología' OR p.descripcion = 'Aparatología' OR c.nombre = 'Aparatología') ORDER BY c.id_categoria, p.nombre;
--- @espera filas 5
+-- @espera filas 7
 CALL clinica.sp_listar_protocolos(NULL, 4, 0);
 -- @espera filas 1
 CALL clinica.sp_listar_protocolos('Protocolo de prueba', NULL, 1);

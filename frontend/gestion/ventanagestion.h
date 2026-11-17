@@ -20,6 +20,9 @@ class QTimer;
 class AvisoConexion;
 class ConexionApp;
 class PaginaAvisos;
+class PaginaCupones;
+class PaginaEvaluaciones;
+class PaginaTarjetas;
 class PaginaPacientes;
 class PaginaReportes;
 class PaginaProfesionales;
@@ -92,6 +95,9 @@ private:
     PaginaPacientes *paginaPacientes = nullptr;
     PaginaAvisos *paginaAvisos = nullptr;
     PaginaReportes *paginaReportes = nullptr;
+    PaginaCupones *paginaCupones = nullptr;
+    PaginaTarjetas *paginaTarjetas = nullptr;
+    PaginaEvaluaciones *paginaEvaluaciones = nullptr;
     Repositorio *repositorio = nullptr;   /* stored procedures de la base */
     bool persistir = false;               /* true: usa el archivo local */
     QString archivoLocal;

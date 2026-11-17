@@ -55,8 +55,8 @@ set(COMUN
     comun/recordatorios.h
     gestion/recursos.qrc)   # íconos y tipografías
 
-# Apartado Gestión (PC de recepción). Semana 3: validaciones sobre datos de
-# prueba, todavía sin base.
+# Apartado Gestión (PC de recepción): con la base usa los stored procedures;
+# sin base, trabaja con el archivo local de esta PC.
 add_executable(dermalia_gestion
     gestion/main.cpp
     gestion/datosprueba.cpp
@@ -80,19 +80,28 @@ add_executable(dermalia_gestion
     gestion/paginaavisos.h
     gestion/paginareportes.cpp
     gestion/paginareportes.h
+    gestion/paginacupones.cpp
+    gestion/paginacupones.h
+    gestion/paginatarjetas.cpp
+    gestion/paginatarjetas.h
+    gestion/paginaevaluaciones.cpp
+    gestion/paginaevaluaciones.h
     ${COMUN})
 target_include_directories(dermalia_gestion PRIVATE comun)
 target_link_libraries(dermalia_gestion PRIVATE Qt6::Widgets)
 con_mysql(dermalia_gestion)
 
-# Apartado Cliente (terminal táctil vertical). Semana 1: solo interfaz.
+# Apartado Cliente (terminal táctil vertical): con la base usa los stored procedures;
+# sin base, guarda los turnos en el archivo local de esta PC.
 add_executable(dermalia_cliente
     cliente/main.cpp
     cliente/ventanacliente.cpp
     cliente/ventanacliente.h
     cliente/ventanacliente.ui
-    gestion/datosprueba.cpp   # protocolos y horarios de ejemplo (los mismos de Gestión)
+    gestion/datosprueba.cpp   # estructuras y catálogo inicial (los mismos de Gestión)
     gestion/datosprueba.h
+    gestion/datosbase.cpp     # filas de los SP → estructuras de las pantallas
+    gestion/datosbase.h
     gestion/almacenlocal.cpp
     gestion/almacenlocal.h
     ${COMUN})
@@ -100,68 +109,11 @@ target_include_directories(dermalia_cliente PRIVATE comun gestion)
 target_link_libraries(dermalia_cliente PRIVATE Qt6::Widgets)
 con_mysql(dermalia_cliente)
 
-# Implementación de Bautista: flujo funcional de turnos, buscador y
-# cancelación. Se mantiene como ejecutable separado para preservar la
-# interfaz Cliente ya existente en la rama.
-add_executable(dermalia_cliente_bautista
-    comun/validaciones.cpp
-    comun/validaciones.h
-    comun/reembolso.h
-    comun/basedatos.cpp
-    comun/basedatos.h
-    comun/contingencia.cpp
-    comun/contingencia.h
-    comun/avisoconexion.cpp
-    comun/avisoconexion.h
-    comun/conexionapp.cpp
-    comun/conexionapp.h
-    comun/repositorio.cpp
-    comun/repositorio.h
-    cliente/main_bautista.cpp
-    cliente/mainwindow.cpp
-    cliente/mainwindow.h
-    cliente/mainwindow.ui
-    cliente/pasoscargaturnowidget.cpp
-    cliente/pasoscargaturnowidget.h
-    cliente/pasoscargaturnowidget.ui
-    cliente/buscadorwidget.cpp
-    cliente/buscadorwidget.h
-    cliente/buscadorwidget.ui
-    cliente/buscarturnowidget.cpp
-    cliente/buscarturnowidget.h
-    cliente/buscarturnowidget.ui)
-target_include_directories(dermalia_cliente_bautista PRIVATE comun)
-target_link_libraries(dermalia_cliente_bautista PRIVATE Qt6::Widgets)
-con_mysql(dermalia_cliente_bautista)
-
-configure_file(cliente/styles.qss styles.qss COPYONLY)
-
-# Pruebas automáticas del apartado Cliente (Semana 3, QA). Solo se arman si Qt Test está instalado.
-# Se corren con: QT_QPA_PLATFORM=offscreen ./dermalia_tests
+# Pruebas automáticas (Semana 3, QA). Solo se arman si Qt Test está instalado.
+# Se corren todas con: ctest (las que usan la base necesitan DERMALIA_DB_USER, etc.)
 find_package(Qt6 QUIET COMPONENTS Test)
 if(Qt6Test_FOUND)
-    add_executable(dermalia_tests
-        tests/test_cliente.cpp
-        comun/validaciones.cpp
-        comun/validaciones.h
-        comun/basedatos.cpp
-        comun/basedatos.h
-        comun/repositorio.cpp
-        comun/repositorio.h
-        cliente/pasoscargaturnowidget.cpp
-        cliente/pasoscargaturnowidget.h
-        cliente/pasoscargaturnowidget.ui
-        cliente/buscadorwidget.cpp
-        cliente/buscadorwidget.h
-        cliente/buscadorwidget.ui
-        cliente/buscarturnowidget.cpp
-        cliente/buscarturnowidget.h
-        cliente/buscarturnowidget.ui)
-    target_include_directories(dermalia_tests PRIVATE comun cliente)
-    target_link_libraries(dermalia_tests PRIVATE Qt6::Widgets Qt6::Test)
-    con_mysql(dermalia_tests)
     enable_testing()
-    add_test(NAME cliente COMMAND dermalia_tests)
 
     # Pruebas de las validaciones de Gestión (nombre, DNI y teléfono).
     add_executable(prueba_validaciones
@@ -171,7 +123,6 @@ if(Qt6Test_FOUND)
     target_include_directories(prueba_validaciones PRIVATE comun)
     target_link_libraries(prueba_validaciones PRIVATE Qt6::Core Qt6::Gui Qt6::Test)
     add_test(NAME validaciones COMMAND prueba_validaciones)
-    set_tests_properties(cliente PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
     # Pruebas de Gestión de las Semanas 2 y 3: reembolso, recordatorios,
     # disponibilidad, contingencia, conexión y pantallas nuevas.
@@ -198,6 +149,12 @@ if(Qt6Test_FOUND)
         gestion/paginaavisos.h
         gestion/paginareportes.cpp
         gestion/paginareportes.h
+        gestion/paginacupones.cpp
+        gestion/paginacupones.h
+        gestion/paginatarjetas.cpp
+        gestion/paginatarjetas.h
+        gestion/paginaevaluaciones.cpp
+        gestion/paginaevaluaciones.h
         ${COMUN})
     target_include_directories(prueba_gestion PRIVATE comun gestion)
     target_link_libraries(prueba_gestion PRIVATE Qt6::Widgets Qt6::Test)
@@ -242,46 +199,18 @@ if(Qt6Test_FOUND)
         gestion/paginaavisos.h
         gestion/paginareportes.cpp
         gestion/paginareportes.h
+        gestion/paginacupones.cpp
+        gestion/paginacupones.h
+        gestion/paginatarjetas.cpp
+        gestion/paginatarjetas.h
+        gestion/paginaevaluaciones.cpp
+        gestion/paginaevaluaciones.h
         ${COMUN})
     target_include_directories(prueba_gestion_base PRIVATE comun gestion)
     target_link_libraries(prueba_gestion_base PRIVATE Qt6::Widgets Qt6::Test)
     con_mysql(prueba_gestion_base)
     add_test(NAME gestion_base COMMAND prueba_gestion_base)
     set_tests_properties(gestion_base PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-
-    # Terminal del Cliente conectada a la base: catálogo, horarios, reserva y seña.
-    add_executable(prueba_cliente_base
-        pruebas/prueba_cliente_base.cpp
-        comun/validaciones.cpp
-        comun/validaciones.h
-        comun/reembolso.h
-        comun/basedatos.cpp
-        comun/basedatos.h
-        comun/contingencia.cpp
-        comun/contingencia.h
-        comun/avisoconexion.cpp
-        comun/avisoconexion.h
-        comun/conexionapp.cpp
-        comun/conexionapp.h
-        comun/repositorio.cpp
-        comun/repositorio.h
-        cliente/mainwindow.cpp
-        cliente/mainwindow.h
-        cliente/mainwindow.ui
-        cliente/pasoscargaturnowidget.cpp
-        cliente/pasoscargaturnowidget.h
-        cliente/pasoscargaturnowidget.ui
-        cliente/buscadorwidget.cpp
-        cliente/buscadorwidget.h
-        cliente/buscadorwidget.ui
-        cliente/buscarturnowidget.cpp
-        cliente/buscarturnowidget.h
-        cliente/buscarturnowidget.ui)
-    target_include_directories(prueba_cliente_base PRIVATE comun cliente)
-    target_link_libraries(prueba_cliente_base PRIVATE Qt6::Widgets Qt6::Test)
-    con_mysql(prueba_cliente_base)
-    add_test(NAME cliente_base COMMAND prueba_cliente_base)
-    set_tests_properties(cliente_base PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
     # Terminal del Cliente con el diseño de ventanacliente: sacar, buscar y cancelar un turno en memoria.
     add_executable(prueba_ventanacliente
@@ -291,6 +220,8 @@ if(Qt6Test_FOUND)
         cliente/ventanacliente.ui
         gestion/datosprueba.cpp
         gestion/datosprueba.h
+        gestion/datosbase.cpp
+        gestion/datosbase.h
         gestion/almacenlocal.cpp
         gestion/almacenlocal.h
         ${COMUN})
@@ -299,4 +230,22 @@ if(Qt6Test_FOUND)
     con_mysql(prueba_ventanacliente)
     add_test(NAME ventanacliente COMMAND prueba_ventanacliente)
     set_tests_properties(ventanacliente PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    # La terminal conectada a la base: reservar, buscar y cancelar con los stored procedures.
+    add_executable(prueba_cliente_base
+        pruebas/prueba_cliente_base.cpp
+        cliente/ventanacliente.cpp
+        cliente/ventanacliente.h
+        cliente/ventanacliente.ui
+        gestion/datosprueba.cpp
+        gestion/datosprueba.h
+        gestion/datosbase.cpp
+        gestion/datosbase.h
+        gestion/almacenlocal.cpp
+        gestion/almacenlocal.h
+        ${COMUN})
+    target_include_directories(prueba_cliente_base PRIVATE comun gestion cliente)
+    target_link_libraries(prueba_cliente_base PRIVATE Qt6::Widgets Qt6::Test)
+    con_mysql(prueba_cliente_base)
+    add_test(NAME cliente_base COMMAND prueba_cliente_base)
+    set_tests_properties(cliente_base PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()

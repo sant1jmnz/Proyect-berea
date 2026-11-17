@@ -1,10 +1,8 @@
 #include "basedatos.h"
 
-#include <QByteArray>
 #include <QDate>
 #include <QDateTime>
 #include <QFile>
-#include <QMetaType>
 #include <QSettings>
 
 #ifdef DERMALIA_CON_MYSQL
@@ -16,24 +14,31 @@ ConfigBD ConfigBD::desdeEntorno(const QString &archivoIni)
     ConfigBD c;
     QSettings ini(archivoIni, QSettings::IniFormat);
     const bool hayIni = QFile::exists(archivoIni);
-    auto valor = [&](const char *variable, const char *clave) -> QString {
-        const QByteArray env = qgetenv(variable);
-        if (!env.isEmpty())
-            return QString::fromUtf8(env);
-        return hayIni ? ini.value(QString("base/") + clave).toString() : QString();
+
+    /* Primero la variable de entorno; si no está, el dermalia.ini. */
+    auto leer = [&](const char *variable, const char *clave) {
+        const QString valor = qEnvironmentVariable(variable);
+        if (!valor.isEmpty() || !hayIni)
+            return valor;
+        return ini.value(QString("base/") + clave).toString();
     };
-    if (const QString h = valor("DERMALIA_DB_HOST", "host"); !h.isEmpty())
-        c.host = h;
-    if (const QString p = valor("DERMALIA_DB_PORT", "puerto"); !p.isEmpty())
-        c.puerto = p.toUInt();
-    c.usuario = valor("DERMALIA_DB_USER", "usuario");
-    c.clave = valor("DERMALIA_DB_PASS", "clave");
-    c.base = valor("DERMALIA_DB_NAME", "base");
-    const QString ssl = valor("DERMALIA_DB_SSL", "ssl").toLower();
+
+    if (!leer("DERMALIA_DB_HOST", "host").isEmpty())
+        c.host = leer("DERMALIA_DB_HOST", "host");
+    if (!leer("DERMALIA_DB_PORT", "puerto").isEmpty())
+        c.puerto = leer("DERMALIA_DB_PORT", "puerto").toUInt();
+    c.usuario = leer("DERMALIA_DB_USER", "usuario");
+    c.clave = leer("DERMALIA_DB_PASS", "clave");
+    c.base = leer("DERMALIA_DB_NAME", "base");
+    const QString ssl = leer("DERMALIA_DB_SSL", "ssl").toLower();
     c.ssl = (ssl == "1" || ssl == "true" || ssl == "si" || ssl == "sí");
     return c;
 }
 
+/* El PPT arma el CALL concatenando los datos entre comillas simples:
+ *   "CALL sp_obtener_alumnos_Fecha('" + fecha_desde + "', '" + fecha_hasta + "');"
+ * Acá se hace lo mismo, pero escapando las comillas que traiga el texto
+ * (si no, un apellido como D'Angelo rompería la consulta). */
 QString BaseDatos::literal(const QVariant &v)
 {
     if (!v.isValid() || v.isNull())
@@ -41,9 +46,13 @@ QString BaseDatos::literal(const QVariant &v)
     switch (v.typeId()) {
     case QMetaType::Bool:
         return v.toBool() ? "1" : "0";
-    case QMetaType::Int: case QMetaType::UInt: case QMetaType::LongLong:
-    case QMetaType::ULongLong: case QMetaType::Double:
-        return QString::number(v.toDouble(), 'f', v.typeId() == QMetaType::Double ? 2 : 0);
+    case QMetaType::Int:
+    case QMetaType::UInt:
+    case QMetaType::LongLong:
+    case QMetaType::ULongLong:
+        return QString::number(v.toLongLong());
+    case QMetaType::Double:
+        return QString::number(v.toDouble(), 'f', 2);
     case QMetaType::QDate:
         return "'" + v.toDate().toString("yyyy-MM-dd") + "'";
     case QMetaType::QDateTime:
@@ -51,26 +60,26 @@ QString BaseDatos::literal(const QVariant &v)
     default:
         break;
     }
-    /* Texto: se escapan la barra y las comillas (lo mismo que hace
-     * mysql_real_escape_string para texto UTF-8). */
-    QString t = v.toString();
-    t.replace('\\', "\\\\");
-    t.replace('\'', "\\'");
-    t.replace('\0', "\\0");
-    t.replace('\n', "\\n");
-    t.replace('\r', "\\r");
-    t.replace('\x1a', "\\Z");   /* Ctrl-Z: mysql_real_escape_string también lo escapa */
-    return "'" + t + "'";
+    QString texto = v.toString();
+    texto.replace("\\", "\\\\");
+    texto.replace("'", "\\'");
+    texto.replace(QChar('\0'), "\\0");
+    texto.replace("\n", "\\n");
+    texto.replace("\r", "\\r");
+    texto.replace(QChar('\x1a'), "\\Z");
+    return "'" + texto + "'";
 }
 
 QString BaseDatos::mensajeDeError(int codigo, const QString &original)
 {
     switch (codigo) {
-    case 2002: case 2003:
+    case 2002:
+    case 2003:
         return "No se pudo conectar con la base de datos. Revisá que el servidor esté encendido y que haya internet.";
     case 2005:
         return "No se encontró el servidor de la base de datos. Revisá la dirección (host) configurada.";
-    case 2006: case 2013:
+    case 2006:
+    case 2013:
         return "Se perdió la conexión con la base de datos.";
     case 1045:
         return "La base de datos rechazó el usuario o la contraseña.";
@@ -89,30 +98,20 @@ QString BaseDatos::mensajeDeError(int codigo, const QString &original)
 
 #ifdef DERMALIA_CON_MYSQL
 
-struct BaseDatos::Impl {
-    MYSQL *conn = nullptr;
-};
-
 bool BaseDatos::compiladoConMysql() { return true; }
 
-BaseDatos::BaseDatos(const ConfigBD &c) : d(new Impl), config(c) {}
+BaseDatos::BaseDatos(const ConfigBD &c) : config(c) {}
 
 BaseDatos::~BaseDatos()
 {
     cerrar();
-    delete d;
-}
-
-bool BaseDatos::conectado() const
-{
-    return d->conn != nullptr;
 }
 
 void BaseDatos::cerrar()
 {
-    if (d->conn) {
-        mysql_close(d->conn);
-        d->conn = nullptr;
+    if (conn) {
+        mysql_close(conn);
+        conn = nullptr;
     }
 }
 
@@ -124,36 +123,41 @@ bool BaseDatos::conectar()
         return false;
     }
 
-    MYSQL *c = mysql_init(nullptr);
-    if (!c) {
+    /* mysql_init: crea el objeto de conexión. */
+    MYSQL *c = mysql_init(NULL);
+    if (c == NULL) {
         error = "No hay memoria para iniciar la conexión.";
         return false;
     }
-    /* Sin esto, un servidor caído deja la ventana colgada medio minuto. */
+
+    /* Opciones antes de conectar: tiempo máximo de espera, tildes (utf8mb4) y SSL para Aiven. */
     mysql_options(c, MYSQL_OPT_CONNECT_TIMEOUT, &config.timeoutSeg);
     mysql_options(c, MYSQL_OPT_READ_TIMEOUT, &config.timeoutSeg);
     mysql_options(c, MYSQL_SET_CHARSET_NAME, "utf8mb4");
     if (config.ssl) {
-#ifdef MARIADB_VERSION_ID   /* Connector/C de MariaDB (Ubuntu, libmariadb-dev) */
+#ifdef MARIADB_VERSION_ID   /* librería de MariaDB (libmariadb-dev) */
         const my_bool exigir = 1;
         mysql_options(c, MYSQL_OPT_SSL_ENFORCE, &exigir);
-#else                       /* libmysqlclient de Oracle */
+#else                       /* librería de MySQL (libmysqlclient-dev) */
         const unsigned modo = SSL_MODE_REQUIRED;
         mysql_options(c, MYSQL_OPT_SSL_MODE, &modo);
 #endif
     }
 
-    const QByteArray host = config.host.toUtf8(), usuario = config.usuario.toUtf8(),
-                     clave = config.clave.toUtf8(), base = config.base.toUtf8();
-    /* mysql_real_connect: abre la sesión de red con el servidor (PPT 006). */
+    /* mysql_real_connect: abre la sesión con el servidor. CLIENT_MULTI_RESULTS hace
+     * falta para los CALL: un stored procedure puede devolver más de un resultado. */
+    const QByteArray host = config.host.toUtf8();
+    const QByteArray usuario = config.usuario.toUtf8();
+    const QByteArray clave = config.clave.toUtf8();
+    const QByteArray base = config.base.toUtf8();
     if (!mysql_real_connect(c, host.constData(), usuario.constData(), clave.constData(),
-                            base.isEmpty() ? nullptr : base.constData(), config.puerto,
-                            nullptr, CLIENT_MULTI_STATEMENTS | CLIENT_MULTI_RESULTS)) {
-        error = mensajeDeError(int(mysql_errno(c)), QString::fromUtf8(mysql_error(c)));
+                            base.isEmpty() ? NULL : base.constData(), config.puerto, NULL,
+                            CLIENT_MULTI_RESULTS)) {
+        error = mensajeDeError(mysql_errno(c), mysql_error(c));
         mysql_close(c);
         return false;
     }
-    d->conn = c;
+    conn = c;
     error.clear();
     return true;
 }
@@ -161,56 +165,61 @@ bool BaseDatos::conectar()
 Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
 {
     Resultado r;
-    if (!d->conn) {
+    if (!conn) {
         r.error = error.isEmpty() ? "No hay conexión con la base de datos." : error;
         return r;
     }
 
-    QStringList args;
+    /* Se arma el texto del CALL, por ejemplo:  CALL agenda.sp_buscar_turnos('30111222', 0) */
+    QStringList valores;
     for (const QVariant &p : parametros)
-        args << literal(p);
-    const QByteArray sql = QString("CALL %1(%2)").arg(sp, args.join(", ")).toUtf8();
+        valores << literal(p);
+    const QByteArray sql = ("CALL " + sp + "(" + valores.join(", ") + ")").toUtf8();
 
-    if (mysql_real_query(d->conn, sql.constData(), sql.size()) != 0) {
-        r.codigoSql = int(mysql_errno(d->conn));
-        r.error = mensajeDeError(r.codigoSql, QString::fromUtf8(mysql_error(d->conn)));
+    /* mysql_query devuelve 0 si salió bien. */
+    if (mysql_query(conn, sql.constData()) != 0) {
+        r.codigoSql = mysql_errno(conn);
+        r.error = mensajeDeError(r.codigoSql, mysql_error(conn));
         if (r.codigoSql == 2006 || r.codigoSql == 2013)
-            cerrar();   /* la conexión murió: la próxima llamada avisa y se reconecta */
+            cerrar();   /* la conexión se cortó: la próxima vez se vuelve a conectar */
         return r;
     }
 
-    /* Un CALL puede devolver varios conjuntos de resultados (el último es el
-     * estado del propio CALL): se toma el primero y se vacían los demás. */
-    bool primero = true;
+    /* Un CALL devuelve primero el SELECT del SP y después un resultado vacío del propio CALL.
+     * Se guarda el primero y los demás se leen solo para liberarlos (si no, la conexión queda trabada). */
+    bool esElPrimero = true;
     do {
-        MYSQL_RES *res = mysql_store_result(d->conn);   /* baja todo a memoria (PPT 006) */
-        if (!res)
+        MYSQL_RES *resultado = mysql_store_result(conn);
+        if (resultado == NULL)
             continue;
-        if (primero) {
-            const unsigned n = mysql_num_fields(res);
-            MYSQL_FIELD *campos = mysql_fetch_fields(res);
-            for (unsigned i = 0; i < n; ++i)
+        if (esElPrimero) {
+            const unsigned cantidad = mysql_num_fields(resultado);
+            MYSQL_FIELD *campos = mysql_fetch_fields(resultado);
+            for (unsigned i = 0; i < cantidad; i++)
                 r.columnas << QString::fromUtf8(campos[i].name);
-            while (MYSQL_ROW fila = mysql_fetch_row(res)) {
-                QVariantMap m;
-                for (unsigned i = 0; i < n; ++i)
-                    m.insert(QString::fromUtf8(campos[i].name),
-                             fila[i] ? QVariant(QString::fromUtf8(fila[i])) : QVariant());
-                r.filas.append(m);
-            }
-            primero = false;
-        }
-        mysql_free_result(res);   /* libera la memoria que reservó la librería */
-    } while (mysql_next_result(d->conn) == 0);
 
-    /* El EXIT HANDLER devuelve estado='ERROR'. Los SP de la cátedra (PPT 006)
-     * usan las columnas codigo_sql / descripcion_error; los SP de Dermalia
-     * (backend/03 y 04) usan codigo / mensaje. Se aceptan las dos. */
+            MYSQL_ROW fila;
+            while ((fila = mysql_fetch_row(resultado)) != NULL) {
+                QVariantMap datos;
+                for (unsigned i = 0; i < cantidad; i++) {
+                    /* fila[i] es NULL cuando la columna vale NULL en la base */
+                    datos[r.columnas[i]] = fila[i] ? QVariant(QString::fromUtf8(fila[i])) : QVariant();
+                }
+                r.filas.append(datos);
+            }
+            esElPrimero = false;
+        }
+        mysql_free_result(resultado);
+    } while (mysql_next_result(conn) == 0);
+
+    /* Si el SP cayó en el EXIT HANDLER devuelve estado = 'ERROR'. Los SP del PPT usan
+     * codigo_sql / descripcion_error y los de Dermalia codigo / mensaje: sirven los dos. */
     if (!r.filas.isEmpty() && r.filas.first().value("estado").toString() == "ERROR") {
-        const QVariantMap &f = r.filas.first();
-        r.codigoSql = f.contains("codigo_sql") ? f.value("codigo_sql").toInt() : f.value("codigo").toInt();
-        r.error = mensajeDeError(r.codigoSql, f.contains("descripcion_error") ? f.value("descripcion_error").toString()
-                                                                            : f.value("mensaje").toString());
+        const QVariantMap f = r.filas.first();
+        r.codigoSql = f.contains("codigo_sql") ? f["codigo_sql"].toInt() : f["codigo"].toInt();
+        const QString mensaje = f.contains("descripcion_error") ? f["descripcion_error"].toString()
+                                                                : f["mensaje"].toString();
+        r.error = mensajeDeError(r.codigoSql, mensaje);
         r.filas.clear();
         return r;
     }
@@ -218,14 +227,11 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
     return r;
 }
 
-#else  /* sin la biblioteca de MySQL: la app funciona igual, con datos de prueba */
-
-struct BaseDatos::Impl {};
+#else   /* Compilado sin la librería de MySQL: la aplicación anda igual, sin conexión. */
 
 bool BaseDatos::compiladoConMysql() { return false; }
-BaseDatos::BaseDatos(const ConfigBD &c) : d(new Impl), config(c) {}
-BaseDatos::~BaseDatos() { delete d; }
-bool BaseDatos::conectado() const { return false; }
+BaseDatos::BaseDatos(const ConfigBD &c) : config(c) {}
+BaseDatos::~BaseDatos() {}
 void BaseDatos::cerrar() {}
 
 bool BaseDatos::conectar()

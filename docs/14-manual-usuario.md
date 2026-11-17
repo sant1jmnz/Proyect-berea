@@ -21,6 +21,14 @@ consulta reportes y auditoría desde Gestión. Para instalar o mantener el siste
 Tres opciones: **Sacar un turno**, **Consultar precios** y **Buscar o cancelar mi turno**.
 Desde cualquier pantalla, el botón **Inicio** de arriba vuelve acá.
 
+### Cuenta opcional (sitio web)
+
+La cuenta no es obligatoria: sin ella todo funciona con el DNI o el teléfono. Si la creás
+(*Ingresar* → *Crear mi cuenta*, con usuario, email y contraseña), el sitio te muestra tus turnos
+sin pedirte el DNI y la reserva te trae tus datos ya cargados. Si ya sacaste un turno antes, usá
+el mismo DNI y el mismo teléfono: así tu cuenta se une a tu historial. Tras 5 contraseñas
+equivocadas la cuenta se bloquea 15 minutos. La terminal del instituto no usa cuenta.
+
 ### Sacar un turno (3 pasos)
 
 **1. Elegí tu protocolo.** Tocá el tratamiento: se ve la duración y el precio. Podés sumar hasta

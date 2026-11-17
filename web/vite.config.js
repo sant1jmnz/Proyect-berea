@@ -14,6 +14,7 @@ export default defineConfig({
         protocolos: resolve(import.meta.dirname, 'protocolos.html'),
         reservar: resolve(import.meta.dirname, 'reservar.html'),
         miTurno: resolve(import.meta.dirname, 'mi-turno.html'),
+        cuenta: resolve(import.meta.dirname, 'cuenta.html'),
       },
     },
   },

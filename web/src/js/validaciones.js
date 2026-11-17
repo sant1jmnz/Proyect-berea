@@ -54,3 +54,27 @@ export function errorNacimiento(texto, hoy = new Date()) {
   }
   return null;
 }
+
+/* Cuenta: usuario, email y contraseña (mismas reglas que Validaciones::usuarioValido, emailValido y claveValida). */
+export function errorUsuario(usuario) {
+  const u = String(usuario).trim();
+  if (!u) return 'Ingresá el usuario.';
+  if (!/^[a-z0-9._-]{4,30}$/.test(u)) return 'El usuario tiene entre 4 y 30 caracteres: minúsculas, números, punto, guion o guion bajo (sin espacios).';
+  return null;
+}
+
+export function errorEmail(email) {
+  const e = String(email).trim();
+  if (!e) return 'Ingresá el email.';
+  if (e.length < 5 || e.length > 100 || e.includes('..') || !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(e)) {
+    return 'El email no tiene un formato válido (ej: nombre@correo.com).';
+  }
+  return null;
+}
+
+export function errorClave(clave) {
+  if (!clave) return 'Ingresá la contraseña.';
+  if (clave.length < 6 || clave.length > 50) return 'La contraseña debe tener entre 6 y 50 caracteres.';
+  if (clave.includes(' ')) return 'La contraseña no puede tener espacios.';
+  return null;
+}

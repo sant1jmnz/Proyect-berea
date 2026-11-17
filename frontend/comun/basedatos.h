@@ -23,8 +23,6 @@
 #include <QVariantMap>
 #include <QVector>
 
-struct st_mysql;   /* es el tipo MYSQL de mysql.h; acá alcanza con nombrarlo */
-
 /* Datos para conectarse (los mismos que recibe mysql_real_connect). */
 struct ConfigBD {
     QString host = "127.0.0.1";
@@ -77,7 +75,8 @@ public:
 
 private:
     ConfigBD config;
-    st_mysql *conn = nullptr;      /* el MYSQL *conn del PPT; nullptr si no hay conexión */
+    void *conn = nullptr;          /* el MYSQL *conn del PPT (se guarda como void* para no incluir
+                                      mysql.h acá); nullptr si no hay conexión */
     QString error;
 };
 

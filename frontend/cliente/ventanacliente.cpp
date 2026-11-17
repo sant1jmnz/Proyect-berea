@@ -546,6 +546,8 @@ void VentanaCliente::mostrarTurno(int indice, int vigentes)
     ui->lblResTurnoSena->setText(sena);
     if (t.estado == EstadoTurno::Cancelado) {
         ui->lblRecordatorio->setText("Turno cancelado: ya no te enviamos recordatorios.");
+    } else if (t.inicio <= QDateTime::currentDateTime()) {
+        ui->lblRecordatorio->setText("Este turno ya pasó.");
     } else {
         const QDateTime aviso = t.inicio.addDays(-1);
         ui->lblRecordatorio->setText(QString("Te lo vamos a recordar el %1 a las %2.").arg(fechaLarga(aviso.date()), aviso.toString("HH:mm")));
@@ -668,10 +670,15 @@ void VentanaCliente::horariosDeBase(const QDate &dia)
         ui->lblNotaHorario->setText("Elegí primero el protocolo.");
         return;
     }
+    /* La base devuelve un horario por cada profesional libre: a la paciente se le
+     * muestra cada hora una sola vez, con el primer profesional que la tiene libre. */
+    QStringList yaMostradas;
     for (const HorarioLibre &h : repositorio->horariosLibres(dia, { p->id })) {
-        if (h.inicio <= QDateTime::currentDateTime())
+        const QString hora = h.inicio.toString("HH:mm");
+        if (h.inicio <= QDateTime::currentDateTime() || yaMostradas.contains(hora))
             continue;
-        auto *item = new QListWidgetItem(h.inicio.toString("HH:mm"));
+        yaMostradas << hora;
+        auto *item = new QListWidgetItem(hora);
         item->setToolTip("Con " + DatosBase::nombreYApellido(h.profesional));
         item->setData(Qt::UserRole, h.inicio);               /* cuándo */
         item->setData(Qt::UserRole + 1, h.idProfesional);    /* con quién */

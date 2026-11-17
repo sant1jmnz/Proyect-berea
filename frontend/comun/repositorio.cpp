@@ -315,10 +315,11 @@ Respuesta Repositorio::validarCupon(const QString &codigo, const QString &token,
 Respuesta Repositorio::comprarTarjeta(double monto, const QString &medioPago, const QString &comprador,
                                       const QString &telefono, const QString &origen, int idUsuario)
 {
-    /* El código de la tarjeta lo arma la aplicación: largo y al azar, para que no se pueda adivinar. */
-    QString codigo = "REGALO-";
-    for (int i = 0; i < 12; ++i)
-        codigo += QString::number(QRandomGenerator::global()->bounded(10));
+    /* El código de la tarjeta lo arma la aplicación, igual que los de la base (GC- y 24 letras
+     * o números al azar): largo para que no se pueda adivinar. */
+    QString codigo = "GC-";
+    for (int i = 0; i < 24; ++i)
+        codigo += QString::number(QRandomGenerator::global()->bounded(16), 16).toUpper();
     return aRespuesta(base.llamar("pagos.sp_comprar_tarjeta",
                                   { monto, medioPago, comprador, textoONulo(telefono), idONulo(idUsuario), origen, codigo }));
 }

@@ -274,7 +274,7 @@ Arrancó con el frontend de escritorio y el diseño de la base de datos:
 - `frontend/`: interfaz en Qt 6 (Widgets). Gestión (`dermalia_gestion`, PC de
   recepción) carga y cancela turnos (seña simulada y reembolso de 24 h),
   administra protocolos, profesionales con su disponibilidad y pacientes, y
-  registra los avisos de turno; Cliente (`dermalia_cliente_bautista`,
+  registra los avisos de turno; Cliente (`dermalia_cliente`,
   terminal táctil) tiene la carga de turno en 3 pasos, el buscador y buscar y
   cancelar el turno. Todo trabaja con **datos de prueba** hasta que exista la
   base. La conexión a MySQL (con `mysql.h`, como pide la cátedra) y el
@@ -317,7 +317,7 @@ scripts de `backend/`, que son la fuente única):
 | `03_ModeloSQL_Grupo<N>.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
 | `04_DatosSQL_Grupo<N>.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
 | `05_Backend_Grupo<N>.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
-| `06_PruebasSQL.xlsx` | Punto 6: 222 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
+| `06_PruebasSQL.xlsx` | Punto 6: 230 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
 | `Diagrama_Chen_Grupo<N>.png`, `Diagrama_Codd_Grupo<N>.png` | Diagramas conceptual y lógico, con fondo blanco |
 
 El orden correcto es 03, 04 y 05, y la secuencia completa se puede repetir. El backend usa solo lo que
@@ -329,13 +329,12 @@ enseña el material de la cátedra y pide la consigna: la lista de lo que se ree
 El trabajo del 4° bimestre está armado en la rama `claude/awesome-hopper-20z4z2`; cada semana se
 trae lo que toca a la rama de cada uno (ver [`docs/15-guia-por-semana.md`](docs/15-guia-por-semana.md)).
 Ya hecho y probado en esa rama: base con datos, stored procedures, 8 reportes, auditoría, tuning medido y
-222 casos de prueba; **Gestión, la terminal y el sitio web conectados a la base** (con pruebas de integración
+230 casos de prueba; **Gestión, la terminal y el sitio web conectados a la base** (con pruebas de integración
 contra MySQL real); modo contingencia que se sincroniza; usuarios de la base con permisos mínimos; informe de
 competencia, presupuesto, pitch de 5 a 7 minutos y manuales.
 
 - Plantillas de **n8n** (`n8n/`): escritas pero sin probar en una instancia real.
 - Pasarela de pagos real, WhatsApp oficial y Google Calendar (hoy: seña simulada, enlace `wa.me`, enlace de Calendar).
-- Pantallas para cupones por QR, tarjetas de regalo y consulta previa de cirugías (la base ya las resuelve).
 - El sitio y la base tienen los mismos 44 protocolos: al agregar uno, hay que cargarlo en los dos.
 - Verificar las celdas "a verificar" del análisis de competencia (`docs/07-competencia.md`) y armar las diapositivas del pitch.
 - Revisión cruzada (peer review) del maquetado y de los árboles con otro equipo: sigue pendiente.

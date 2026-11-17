@@ -9,6 +9,9 @@
 -- una base de datos: las tablas se nombran schema.Tabla y las FK cruzan
 -- schemas sin problema. Cambios de la revisión explicados en backend/REVISION.md.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 -- Borrado: con la FK circular Turno <-> EvaluacionPrevia no hay un orden de
 -- DROP TABLE que funcione, así que se apagan los chequeos y se borran los schemas.
 SET FOREIGN_KEY_CHECKS = 0;

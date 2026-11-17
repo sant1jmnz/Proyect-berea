@@ -105,7 +105,7 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
         archivoLocal = AlmacenLocal::rutaPorDefecto();
         AlmacenLocal::Datos guardados;
         if (AlmacenLocal::leer(archivoLocal, &guardados)) {
-            if (!guardados.protocolos.isEmpty())
+            if (!guardados.protocolos.isEmpty() && !DatosPrueba::esCatalogoViejo(guardados.protocolos))
                 protocolos = guardados.protocolos;
             turnos = guardados.turnos;
             profesionales = guardados.profesionales;
@@ -334,6 +334,7 @@ void VentanaGestion::cargarProtocolos()
         protocolosVisibles << i;
         ui->listaProtocolos->addItem(QString("%1\n%2 min · %3").arg(p.nombre).arg(p.duracionMin).arg(pesos(p.precio)));
     }
+    ui->buscador->setCatalogo(DatosPrueba::comoTratamientos(protocolos));   /* el buscador de precios usa el mismo catálogo */
 }
 
 void VentanaGestion::protocolosCambiaron()

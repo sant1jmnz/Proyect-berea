@@ -18,6 +18,8 @@
 #include <QTimeEdit>
 
 #include "almacenlocal.h"
+#include "buscadorprecios.h"
+#include "resumentratamiento.h"
 #include "avisoconexion.h"
 #include "basedatos.h"
 #include "conexionapp.h"
@@ -489,8 +491,10 @@ private slots:
         auto *pagina = w.findChild<QWidget *>("pagProtocolos");
         auto *lista = w.findChild<QListWidget *>("listaProtocolos");
         auto *tabla = pagina->findChild<QTableWidget *>("tablaProtocolos");
-        QCOMPARE(lista->count(), 4);
-        QCOMPARE(tabla->rowCount(), 4);
+        const int n = DatosPrueba::protocolos().size();   // el catálogo de la base y la web (44)
+        QVERIFY(n >= 40);
+        QCOMPARE(lista->count(), n);
+        QCOMPARE(tabla->rowCount(), n);
 
         pagina->findChild<QLineEdit *>("editNombre")->setText("Hidrafacial");
         pagina->findChild<QLineEdit *>("editPrecio")->setText("-1");
@@ -499,22 +503,86 @@ private slots:
         cerrarDialogo(QMessageBox::Ok, &texto);
         pagina->findChild<QPushButton *>("btnGuardar")->click();
         QVERIFY2(texto.contains("no puede ser negativo"), qPrintable(texto));
-        QCOMPARE(tabla->rowCount(), 4);                         // no se agregó nada
+        QCOMPARE(tabla->rowCount(), n);                         // no se agregó nada
 
         pagina->findChild<QLineEdit *>("editPrecio")->setText("30000");
         cerrarDialogo(QMessageBox::Ok);
         pagina->findChild<QPushButton *>("btnGuardar")->click();
-        QCOMPARE(tabla->rowCount(), 5);
-        QCOMPARE(lista->count(), 5);                            // ya se ofrece al cargar un turno
-        QVERIFY(lista->item(4)->text().contains("Hidrafacial"));
+        QCOMPARE(tabla->rowCount(), n + 1);
+        QCOMPARE(lista->count(), n + 1);                        // ya se ofrece al cargar un turno
+        QVERIFY(lista->item(n)->text().contains("Hidrafacial"));
 
         // baja: sale de "Cargar turno" pero sigue en la pantalla de protocolos
-        tabla->selectRow(4);
+        tabla->selectRow(n);
         cerrarDialogo(QMessageBox::Yes);
         pagina->findChild<QPushButton *>("btnEstado")->click();
-        QCOMPARE(tabla->rowCount(), 5);
-        QCOMPARE(tabla->item(4, 5)->text(), QString("De baja"));
-        QCOMPARE(lista->count(), 4);
+        QCOMPARE(tabla->rowCount(), n + 1);
+        QCOMPARE(tabla->item(n, 5)->text(), QString("De baja"));
+        QCOMPARE(lista->count(), n);
+    }
+
+    // ---- Buscador de precios y resumen de cada tratamiento ----
+    void buscador_buscaSinImportarTildesNiMayusculas()
+    {
+        const QVector<Tratamiento> catalogo = DatosPrueba::comoTratamientos(DatosPrueba::protocolos());
+        const QVector<int> laser = BuscadorPrecios::buscar(catalogo, "LASER");
+        QVERIFY(laser.size() >= 3);
+        for (int i : laser)
+            QVERIFY(catalogo[i].nombre.contains("láser") || catalogo[i].descripcion.contains("láser", Qt::CaseInsensitive));
+        QCOMPARE(BuscadorPrecios::buscar(catalogo, "").size(), catalogo.size());     // vacío: todos
+        QVERIFY(BuscadorPrecios::buscar(catalogo, "xyzxyz").isEmpty());
+    }
+    void resumen_cadaProtocoloTieneSuFichaComoEnLaWeb()
+    {
+        // El catálogo sin base es el de la web (44) y cada uno tiene su ficha completa.
+        const QVector<Protocolo> catalogo = DatosPrueba::protocolos();
+        QCOMPARE(catalogo.size(), 44);
+        for (const Protocolo &p : catalogo) {
+            const ResumenTratamiento::Ficha f = ResumenTratamiento::fichaDe(p.id, p.nombre);
+            QVERIFY2(f.encontrada, qPrintable(p.nombre));
+            QVERIFY2(!f.descripcion.isEmpty() && !f.sesiones.isEmpty() && !f.zona.isEmpty() && !f.capa.isEmpty()
+                     && !f.preparacion.isEmpty() && !f.despues.isEmpty() && !f.noApto.isEmpty(), qPrintable(p.nombre));
+        }
+        // Mismo texto que la ficha de la web (web/src/datos/fichas.js) para la limpieza facial (id 1).
+        const ResumenTratamiento::Ficha limpieza = ResumenTratamiento::fichaDe(1, QString());
+        QCOMPARE(limpieza.zona, QString("Rostro"));
+        QCOMPARE(limpieza.capa, QString("Epidermis"));
+        QCOMPARE(limpieza.sesiones, QString("1 sesión cada 4 a 6 semanas"));
+    }
+    void resumen_seAbreDesdeProtocolosYDesdeElBuscador()
+    {
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        auto *pagina = w.findChild<QWidget *>("pagProtocolos");
+        auto *btnResumen = pagina->findChild<QPushButton *>("btnResumenProtocolo");
+        QVERIFY(!btnResumen->isEnabled());
+        pagina->findChild<QTableWidget *>("tablaProtocolos")->selectRow(0);
+        QVERIFY(btnResumen->isEnabled());
+        QString nombre;
+        QTimer::singleShot(100, [&nombre] {
+            QWidget *d = QApplication::activeModalWidget();
+            if (auto *lbl = d ? d->findChild<QLabel *>("lblResumenNombre") : nullptr)
+                nombre = lbl->text();
+            if (d)
+                d->close();
+        });
+        btnResumen->click();
+        QCOMPARE(nombre, DatosPrueba::protocolos().first().nombre);
+
+        // Buscador de precios: escribir filtra y cada resultado tiene "Ver resumen".
+        w.findChild<QLineEdit *>("editConsulta")->setText("rinoplastia");
+        const QList<QPushButton *> botones = w.findChild<QWidget *>("listaResultados")->findChildren<QPushButton *>("btnResumen");
+        QCOMPARE(botones.size(), 1);
+        QString aviso;
+        QTimer::singleShot(100, [&aviso] {
+            QWidget *d = QApplication::activeModalWidget();
+            if (auto *lbl = d ? d->findChild<QLabel *>("lblResumenAviso") : nullptr)
+                aviso = lbl->text();
+            if (d)
+                d->close();
+        });
+        botones.first()->click();
+        QVERIFY2(aviso.contains("consulta prequirúrgica"), qPrintable(aviso));   // es una cirugía
     }
 
     // ---- CP-09: franjas de disponibilidad desde la pantalla ----

@@ -1,3 +1,6 @@
+
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
 /*
  =============================================================================
    DERMALIA - REPORTES Y AUDITORIA (SEMANA 5) - MySQL 8

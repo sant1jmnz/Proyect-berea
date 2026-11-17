@@ -5,6 +5,9 @@
 -- (beneficios.sp_emitir_cupones). No es una entidad del modelo: vive con el backend.
 -- Se puede correr varias veces: solo agrega los números que faltan.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 CREATE TABLE IF NOT EXISTS agenda.Numero (
     n INT PRIMARY KEY
 );

@@ -9,6 +9,9 @@
 -- "Ahora" de los datos de ejemplo: 3 de noviembre de 2026.
 -- Los datos se generaron de forma determinista y este archivo es la fuente: para cambiarlos se edita acá.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 -- Roles
 INSERT INTO seguridad.Rol (id_rol, nombre) VALUES
   (1, 'paciente'),

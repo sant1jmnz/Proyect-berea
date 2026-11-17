@@ -718,8 +718,10 @@ void VentanaGestion::conectarBase()
         return;   /* ya estaba conectada */
     if (!repositorio)
         repositorio = new Repositorio(conexion->base());
-    if (!pedirLogin())
+    if (!pedirLogin()) {
+        franja->mostrarSinIngreso("No ingresaste con tu usuario y contraseña.");
         return;
+    }
     cargarDesdeBase();
 }
 
@@ -756,9 +758,12 @@ void VentanaGestion::cargarDesdeBase()
         || !DatosBase::cargarTurnos(*repositorio, hoy, 60, turnos, &error)
         || !DatosBase::cargarAvisos(*repositorio, hoy, 60, avisos, &error)) {
         QMessageBox::warning(this, "No se pudieron leer los datos", error);
+        franja->mostrarSinIngreso("No se pudieron leer los datos de la base.");
         return;
     }
     enModoBase = true;
+    franja->hide();
+    ui->lblUsuario->setText(rolUsuario == "administrador" ? "Administración" : "Recepción");
     paginaProtocolos->usarBase(repositorio, idUsuario);
     paginaProfesionales->usarBase(repositorio, idUsuario);
     paginaPacientes->usarBase(repositorio, idUsuario);

@@ -71,6 +71,33 @@ private slots:
         QLocale::setDefault(QLocale(QLocale::Spanish, QLocale::Argentina));   // como main.cpp: $30.000
     }
 
+    // Si no se ingresa con el usuario, la franja avisa que nada va a la base, y con
+    // "Ingresar" se vuelve a pedir el usuario: ahí sí se trabaja con la base.
+    void ventana_sinIngresoAvisaYDejaIngresarDespues()
+    {
+        BaseDatos prueba(ConfigBD::desdeEntorno());
+        if (!prueba.conectar())
+            QSKIP("Sin base de datos (definir DERMALIA_DB_USER, etc.).");
+        qputenv("DERMALIA_CLAVE", "clave-equivocada");
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        w.show();
+        auto *franja = w.findChild<AvisoConexion *>("avisoConexion");
+        QTRY_VERIFY_WITH_TIMEOUT(franja->isVisible(), 5000);
+        QVERIFY(!w.usaBase());
+        QVERIFY2(franja->texto().contains("NO se guarda en la base"), qPrintable(franja->texto()));
+
+        qputenv("DERMALIA_CLAVE", "dermalia2026");
+        QPushButton *ingresar = nullptr;
+        for (QPushButton *b : franja->findChildren<QPushButton *>())
+            if (b->text() == "Ingresar")
+                ingresar = b;
+        QVERIFY(ingresar);
+        ingresar->click();
+        QTRY_VERIFY_WITH_TIMEOUT(w.usaBase(), 5000);
+        QVERIFY(!franja->isVisible());
+    }
+
     // Con la base conectada, las pantallas muestran los datos de la base.
     void ventana_leeLosDatosDeLaBase()
     {

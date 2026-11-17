@@ -17,6 +17,8 @@ class Repositorio;
 
 namespace Ui { class VentanaCliente; }
 
+class QTimer;
+
 class VentanaCliente : public QMainWindow
 {
     Q_OBJECT
@@ -46,6 +48,7 @@ private:
     void confirmar();
     void reiniciarCarga();
     void buscarMiTurno();
+    bool mostrarTurnosDe(const QString &buscado);   /* false si no tiene turnos */
     void mostrarTurno(int indice, int cantidad);
     void ocultarTurno();
     void cancelarMiTurno();
@@ -56,6 +59,7 @@ private:
     /* Con la base */
     void conectarBase();
     void horariosDeBase(const QDate &dia);
+    void sincronizarBase();            /* cada 3 segundos: trae lo que cambió Gestión */
     bool confirmarEnBase(const Protocolo *p, const QDateTime &inicio);
     bool buscarOCrearPaciente(int *idPaciente);
 
@@ -73,6 +77,8 @@ private:
     ConexionApp *conexion = nullptr;
     Repositorio *repositorio = nullptr;
     bool enModoBase = false;           /* true: los datos salen de la base */
+    QTimer *relojBase = nullptr;
+    QString resumenAgenda;             /* para saber si los turnos de la base cambiaron */
 };
 
 #endif

@@ -18,9 +18,11 @@
 #include "sena.h"
 #include "validaciones.h"
 
+#include <QApplication>
 #include <QFileInfo>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
+#include <QListWidget>
 #include <QInputDialog>
 #include <QRandomGenerator>
 #include <QTimer>
@@ -564,9 +566,14 @@ void VentanaGestion::reiniciarCarga()
 /* RF-13: busca por nombre (si hay letras) o por DNI o teléfono (si son números). */
 void VentanaGestion::buscarTurnos()
 {
-    const QString texto = ui->editBuscar->text().simplified();
     if (enModoBase)
-        refrescarTurnosDeBase(texto);
+        refrescarTurnosDeBase(ui->editBuscar->text().simplified());
+    mostrarTurnos();
+}
+
+void VentanaGestion::mostrarTurnos()
+{
+    const QString texto = ui->editBuscar->text().simplified();
     const QString numeros = soloDigitos(texto);
     const bool esNumero = !numeros.isEmpty() && std::all_of(numeros.cbegin(), numeros.cend(),
                                                             [](QChar c) { return c.isDigit(); });
@@ -768,6 +775,72 @@ void VentanaGestion::cargarDesdeBase()
     paginaAvisos->recargar();
     reiniciarCarga();
     buscarTurnos();
+
+    /* Los dos programas trabajan sobre la misma base: cada 3 segundos se mira si
+     * la Terminal (u otra PC) cargó, canceló o dio de alta algo, y se muestra. */
+    if (!relojBase) {
+        relojBase = new QTimer(this);
+        relojBase->setInterval(3000);
+        connect(relojBase, &QTimer::timeout, this, &VentanaGestion::sincronizarBase);
+    }
+    relojBase->start();
+}
+
+/* Vuelve a elegir en la lista la fila con ese texto (si sigue estando). */
+static void volverAElegir(QListWidget *lista, const QString &texto)
+{
+    if (texto.isEmpty())
+        return;
+    const QList<QListWidgetItem *> iguales = lista->findItems(texto, Qt::MatchExactly);
+    if (!iguales.isEmpty())
+        lista->setCurrentItem(iguales.first());
+}
+
+/* Con la base: si cambiaron los turnos o las pacientes (por la Terminal, otra PC o el
+ * Workbench), se actualizan las pantallas sin perder lo que estaba elegido. */
+void VentanaGestion::sincronizarBase()
+{
+    if (!enModoBase || QApplication::activeModalWidget())
+        return;   /* con un cartel abierto se espera a la próxima vuelta */
+    QString error;
+
+    QVector<Paciente> pacientesNuevas;
+    if (DatosBase::cargarPacientes(*repositorio, pacientesNuevas, &error)
+        && DatosBase::resumen(pacientesNuevas) != DatosBase::resumen(pacientes)) {
+        pacientes = pacientesNuevas;
+        paginaPacientes->recargar();
+    }
+
+    const QVector<Turno> antes = turnos;
+    refrescarTurnosDeBase(ui->editBuscar->text().simplified());
+    if (DatosBase::resumen(turnos) == DatosBase::resumen(antes))
+        return;
+
+    /* Turno elegido en la tabla (DNI y fecha) para volver a marcarlo. */
+    QString dniElegido, fechaElegida;
+    const int fila = ui->tablaTurnos->currentRow();
+    if (fila >= 0 && !ui->tablaTurnos->selectedItems().isEmpty()) {
+        dniElegido = ui->tablaTurnos->item(fila, ColDni)->text();
+        fechaElegida = ui->tablaTurnos->item(fila, ColFecha)->text();
+    }
+    mostrarTurnos();
+    for (int f = 0; f < ui->tablaTurnos->rowCount(); ++f) {
+        if (ui->tablaTurnos->item(f, ColDni)->text() == dniElegido
+            && ui->tablaTurnos->item(f, ColFecha)->text() == fechaElegida) {
+            ui->tablaTurnos->selectRow(f);
+            break;
+        }
+    }
+    turnoElegido();
+
+    /* Los horarios libres cambiaron: se recalculan sin perder el elegido (si sigue libre). */
+    const QListWidgetItem *horario = ui->listaHorarios->currentItem();
+    const QString horarioElegido = horario && horario->isSelected() ? horario->text() : QString();
+    actualizarHorarios();
+    volverAElegir(ui->listaHorarios, horarioElegido);
+
+    DatosBase::cargarAvisos(*repositorio, QDate::currentDate(), 60, avisos, &error);
+    paginaAvisos->recargar();
 }
 
 /* RF-04: los horarios libres de los profesionales que hacen el protocolo elegido. */

@@ -5,6 +5,7 @@ import { leerReservas, cancelarReserva, turnoDeEjemplo, protocoloPorId } from '.
 import { calcularSena, montoReembolso, cancelaATiempo, pesos } from '../sena.js';
 import { turnosDeBase, cancelarEnBase } from '../../datos/api.js';
 import { errorDniOTelefono, soloDigitos } from '../validaciones.js';
+import { leerSesion, miCuenta } from '../../datos/cuenta.js';
 
 iniciarComun();
 
@@ -130,3 +131,16 @@ resultado.addEventListener('click', async (e) => {
   if (movimientoReducido()) repintar();
   else gsap.to(articulo, { rotateX: 12, y: -10, autoAlpha: 0.4, duration: 0.4, transformPerspective: 900, onComplete: repintar });
 });
+
+/* Con cuenta, el historial aparece solo: no hace falta escribir el DNI (RF-15). */
+const sesion = leerSesion();
+if (sesion) {
+  miCuenta().then(async (cuenta) => {
+    if (!cuenta) return;   // la sesión venció: queda el buscador de siempre
+    document.querySelector('.titulo-pagina').textContent = `Hola, ${cuenta.paciente.nombre}`;
+    document.querySelector('.bajada').textContent = 'Estos son tus turnos. Si cancelás con más de 24 horas, te devolvemos la seña.';
+    formulario.clave.value = cuenta.paciente.dni;
+    ultima = cuenta.paciente.dni;
+    pintar(await buscar(cuenta.paciente.dni));
+  });
+}

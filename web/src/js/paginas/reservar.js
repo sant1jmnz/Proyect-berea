@@ -3,6 +3,7 @@ import { gsap, movimientoReducido } from '../movimiento/gsap.js';
 import { protocolos, categorias, categoriaDe, buscarProtocolos, protocoloPorId, CONSULTA_PREQUIRURGICA } from '../../datos/protocolos.js';
 import { proximosDias, horariosDe, guardarReserva } from '../../datos/reservas.js';
 import { horariosDeBase, reservarEnBase, revisarCodigo } from '../../datos/api.js';
+import { leerSesion } from '../../datos/cuenta.js';
 import { errorDni, errorTelefono, errorNombreApellido, errorNacimiento, soloDigitos } from '../validaciones.js';
 import { calcularSena, pesos } from '../sena.js';
 
@@ -422,6 +423,14 @@ async function confirmar() {
 function celebrar() {
   const panel = $('[data-panel="listo"]');
   gsap.from(panel.querySelectorAll('.listo__check circle, .listo__check path'), { drawSVG: 0, duration: 0.8, stagger: 0.2, ease: 'power2.inOut' });
+}
+
+// Con cuenta, los datos de la paciente ya vienen cargados.
+const sesionPaciente = leerSesion()?.paciente;
+if (sesionPaciente) {
+  formulario.nombre.value = `${sesionPaciente.nombre} ${sesionPaciente.apellido}`;
+  formulario.dni.value = sesionPaciente.dni;
+  formulario.telefono.value = sesionPaciente.telefono;
 }
 
 // Si llegaste desde una ficha (?protocolo=...), ya viene elegido.

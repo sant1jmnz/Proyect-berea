@@ -31,6 +31,14 @@ se generan con el mismo script (`npm run generar` en `web/`) desde `backend/02_d
 sitio (`web/src/js/validaciones.js`) repiten las de `frontend/comun/validaciones.cpp`. Si cambia el catálogo, hay
 que volver a correr el script y subir los dos archivos generados.
 
+**Cuenta de la paciente (sitio web).** Usa `seguridad.sp_crear_cuenta_paciente` y `seguridad.sp_login`, que ya existían.
+Como `sp_login` compara la contraseña "tal cual", la API del sitio (`web/api/servidor.js`) le manda un **hash**
+(scrypt con el usuario y un pimiento como sal) en lugar de la contraseña: en la base no queda la clave de una
+paciente en texto plano. La sesión es un token firmado (HMAC) de 12 horas. Variables: `DERMALIA_PIMIENTO` (no
+cambiarla una vez que hay cuentas, porque invalidaría las contraseñas) y `DERMALIA_SECRETO` (si falta, las sesiones se
+cierran al reiniciar la API). Para quedarse con la cuenta de un DNI que ya existe hay que escribir además el
+teléfono que dejó al reservar. Las cuentas del personal (Gestión) siguen como estaban.
+
 La regla central: **la lógica del negocio vive en la base**, en stored
 procedures. Las aplicaciones no escriben en tablas ni arman SQL propio: llaman a
 los SP del catálogo [`12-contrato-sp.md`](12-contrato-sp.md). Así los tres

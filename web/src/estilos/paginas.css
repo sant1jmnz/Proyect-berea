@@ -320,6 +320,16 @@
   gap: 10px;
 }
 
+/* Los mensajes de error vacíos no ocupan lugar. */
+.formulario .error:empty {
+  display: none;
+}
+
+/* Cuenta: los botones de modo se separan del texto de arriba. */
+[data-sin-sesion] .chips {
+  margin-top: 22px;
+}
+
 @media (max-width: 560px) {
   .formulario {
     grid-template-columns: 1fr;

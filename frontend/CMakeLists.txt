@@ -53,7 +53,9 @@ set(COMUN
     comun/repositorio.h
     comun/recordatorios.cpp  # recordatorio de turno y registro de avisos (RF-11)
     comun/recordatorios.h
-    gestion/recursos.qrc)   # íconos y tipografías
+    comun/resumentratamiento.cpp   # resumen de cada tratamiento, igual al de la web
+    comun/resumentratamiento.h
+    gestion/recursos.qrc)   # íconos, tipografías y las fichas de los tratamientos
 
 # Apartado Gestión (PC de recepción): con la base usa los stored procedures;
 # sin base, trabaja con el archivo local de esta PC.

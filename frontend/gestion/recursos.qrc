@@ -7,5 +7,6 @@
   <file>fuentes/Lato-Regular.ttf</file>
   <file>fuentes/Lato-Bold.ttf</file>
   <file>fuentes/PlayfairDisplay.ttf</file>
+  <file alias="fichas.json">../comun/fichas.generado.json</file>
  </qresource>
 </RCC>

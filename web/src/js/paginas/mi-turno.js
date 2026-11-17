@@ -4,6 +4,7 @@ import { categoriaDe } from '../../datos/protocolos.js';
 import { leerReservas, cancelarReserva, turnoDeEjemplo, protocoloPorId } from '../../datos/reservas.js';
 import { calcularSena, montoReembolso, cancelaATiempo, pesos } from '../sena.js';
 import { turnosDeBase, cancelarEnBase } from '../../datos/api.js';
+import { errorDniOTelefono, soloDigitos } from '../validaciones.js';
 
 iniciarComun();
 
@@ -95,9 +96,10 @@ function pintar(turnos) {
 let ultima = '';
 formulario.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const clave = formulario.clave.value.replace(/\D/g, '');
-  if (!clave) {
-    resultado.innerHTML = '<p class="error">Escribí tu DNI o tu teléfono, solo con números.</p>';
+  const falla = errorDniOTelefono(formulario.clave.value);
+  const clave = soloDigitos(formulario.clave.value);
+  if (falla) {
+    resultado.innerHTML = `<p class="error">${falla}</p>`;
     formulario.clave.focus();
     return;
   }

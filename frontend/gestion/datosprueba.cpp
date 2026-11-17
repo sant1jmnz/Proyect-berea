@@ -1,5 +1,6 @@
 #include "datosprueba.h"
 
+#include "catalogogenerado.h"
 #include "sena.h"
 
 namespace DatosPrueba {
@@ -15,18 +16,22 @@ QVector<Categoria> categorias()
     };
 }
 
+/* Los mismos protocolos que la base y el sitio web (catálogo generado desde backend/02_datos.sql).
+ * El id queda en 0: sin base no hay id que valga. */
 QVector<Protocolo> protocolos()
 {
     const QVector<Categoria> c = categorias();
-    const Categoria faciales = c[0];
-    const Categoria aparatologia = c[1];
-    const Categoria medicinaEstetica = c[2];
-    return {
-        { "Limpieza facial profunda", 60, 25000, faciales },
-        { "Peeling químico", 45, 40000, faciales },
-        { "Mesoterapia facial", 45, 55000, medicinaEstetica },
-        { "Depilación láser (zona chica)", 30, 18000, aparatologia },
-    };
+    QVector<Protocolo> lista;
+    for (const FilaCatalogo &f : CATALOGO) {
+        Protocolo p;
+        p.nombre = QString::fromUtf8(f.nombre);
+        p.duracionMin = f.duracionMin;
+        p.precio = f.precio;
+        p.categoria = c[f.idCategoria - 1];
+        p.descripcion = QString::fromUtf8(f.descripcion);
+        lista.append(p);
+    }
+    return lista;
 }
 
 /* El instituto no abre los domingos: esos turnos pasan al lunes. */
@@ -44,17 +49,29 @@ static Turno turno(const QString &paciente, const QString &dni, const QString &t
              estado, origen, senaPagada };
 }
 
+/* El protocolo del catálogo con ese nombre. */
+static Protocolo porNombre(const QString &nombre)
+{
+    for (const Protocolo &p : protocolos())
+        if (p.nombre == nombre)
+            return p;
+    return {};
+}
+
 QVector<Turno> turnos(const QDate &hoy)
 {
-    const QVector<Protocolo> p = protocolos();
+    const Protocolo limpieza = porNombre("Limpieza facial profunda");
+    const Protocolo peeling = porNombre("Peeling químico");
+    const Protocolo mesoterapia = porNombre("Mesoterapia facial");
+    const Protocolo laser = porNombre("Depilación láser (zona chica)");
     return {
-        turno("María Sosa", "30111222", "1155550102", p[0], QDateTime(hoy.addDays(-27), QTime(16, 0)),
+        turno("María Sosa", "30111222", "1155550102", limpieza, QDateTime(hoy.addDays(-27), QTime(16, 0)),
               EstadoTurno::Realizado, "Terminal", true),
-        turno("Carla Gómez", "33222111", "1155550177", p[2], diaHabil(hoy.addDays(1), 13),
+        turno("Carla Gómez", "33222111", "1155550177", mesoterapia, diaHabil(hoy.addDays(1), 13),
               EstadoTurno::Confirmado, "Gestión", false),
-        turno("María Sosa", "30111222", "1155550102", p[3], diaHabil(hoy.addDays(2), 9),
+        turno("María Sosa", "30111222", "1155550102", laser, diaHabil(hoy.addDays(2), 9),
               EstadoTurno::Confirmado, "Web", true),
-        turno("Lucía Fernández", "28444555", "1155550144", p[1], diaHabil(hoy.addDays(3), 17),
+        turno("Lucía Fernández", "28444555", "1155550144", peeling, diaHabil(hoy.addDays(3), 17),
               EstadoTurno::Confirmado, "Gestión", true),
     };
 }
@@ -93,7 +110,7 @@ QVector<Paciente> pacientes()
 
 QStringList horariosDelDia()
 {
-    return { "09:00", "10:30", "13:00", "15:30", "17:00" };
+    return { "09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00" };   /* los mismos que el sitio web sin conexión */
 }
 
 QString texto(EstadoTurno estado)

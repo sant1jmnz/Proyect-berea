@@ -489,8 +489,9 @@ private slots:
         auto *pagina = w.findChild<QWidget *>("pagProtocolos");
         auto *lista = w.findChild<QListWidget *>("listaProtocolos");
         auto *tabla = pagina->findChild<QTableWidget *>("tablaProtocolos");
-        QCOMPARE(lista->count(), 4);
-        QCOMPARE(tabla->rowCount(), 4);
+        const int n = DatosPrueba::protocolos().size();   // el catálogo de ejemplo es el mismo que el de la base y el sitio
+        QCOMPARE(lista->count(), n);
+        QCOMPARE(tabla->rowCount(), n);
 
         pagina->findChild<QLineEdit *>("editNombre")->setText("Hidrafacial");
         pagina->findChild<QLineEdit *>("editPrecio")->setText("-1");
@@ -499,22 +500,22 @@ private slots:
         cerrarDialogo(QMessageBox::Ok, &texto);
         pagina->findChild<QPushButton *>("btnGuardar")->click();
         QVERIFY2(texto.contains("no puede ser negativo"), qPrintable(texto));
-        QCOMPARE(tabla->rowCount(), 4);                         // no se agregó nada
+        QCOMPARE(tabla->rowCount(), n);                         // no se agregó nada
 
         pagina->findChild<QLineEdit *>("editPrecio")->setText("30000");
         cerrarDialogo(QMessageBox::Ok);
         pagina->findChild<QPushButton *>("btnGuardar")->click();
-        QCOMPARE(tabla->rowCount(), 5);
-        QCOMPARE(lista->count(), 5);                            // ya se ofrece al cargar un turno
-        QVERIFY(lista->item(4)->text().contains("Hidrafacial"));
+        QCOMPARE(tabla->rowCount(), n + 1);
+        QCOMPARE(lista->count(), n + 1);                            // ya se ofrece al cargar un turno
+        QVERIFY(lista->item(n)->text().contains("Hidrafacial"));
 
         // baja: sale de "Cargar turno" pero sigue en la pantalla de protocolos
-        tabla->selectRow(4);
+        tabla->selectRow(n);
         cerrarDialogo(QMessageBox::Yes);
         pagina->findChild<QPushButton *>("btnEstado")->click();
-        QCOMPARE(tabla->rowCount(), 5);
-        QCOMPARE(tabla->item(4, 5)->text(), QString("De baja"));
-        QCOMPARE(lista->count(), 4);
+        QCOMPARE(tabla->rowCount(), n + 1);
+        QCOMPARE(tabla->item(n, 5)->text(), QString("De baja"));
+        QCOMPARE(lista->count(), n);
     }
 
     // ---- CP-09: franjas de disponibilidad desde la pantalla ----

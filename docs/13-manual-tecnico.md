@@ -24,6 +24,13 @@ sistema está en [`14-manual-usuario.md`](14-manual-usuario.md).
 | Sitio web | `web/` | Vite, GSAP, three.js, Lenis |
 | Documentación | `docs/` | Markdown |
 
+**Terminal y sitio hacen lo mismo.** Comparten las reglas (seña, 24 horas, cirugías, cupones, tarjetas de regalo,
+máximo de 3 protocolos por turno) porque las aplica la base, y comparten los datos sin conexión: el catálogo de
+ejemplo de las apps Qt (`frontend/comun/catalogogenerado.h`) y el del sitio (`web/src/datos/catalogo.generado.js`)
+se generan con el mismo script (`npm run generar` en `web/`) desde `backend/02_datos.sql`. Las validaciones del
+sitio (`web/src/js/validaciones.js`) repiten las de `frontend/comun/validaciones.cpp`. Si cambia el catálogo, hay
+que volver a correr el script y subir los dos archivos generados.
+
 La regla central: **la lógica del negocio vive en la base**, en stored
 procedures. Las aplicaciones no escriben en tablas ni arman SQL propio: llaman a
 los SP del catálogo [`12-contrato-sp.md`](12-contrato-sp.md). Así los tres

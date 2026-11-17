@@ -51,13 +51,13 @@ export async function horariosDeBase(dia, idsWeb) {
 }
 
 /* Reserva el turno y registra la seña simulada. Devuelve { ok, cuerpo } o null si no hay API. */
-export async function reservarEnBase({ nombre, dni, telefono, nacimiento, idsWeb, profesional, inicio, cupon }) {
+export async function reservarEnBase({ nombre, dni, telefono, nacimiento, idsWeb, profesional, inicio, cupon, tarjeta }) {
   const ids = await idsDe(idsWeb);
   if (!ids) return null;
   return pedir('/turnos', {
     method: 'POST',
     body: JSON.stringify({ nombre, dni, telefono, nacimiento: nacimiento || undefined, protocolos: ids, profesional,
-      inicio: `${aTextoFecha(inicio)} ${dosDigitos(inicio.getHours())}:${dosDigitos(inicio.getMinutes())}:00`, cupon: cupon || undefined }),
+      inicio: `${aTextoFecha(inicio)} ${dosDigitos(inicio.getHours())}:${dosDigitos(inicio.getMinutes())}:00`, cupon: cupon || undefined, tarjeta: tarjeta || undefined }),
   });
 }
 
@@ -82,4 +82,28 @@ export async function turnosDeBase(clave) {
 /* Cancela un turno de la base ("bd-12" → 12). Devuelve { ok, cuerpo } o null si no hay API. */
 export function cancelarEnBase(id) {
   return pedir(`/turnos/${String(id).replace('bd-', '')}/cancelar`, { method: 'POST' });
+}
+
+/* Revisa un código del campo "Cupón o tarjeta de regalo" contra la base (RF-17, RF-23):
+ *  - tarjeta de regalo vigente y con saldo  → { tipo: 'tarjeta', saldo }
+ *  - cupón de ese DNI, vigente y sin usar   → { tipo: 'cupon', porcentaje }
+ *  - cualquier otra cosa                    → { error: 'texto para mostrar' }
+ * Devuelve null si no hay API (la pantalla usa entonces los datos de ejemplo). */
+export async function revisarCodigo(codigo, dni) {
+  const t = await pedir(`/tarjetas?codigo=${encodeURIComponent(codigo)}`);
+  if (!t?.ok) return null;
+  if (t.cuerpo.length > 0) {
+    const tarjeta = t.cuerpo[0];
+    return tarjeta.vigente && tarjeta.saldo > 0
+      ? { tipo: 'tarjeta', saldo: Number(tarjeta.saldo) }
+      : { error: 'Esa tarjeta de regalo está vencida o sin saldo.' };
+  }
+  if (!/^\d{7,8}$/.test(dni)) return { error: 'Escribí tu DNI primero: los cupones son personales.' };
+  const r = await pedir(`/cupones?dni=${encodeURIComponent(dni)}`);
+  if (!r?.ok) return null;
+  const cupon = r.cuerpo.find((c) => c.codigo.toUpperCase() === codigo.toUpperCase());
+  if (!cupon) return { error: 'Ese código no existe o es de otra paciente. Revisá que esté bien escrito.' };
+  if (cupon.usado) return { error: 'Ese cupón ya se usó.' };
+  if (!cupon.vigente) return { error: 'Ese cupón está vencido.' };
+  return { tipo: 'cupon', porcentaje: Number(cupon.porcentaje_descuento) };
 }

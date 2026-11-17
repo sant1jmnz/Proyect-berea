@@ -10,6 +10,8 @@
  *   POST /api/turnos                                    reserva un turno y registra la seña simulada
  *   GET  /api/turnos?clave=30111222                     turnos de un DNI o teléfono
  *   POST /api/turnos/:id/cancelar                       cancela (la base decide si devuelve la seña)
+ *   GET  /api/cupones?dni=30111222                      cupones de una paciente (para validar el código al reservar)
+ *   GET  /api/tarjetas?codigo=GC-...                    saldo y vigencia de una tarjeta de regalo
  *   POST /api/consultas                                 registra una pregunta al asistente
  *
  * Variables: DERMALIA_DB_HOST, _PORT, _USER, _PASS, _SSL (como las apps de escritorio) y PUERTO_API.
@@ -108,7 +110,9 @@ export function crearServidor(pool) {
         // la seña es simulada (RNF-05): se marca como pagada con tarjeta simulada
         /* El código de operación lo genera el servidor; la base solo lo guarda. */
         const codigoOperacion = `SIM-${randomInt(100000, 1000000)}`;
-        const sena = await escribir(pool, 'pagos.sp_registrar_sena', [turno.id, 'tarjeta simulada', null, null, 'web', codigoOperacion]);
+        // con una tarjeta de regalo la seña sale de su saldo; si no, es el pago simulado de siempre
+        const sena = await escribir(pool, 'pagos.sp_registrar_sena',
+          [turno.id, d.tarjeta ? 'tarjeta de regalo' : 'tarjeta simulada', d.tarjeta || null, null, 'web', codigoOperacion]);
         return responder(res, 201, { turno: turno.id, sena: turno.valor, precioFinal: Number(turno.dato), senaRegistrada: sena.ok, codigoOperacion: sena.dato, aviso: sena.ok ? null : sena.mensaje });
       }
       if (req.method === 'GET' && ruta === '/api/turnos') {
@@ -118,6 +122,12 @@ export function crearServidor(pool) {
       if (req.method === 'POST' && cancelar) {
         const r = await escribir(pool, 'agenda.sp_cancelar_turno', [Number(cancelar[1]), null, 'web']);
         return responder(res, r.ok ? 200 : 409, r.ok ? { reembolsado: r.valor, seña: r.dato } : { error: r.mensaje, codigo: r.codigo });
+      }
+      if (req.method === 'GET' && ruta === '/api/cupones') {
+        return responder(res, 200, await llamar(pool, 'beneficios.sp_listar_cupones', [url.searchParams.get('dni') || '']));
+      }
+      if (req.method === 'GET' && ruta === '/api/tarjetas') {
+        return responder(res, 200, await llamar(pool, 'pagos.sp_saldo_tarjeta', [url.searchParams.get('codigo') || '', null, 'web']));
       }
       if (req.method === 'POST' && ruta === '/api/consultas') {
         const d = await leerJson(req);

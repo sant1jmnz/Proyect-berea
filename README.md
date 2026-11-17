@@ -143,8 +143,9 @@ docs/
   catedra/               # material de cátedra transcripto (con ejemplos de conexión C y MySQL)
   diagramas/             # diseño conceptual escrito (Peter Chen)
 backend/                 # base MySQL: tablas en 9 schemas, datos, stored procedures, reportes, tuning y pruebas
-  01 codigobasededatossolotablas.sql  02_datos.sql  03_sp_semana3.sql  04_sp_semana4.sql
-  05_reportes_semana5.sql  06_tuning_semana6.sql  07_actividad_con_sps.sql  05_pruebas_sp.sql
+  01 codigobasededatossolotablas.sql  02_datos.sql  02b_numero.sql  03_sp_semana3.sql  04_sp_semana4.sql
+  05_reportes_semana5.sql  06_tuning_semana6.sql  09_sp_pantallas.sql  07_actividad_con_sps.sql
+  08_usuarios.sql  05_pruebas_sp.sql
   medir_tuning.sql  pruebas/correr_pruebas.py
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
 web/                     # sitio web para la paciente (Vite, GSAP, Three.js)

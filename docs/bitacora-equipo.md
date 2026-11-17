@@ -1,43 +1,15 @@
-# Bitácora del equipo — Dermalia
+# Bitácora del equipo — martes 17 de noviembre de 2026
 
-**Integrantes:** Santiago Jiménez y Bautista Casero · Proyecto Informático I · 4° bimestre 2026
+**Integrantes:** Santiago Jiménez y Bautista Casero · Proyecto Informático I
 
-## Qué hicimos
+Hoy el objetivo fue que los dos programas de escritorio, Gestión y la terminal de la paciente, trabajen de verdad sobre la base de datos MySQL y no con datos de prueba. Empezamos cargando la base en la PC del colegio. Como la cuenta no tiene permisos de administrador, no podíamos usar `sudo`, pero MySQL ya estaba corriendo, así que cargamos los scripts en orden desde la terminal de Ubuntu. En la primera carga apareció el error de que no existía la tabla `agenda.Numero`: nos faltaba el script `02b_numero.sql`, que usan los horarios libres y los cupones. Lo agregamos al orden de carga y lo anotamos en el manual técnico.
 
-| Período | Santiago | Bautista |
-|---|---|---|
-| Septiembre | Carpeta de Proyecto V1, guion del pitch y resumen del material de cátedra | Viabilidad del pitch y maquetado del apartado Cliente |
-| Semana 1 (6/10) | Prototipo de **Gestión** en Qt con el diseño estilo spa | Prototipo de la **terminal táctil** (Cliente) |
-| Semana 3 (13/10) | Validaciones de la carga de turnos, seña por categoría y 5 casos de prueba de Gestión | Validaciones, pruebas y casos de prueba de la terminal; quedó un solo módulo de validaciones para los dos |
-| Base de datos | Modelo de Chen entre los dos. SP de seña, cancelación, reembolso y cirugías; reportes 1 a 4 y auditoría | SP de cupones, tarjetas de regalo y notificaciones; reportes 5 a 8 |
-| Noviembre | Competencia (indirectos y PUV), presupuesto y retorno de inversión, manual técnico y tuning de su reporte | Competencia (directos y matriz), monetización, manual de usuario con capturas y tuning de su reporte |
+Después compilamos con el CMake que trae Qt, porque `ctest` tampoco estaba instalado. La compilación falló porque nuestra conexión usaba el nombre interno del tipo de MariaDB y la PC tiene la librería de MySQL. Lo resolvimos guardando la conexión como `void*` y convirtiéndola a `MYSQL*` en `basedatos.cpp`, y desde ahí compila con las dos librerías.
 
-**Lo último (noviembre):**
+Con los programas andando vimos que lo que se cargaba en uno no aparecía en el otro. Agregamos que Gestión y la terminal miren la base cada tres segundos y actualicen la pantalla sin perder lo que estaba elegido. Al probarlo con capturas descubrimos que Gestión en realidad no estaba en la base: si se cancelaba el ingreso, seguía con datos de prueba sin avisar. Ahora muestra una franja amarilla que lo dice y un botón para ingresar, y abajo se ve quién ingresó.
 
-- La terminal y Gestión trabajan sobre la misma base y se actualizan solas cada 3 segundos.
-- Pantallas nuevas en Gestión: Cupones, Tarjetas de regalo, Consultas previas y Usuarios (la administración crea los usuarios del personal).
-- Cuenta opcional de la paciente en la terminal (Ingresar / Crear cuenta).
-- "Ver resumen" de cada tratamiento, igual al de la web, y buscador de precios funcional.
-- 239 pruebas de los stored procedures y 6 de los programas, todas aprobadas; manuales con capturas.
+También sumamos la pantalla Usuarios. No hay registro libre para el personal porque ve los datos de las pacientes, así que la administración crea los usuarios en la base y cada uno puede cambiar su contraseña. En la terminal, en cambio, agregamos arriba a la derecha el botón Ingresar, con el que la paciente puede crear una cuenta opcional. Con la cuenta, sus datos aparecen escritos al sacar turno y sus turnos se ven solos; si nadie toca la terminal durante tres minutos, la sesión se cierra.
 
-## Problemas y cómo los resolvimos
+Por último, cada tratamiento tiene ahora un botón Ver resumen con la misma ficha que la página web, porque los textos se generan del mismo archivo. Al hacerlo encontramos que el buscador de precios mostraba siempre tres resultados fijos con precios viejos; ahora busca en el catálogo real, sin importar tildes ni mayúsculas. En una rama aparte también avanzamos con el sitio web: cuentas de paciente, cupones y tarjetas reales, y las mismas validaciones que en Qt.
 
-| Problema | Solución |
-|---|---|
-| Las ramas chocaban con `main` | Un PR por semana, resolviendo los conflictos y corriendo las pruebas de los dos |
-| Cliente y Gestión validaban distinto | Un solo módulo compartido (`frontend/comun/validaciones`) |
-| Las tildes se guardaban rotas en la base | `SET NAMES utf8mb4` al principio de cada script |
-| No compilaba con la librería de MySQL (sí con MariaDB) | Guardar la conexión como `void*` y convertirla a `MYSQL*` |
-| Gestión seguía sin la base si se cancelaba el ingreso | Una franja amarilla que avisa y un botón para ingresar |
-| El buscador de precios mostraba resultados fijos | Ahora busca en el catálogo real de la base |
-
-## Qué aprendimos
-
-- A conectar C++ con MySQL usando la API de C y a llamar a los stored procedures desde Qt.
-- A manejar errores en los SP con `EXIT HANDLER` y `GET DIAGNOSTICS`.
-- Que un dato debe tener una sola fuente: el catálogo sale de la base, y la web y los programas lo leen de ahí.
-
-## Pendiente
-
-- Subir la base a Aiven para usarla desde cualquier PC.
-- Entregas en Classroom, diapositivas, ensayo del Demo Day y coevaluación.
+Todas las pruebas quedaron aprobadas: los 239 casos de los stored procedures y las 6 pruebas de los programas, con la base y sin ella. Actualizamos el manual de usuario, los casos de prueba y las capturas. Aprendimos que una misma librería puede llamarse distinto según el sistema, que hay que avisar con claridad cuando un programa no está guardando en la base y que cada dato tiene que salir de una sola fuente. Queda pendiente subir la base a Aiven para usar los mismos usuarios desde cualquier PC y juntar la rama del sitio web con la nuestra.

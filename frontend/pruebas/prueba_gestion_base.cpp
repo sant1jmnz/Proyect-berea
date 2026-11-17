@@ -21,7 +21,9 @@
 #include <QDateEdit>
 
 #include "avisoconexion.h"
+#include "basedatos.h"
 #include "conexionapp.h"
+#include "datosbase.h"
 #include "repositorio.h"
 #include "ventanagestion.h"
 
@@ -257,6 +259,63 @@ private slots:
         QTest::keyClick(buscar, Qt::Key_Return);
         QCOMPARE(tabla->item(0, 5)->text(), QString("Cancelado"));
         QVERIFY2(tabla->item(0, 6)->text().contains("reembolsada"), qPrintable(tabla->item(0, 6)->text()));
+    }
+
+    // La Terminal (otro programa) reserva y después se cancela en la base: Gestión,
+    // abierta al mismo tiempo, lo muestra sola en pocos segundos, sin tocar nada.
+    void ventana_seActualizaSolaConLosCambiosDeLaBase()
+    {
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        QTest::qWait(1500);
+        if (!w.usaBase())
+            QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
+        BaseDatos base(ConfigBD::desdeEntorno());
+        QVERIFY(base.conectar());
+        Repositorio repo(base);
+
+        // Un horario libre del primer protocolo activo, al menos 3 días adelante.
+        QVector<Protocolo> catalogo;
+        QString error;
+        QVERIFY(DatosBase::cargarProtocolos(repo, catalogo, &error));
+        int idProtocolo = 0;
+        HorarioLibre libre;
+        for (const Protocolo &p : catalogo) {
+            if (!p.activo)
+                continue;
+            for (int d = 3; d <= 30 && idProtocolo == 0; ++d) {
+                const QVector<HorarioLibre> lista = repo.horariosLibres(QDate::currentDate().addDays(d), { p.id });
+                if (!lista.isEmpty()) {
+                    idProtocolo = p.id;
+                    libre = lista.first();
+                }
+            }
+            if (idProtocolo != 0)
+                break;
+        }
+        if (idProtocolo == 0)
+            QSKIP("No hay horarios libres en los próximos 30 días.");
+
+        const QString dni = QString::number(60000000 + int(QRandomGenerator::global()->bounded(9999999)));
+        const Respuesta paciente = repo.altaPaciente(dni, "Desde", "Terminal", QDate(1993, 8, 9), QString(),
+                                                     "1166665555", "terminal");
+        QVERIFY2(paciente.ok, qPrintable(paciente.mensaje));
+        const Respuesta turno = repo.altaTurno(paciente.id, libre.idProfesional, libre.inicio, { idProtocolo }, "terminal");
+        QVERIFY2(turno.ok, qPrintable(turno.mensaje));
+
+        // Aparece en la tabla de turnos de Gestión sin buscar nada.
+        auto *tabla = w.findChild<QTableWidget *>("tablaTurnos");
+        auto filaDelDni = [&] {
+            for (int f = 0; f < tabla->rowCount(); ++f)
+                if (tabla->item(f, 1) && tabla->item(f, 1)->text() == dni)
+                    return f;
+            return -1;
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(filaDelDni() >= 0, 8000);
+
+        // Se cancela desde la Terminal: el estado cambia solo en Gestión.
+        QVERIFY(repo.cancelarTurno(turno.id, "terminal").ok);
+        QTRY_COMPARE_WITH_TIMEOUT(tabla->item(filaDelDni(), 5)->text(), QString("Cancelado"), 8000);
     }
 };
 

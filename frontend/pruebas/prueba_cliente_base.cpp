@@ -16,6 +16,7 @@
 #include <QTemporaryDir>
 
 #include "basedatos.h"
+#include "datosbase.h"
 #include "repositorio.h"
 #include "ventanacliente.h"
 
@@ -107,6 +108,70 @@ private slots:
         w.findChild<QPushButton *>("btnCancelarMiTurno")->click();
         QCOMPARE(repo.buscarTurnos(dni).first().estado, QString("cancelado"));
         QCOMPARE(w.findChild<QLabel *>("lblEstadoTurno")->text(), QString("Cancelado"));
+    }
+
+    // Gestión (u otra PC) ocupa un horario y cancela turnos en la base: la terminal,
+    // abierta al mismo tiempo, lo muestra sola en pocos segundos, sin tocar nada.
+    void terminal_seActualizaSolaConLosCambiosDeLaBase()
+    {
+        BaseDatos base(ConfigBD::desdeEntorno());
+        if (!base.conectar())
+            QSKIP("Sin base de datos (definir DERMALIA_DB_USER, etc.).");
+        Repositorio repo(base);
+
+        VentanaCliente w(nullptr, carpeta.filePath("local2.json"), carpeta.filePath("pendientes2.json"));
+        w.show();
+        QTRY_VERIFY_WITH_TIMEOUT(w.usaBase(), 5000);
+
+        auto *protocolos = w.findChild<QListWidget *>("listaProtocolos");
+        protocolos->setCurrentRow(0);
+        protocolos->item(0)->setSelected(true);
+        w.findChild<QPushButton *>("btnContinuar1")->click();
+        auto *calendario = w.findChild<QCalendarWidget *>("calendario");
+        auto *horarios = w.findChild<QListWidget *>("listaHorarios");
+        for (int d = 3; d <= 40 && horarios->count() == 0; ++d)
+            calendario->setSelectedDate(QDate::currentDate().addDays(d));
+        QVERIFY(horarios->count() > 0);
+        const QString hora = horarios->item(0)->text();
+        const QDateTime inicio = horarios->item(0)->data(Qt::UserRole).toDateTime();
+
+        // El id del protocolo elegido (la lista muestra el nombre en la primera línea).
+        QVector<Protocolo> catalogo;
+        QString error;
+        QVERIFY(DatosBase::cargarProtocolos(repo, catalogo, &error));
+        const QString nombre = protocolos->item(0)->text().section('\n', 0, 0);
+        int idProtocolo = 0;
+        for (const Protocolo &p : catalogo)
+            if (p.nombre == nombre)
+                idProtocolo = p.id;
+        QVERIFY(idProtocolo != 0);
+
+        // "Gestión" reserva ese horario con todos los profesionales que lo tenían libre.
+        const QString dni = QString::number(60000000 + QRandomGenerator::global()->bounded(9999999));
+        const Respuesta paciente = repo.altaPaciente(dni, "Otra", "Computadora", QDate(1991, 5, 2), QString(),
+                                                     "1144443333", "terminal");
+        QVERIFY2(paciente.ok, qPrintable(paciente.mensaje));
+        QVector<int> reservados;
+        for (const HorarioLibre &h : repo.horariosLibres(inicio.date(), { idProtocolo }))
+            if (h.inicio == inicio) {
+                const Respuesta r = repo.altaTurno(paciente.id, h.idProfesional, inicio, { idProtocolo }, "terminal");
+                QVERIFY2(r.ok, qPrintable(r.mensaje));
+                reservados << r.id;
+            }
+        QVERIFY(!reservados.isEmpty());
+
+        // La terminal deja de ofrecer esa hora sin que nadie toque nada.
+        QTRY_VERIFY_WITH_TIMEOUT(horarios->findItems(hora, Qt::MatchExactly).isEmpty(), 8000);
+
+        // "Mi turno" abierto en la terminal: si Gestión lo cancela, el estado cambia solo.
+        w.findChild<QPushButton *>("btnMiTurno")->click();
+        w.findChild<QLineEdit *>("editBuscarTurno")->setText(dni);
+        w.findChild<QPushButton *>("btnBuscarTurno")->click();
+        auto *estado = w.findChild<QLabel *>("lblEstadoTurno");
+        QVERIFY(estado->text() != "Cancelado");
+        for (int id : reservados)
+            QVERIFY(repo.cancelarTurno(id, "terminal").ok);
+        QTRY_COMPARE_WITH_TIMEOUT(estado->text(), QString("Cancelado"), 8000);
     }
 };
 

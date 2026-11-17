@@ -10,6 +10,7 @@
 #include "sena.h"
 #include "validaciones.h"
 
+#include <QApplication>
 #include <QCalendarWidget>
 #include <QGraphicsDropShadowEffect>
 #include <QInputDialog>
@@ -486,6 +487,15 @@ void VentanaCliente::buscarMiTurno()
         return;
     }
     const QString buscado = soloDigitos(texto);
+    if (!mostrarTurnosDe(buscado)) {
+        ocultarTurno();
+        QMessageBox::information(this, "Sin turnos", QString("No encontramos turnos para %1.").arg(buscado));
+    }
+}
+
+/* Muestra el próximo turno vigente de ese DNI o teléfono o, si no hay, el último que tuvo. */
+bool VentanaCliente::mostrarTurnosDe(const QString &buscado)
+{
     const QDateTime ahora = QDateTime::currentDateTime();
     recargarLocal();
     if (enModoBase) {   /* sp_buscar_turnos: los turnos de ese DNI o teléfono */
@@ -497,11 +507,8 @@ void VentanaCliente::buscarMiTurno()
     for (int i = 0; i < turnos.size(); ++i)
         if (turnos[i].dni == buscado || soloDigitos(turnos[i].telefono) == buscado)
             encontrados << i;
-    if (encontrados.isEmpty()) {
-        ocultarTurno();
-        QMessageBox::information(this, "Sin turnos", QString("No encontramos turnos para %1.").arg(buscado));
-        return;
-    }
+    if (encontrados.isEmpty())
+        return false;
     const auto vigente = [&](int i) {
         return (turnos[i].estado == EstadoTurno::Confirmado || turnos[i].estado == EstadoTurno::Pendiente)
                && turnos[i].inicio > ahora;
@@ -520,6 +527,7 @@ void VentanaCliente::buscarMiTurno()
                                     [&](int a, int b) { return turnos[a].inicio < turnos[b].inicio; });
     buscadoActual = buscado;
     mostrarTurno(elegido, vigentes);
+    return true;
 }
 
 void VentanaCliente::mostrarTurno(int indice, int vigentes)
@@ -660,6 +668,54 @@ void VentanaCliente::conectarBase()
     cargarProtocolos();
     actualizarHorarios();
     ocultarTurno();
+
+    /* Gestión y la Terminal usan la misma base: cada 3 segundos se mira si cambió algo. */
+    if (!relojBase) {
+        relojBase = new QTimer(this);
+        relojBase->setInterval(3000);
+        connect(relojBase, &QTimer::timeout, this, &VentanaCliente::sincronizarBase);
+    }
+    relojBase->start();
+}
+
+/* Si Gestión cambió el catálogo, o alguien cargó o canceló un turno, se actualiza
+ * lo que se está viendo sin perder lo que la paciente ya eligió. */
+void VentanaCliente::sincronizarBase()
+{
+    if (!enModoBase || QApplication::activeModalWidget())
+        return;   /* con un cartel abierto se espera a la próxima vuelta */
+    QString error;
+
+    /* Catálogo: precios, altas y bajas de protocolos. */
+    QVector<Protocolo> catalogo;
+    if (DatosBase::cargarProtocolos(*repositorio, catalogo, &error)
+        && DatosBase::resumen(catalogo) != DatosBase::resumen(protocolos)) {
+        const Protocolo *p = protocoloElegido();
+        const int idElegido = p ? p->id : 0;
+        cargarProtocolos();
+        for (int fila = 0; fila < protocolosVisibles.size(); ++fila)
+            if (idElegido != 0 && protocolos[protocolosVisibles[fila]].id == idElegido)
+                ui->listaProtocolos->setCurrentRow(fila);
+    }
+
+    /* Turnos: si cambiaron, se recalculan los horarios libres y "mi turno". */
+    QVector<Turno> agenda;
+    if (!DatosBase::cargarTurnos(*repositorio, QDate::currentDate(), 60, agenda, &error))
+        return;
+    const QString resumen = DatosBase::resumen(agenda);
+    if (resumen == resumenAgenda)
+        return;
+    resumenAgenda = resumen;
+
+    const QListWidgetItem *horario = ui->listaHorarios->currentItem();
+    const QString horarioElegido = horario && horario->isSelected() ? horario->text() : QString();
+    actualizarHorarios();
+    const QList<QListWidgetItem *> iguales = ui->listaHorarios->findItems(horarioElegido, Qt::MatchExactly);
+    if (!horarioElegido.isEmpty() && !iguales.isEmpty())
+        ui->listaHorarios->setCurrentItem(iguales.first());
+
+    if (turnoMostrado >= 0 && !buscadoActual.isEmpty() && !mostrarTurnosDe(buscadoActual))
+        ocultarTurno();
 }
 
 /* Horarios libres del día para el protocolo elegido, con el profesional que atiende. */

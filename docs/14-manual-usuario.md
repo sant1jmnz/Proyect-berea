@@ -5,7 +5,9 @@ instituto) y la **recepción** (en la PC, con el programa de Gestión); la **adm
 consulta reportes y auditoría desde Gestión. Para instalar o mantener el sistema, ver el
 [manual técnico](13-manual-tecnico.md).
 
-> **Con base y sin base.** Con la base de datos conectada, todo lo que se ve sale de la base.
+> **Con base y sin base.** Con la base de datos conectada, todo lo que se ve sale de la base, y
+> Gestión y la terminal se actualizan solas cada 3 segundos: un turno que se saca o se cancela en
+> un programa aparece en el otro sin tocar nada.
 > Si la base no responde, aparece una franja amarilla y los dos programas siguen andando con
 > un archivo local de esta PC (lo comparten Gestión y la terminal). Los turnos que se cargan
 > así se mandan solos a la base cuando vuelve la conexión.

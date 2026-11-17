@@ -44,9 +44,10 @@ private slots:
     {
         const QVector<ProtocoloBD> todos = repo->listarProtocolos();
         QVERIFY2(todos.size() >= 30, "El catálogo de ejemplo tiene 30 protocolos");
-        const QVector<ProtocoloBD> laser = repo->listarProtocolos("láser");
-        QVERIFY(!laser.isEmpty());
-        QVERIFY(laser.first().nombre.contains("láser", Qt::CaseInsensitive));
+        // sp_listar_protocolos busca por nombre exacto (o por categoría), sin LIKE
+        const QVector<ProtocoloBD> laser = repo->listarProtocolos("Depilación láser (zona chica)");
+        QCOMPARE(laser.size(), 1);
+        QCOMPARE(laser.first().nombre, QString("Depilación láser (zona chica)"));
         QCOMPARE(repo->listarProtocolos("xyzxyz").size(), 0);
         // la seña es el porcentaje de la categoría sobre el precio
         for (const ProtocoloBD &p : todos)

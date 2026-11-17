@@ -100,9 +100,8 @@ Cada uno tiene que **correr la prueba de lo que trae** (`DERMALIA_DB_USER=root c
    importarlas. Hay que importarlas, poner las credenciales y probar un aviso real.
 2. **Pasarela de pagos real, WhatsApp oficial (Meta) y Google Calendar:** hoy la seña es simulada, WhatsApp es
    un enlace `wa.me` que abre la recepción y el botón de Calendar es un enlace.
-3. **Pantallas para cupones por QR, tarjetas de regalo y consulta previa de cirugías:** la base los resuelve
-   (tienen stored procedures probados) pero Gestión, Cliente y el sitio todavía no tienen una pantalla para
-   cada uno. La carga de un turno acepta el cupón en el sitio (campo "Cupón") y en la API.
+3. ~~**Pantallas para cupones por QR, tarjetas de regalo y consulta previa de cirugías**~~: hechas en Gestión
+   (pantallas *Cupones*, *Tarjetas de regalo* y *Consultas previas*, con `backend/09_sp_pantallas.sql`).
 4. **El catálogo del sitio y la base tienen los mismos 44 protocolos** (`protocolos.html` los lista con comparador;
    la reserva los relaciona con la base por nombre). Si se agrega uno a la base, hay que agregarlo también al catálogo
    del sitio.

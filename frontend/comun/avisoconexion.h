@@ -20,6 +20,8 @@ public:
     void mostrarSinConexion(const QString &motivo, int pendientes);
     /* Con conexión: se oculta; si hay pendientes avisa que falta sincronizarlos. */
     void mostrarConectado(int pendientes);
+    /* Hay base, pero la persona no ingresó con su usuario: nada se guarda en la base. */
+    void mostrarSinIngreso(const QString &motivo);
     /* Solo actualiza el contador (se guardó otro turno en este equipo). */
     void actualizarPendientes(int pendientes);
 

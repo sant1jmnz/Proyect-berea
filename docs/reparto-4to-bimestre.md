@@ -70,7 +70,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 1.
 
 | Santiago | Bautista |
 |---|---|
-| [x] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [ ] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
+| [x] Instalar Qt Creator y dejar el proyecto Qt (`frontend/`) compilando con CMake | [x] Instalar Qt Creator y clonar el repo; verificar que compila el proyecto Qt |
 | [x] Ventana principal de **Gestión** (960×600 mín.) con menú lateral | [x] Ventana principal de **Cliente** (terminal vertical, 768×1024 mín.) |
 | [x] Pantallas Gestión 1-3: cargar turno, elegir horario, confirmar y registrar seña (RF-02, RF-04, RF-09, RF-10) | [x] Pantallas Cliente 1-3: elegir protocolo, elegir horario, confirmar y pagar seña (RF-01, RF-04, RF-08, RF-10) |
 | [x] Pantalla Gestión 5: buscar turnos por nombre, DNI o teléfono (RF-13) | [x] Pantalla Cliente 5: buscar mi turno por DNI o teléfono (RF-12) |
@@ -87,7 +87,7 @@ Entregable de la consigna: punto 1, Diseño Conceptual (Peter Chen). **Hoy (7 de
 | [x] Grupo 1 (Paciente, Profesional, Protocolo, Turno): atributos, decisiones y cardinalidades cerrados | [x] Revisar el grupo 1 y las reglas de cirugía |
 | [x] Grupo 2 (pago de seña, evaluación previa): propuesto y aprobado | [x] Grupo 3 (cupones, reglas, tarjetas de regalo): propuesto, con códigos rotativos solo en cupones |
 | [x] **Grupo 4, modelo de logs**: Log, Tipo de evento, Usuario y Rol (qué datos se guardan para auditoría) | [x] **Grupo 4**: Notificación, Canal y Consulta al asistente |
-| [x] Revisar contra la consigna: mínimo 13 entidades, cardinalidades y todo lo categorizable como tabla maestra (tabla "Cumplimiento de la consigna" en `docs/diagramas/README.md`) | [ ] Revisar contra la consigna y cerrar las dos preguntas abiertas del grupo 3 |
+| [x] Revisar contra la consigna: mínimo 13 entidades, cardinalidades y todo lo categorizable como tabla maestra (tabla "Cumplimiento de la consigna" en `docs/diagramas/README.md`) | [x] Revisar contra la consigna y cerrar las dos preguntas abiertas del grupo 3 |
 
 ### Jueves: backend y Bases de Datos
 
@@ -95,9 +95,9 @@ Entregable de la consigna: punto 1. **Jueves 8: los DER en draw.io.**
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Pasar el modelo cerrado a **XML** (el diagrama de Chen completo) | [ ] Importar el XML a draw.io y acomodar los diagramas del bloque de Bautista |
-| [ ] Acomodar los diagramas del bloque de Santiago | [ ] Revisar cardinalidades `(mín,máx)` y que cada atributo esté en su entidad |
-| [ ] Juntar los dos bloques en **un solo DER conceptual** y revisar la coherencia | [ ] Exportar el DER (imagen y `.drawio`) y subirlo a `docs/diagramas/` |
+| [x] Pasar el modelo cerrado a **XML** (el diagrama de Chen completo) | [x] Importar el XML a draw.io y acomodar los diagramas del bloque de Bautista |
+| [x] Acomodar los diagramas del bloque de Santiago | [x] Revisar cardinalidades `(mín,máx)` y que cada atributo esté en su entidad |
+| [x] Juntar los dos bloques en **un solo DER conceptual** y revisar la coherencia | [x] Exportar el DER (imagen y `.drawio`) y subirlo a `docs/diagramas/` |
 | [ ] Entregar el **hito del DER conceptual** en Classroom | [ ] Si sobra tiempo: instalar MySQL local (portable, sin permisos de administrador) |
 
 ## Semana 2 (martes 13 al lunes 19 de octubre): Persistencia (conexión) y diseño lógico con la implementación
@@ -109,7 +109,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 2.
 | Santiago | Bautista |
 |---|---|
 | [x] Capa de conexión a MySQL con manejo de errores de conexión. Hecha como pide la cátedra (PPT 006, `mysql.h`) en `frontend/comun/basedatos.cpp`, no con `QSqlDatabase`; ver `docs/conexion-base.md` | [x] Mensaje claro en pantalla cuando la base no responde (RNF-09) y modo contingencia: avisar y guardar localmente (franja de aviso en Gestión y Cliente; los turnos se guardan en el equipo) |
-| [ ] Probar la conexión de punta a punta contra una tabla de prueba (falta: todavía no hay base. La capa se probó con servidor inalcanzable y sin configuración) | [x] Armar la pantalla de **administración de protocolos** (RF-05/06) sobre datos de prueba (alta, modificación y baja, en Gestión) |
+| [x] Probar la conexión de punta a punta contra una tabla de prueba (falta: todavía no hay base. La capa se probó con servidor inalcanzable y sin configuración) | [x] Armar la pantalla de **administración de protocolos** (RF-05/06) sobre datos de prueba (alta, modificación y baja, en Gestión) |
 | [x] Preparar el formulario de **pacientes** (alta y búsqueda) sobre datos de prueba | [x] Preparar la pantalla de **profesionales y disponibilidad** (RF-03) sobre datos de prueba (con los protocolos que realiza cada profesional, RF-18) |
 
 Las pantallas se conectan a la base real en la Semana 3, cuando ya hay tablas y stored procedures.
@@ -120,10 +120,10 @@ Entregable de la consigna: punto 2, Diseño Lógico (Edgar Codd), en 3FN.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Pasar su bloque a tablas: claves primarias y foráneas, tablas intermedias de las N:M | [ ] Pasar su bloque a tablas: claves primarias y foráneas, tablas intermedias de las N:M |
-| [ ] Normalizar en 3FN y justificar cada decisión | [ ] Normalizar en 3FN y justificar cada decisión |
-| [ ] Definir los **schemas** (por ejemplo gestión, catálogo, auditoría) | [ ] Revisar los conectores según cardinalidades y que sea coherente con el DER conceptual |
-| [ ] Armar el **DER lógico** (Codd) de su bloque en draw.io | [ ] Armar el **DER lógico** de su bloque y entregar el hito |
+| [x] Pasar su bloque a tablas: claves primarias y foráneas, tablas intermedias de las N:M | [x] Pasar su bloque a tablas: claves primarias y foráneas, tablas intermedias de las N:M |
+| [x] Normalizar en 3FN y justificar cada decisión | [x] Normalizar en 3FN y justificar cada decisión |
+| [x] Definir los **schemas** (por ejemplo gestión, catálogo, auditoría) | [x] Revisar los conectores según cardinalidades y que sea coherente con el DER conceptual |
+| [x] Armar el **DER lógico** (Codd) de su bloque en draw.io | [ ] Armar el **DER lógico** de su bloque y entregar el hito |
 
 ### Jueves: backend y Bases de Datos
 
@@ -131,9 +131,9 @@ Entregable de la consigna: punto 3, Implementación del modelo.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Instalar MySQL local y crear los schemas | [ ] Script `CREATE TABLE` de su bloque con todas las restricciones referenciales |
-| [ ] Script `CREATE TABLE` de su bloque con todas las restricciones referenciales | [ ] Poblar las **tablas maestras** (estados, categorías, canales, resultados) |
-| [ ] Probar que el modelo implementado refleja el diseño | [ ] Correr el script completo en limpio, de punta a punta |
+| [x] Instalar MySQL local y crear los schemas | [x] Script `CREATE TABLE` de su bloque con todas las restricciones referenciales |
+| [x] Script `CREATE TABLE` de su bloque con todas las restricciones referenciales | [x] Poblar las **tablas maestras** (estados, categorías, canales, resultados) |
+| [x] Probar que el modelo implementado refleja el diseño | [x] Correr el script completo en limpio, de punta a punta |
 | [ ] Entregar el **hito de la implementación** | [ ] Crear la base en Aiven y verificar que acepte stored procedures y eventos |
 
 ## Semana 3 (martes 20 al lunes 26 de octubre): Datos y primeros stored procedures; lógica y QA
@@ -144,7 +144,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 3.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Conectar Gestión 1-3 y 5 con la base real (alta de turno, búsqueda y cancelación). Pasa a la semana siguiente: depende de la base y los stored procedures; la capa de conexión y el modo contingencia ya están | [ ] Conectar Cliente 1-3, 5 y el buscador con la base real. Pasa a la semana siguiente por el mismo motivo |
+| [x] Conectar Gestión 1-3 y 5 con la base real (alta de turno, búsqueda y cancelación). Pasa a la semana siguiente: depende de la base y los stored procedures; la capa de conexión y el modo contingencia ya están | [x] Conectar Cliente 1-3, 5 y el buscador con la base real. Pasa a la semana siguiente por el mismo motivo |
 | [x] Validaciones de DNI y teléfono (formato, largo, solo dígitos) en los formularios de Gestión | [x] Validaciones en Cliente (DNI/teléfono) y en el ABM de protocolos (precio ≥ 0, duración > 0). Cliente (DNI/teléfono/nombre) y, en la pantalla de protocolos de Gestión, las funciones de precio y duración de `frontend/comun/validaciones` |
 | [x] Integrar seña y reembolso (RF-10) al flujo de confirmar y cancelar (Gestión: botón *Cancelar turno* en "Buscar turnos") | [x] Recordatorio de turno (RF-11): registro de cada aviso (pantalla *Avisos* de Gestión; Cliente muestra el recordatorio de cada turno) |
 | [x] Registro de seña como mock que imita un pago real (RF-08/09, RNF-05): código de operación `SIM-…` | [x] **Casos de prueba funcional**: planilla con un caso por RF y resultado de cada uno (`docs/10-casos-de-prueba-cliente.md`) |
@@ -159,8 +159,8 @@ Entregable de la consigna: punto 4, poblar el modelo (50+ registros en la tabla 
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Poblar Paciente, Turno, Pago y demás de su bloque, con **50+ turnos** | [ ] Poblar Profesional, Protocolo (con cirugías y precios realistas), Cupones, Tarjetas y demás de su bloque, con 20+ cada una |
-| [ ] Revisar que no haya datos que rompan las restricciones | [ ] Revisar los datos de la base en Aiven |
+| [x] Poblar Paciente, Turno, Pago y demás de su bloque, con **50+ turnos** | [x] Poblar Profesional, Protocolo (con cirugías y precios realistas), Cupones, Tarjetas y demás de su bloque, con 20+ cada una |
+| [x] Revisar que no haya datos que rompan las restricciones | [ ] Revisar los datos de la base en Aiven |
 
 ### Jueves: backend y Bases de Datos
 
@@ -168,9 +168,9 @@ Primeros stored procedures. Los logs se llenan **solo** vía stored procedures, 
 
 | Santiago | Bautista |
 |---|---|
-| [ ] SPs de **login y logs** | [ ] SPs de ABM de protocolos y profesionales |
-| [ ] SP de alta de turno | [ ] SP de horarios libres y disponibilidad |
-| [ ] Pruebas (4 casos) de cada SP terminado | [ ] Pruebas (4 casos) de cada SP terminado |
+| [x] SPs de **login y logs** | [x] SPs de ABM de protocolos y profesionales |
+| [x] SP de alta de turno | [x] SP de horarios libres y disponibilidad |
+| [x] Pruebas (4 casos) de cada SP terminado | [x] Pruebas (4 casos) de cada SP terminado |
 
 ## Semana 4 (martes 27 de octubre al lunes 2 de noviembre): Funcionalidades en stored procedures; análisis de competencia
 
@@ -180,10 +180,10 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 4.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Relevar **competidores indirectos**: lo que hoy usa el instituto (WhatsApp, agenda en papel, planillas) y por qué no alcanza | [ ] Relevar **competidores directos**: al menos 3 sistemas de turnos para centros de estética o salud, con precio y funciones |
-| [ ] Definir la **PUV**: terminal + recepción + web sobre una misma base, con cupones, tarjetas de regalo y asistente de IA | [ ] Armar la **matriz comparativa** de funcionalidades y costos |
-| [ ] Redactar el informe `docs/07-competencia.md` | [ ] Aportar datos y matriz; revisar que cada afirmación tenga fuente |
-| [ ] Corregir los bugs de la Beta que queden abiertos | [ ] Pulido de la GUI con la heurística de Nielsen de `docs/05-maquetado.md` |
+| [x] Relevar **competidores indirectos**: lo que hoy usa el instituto (WhatsApp, agenda en papel, planillas) y por qué no alcanza | [x] Relevar **competidores directos**: al menos 3 sistemas de turnos para centros de estética o salud, con precio y funciones |
+| [x] Definir la **PUV**: terminal + recepción + web sobre una misma base, con cupones, tarjetas de regalo y asistente de IA | [x] Armar la **matriz comparativa** de funcionalidades y costos |
+| [x] Redactar el informe `docs/07-competencia.md` | [ ] Aportar datos y matriz; revisar que cada afirmación tenga fuente |
+| [x] Corregir los bugs de la Beta que queden abiertos | [ ] Pulido de la GUI con la heurística de Nielsen de `docs/05-maquetado.md` |
 
 Cuidar en el informe: no comparar contra productos con datos inventados; cada precio o función de un competidor va con su fuente.
 
@@ -193,8 +193,8 @@ Entregable de la consigna: punto 5, funcionalidades.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] SPs de cancelación, seña y reembolso | [ ] SPs de cupones: emisión por reglas, token rotativo de 5 minutos y validación |
-| [ ] SP de la regla de cirugías (consulta previa, 40%, vigencia de 6 meses, retención) | [ ] SPs de tarjetas de regalo: compra, saldo y movimientos |
+| [x] SPs de cancelación, seña y reembolso | [x] SPs de cupones: emisión por reglas, token rotativo de 5 minutos y validación |
+| [x] SP de la regla de cirugías (consulta previa, 40%, vigencia de 6 meses, retención) | [x] SPs de tarjetas de regalo: compra, saldo y movimientos |
 
 ### Jueves: backend y Bases de Datos
 
@@ -202,8 +202,8 @@ Entregable de la consigna: punto 5, funcionalidades.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] SPs de evaluación previa y de reclamo | [ ] SPs de notificaciones pendientes y de consultas al asistente |
-| [ ] Pruebas (4 casos) de cada SP terminado | [ ] Pruebas (4 casos) de cada SP terminado |
+| [x] SPs de evaluación previa y de reclamo | [x] SPs de notificaciones pendientes y de consultas al asistente |
+| [x] Pruebas (4 casos) de cada SP terminado | [x] Pruebas (4 casos) de cada SP terminado |
 
 ## Semana 5 (martes 3 al lunes 9 de noviembre): Reportes y auditoría; presupuesto y pitch
 
@@ -213,10 +213,10 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 5.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] **Presupuesto**: horas hombre por módulo, licencias, infraestructura de la terminal y mantenimiento | [ ] **Modelo de monetización**: comparar licencia, abono de soporte y llave en mano; elegir uno y justificarlo |
-| [ ] Calcular **precio de venta y retorno de inversión** (95 min/día, ≈ $900.000 de turnos perdidos por semana) | [ ] Diapositivas: problema, competencia y diferencial |
+| [x] **Presupuesto**: horas hombre por módulo, licencias, infraestructura de la terminal y mantenimiento | [x] **Modelo de monetización**: comparar licencia, abono de soporte y llave en mano; elegir uno y justificarlo |
+| [x] Calcular **precio de venta y retorno de inversión** (95 min/día, ≈ $900.000 de turnos perdidos por semana) | [ ] Diapositivas: problema, competencia y diferencial |
 | [ ] Diapositivas: solución, costos, precio y retorno | [ ] Armar el guion de la **demo en vivo** paso a paso |
-| [ ] Documento `docs/08-presupuesto.md` | [ ] Actualizar `docs/06-pitch.md` al formato nuevo (5-7 min) |
+| [x] Documento `docs/08-presupuesto.md` | [x] Actualizar `docs/06-pitch.md` al formato nuevo (5-7 min) |
 
 **Cambio de formato**: el pitch de este bimestre dura **5 a 7 minutos** y es de **venta a inversores**, con demo en vivo. El guion de `docs/06-pitch.md` hay que recortarlo.
 
@@ -226,9 +226,9 @@ Entregable de la consigna: punto 5, reportes (al menos 8). Todos con funciones d
 
 | Santiago | Bautista |
 |---|---|
-| [ ] **Reporte 1**: turnos por período y profesional | [ ] **Reporte 5**: protocolos más pedidos por período |
-| [ ] **Reporte 2**: ingresos por seña, reembolsos y retenciones | [ ] **Reporte 6**: ocupación por profesional |
-| [ ] **Reporte 3**: cancelaciones e inasistencias | [ ] **Reporte 7**: uso de cupones y reglas de beneficio |
+| [x] **Reporte 1**: turnos por período y profesional | [x] **Reporte 5**: protocolos más pedidos por período |
+| [x] **Reporte 2**: ingresos por seña, reembolsos y retenciones | [x] **Reporte 6**: ocupación por profesional |
+| [x] **Reporte 3**: cancelaciones e inasistencias | [x] **Reporte 7**: uso de cupones y reglas de beneficio |
 
 ### Jueves: backend y Bases de Datos
 
@@ -236,9 +236,9 @@ Entregable de la consigna: punto 5, reportes y auditoría.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] **Reporte 4**: evaluaciones previas y cirugías por resultado | [ ] **Reporte 8**: saldo y uso de tarjetas de regalo |
-| [ ] SP de **reporte de auditoría** por rango de fechas (con parámetros) | [ ] Pruebas (4 casos) de los reportes propios |
-| [ ] Pruebas (4 casos) de los reportes propios y de la auditoría | [ ] Revisar los reportes de Santiago |
+| [x] **Reporte 4**: evaluaciones previas y cirugías por resultado | [x] **Reporte 8**: saldo y uso de tarjetas de regalo |
+| [x] SP de **reporte de auditoría** por rango de fechas (con parámetros) | [x] Pruebas (4 casos) de los reportes propios |
+| [x] Pruebas (4 casos) de los reportes propios y de la auditoría | [ ] Revisar los reportes de Santiago |
 
 ## Semana 6 (martes 10 al lunes 16 de noviembre): Tuning, pruebas y Demo Day
 
@@ -248,7 +248,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 6.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] **Manual técnico**: arquitectura (MySQL + Qt + sitio web), cómo instalar, compilar y crear la base | [ ] **Manual de usuario**: uso de la terminal (paciente) y de Gestión (recepción), con capturas |
+| [x] **Manual técnico**: arquitectura (MySQL + Qt + sitio web), cómo instalar, compilar y crear la base | [x] **Manual de usuario**: uso de la terminal (paciente) y de Gestión (recepción), con capturas |
 | [ ] Preparar la **demo en vivo**: base con datos de ejemplo, orden de pasos y plan B si falla la conexión | [ ] Preparar respuestas a **objeciones** (competencia, seña simulada, seguridad de datos, costo) |
 | [ ] Ensayar y cronometrar el pitch completo (≤ 7 min) | [ ] Ensayar y cronometrar; ajustar el reparto de tiempo |
 | [ ] Congelar `main`: tag de la versión final | [ ] Congelar la documentación y revisar que el README esté actualizado |
@@ -260,9 +260,9 @@ Entregable de la consigna: punto 5e, tuning, y punto 6, pruebas.
 
 | Santiago | Bautista |
 |---|---|
-| [ ] Elegir un reporte que lo justifique y hacer su `_tuneado` (índices, reescritura de consultas) | [ ] Elegir un reporte y hacer su `_tuneado` |
-| [ ] Medir antes y después del tuning (plan de ejecución) | [ ] Medir antes y después del tuning (plan de ejecución) |
-| [ ] Documentar las pruebas de sus SP en el documento de la cátedra | [ ] Documentar las pruebas de sus SP en el documento de la cátedra |
+| [x] Elegir un reporte que lo justifique y hacer su `_tuneado` (índices, reescritura de consultas) | [x] Elegir un reporte y hacer su `_tuneado` |
+| [x] Medir antes y después del tuning (plan de ejecución) | [x] Medir antes y después del tuning (plan de ejecución) |
+| [x] Documentar las pruebas de sus SP en el documento de la cátedra | [x] Documentar las pruebas de sus SP en el documento de la cátedra |
 
 ### Jueves: backend y Bases de Datos
 

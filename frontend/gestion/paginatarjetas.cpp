@@ -111,7 +111,8 @@ PaginaTarjetas::PaginaTarjetas(QWidget *parent) : QWidget(parent)
     tabla->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tabla->setAlternatingRowColors(true);
     tabla->verticalHeader()->hide();
-    tabla->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    tabla->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    tabla->horizontalHeader()->setStretchLastSection(true);
     capaConsulta->addWidget(tabla, 1);
     columnas->addWidget(consulta, 1);
 

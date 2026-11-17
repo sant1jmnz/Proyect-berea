@@ -23,7 +23,9 @@ Desde cualquier pantalla, el botón **Inicio** de arriba vuelve acá.
 
 ### Sacar un turno (3 pasos)
 
-**1. Elegí tu protocolo.** Tocá el tratamiento: se ve la duración y el precio. *Continuar*.
+**1. Elegí tu protocolo.** Tocá el tratamiento: se ve la duración y el precio. Podés sumar hasta
+**3 protocolos** en el mismo turno (los tocás de a uno). Si tocás una **cirugía**, el programa te
+avisa que primero hay que reservar la **consulta prequirúrgica** y te ofrece sumarla. *Continuar*.
 
 ![Paso 1: elegir el protocolo](capturas/cliente-01-protocolo.png)
 
@@ -39,10 +41,14 @@ los horarios libres de los profesionales que hacen ese protocolo.
 
 **3. Confirmá tu turno.** Escribí tu nombre y apellido, tu DNI y tu teléfono. A la derecha se
 ve la **seña** (30% del precio; 40% en cirugías). *Pagar seña (simulado)* la marca como paga: no
-se pide tarjeta ni se cobra dinero. Tocá *Confirmar turno*.
+se pide tarjeta ni se cobra dinero. Si tenés un **cupón** (un descuento personal, que se revisa con
+tu DNI) o una **tarjeta de regalo** (la seña sale de su saldo), escribí el código y tocá *Aplicar*.
+Tocá *Confirmar turno*.
 
 ![Paso 3: datos y seña](capturas/cliente-03-confirmar.png)
 
+- El sitio web hace lo mismo y con las mismas reglas: mismos protocolos, validaciones, cupones, tarjetas
+  de regalo y reglas de seña y cancelación.
 - Si es tu primera vez, el programa te pregunta la **fecha de nacimiento** para darte de alta.
 - Mientras escribís, el nombre no acepta números y el DNI y el teléfono no aceptan letras.
 - Si otra persona tomó ese horario un segundo antes, te avisa y te deja elegir otro.

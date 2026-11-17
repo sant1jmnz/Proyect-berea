@@ -110,7 +110,7 @@ BaseDatos::~BaseDatos()
 void BaseDatos::cerrar()
 {
     if (conn) {
-        mysql_close(conn);
+        mysql_close(static_cast<MYSQL *>(conn));
         conn = nullptr;
     }
 }
@@ -177,9 +177,9 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
     const QByteArray sql = ("CALL " + sp + "(" + valores.join(", ") + ")").toUtf8();
 
     /* mysql_query devuelve 0 si salió bien. */
-    if (mysql_query(conn, sql.constData()) != 0) {
-        r.codigoSql = mysql_errno(conn);
-        r.error = mensajeDeError(r.codigoSql, mysql_error(conn));
+    if (mysql_query(static_cast<MYSQL *>(conn), sql.constData()) != 0) {
+        r.codigoSql = mysql_errno(static_cast<MYSQL *>(conn));
+        r.error = mensajeDeError(r.codigoSql, mysql_error(static_cast<MYSQL *>(conn)));
         if (r.codigoSql == 2006 || r.codigoSql == 2013)
             cerrar();   /* la conexión se cortó: la próxima vez se vuelve a conectar */
         return r;
@@ -189,7 +189,7 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
      * Se guarda el primero y los demás se leen solo para liberarlos (si no, la conexión queda trabada). */
     bool esElPrimero = true;
     do {
-        MYSQL_RES *resultado = mysql_store_result(conn);
+        MYSQL_RES *resultado = mysql_store_result(static_cast<MYSQL *>(conn));
         if (resultado == NULL)
             continue;
         if (esElPrimero) {
@@ -210,7 +210,7 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
             esElPrimero = false;
         }
         mysql_free_result(resultado);
-    } while (mysql_next_result(conn) == 0);
+    } while (mysql_next_result(static_cast<MYSQL *>(conn)) == 0);
 
     /* Si el SP cayó en el EXIT HANDLER devuelve estado = 'ERROR'. Los SP del PPT usan
      * codigo_sql / descripcion_error y los de Dermalia codigo / mensaje: sirven los dos. */

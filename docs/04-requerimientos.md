@@ -43,7 +43,7 @@ quién hizo cada acción.
 | RF-07 | Todos | ...derivar la consulta al WhatsApp del instituto cuando el buscador o el asistente de IA no puedan responder, y dejarla registrada. | R2 | Must |
 | RF-08 | Cliente + Web | ...a la paciente pagar la seña al confirmar su turno con un flujo **simulado que imita un pago real** (estilo Mercado Pago): el sistema registra el estado, sin procesar dinero real. | R3 | Must |
 | RF-09 | Gestión | ...a la recepción registrar el pago de la seña cuando confirma un turno cargado por teléfono (mismo mock que RF-08). | R3 | Must |
-| RF-10 | Todos | ...calcular (de forma simulada) una seña del 30% del precio final del protocolo (mínimo $20.000), y del **40% en cirugías**; reembolsable 100% si se cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
+| RF-10 | Todos | ...calcular (de forma simulada) una seña del 30% del precio final del protocolo (sin mínimo, como la calcula la base), y del **40% en cirugías**; reembolsable 100% si se cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
 | RF-11 | Todos | ...enviar un recordatorio de turno a la paciente antes de la fecha reservada y registrar cada aviso (canal, estado, fecha programada). Canales: **Telegram** (bot, gratis y automático, se usa en el desarrollo y la demo), **Google Calendar** (invitación con recordatorio) y **WhatsApp** (API oficial en producción; mientras tanto, enlace `wa.me` asistido desde la recepción). | R4 | Must |
 | RF-12 | Cliente + Web | ...a la paciente buscar y cancelar su propio turno con su DNI o teléfono, sin cuenta. | R1 | Should |
 | RF-13 | Gestión | ...a la recepción buscar y cancelar el turno de cualquier paciente por nombre, DNI o teléfono. | R1 | Should |
@@ -116,7 +116,7 @@ para asegurar mi reserva y saber cuánto se cobra por adelantado.
 
 Criterios de aceptación:
 - El pago es simulado (mock): imita el flujo de un pago real pero no se conecta a ninguna pasarela.
-- El monto se ve antes de confirmar (30% del precio final, mínimo $20.000).
+- El monto se ve antes de confirmar (30% del precio final; 40% en cirugías).
 - El sistema no pide ni guarda ningún dato de tarjeta.
 ```
 

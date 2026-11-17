@@ -110,6 +110,25 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
     /* Los 3 pasos de sacar un turno (RF-01): Continuar avanza, Volver retrocede. */
     connect(ui->btnVolver1, &QPushButton::clicked, this, [this] { irA(PagInicio); });
     connect(ui->btnContinuar1, &QPushButton::clicked, this, &VentanaCliente::continuarProtocolo);
+    /* Paso 1: "Ver resumen" del tratamiento elegido (el mismo resumen que la web). */
+    auto *btnResumen = new QPushButton("Ver resumen");
+    btnResumen->setObjectName("btnResumen1");
+    btnResumen->setCursor(Qt::PointingHandCursor);
+    btnResumen->setEnabled(false);
+    ui->botonesProtocolo->insertWidget(ui->botonesProtocolo->indexOf(ui->btnVolver1), btnResumen);
+    connect(ui->listaProtocolos, &QListWidget::itemSelectionChanged, this, [this, btnResumen] {
+        btnResumen->setEnabled(protocoloElegido() != nullptr);
+    });
+    connect(btnResumen, &QPushButton::clicked, this, [this] {
+        const Protocolo *p = protocoloElegido();
+        if (!p)
+            return;
+        int precioConsulta = 0;
+        for (const Protocolo &otro : std::as_const(protocolos))
+            if (otro.nombre.startsWith("Consulta prequir"))
+                precioConsulta = otro.precio;
+        ResumenTratamiento::mostrar(this, DatosPrueba::comoTratamiento(*p), precioConsulta);
+    });
     connect(ui->btnVolver2, &QPushButton::clicked, this, [this] { irA(PagProtocolo); });
     connect(ui->btnContinuar2, &QPushButton::clicked, this, &VentanaCliente::continuarHorario);
     connect(ui->btnVolver3, &QPushButton::clicked, this, [this] { irA(PagHorario); });
@@ -210,7 +229,8 @@ void VentanaCliente::cargarProtocolos()
     QString error;
     if (enModoBase)   /* catálogo de la base (sp_listar_protocolos) */
         DatosBase::cargarProtocolos(*repositorio, protocolos, &error);
-    else if (AlmacenLocal::leer(archivoLocal, &guardados) && !guardados.protocolos.isEmpty())
+    else if (AlmacenLocal::leer(archivoLocal, &guardados) && !guardados.protocolos.isEmpty()
+             && !DatosPrueba::esCatalogoViejo(guardados.protocolos))
         protocolos = guardados.protocolos;
     ui->listaProtocolos->clear();
     protocolosVisibles.clear();
@@ -222,6 +242,7 @@ void VentanaCliente::cargarProtocolos()
                                          .arg(protocolos[i].nombre).arg(protocolos[i].duracionMin).arg(pesos(protocolos[i].precio)));
     }
     ui->listaProtocolos->setCurrentRow(-1);
+    ui->buscador->setCatalogo(DatosPrueba::comoTratamientos(protocolos));   /* "Consultar precios" usa el mismo catálogo */
 }
 
 const Protocolo *VentanaCliente::protocoloElegido() const

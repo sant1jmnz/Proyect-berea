@@ -374,8 +374,8 @@ private slots:
         auto *menu = w.findChild<QListWidget *>("menu");
         auto *paginas = w.findChild<QStackedWidget *>("paginas");
         QVERIFY(menu && paginas);
-        QCOMPARE(menu->count(), 9);        // ...Avisos y Reportes
-        QCOMPARE(paginas->count(), 11);
+        QCOMPARE(menu->count(), 12);       // ...Avisos, Cupones, Tarjetas, Consultas previas y Reportes
+        QCOMPARE(paginas->count(), 14);
         for (int fila = 0; fila < menu->count(); ++fila) {   // cada opción del menú abre su pantalla
             menu->setCurrentRow(fila);
             QVERIFY2(paginas->currentWidget() != nullptr, qPrintable(menu->item(fila)->text()));
@@ -385,7 +385,17 @@ private slots:
         menu->setCurrentRow(7);
         QCOMPARE(paginas->currentWidget()->objectName(), QString("pagAvisos"));
         menu->setCurrentRow(8);
+        QCOMPARE(paginas->currentWidget()->objectName(), QString("pagCupones"));
+        menu->setCurrentRow(9);
+        QCOMPARE(paginas->currentWidget()->objectName(), QString("pagTarjetas"));
+        menu->setCurrentRow(10);
+        QCOMPARE(paginas->currentWidget()->objectName(), QString("pagEvaluaciones"));
+        menu->setCurrentRow(11);
         QCOMPARE(paginas->currentWidget()->objectName(), QString("pagReportes"));
+        // sin base, las pantallas nuevas avisan y no dejan operar
+        QVERIFY(!w.findChild<QPushButton *>("btnBuscarCupones")->isEnabled());
+        QVERIFY(!w.findChild<QPushButton *>("btnVenderTarjeta")->isEnabled());
+        QVERIFY(!w.findChild<QPushButton *>("btnApta")->isEnabled());
 
         auto *franja = w.findChild<AvisoConexion *>("avisoConexion");
         QVERIFY(franja);

@@ -107,7 +107,7 @@ private slots:
         tarjetas->findChild<QLineEdit *>("editCompradorTarjeta")->setText("Ana Regalo");
         responderDialogos({});
         tarjetas->findChild<QPushButton *>("btnVenderTarjeta")->click();
-        QVERIFY(tarjetas->findChild<QLineEdit *>("editCodigoTarjeta")->text().startsWith("REGALO-"));
+        QVERIFY(tarjetas->findChild<QLineEdit *>("editCodigoTarjeta")->text().startsWith("GC-"));
         const QString saldo = tarjetas->findChild<QLabel *>("lblSaldoTarjeta")->text();
         QVERIFY2(saldo.contains("30.000"), qPrintable(saldo));
 

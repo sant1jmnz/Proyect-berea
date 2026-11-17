@@ -16,6 +16,7 @@
 #include <QTableWidget>
 #include <QTemporaryDir>
 #include <QCalendarWidget>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDateEdit>
 
@@ -64,6 +65,7 @@ private slots:
         // Ingreso automático del personal (sin abrir la ventana de login).
         qputenv("DERMALIA_USUARIO", "recepcion1");
         qputenv("DERMALIA_CLAVE", "dermalia2026");
+        QLocale::setDefault(QLocale(QLocale::Spanish, QLocale::Argentina));   // como main.cpp: $30.000
     }
 
     // Con la base conectada, las pantallas muestran los datos de la base.
@@ -81,6 +83,49 @@ private slots:
         QVERIFY(w.findChild<QTableWidget *>("tablaAvisos")->rowCount() > 20);
         QVERIFY(w.findChild<QWidget *>("pagProtocolos")->findChild<QTableWidget *>("tablaProtocolos")->rowCount() >= 30);
         QVERIFY(w.findChild<QWidget *>("pagProfesionales")->findChild<QListWidget *>("listaProfesionales")->count() >= 20);
+    }
+
+    // Pantallas nuevas: cupones de una paciente, venta de una tarjeta de regalo con su saldo
+    // y la lista de consultas previas de cirugía.
+    void ventana_cuponesTarjetasYConsultasPrevias()
+    {
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        QTest::qWait(1500);
+        if (!w.usaBase())
+            QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
+
+        // Cupones: la paciente 36861630 tiene cupones en los datos de ejemplo.
+        auto *cupones = w.findChild<QWidget *>("pagCupones");
+        cupones->findChild<QLineEdit *>("editDniCupon")->setText("36861630");
+        cupones->findChild<QPushButton *>("btnBuscarCupones")->click();
+        QVERIFY(cupones->findChild<QTableWidget *>("tablaCupones")->rowCount() >= 3);
+
+        // Tarjeta de regalo: se vende y queda consultada con su saldo completo.
+        auto *tarjetas = w.findChild<QWidget *>("pagTarjetas");
+        tarjetas->findChild<QLineEdit *>("editMontoTarjeta")->setText("30000");
+        tarjetas->findChild<QLineEdit *>("editCompradorTarjeta")->setText("Ana Regalo");
+        responderDialogos({});
+        tarjetas->findChild<QPushButton *>("btnVenderTarjeta")->click();
+        QVERIFY(tarjetas->findChild<QLineEdit *>("editCodigoTarjeta")->text().startsWith("REGALO-"));
+        const QString saldo = tarjetas->findChild<QLabel *>("lblSaldoTarjeta")->text();
+        QVERIFY2(saldo.contains("30.000"), qPrintable(saldo));
+
+        // Un monto fuera de rango no se vende.
+        tarjetas->findChild<QLineEdit *>("editMontoTarjeta")->setText("100");
+        tarjetas->findChild<QLineEdit *>("editCompradorTarjeta")->setText("Ana Regalo");
+        responderDialogos({});
+        tarjetas->findChild<QPushButton *>("btnVenderTarjeta")->click();
+        QCOMPARE(tarjetas->findChild<QLineEdit *>("editMontoTarjeta")->text(), QString("100"));   // no se limpió
+
+        // Consultas previas: hay evaluaciones de cirugía en los datos de ejemplo.
+        auto *evaluaciones = w.findChild<QWidget *>("pagEvaluaciones");
+        QVERIFY(evaluaciones->findChild<QTableWidget *>("tablaEvaluaciones")->rowCount() >= 20);
+        evaluaciones->findChild<QCheckBox *>("checkPendientes")->setChecked(true);
+        const int pendientes = evaluaciones->findChild<QTableWidget *>("tablaEvaluaciones")->rowCount();
+        QVERIFY(pendientes < 20);
+        for (int fila = 0; fila < pendientes; ++fila)
+            QCOMPARE(evaluaciones->findChild<QTableWidget *>("tablaEvaluaciones")->item(fila, 4)->text(), QString("Pendiente"));
     }
 
     // Modo contingencia (RNF-09): un turno guardado sin conexión se envía a la base cuando vuelve.

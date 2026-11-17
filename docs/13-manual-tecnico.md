@@ -45,6 +45,7 @@ Después, en este orden (cada archivo supone los anteriores):
 ```bash
 mysql -u root -p < backend/codigobasededatossolotablas.sql   # schemas y tablas (borra y recrea todo)
 mysql -u root -p < backend/02_datos.sql                      # catálogos y datos de ejemplo
+mysql -u root -p < backend/02b_numero.sql                    # tabla auxiliar de números (la usan horarios libres y cupones)
 mysql -u root -p < backend/03_sp_semana3.sql                 # login, ABM, horarios, alta de turno
 mysql -u root -p < backend/04_sp_semana4.sql                 # seña, cancelación, cirugías, cupones, tarjetas, avisos
 mysql -u root -p < backend/05_reportes_semana5.sql           # 8 reportes + auditoría

@@ -8,6 +8,9 @@
 -- Misma convención que la Semana 3: 6 columnas de respuesta
 -- (estado, codigo, mensaje, id, valor, dato) y error con EXIT HANDLER.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 DELIMITER //
 
 -- =====================================================================

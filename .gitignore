@@ -7,3 +7,4 @@ build/
 # Datos de conexión a la base (con contraseña): no se suben
 dermalia.ini
 pendientes.json
+__pycache__/

@@ -4,15 +4,15 @@ Pruebas funcionales de los **stored procedures** de Dermalia, con el formato que
 pide la consigna (`docs/consigna-bbdd.md`, punto 6b) y la plantilla de la cátedra
 (`docs/catedra/semana-3-casos-de-prueba-funcional.md`).
 
-**Resultado: 222 casos, 222 aprobados, 0 con fallas** (MySQL 8.0.46, base
-recién cargada con `backend/01` a `06`).
+**Resultado: 230 casos, 230 aprobados, 0 con fallas** (MySQL 8.0.46, base
+recién cargada con `backend/01` a `06` y `09`).
 
 ## Cómo se corren
 
 El script es `backend/05_pruebas_sp.sql`. Dos formas:
 
 1. **A mano (Workbench / DBeaver / consola):** cargar la base (`codigobasededatossolotablas.sql`,
-   `02` a `06`) y ejecutar `05_pruebas_sp.sql`. Cada caso empieza con un comentario
+   `02` a `06` y `09`) y ejecutar `05_pruebas_sp.sql`. Cada caso empieza con un comentario
    `-- @caso ...` y las líneas `-- @espera ...` dicen qué tiene que pasar; se compara con lo
    que muestra el cliente.
 2. **Automática:** `pip install pymysql` y
@@ -91,7 +91,7 @@ regla y de notificación, resultado de evaluación) tienen los valores que defin
 (entre 3 y 5), no 20: no tendría sentido inventar estados. Conviene confirmar este criterio con el
 docente.
 
-## Detalle de los 222 casos
+## Detalle de los 230 casos
 
 | Caso | Tipo | Descripción | Resultado |
 |---|---|---|---|
@@ -127,6 +127,14 @@ docente.
 | sp_reporte_tarjetas_regalo.2 | Sin coincidencias | Rango de enero de 2020: no hay datos y no da error | OK |
 | sp_reporte_tarjetas_regalo.3 | Nulos y límites | Fechas NULL y rango invertido (desde > hasta): 0 filas, sin error | OK |
 | sp_reporte_tarjetas_regalo.4 | Consistencia | El SP devuelve lo mismo que su consulta SELECT directa (mismas filas y valores) | OK |
+| sp_listar_cupones.1 | Éxito | La paciente 36861630 tiene 3 cupones | OK |
+| sp_listar_cupones.2 | Sin coincidencias | Un DNI que no existe: 0 filas, sin error | OK |
+| sp_listar_cupones.3 | Nulos y límites | DNI NULL y vacío: 0 filas, sin error | OK |
+| sp_listar_cupones.4 | Consistencia | Igual a un SELECT directo | OK |
+| sp_listar_evaluaciones.1 | Éxito | Todas las evaluaciones de ejemplo: 24 | OK |
+| sp_listar_evaluaciones.2 | Éxito | Solo las pendientes de resultado: 3 | OK |
+| sp_listar_evaluaciones.3 | Nulos y límites | NULL se toma como "todas" (24), sin error | OK |
+| sp_listar_evaluaciones.4 | Consistencia | Las pendientes son las mismas que en un SELECT directo | OK |
 | sp_reporte_turnos_por_periodo_profesional_tuneado.1 | Éxito | Con un rango con datos devuelve 53 filas | OK |
 | sp_reporte_turnos_por_periodo_profesional_tuneado.2 | Sin coincidencias | Rango sin datos: 0 filas | OK |
 | sp_reporte_turnos_por_periodo_profesional_tuneado.3 | Nulos y límites | Fechas NULL y rango invertido: 0 filas | OK |
@@ -140,8 +148,8 @@ docente.
 | sp_registrar_log.3 | Nulos y límites | Usuario inexistente y origen desconocido: el log queda con usuario NULL y origen sistema; exitoso NULL vale 1 | OK |
 | sp_registrar_log.4 | Consistencia | La descripción se recorta a 500 caracteres y exitoso=0 se conserva | OK |
 | fn_ahora.1 | Éxito | Con @ahora_simulado devuelve esa hora | OK |
-| fn_ahora.2 | Sin coincidencias | Sin reloj simulado devuelve la hora real (cerca de NOW()) | OK |
-| fn_ahora.3 | Nulos y límites | Un valor vacío del reloj también cae a NOW() | OK |
+| fn_ahora.2 | Sin coincidencias | Sin reloj simulado devuelve la hora real (cerca de CURRENT_TIMESTAMP) | OK |
+| fn_ahora.3 | Nulos y límites | Un valor vacío del reloj también cae a CURRENT_TIMESTAMP | OK |
 | fn_ahora.4 | Consistencia | Al volver a poner el reloj simulado se vuelve a usar | OK |
 | sp_login.1 | Éxito | Ingreso correcto del administrador: devuelve id, rol y deja el inicio de sesión en el log | OK |
 | sp_login.2 | Sin coincidencias | Usuario inexistente y contraseña mal: error 52011 y los dos intentos quedan en el log | OK |
@@ -153,11 +161,11 @@ docente.
 | sp_cerrar_sesion.4 | Consistencia | Hay exactamente un cierre de sesión en el log (el del caso 1) | OK |
 | sp_crear_cuenta_paciente.1 | Éxito | Una paciente sin cuenta crea la suya con su DNI | OK |
 | sp_crear_cuenta_paciente.2 | Sin coincidencias | DNI inexistente (52020), cuenta ya creada (52021), usuario o email repetidos (52025) | OK |
-| sp_crear_cuenta_paciente.3 | Nulos y límites | DNI NULL, usuario corto o con mayúsculas, email mal escrito y contraseña vacía | OK |
+| sp_crear_cuenta_paciente.3 | Nulos y límites | DNI NULL, usuario de menos de 4 letras, email de menos de 5 letras y contraseña vacía | OK |
 | sp_crear_cuenta_paciente.4 | Consistencia | El usuario nuevo tiene rol paciente, la paciente quedó vinculada y el alta está en el log | OK |
 | sp_alta_paciente.1 | Éxito | Alta con todos los datos válidos: queda la paciente y su teléfono | OK |
 | sp_alta_paciente.2 | Sin coincidencias | DNI repetido: error 52035 y no se crea otra fila | OK |
-| sp_alta_paciente.3 | Nulos y límites | DNI NULL o de 6 y 9 dígitos, nombre de 1 letra, teléfono corto, fecha futura, email mal escrito | OK |
+| sp_alta_paciente.3 | Nulos y límites | DNI NULL o de 6 y 9 dígitos, nombre de 1 letra, teléfono corto, fecha futura, email de menos de 5 letras | OK |
 | sp_alta_paciente.4 | Consistencia | El log tiene las altas correctas (exitoso=1) y los rechazos (exitoso=0); un email vacío se guarda como NULL | OK |
 | sp_modificar_paciente.1 | Éxito | Cambia nombre y email y agrega un teléfono | OK |
 | sp_modificar_paciente.2 | Sin coincidencias | Paciente inexistente: error 52036 | OK |
@@ -199,10 +207,10 @@ docente.
 | sp_modificar_protocolo.2 | Sin coincidencias | Protocolo inexistente (52060) y nombre de otro protocolo (52065) | OK |
 | sp_modificar_protocolo.3 | Nulos y límites | Precio negativo, duración NULL y activo 3 | OK |
 | sp_modificar_protocolo.4 | Consistencia | Los turnos viejos conservan su precio aplicado; la baja lo saca del catálogo; el log guarda lo anterior y lo nuevo | OK |
-| sp_listar_protocolos.1 | Éxito | Sin filtros trae todo el catálogo activo (30 de ejemplo + "Otro protocolo") | OK |
+| sp_listar_protocolos.1 | Éxito | Sin filtros trae todo el catálogo activo (44 de ejemplo + "Otro protocolo") | OK |
 | sp_listar_protocolos.2 | Sin coincidencias | Una palabra que no está en ningún protocolo: 0 filas | OK |
 | sp_listar_protocolos.3 | Nulos y límites | Texto vacío trae todo; un protocolo dado de baja no aparece; categoría inexistente trae 0 filas | OK |
-| sp_listar_protocolos.4 | Consistencia | La búsqueda "láser" y la categoría Cirugías coinciden con un SELECT directo | OK |
+| sp_listar_protocolos.4 | Consistencia | La búsqueda por la categoría "Aparatología" (texto exacto) y la categoría Cirugías coinciden con un SELECT directo | OK |
 | sp_horarios_libres.1 | Éxito | Una limpieza (60 min) el lunes 14/12 de 9 a 13 deja 7 horarios para el profesional de prueba | OK |
 | sp_horarios_libres.2 | Sin coincidencias | Un día sin disponibilidad y un protocolo que el profesional no hace: 0 filas | OK |
 | sp_horarios_libres.3 | Nulos y límites | Fecha NULL, protocolos NULL, vacíos o con letras, protocolo de baja: 0 filas; el último horario de una cirugía de 180 min es 10:00 | OK |
@@ -217,7 +225,7 @@ docente.
 | sp_buscar_turnos.2 | Sin coincidencias | DNI y apellido que no existen: 0 filas | OK |
 | sp_buscar_turnos.3 | Nulos y límites | NULL, vacío y 2 caracteres: 0 filas | OK |
 | sp_buscar_turnos.4 | Consistencia | Por apellido trae los 4 turnos de las pacientes de prueba (uno está cancelado) y la cantidad coincide con un conteo directo | OK |
-| sp_registrar_sena.1 | Éxito | Seña del turno 1 en efectivo: $27.000, turno confirmado, código de operación, confirmación y recordatorio programados | OK |
+| sp_registrar_sena.1 | Éxito | Seña del turno 1 en efectivo: $27.000, turno confirmado, se guarda el código de operación que genera la aplicación, confirmación y recordatorio programados | OK |
 | sp_registrar_sena.2 | Sin coincidencias | Turno inexistente (52110), ya pagado (52111), medio de pago inexistente (52114), tarjeta inexistente (52117) | OK |
 | sp_registrar_sena.3 | Nulos y límites | Turno NULL, medio NULL y tarjeta de regalo sin código | OK |
 | sp_registrar_sena.4 | Consistencia | El monto cobrado coincide con fn_sena y con 30% del precio; el rechazo de la tarjeta quedó en el log | OK |
@@ -231,9 +239,9 @@ docente.
 | sp_marcar_turno.4 | Consistencia | La inasistencia retiene la seña (retenida, reembolsado 0) y queda en el log | OK |
 | sp_aplicar_reembolso.3 | Nulos y límites | Monto NULL o mayor al pagado (52102) y estado inventado (52103); con el pago todavía "pagada" | OK |
 | sp_aplicar_reembolso.1 | Éxito | Reembolso parcial de la seña del turno 5 (interno: lo usan otros SP) | OK |
-| sp_aplicar_reembolso.2 | Sin coincidencias | Pago inexistente: excepción 52100 | OK |
+| sp_aplicar_reembolso.2 | Sin coincidencias | Pago inexistente: deja el código 52100 en @reembolso_codigo | OK |
 | sp_aplicar_reembolso.4 | Consistencia | Un pago ya resuelto no se puede resolver de nuevo (52101) y su monto no cambia | OK |
-| sp_comprar_tarjeta.1 | Éxito | Venta de una tarjeta de $300.000 en efectivo: código numérico de 7 cifras, vigencia de 12 meses | OK |
+| sp_comprar_tarjeta.1 | Éxito | Venta de una tarjeta de $300.000 en efectivo: se guarda el código que genera la aplicación, vigencia de 12 meses | OK |
 | sp_comprar_tarjeta.2 | Sin coincidencias | Medio de pago inexistente o "tarjeta de regalo" (52151) | OK |
 | sp_comprar_tarjeta.3 | Nulos y límites | Monto 19.999 y 5.000.001 se rechazan, 20.000 y 5.000.000 se aceptan; nombre vacío; teléfono inválido | OK |
 | sp_comprar_tarjeta.4 | Consistencia | Las tres tarjetas válidas existen y las rechazadas no; las compras están en el log | OK |
@@ -250,7 +258,7 @@ docente.
 | sp_emitir_cupones.2 | Sin coincidencias | Una segunda corrida inmediata no emite nada nuevo (0 cupones) | OK |
 | sp_emitir_cupones.3 | Nulos y límites | Sin origen (NULL) corre igual; la paciente B, que no tiene cuenta, nunca recibe cupones | OK |
 | sp_emitir_cupones.4 | Consistencia | Todo cupón vence en emisión + vigencia de su regla y copia el porcentaje de la regla | OK |
-| sp_generar_token_cupon.1 | Éxito | Devuelve un token numérico (hasta 7 cifras) que dura 300 segundos desde el inicio del tramo | OK |
+| sp_generar_token_cupon.1 | Éxito | Devuelve un token numérico que dura 300 segundos desde el inicio del tramo | OK |
 | sp_generar_token_cupon.2 | Sin coincidencias | Cupón inexistente (52140), de otra paciente (52141), ya usado (52142), vencido (52143) | OK |
 | sp_generar_token_cupon.3 | Nulos y límites | Código NULL: error 52140; sin paciente se genera igual; a mitad del tramo quedan 150 segundos | OK |
 | sp_generar_token_cupon.4 | Consistencia | El token cambia en el tramo siguiente y es el mismo dentro del tramo | OK |
@@ -325,9 +333,9 @@ Además de los casos de SQL, las aplicaciones se prueban contra el MySQL real (s
 | Prueba | Qué recorre |
 |---|---|
 | `frontend/pruebas/prueba_base.cpp` | La capa `Repositorio`: catálogo, ingreso, paciente nueva, horario libre, turno, seña, búsqueda y cancelación con reembolso |
-| `frontend/pruebas/prueba_gestion_base.cpp` | La ventana de Gestión conectada: lee los datos, carga un turno con seña (dialogos incluidos), lo busca y lo cancela; la pantalla Reportes; y la sincronización de la contingencia |
-| `frontend/pruebas/prueba_cliente_base.cpp` | La terminal: elegir protocolo, profesional y horario de la base, reservar con seña simulada |
+| `frontend/pruebas/prueba_gestion_base.cpp` | La ventana de Gestión conectada: lee los datos, carga un turno con seña (diálogos incluidos), lo busca y lo cancela; las pantallas Reportes, Cupones, Tarjetas de regalo y Consultas previas; y la sincronización de la contingencia |
+| `frontend/pruebas/prueba_cliente_base.cpp` | La terminal (`dermalia_cliente`): protocolo y horario de la base, alta de una paciente nueva, reserva con seña simulada, búsqueda por DNI y cancelación |
 | `web/api/servidor.test.js` | La API del sitio: catálogo, horarios, reserva (con y sin fecha de nacimiento), superposición rechazada, búsqueda y cancelación |
 | Recorrido en navegador (Playwright) | Reservar en el sitio, verlo en "Mi turno" y cancelarlo: la base queda con el turno cancelado y la seña reembolsada |
 
-Se corren con `DERMALIA_DB_USER=root ctest --test-dir build` y `DERMALIA_DB_USER=root npm run test:api`.
+Se corren con `DERMALIA_DB_USER=root DERMALIA_DB_PASS=... ctest --test-dir build` y `DERMALIA_DB_USER=root npm run test:api`.

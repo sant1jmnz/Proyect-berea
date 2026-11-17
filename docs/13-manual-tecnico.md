@@ -49,6 +49,7 @@ mysql -u root -p < backend/03_sp_semana3.sql                 # login, ABM, horar
 mysql -u root -p < backend/04_sp_semana4.sql                 # seña, cancelación, cirugías, cupones, tarjetas, avisos
 mysql -u root -p < backend/05_reportes_semana5.sql           # 8 reportes + auditoría
 mysql -u root -p < backend/06_tuning_semana6.sql             # versiones _tuneado
+mysql -u root -p < backend/09_sp_pantallas.sql               # listados de las pantallas Cupones y Consultas previas
 mysql -u root -p < backend/07_actividad_con_sps.sql          # (opcional) actividad de ejemplo que llena el log
 mysql -u root -p < backend/08_usuarios.sql                   # usuarios de las aplicaciones (solo pueden EJECUTAR los SP); cambiar las contraseñas
 ```
@@ -57,7 +58,7 @@ mysql -u root -p < backend/08_usuarios.sql                   # usuarios de las a
 
 Para verificar: `mysql -u root -p < backend/pruebas_estructura.sql` (44 pruebas de las
 restricciones de las tablas) y
-`python3 backend/pruebas/correr_pruebas.py --recargar` (222 casos de los SP; ver
+`python3 backend/pruebas/correr_pruebas.py --recargar` (230 casos de los SP; ver
 [`11-pruebas-bbdd.md`](11-pruebas-bbdd.md)).
 
 ### En Aiven (producción)
@@ -118,7 +119,7 @@ Requisitos en Ubuntu: `sudo apt install qt6-base-dev libmysqlclient-dev cmake ni
 cmake -S frontend -B build -G Ninja && cmake --build build
 QT_QPA_PLATFORM=offscreen ctest --test-dir build      # pruebas automáticas
 ./build/dermalia_gestion                               # recepción
-./build/dermalia_cliente_bautista                      # terminal de la paciente
+./build/dermalia_cliente                               # terminal de la paciente
 ```
 
 **Conexión a la base:** variables de entorno `DERMALIA_DB_HOST`, `_PORT`, `_USER`, `_PASS`,
@@ -129,7 +130,7 @@ las aplicaciones avisan con una franja amarilla y trabajan en **modo contingenci
 
 | Archivo | Responsabilidad |
 |---|---|
-| `basedatos.*` | Conexión con `mysql.h` y `llamar("sp", {parámetros})` |
+| `basedatos.*` | Conexión con `mysql.h` como en el PPT 006 (`mysql_init`, `mysql_real_connect`, `mysql_query`, `mysql_store_result`, `mysql_fetch_row`) y `llamar("sp", {parámetros})`, que arma el `CALL` |
 | `repositorio.*` | Un método por cada SP que usan las pantallas; devuelve datos ya interpretados |
 | `conexionapp.*`, `avisoconexion.*`, `contingencia.*` | Aviso "sin conexión" y turnos guardados en el equipo |
 | `validaciones.*`, `sena.h`, `reembolso.h` | Reglas que también valida la base (la pantalla las avisa antes) |
@@ -141,8 +142,11 @@ las aplicaciones avisan con una franja amarilla y trabajan en **modo contingenci
   pacientes, profesionales con sus franjas, turnos (±60 días) y avisos (`gestion/datosbase.*`). Desde ahí,
   cargar turno, seña, cancelación, protocolos, pacientes, profesionales, avisos y reportes llaman a los
   stored procedures, con el usuario que ingresó en el log.
-- **Cliente (terminal):** no pide ingreso (la paciente se identifica con el DNI): el catálogo, los
-  profesionales y los horarios libres salen de la base, y la reserva paga la seña simulada.
+- **Cliente (terminal):** no pide ingreso (la paciente se identifica con el DNI): el catálogo y los
+  horarios libres salen de la base; la reserva da de alta a la paciente nueva (pide la fecha de
+  nacimiento), crea el turno y paga la seña simulada; buscar y cancelar también usan los SP.
+- **Cupones, Tarjetas de regalo y Consultas previas** (Gestión) solo funcionan con la base: sin conexión
+  quedan deshabilitadas y lo avisan.
 - **Sin conexión:** las dos siguen con el almacén local de pruebas (`frontend/gestion/almacenlocal.*`: un
   `datos_local.json` en la carpeta de datos de la aplicación, o la ruta de `DERMALIA_DATOS_LOCAL`, que
   comparten Gestión y Terminal) y la franja amarilla. Los turnos que se cargan
@@ -150,8 +154,9 @@ las aplicaciones avisan con una franja amarilla y trabajan en **modo contingenci
   que la base no acepta (horario ocupado, paciente que no existe) siguen guardados y se avisa el motivo.
 - Cada pantalla tiene un método `usarBase(Repositorio*)`: con `nullptr` trabaja en memoria como antes.
 
-Pruebas: `DERMALIA_DB_USER=root ctest --test-dir build` (ver `11-pruebas-bbdd.md`). Los nombres de los
-controles y los slots siguen la convención de la cátedra (`btnConfirmar`, `on_btnX_clicked`...).
+Pruebas: `DERMALIA_DB_USER=root DERMALIA_DB_PASS=... ctest --test-dir build` (ver `11-pruebas-bbdd.md`).
+Sin las variables, las pruebas que usan la base se saltean. Los nombres de los controles siguen la
+convención de la cátedra (`btnConfirmar`, `editDni`, `lblSaldo`...).
 
 ## 4. Sitio web
 
@@ -191,7 +196,7 @@ Un fallo se reintenta hasta 3 veces. Una vez por día corre `CALL clinica.sp_ven
 |---|---|
 | `ERROR 1418 ... DETERMINISTIC, NO SQL, or READS SQL DATA` | El servidor tiene registro binario: las funciones del proyecto ya declaran la característica; si se agrega una función, hay que declararla |
 | Los `CHECK` no rechazan nada | MySQL 5.7 los ignora. Usar 8.0.16 o superior |
-| Tildes que salen como `Ã¡` | Cliente sin `utf8mb4`: correr `SET NAMES utf8mb4;` en el cliente antes de ejecutar (los scripts ya no lo hacen) |
+| Tildes que salen como `Ã¡` | Los datos se cargaron con un cliente en `latin1`. Todos los scripts empiezan con `SET NAMES utf8mb4;`: volver a cargarlos desde el primero |
 | `ERROR 1055 ... ONLY_FULL_GROUP_BY` al probar consultas propias | Todo campo del `SELECT` debe estar en el `GROUP BY` o dentro de un agregado |
 | `Access denied for user 'root'@'localhost'` desde Python o Qt | `root` entra por socket; crear un usuario con contraseña o `ALTER USER ... IDENTIFIED WITH mysql_native_password` |
 | El programa dice "sin conexión" | Revisar variables `DERMALIA_DB_*`, el servidor y, en Aiven, `DERMALIA_DB_SSL=1` |

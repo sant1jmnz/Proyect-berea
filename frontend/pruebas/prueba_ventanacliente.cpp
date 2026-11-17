@@ -14,6 +14,7 @@
 #include <QInputDialog>
 #include <QMenu>
 #include <QStackedWidget>
+#include <QStandardPaths>
 #include <QToolButton>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -99,6 +100,9 @@ private slots:
         QLocale::setDefault(QLocale(QLocale::Spanish, QLocale::Argentina));   /* como main.cpp */
         QVERIFY(carpeta.isValid());
         qputenv("DERMALIA_DATOS_LOCAL", carpeta.filePath("local.json").toUtf8());   /* nunca el archivo real */
+        QStandardPaths::setTestModeEnabled(true);   /* la contingencia va a una carpeta de pruebas */
+        for (const char *v : { "DERMALIA_DB_HOST", "DERMALIA_DB_USER", "DERMALIA_DB_PASS" })
+            qunsetenv(v);   /* estas pruebas son sin base (las de la base están en prueba_cliente_base) */
     }
     void init() { QFile::remove(carpeta.filePath("local.json")); }   /* cada prueba arranca sin datos */
 

@@ -116,6 +116,13 @@ devuelven 0 filas y no dan error.
 | `pagos.sp_registrar_sena` (SP) | `p_id_turno INT, p_medio_pago VARCHAR(50), p_codigo_tarjeta VARCHAR(50), p_id_usuario INT, p_origen VARCHAR(50), p_codigo_operacion VARCHAR(50)` | Registra la seña (pago simulado, sin pasarela) y confirma el turno. Devuelve: id = pago, valor = monto de la seña, dato = código de operación 'SIM-...'. Si se paga con tarjeta de regalo hay que pasar su código; el turno no puede tener cupón (un cupón y una tarjeta no van juntos). |
 | `pagos.sp_saldo_tarjeta` (SP) | `p_codigo VARCHAR(50), p_id_usuario INT, p_origen VARCHAR(50)` | Saldo y vigencia de una tarjeta. Un código inexistente queda en el log (intentos fallidos, modelo grupo 3 decisión 9) y no devuelve filas. |
 
+### Pantallas de Gestión (`backend/09_sp_pantallas.sql`): listados de cupones y consultas previas
+
+| SP | Parámetros | Qué devuelve |
+|---|---|---|
+| `beneficios.sp_listar_cupones` (SP) | `p_dni VARCHAR(20)` | Cupones de la paciente: `id_cupon, codigo, regla, porcentaje_descuento, fecha_emision, fecha_vencimiento, usado, vigente, id_paciente, apellido, nombre`. DNI inexistente, NULL o vacío: 0 filas. |
+| `clinica.sp_listar_evaluaciones` (SP) | `p_solo_pendientes SMALLINT` | Evaluaciones previas de cirugía: `id_evaluacion, dni, apellido, nombre, protocolo, fecha_consulta, estado_turno, resultado, observaciones, fecha_resultado, vence, fecha_reclamo`. Con 1, solo las que no tienen resultado. |
+
 ### Semana 5 (`backend/05_reportes_semana5.sql`): 8 reportes y auditoría
 
 | SP / función | Parámetros | Qué hace |

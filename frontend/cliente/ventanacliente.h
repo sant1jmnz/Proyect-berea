@@ -69,6 +69,7 @@ private:
     QVector<Turno> turnos;
     QString archivoLocal;
     QString buscadoActual;             /* DNI o teléfono (solo dígitos) de la última búsqueda con resultados */
+    QString ultimoBuscado;             /* lo último que se buscó, aunque no haya tenido turnos */
     int turnoMostrado = -1;            /* índice en `turnos` del que se ve en "Buscar mi turno" */
     bool ajustandoFecha = false;       /* evita que setSelectedDate vuelva a disparar el aviso */
     QString notaHorarioOriginal;

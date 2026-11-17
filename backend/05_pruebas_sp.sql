@@ -18,6 +18,9 @@
 -- tiene que pasar; el corredor automático las verifica solo.
 -- Un reloj simulado (@ahora_simulado) permite probar vencimientos y plazos de 24 horas.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 SET @ahora_simulado = '2026-11-03 09:00:00';
 
 -- ======================================================================

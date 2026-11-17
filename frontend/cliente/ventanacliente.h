@@ -1,7 +1,8 @@
 /* Ventana principal del apartado Cliente (terminal táctil del instituto).
- * Sin base de datos todavía: los turnos viven en memoria mientras la ventana está
- * abierta (se cargan al momento y la búsqueda "Buscar mi turno" los encuentra).
- * Cuando se conecte la base, `turnos` se reemplaza por consultas a los stored procedures. */
+ * Con la base conectada, los protocolos, los horarios libres, la reserva, la
+ * búsqueda y la cancelación pasan por los stored procedures (comun/repositorio.h).
+ * Sin base, los turnos se guardan en el archivo local de esta PC (el mismo que
+ * usa Gestión) y además quedan en contingencia para mandarlos cuando vuelva la base. */
 #ifndef VENTANACLIENTE_H
 #define VENTANACLIENTE_H
 
@@ -10,6 +11,10 @@
 #include <QMainWindow>
 #include <QVector>
 
+class AvisoConexion;
+class ConexionApp;
+class Repositorio;
+
 namespace Ui { class VentanaCliente; }
 
 class VentanaCliente : public QMainWindow
@@ -17,13 +22,15 @@ class VentanaCliente : public QMainWindow
     Q_OBJECT
 
 public:
-    /* Los turnos se guardan en el archivo local de AlmacenLocal (el mismo que usa
-     * Gestión); `archivoLocal` vacío usa el de siempre. */
-    explicit VentanaCliente(QWidget *parent = nullptr, const QString &archivoLocal = QString());
+    /* `archivoLocal` y `archivoContingencia` vacíos: los de siempre (las pruebas pasan otros). */
+    explicit VentanaCliente(QWidget *parent = nullptr, const QString &archivoLocal = QString(),
+                            const QString &archivoContingencia = QString());
     ~VentanaCliente();
 
-    /* Los turnos cargados (para las pruebas). */
+    /* Para las pruebas. */
     const QVector<Turno> &turnosCargados() const { return turnos; }
+    bool usaBase() const { return enModoBase; }
+    ConexionApp *conexionApp() const { return conexion; }
 
 private:
     void irA(int pagina);
@@ -46,6 +53,12 @@ private:
     void recargarLocal();   /* toma del archivo los turnos que cargó o canceló Gestión */
     void guardarLocal();    /* deja los turnos (y la paciente nueva) en el archivo */
 
+    /* Con la base */
+    void conectarBase();
+    void horariosDeBase(const QDate &dia);
+    bool confirmarEnBase(const Protocolo *p, const QDateTime &inicio);
+    bool buscarOCrearPaciente(int *idPaciente);
+
     Ui::VentanaCliente *ui;
     QVector<Protocolo> protocolos;
     QVector<int> protocolosVisibles;   /* fila de la lista → índice en `protocolos` */
@@ -55,6 +68,11 @@ private:
     int turnoMostrado = -1;            /* índice en `turnos` del que se ve en "Buscar mi turno" */
     bool ajustandoFecha = false;       /* evita que setSelectedDate vuelva a disparar el aviso */
     QString notaHorarioOriginal;
+
+    AvisoConexion *franja = nullptr;   /* "sin conexión con la base" */
+    ConexionApp *conexion = nullptr;
+    Repositorio *repositorio = nullptr;
+    bool enModoBase = false;           /* true: los datos salen de la base */
 };
 
 #endif

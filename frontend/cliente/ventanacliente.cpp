@@ -2,6 +2,10 @@
 #include "ui_ventanacliente.h"
 
 #include "almacenlocal.h"
+#include "avisoconexion.h"
+#include "conexionapp.h"
+#include "datosbase.h"
+#include "repositorio.h"
 #include "reembolso.h"
 #include "sena.h"
 #include "validaciones.h"
@@ -18,6 +22,8 @@
 #include <QRegularExpressionValidator>
 #include <QStyle>
 #include <QTextCharFormat>
+#include <QTimer>
+#include <QVBoxLayout>
 #include <algorithm>
 
 /* Orden de las páginas dentro del QStackedWidget `paginas` del .ui. */
@@ -52,7 +58,7 @@ static QString fechaLarga(const QDate &fecha)
     return QLocale().toString(fecha, "dddd d 'de' MMMM");   /* jueves 8 de octubre */
 }
 
-VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo)
+VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QString &archivoContingencia)
     : QMainWindow(parent), ui(new Ui::VentanaCliente),
       archivoLocal(archivo.isEmpty() ? AlmacenLocal::rutaPorDefecto() : archivo)
 {
@@ -133,10 +139,21 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo)
     connect(ui->btnSena, &QPushButton::toggled, this, [this](bool pagada) {
         ui->btnSena->setText(pagada ? "✓  Seña pagada" : "Pagar seña (simulado)");
     });
+
+    /* Franja de aviso arriba de todo y conexión con la base (RNF-09). La terminal no pide
+     * usuario: la paciente se identifica con su DNI. La conexión se prueba apenas se
+     * muestra la ventana, para no demorar el arranque. */
+    franja = new AvisoConexion;
+    franja->setObjectName("avisoConexion");
+    qobject_cast<QVBoxLayout *>(ui->central->layout())->insertWidget(0, franja);
+    conexion = new ConexionApp(franja, ConfigBD::desdeEntorno(), archivoContingencia, this);
+    connect(conexion, &ConexionApp::conectada, this, &VentanaCliente::conectarBase);
+    QTimer::singleShot(0, conexion, &ConexionApp::probar);
 }
 
 VentanaCliente::~VentanaCliente()
 {
+    delete repositorio;
     delete ui;
 }
 
@@ -153,6 +170,8 @@ void VentanaCliente::irA(int pagina)
 /* Vuelve a leer el archivo: Gestión pudo haber cargado o cancelado turnos. */
 void VentanaCliente::recargarLocal()
 {
+    if (enModoBase)
+        return;   /* con la base, los turnos se piden a la base en cada búsqueda */
     AlmacenLocal::Datos datos;
     if (!AlmacenLocal::leer(archivoLocal, &datos))
         return;
@@ -164,6 +183,8 @@ void VentanaCliente::recargarLocal()
 /* Deja los turnos en el archivo sin pisar lo que es de Gestión (protocolos, profesionales). */
 void VentanaCliente::guardarLocal()
 {
+    if (enModoBase)
+        return;
     AlmacenLocal::Datos datos;
     AlmacenLocal::leer(archivoLocal, &datos);
     datos.turnos = turnos;
@@ -185,7 +206,10 @@ void VentanaCliente::cargarProtocolos()
 {
     protocolos = DatosPrueba::protocolos();
     AlmacenLocal::Datos guardados;
-    if (AlmacenLocal::leer(archivoLocal, &guardados) && !guardados.protocolos.isEmpty())
+    QString error;
+    if (enModoBase)   /* catálogo de la base (sp_listar_protocolos) */
+        DatosBase::cargarProtocolos(*repositorio, protocolos, &error);
+    else if (AlmacenLocal::leer(archivoLocal, &guardados) && !guardados.protocolos.isEmpty())
         protocolos = guardados.protocolos;
     ui->listaProtocolos->clear();
     protocolosVisibles.clear();
@@ -213,6 +237,8 @@ QDateTime VentanaCliente::horarioElegido() const
     const QListWidgetItem *item = ui->listaHorarios->currentItem();
     if (!item || !item->isSelected() || !(item->flags() & Qt::ItemIsSelectable))
         return {};
+    if (item->data(Qt::UserRole).isValid())   /* con la base, el horario viaja dentro del ítem */
+        return item->data(Qt::UserRole).toDateTime();
     return QDateTime(ui->calendario->selectedDate(), QTime::fromString(item->text(), "HH:mm"));
 }
 
@@ -278,6 +304,10 @@ void VentanaCliente::actualizarHorarios()
 
     if (dia.dayOfWeek() == Qt::Sunday) {
         ui->lblNotaHorario->setText("Los domingos el instituto no atiende. Elegí otro día.");
+        return;
+    }
+    if (enModoBase) {   /* los horarios libres los calcula la base (RF-04) */
+        horariosDeBase(dia);
         return;
     }
     for (const QString &hora : DatosPrueba::horariosDelDia()) {
@@ -370,6 +400,16 @@ void VentanaCliente::confirmar()
         irA(PagHorario);
         return;
     }
+    if (enModoBase) {
+        if (confirmarEnBase(p, inicio)) {
+            const QString dni = soloDigitos(ui->editDni->text());
+            reiniciarCarga();
+            ui->editBuscarTurno->setText(dni);   /* se muestra el turno recién cargado */
+            buscarMiTurno();
+            irA(PagMiTurno);
+        }
+        return;
+    }
     recargarLocal();
     const bool ocupado = std::any_of(turnos.cbegin(), turnos.cend(), [&](const Turno &t) {
         return t.inicio == inicio && t.estado != EstadoTurno::Cancelado;
@@ -390,6 +430,9 @@ void VentanaCliente::confirmar()
         nuevo.codigoOperacion = nuevoCodigoOperacion();
     turnos.append(nuevo);
     guardarLocal();
+    /* Sin base, el turno también queda en contingencia: se manda solo cuando vuelve la conexión (RNF-09). */
+    conexion->guardarEnContingencia({ nuevo.paciente, nuevo.dni, nuevo.telefono, nuevo.protocolo,
+                                      nuevo.inicio, nuevo.sena, nuevo.senaPagada, nuevo.origen, {} });
 
     QString mensaje = QString("¡Listo! Tu turno quedó reservado.\n%1 · %2 de %3, %4")
                           .arg(nuevo.protocolo, fechaLarga(inicio.date()), QString::number(inicio.date().year()), inicio.toString("HH:mm"));
@@ -445,6 +488,11 @@ void VentanaCliente::buscarMiTurno()
     const QString buscado = soloDigitos(texto);
     const QDateTime ahora = QDateTime::currentDateTime();
     recargarLocal();
+    if (enModoBase) {   /* sp_buscar_turnos: los turnos de ese DNI o teléfono */
+        turnos.clear();
+        for (const TurnoBD &fila : repositorio->buscarTurnos(buscado))
+            turnos.append(DatosBase::aTurno(fila));
+    }
     QVector<int> encontrados;
     for (int i = 0; i < turnos.size(); ++i)
         if (turnos[i].dni == buscado || soloDigitos(turnos[i].telefono) == buscado)
@@ -519,6 +567,11 @@ static QString descripcionTurno(const Turno &t)
 void VentanaCliente::cancelarMiTurno()
 {
     recargarLocal();   /* puede haber cambiado desde que se mostró */
+    if (enModoBase) {
+        turnos.clear();
+        for (const TurnoBD &fila : repositorio->buscarTurnos(buscadoActual))
+            turnos.append(DatosBase::aTurno(fila));
+    }
     const QDateTime ahora = QDateTime::currentDateTime();
     QVector<int> vigentes;   /* turnos de quien buscó que todavía se pueden cancelar */
     for (int i = 0; i < turnos.size(); ++i) {
@@ -568,6 +621,18 @@ void VentanaCliente::cancelarMiTurno()
     if (respuesta != QMessageBox::Yes)
         return;
 
+    if (enModoBase) {   /* la base aplica la regla de las 24 horas y devuelve la seña */
+        const Respuesta r = repositorio->cancelarTurno(t.id, "terminal");
+        if (!r.ok) {
+            QMessageBox::warning(this, "No se pudo cancelar", r.mensaje);
+            return;
+        }
+        QMessageBox::information(this, "Turno cancelado",
+                                 r.valor > 0 ? QString("Turno cancelado. Se te devolvieron %1.").arg(pesos(qRound(r.valor)))
+                                             : "Turno cancelado.");
+        buscarMiTurno();
+        return;
+    }
     t.estado = EstadoTurno::Cancelado;
     t.reembolsado = devolver;
     guardarLocal();
@@ -575,4 +640,120 @@ void VentanaCliente::cancelarMiTurno()
     QMessageBox::information(this, "Turno cancelado",
                              devolver > 0 ? QString("Turno cancelado. Se te devolvieron %1.").arg(pesos(devolver)) : "Turno cancelado.");
     buscarMiTurno();                   /* muestra el próximo turno que le queda, o el cancelado si no tiene más */
+}
+
+
+/* ---------------------------------------------------------------------------
+ * Con la base conectada: los datos salen de los stored procedures
+ * --------------------------------------------------------------------------- */
+
+/* Se llama cada vez que ConexionApp logra conectarse (al arrancar o con "Reintentar"). */
+void VentanaCliente::conectarBase()
+{
+    if (enModoBase)
+        return;   /* ya estaba conectada */
+    if (!repositorio)
+        repositorio = new Repositorio(conexion->base());
+    enModoBase = true;
+    cargarProtocolos();
+    actualizarHorarios();
+    ocultarTurno();
+}
+
+/* Horarios libres del día para el protocolo elegido, con el profesional que atiende. */
+void VentanaCliente::horariosDeBase(const QDate &dia)
+{
+    const Protocolo *p = protocoloElegido();
+    if (!p) {
+        ui->lblNotaHorario->setText("Elegí primero el protocolo.");
+        return;
+    }
+    for (const HorarioLibre &h : repositorio->horariosLibres(dia, { p->id })) {
+        if (h.inicio <= QDateTime::currentDateTime())
+            continue;
+        auto *item = new QListWidgetItem(h.inicio.toString("HH:mm"));
+        item->setToolTip("Con " + DatosBase::nombreYApellido(h.profesional));
+        item->setData(Qt::UserRole, h.inicio);               /* cuándo */
+        item->setData(Qt::UserRole + 1, h.idProfesional);    /* con quién */
+        ui->listaHorarios->addItem(item);
+    }
+    if (ui->listaHorarios->count() == 0)
+        ui->lblNotaHorario->setText("No quedan horarios libres ese día. Probá con otro.");
+}
+
+/* Si el DNI ya está en la base se usa esa paciente; si no, se la da de alta.
+ * El apellido sale de la última palabra del nombre; la fecha de nacimiento se pregunta. */
+bool VentanaCliente::buscarOCrearPaciente(int *idPaciente)
+{
+    const QString dni = soloDigitos(ui->editDni->text());
+    const Resultado r = repositorio->buscarPaciente(dni);
+    if (!r.ok) {   /* si la base falló no se sabe si existe: no se da de alta para no duplicarla */
+        QMessageBox::warning(this, "No pudimos buscar tus datos", r.error);
+        return false;
+    }
+    for (const QVariantMap &fila : r.filas) {
+        if (fila.value("dni").toString() == dni) {
+            *idPaciente = fila.value("id_paciente").toInt();
+            return true;
+        }
+    }
+
+    const QString completo = ui->editNombre->text().simplified();
+    const int espacio = completo.lastIndexOf(' ');
+    const QString nombre = completo.left(espacio);
+    const QString apellido = completo.mid(espacio + 1);
+
+    QDate nacimiento;
+    QString texto;
+    for (;;) {   /* se vuelve a preguntar hasta que la fecha sea válida o la paciente cancele */
+        bool ok = false;
+        texto = QInputDialog::getText(this, "Es tu primera vez",
+                                      QString("Hola %1. ¿Cuál es tu fecha de nacimiento? (dd/mm/aaaa)").arg(nombre),
+                                      QLineEdit::Normal, texto, &ok);
+        if (!ok)
+            return false;
+        QString error;
+        nacimiento = Validaciones::fechaDesdeTexto(texto, &error);
+        if (nacimiento.isValid() && Validaciones::fechaNacimientoValida(nacimiento, QDate::currentDate(), &error))
+            break;
+        QMessageBox::warning(this, "Fecha incorrecta", error);
+    }
+    const Respuesta alta = repositorio->altaPaciente(dni, nombre, apellido, nacimiento, QString(),
+                                                     soloDigitos(ui->editTelefono->text()), "terminal");
+    if (!alta.ok) {
+        QMessageBox::warning(this, "No pudimos guardar tus datos", alta.mensaje);
+        return false;
+    }
+    *idPaciente = alta.id;
+    return true;
+}
+
+/* Paso 3 con la base: sp_alta_turno y, si tocó "Pagar seña", sp_registrar_seña (pago simulado). */
+bool VentanaCliente::confirmarEnBase(const Protocolo *p, const QDateTime &inicio)
+{
+    int idPaciente = 0;
+    if (!buscarOCrearPaciente(&idPaciente))
+        return false;
+
+    const int idProfesional = ui->listaHorarios->currentItem()->data(Qt::UserRole + 1).toInt();
+    const Respuesta turno = repositorio->altaTurno(idPaciente, idProfesional, inicio, { p->id }, "terminal");
+    if (!turno.ok) {   /* la base aplicó una regla (por ejemplo, otra persona se llevó ese horario) */
+        QMessageBox::warning(this, "No pudimos reservar el turno", turno.mensaje);
+        actualizarHorarios();
+        irA(PagHorario);
+        return false;
+    }
+
+    QString mensaje = QString("¡Listo! Tu turno quedó reservado.\n%1 · %2 de %3, %4")
+                          .arg(p->nombre, fechaLarga(inicio.date()), QString::number(inicio.date().year()),
+                               inicio.toString("HH:mm"));
+    if (ui->btnSena->isChecked()) {
+        const Respuesta sena = repositorio->registrarSena(turno.id, "tarjeta simulada", QString(), "terminal");
+        mensaje += sena.ok ? QString("\nSeña pagada (simulada): código %1.").arg(sena.dato)
+                           : QString("\nLa seña no se pudo registrar (%1): acercate a recepción.").arg(sena.mensaje);
+    } else {
+        mensaje += "\nLa seña quedó sin pagar: acercate a recepción para abonarla.";
+    }
+    QMessageBox::information(this, "Turno confirmado", mensaje);
+    return true;
 }

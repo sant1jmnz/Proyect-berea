@@ -11,6 +11,9 @@
 --   3. corre los dos reportes de cada par para comparar el resultado;
 --   4. borra los datos de volumen.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 SELECT COALESCE(MAX(id_turno), 0) INTO @base FROM agenda.Turno;
 SELECT COALESCE(MAX(id_pago), 0) INTO @base_pago FROM pagos.PagoSena;
 

@@ -5,9 +5,10 @@
 import { protocolos } from './protocolos.js';
 
 /* Hace el pedido; devuelve { ok, estado, cuerpo } o null si no hay API. */
-async function pedir(ruta, opciones) {
+export async function pedir(ruta, opciones) {
   try {
-    const r = await fetch(`/api${ruta}`, { headers: { 'Content-Type': 'application/json' }, ...opciones });
+    const { headers, ...resto } = opciones ?? {};
+    const r = await fetch(`/api${ruta}`, { headers: { 'Content-Type': 'application/json', ...headers }, ...resto });
     return { ok: r.ok, estado: r.status, cuerpo: await r.json() };
   } catch {
     return null;

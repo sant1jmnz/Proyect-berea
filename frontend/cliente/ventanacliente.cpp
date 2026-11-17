@@ -487,6 +487,7 @@ void VentanaCliente::buscarMiTurno()
         return;
     }
     const QString buscado = soloDigitos(texto);
+    ultimoBuscado = buscado;
     if (!mostrarTurnosDe(buscado)) {
         ocultarTurno();
         QMessageBox::information(this, "Sin turnos", QString("No encontramos turnos para %1.").arg(buscado));
@@ -714,7 +715,10 @@ void VentanaCliente::sincronizarBase()
     if (!horarioElegido.isEmpty() && !iguales.isEmpty())
         ui->listaHorarios->setCurrentItem(iguales.first());
 
-    if (turnoMostrado >= 0 && !buscadoActual.isEmpty() && !mostrarTurnosDe(buscadoActual))
+    /* "Buscar mi turno": si la paciente ya buscó (aunque todavía no tuviera turnos), se vuelve
+     * a buscar; así aparece el turno que le cargó la recepción o cambia el estado si se canceló. */
+    const bool mirandoMiTurno = ui->paginas->currentIndex() == PagMiTurno || turnoMostrado >= 0;
+    if (mirandoMiTurno && !ultimoBuscado.isEmpty() && !mostrarTurnosDe(ultimoBuscado))
         ocultarTurno();
 }
 

@@ -19,11 +19,11 @@
  *   POST /api/consultas                                 registra una pregunta al asistente
  *
  * Cuentas de pacientes: la base compara la contraseña "tal cual" (sp_login), así que esta API le manda un
- * hash (scrypt con el usuario y un pimiento como sal) en vez de la contraseña: en la base nunca queda la
+ * hash (scrypt con el usuario y un secreto propio de la API) en vez de la contraseña: en la base nunca queda la
  * clave de una paciente en texto plano. La sesión es un token firmado (HMAC) que dura 12 horas.
  *
  * Variables: DERMALIA_DB_HOST, _PORT, _USER, _PASS, _SSL (como las apps de escritorio), PUERTO_API,
- * DERMALIA_PIMIENTO (sal del hash; no cambiarla una vez que hay cuentas) y DERMALIA_SECRETO (firma de las
+ * DERMALIA_SECRETO_CLAVES (secreto que se mezcla al guardar las contraseñas; no cambiarlo una vez que hay cuentas) y DERMALIA_SECRETO_SESIONES (firma de las
  * sesiones; si falta se genera al arrancar y las sesiones se cierran al reiniciar).
  * Conviene un usuario de la base que solo pueda ejecutar stored procedures (backend/08_usuarios.sql). */
 import http from 'node:http';
@@ -66,16 +66,16 @@ async function escribir(pool, sp, parametros) {
 
 /* ---------- Cuentas de pacientes (RF-15) ---------- */
 
-const PIMIENTO = process.env.DERMALIA_PIMIENTO || 'dermalia-pimiento-de-desarrollo';
-const SECRETO = process.env.DERMALIA_SECRETO || randomBytes(32).toString('hex');
+const SECRETO_CLAVES = process.env.DERMALIA_SECRETO_CLAVES || 'dermalia-secreto-claves-de-desarrollo';
+const SECRETO_SESIONES = process.env.DERMALIA_SECRETO_SESIONES || randomBytes(32).toString('hex');
 const DURACION_SESION_MS = 12 * 3600 * 1000;
 
 /* El usuario siempre en minúsculas y sin espacios: es la sal del hash y lo que se guarda en la base. */
 const normalizarUsuario = (u) => String(u ?? '').trim().toLowerCase();
 /* Lo que se guarda en la base en lugar de la contraseña. Es determinista, así sp_login puede compararlo. */
-const claveParaBase = (usuario, password) => scryptSync(String(password), `${PIMIENTO}:${usuario}`, 32).toString('hex');
+const claveParaBase = (usuario, password) => scryptSync(String(password), `${SECRETO_CLAVES}:${usuario}`, 32).toString('hex');
 
-const firma = (cuerpo) => createHmac('sha256', SECRETO).update(cuerpo).digest('base64url');
+const firma = (cuerpo) => createHmac('sha256', SECRETO_SESIONES).update(cuerpo).digest('base64url');
 function crearToken(datos) {
   const cuerpo = Buffer.from(JSON.stringify({ ...datos, vence: Date.now() + DURACION_SESION_MS })).toString('base64url');
   return `${cuerpo}.${firma(cuerpo)}`;

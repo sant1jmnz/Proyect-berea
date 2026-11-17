@@ -108,8 +108,13 @@ void PaginaAvisos::abrirWhatsApp()
     const auto r = QMessageBox::question(this, "¿Se envió?",
         "Se abrió WhatsApp con el mensaje (el enlace también quedó copiado).\n¿Lo enviaste?");
     if (r == QMessageBox::Yes) {
-        if (repo && a.id > 0)
-            repo->marcarNotificacion(a.id, "enviada");
+        if (repo && a.id > 0) {   /* con la base, primero se guarda ahí */
+            const Respuesta guardado = repo->marcarNotificacion(a.id, "enviada");
+            if (!guardado.ok) {
+                QMessageBox::warning(this, "No se pudo guardar", guardado.mensaje);
+                return;
+            }
+        }
         avisos->marcarEnviado(fila, QDateTime::currentDateTime());
     }
     recargar();
@@ -132,8 +137,13 @@ void PaginaAvisos::marcarFallido()
             break;
         QMessageBox::warning(this, "Dato incorrecto", error);
     }
-    if (repo && avisos->todos()[fila].id > 0)
-        repo->marcarNotificacion(avisos->todos()[fila].id, "fallida", motivo.simplified());
+    if (repo && avisos->todos()[fila].id > 0) {
+        const Respuesta guardado = repo->marcarNotificacion(avisos->todos()[fila].id, "fallida", motivo.simplified());
+        if (!guardado.ok) {
+            QMessageBox::warning(this, "No se pudo guardar", guardado.mensaje);
+            return;
+        }
+    }
     avisos->marcarFallido(fila, motivo.simplified());
     recargar();
     tabla->selectRow(fila);

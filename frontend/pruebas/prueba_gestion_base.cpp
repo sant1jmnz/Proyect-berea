@@ -15,6 +15,7 @@
 #include <QRandomGenerator>
 #include <QTableWidget>
 #include <QTemporaryDir>
+#include <QTimeEdit>
 #include <QCalendarWidget>
 #include <QCheckBox>
 #include <QComboBox>
@@ -316,6 +317,89 @@ private slots:
         // Se cancela desde la Terminal: el estado cambia solo en Gestión.
         QVERIFY(repo.cancelarTurno(turno.id, "terminal").ok);
         QTRY_COMPARE_WITH_TIMEOUT(tabla->item(filaDelDni(), 5)->text(), QString("Cancelado"), 8000);
+    }
+
+    // Cada pestaña que carga datos los deja en la base (no solo en la pantalla):
+    // Protocolos (alta y cambio de precio), Pacientes, Profesionales (franja) y Avisos.
+    void ventana_cadaPestaniaGuardaEnLaBase()
+    {
+        QTemporaryDir carpeta;
+        VentanaGestion w(nullptr, carpeta.filePath("p.json"), true);
+        QTest::qWait(1500);
+        if (!w.usaBase())
+            QSKIP("Sin base de datos o sin ingreso (definir DERMALIA_DB_USER, etc.).");
+        BaseDatos base(ConfigBD::desdeEntorno());
+        QVERIFY(base.conectar());
+        Repositorio repo(base);
+        QString letras;
+        for (int i = 0; i < 6; ++i)
+            letras += QChar('a' + QRandomGenerator::global()->bounded(26));
+
+        // Protocolos: alta y después cambio de precio.
+        QWidget *protocolos = w.findChild<QWidget *>("pagProtocolos");
+        const QString nombre = "Prueba " + letras;
+        protocolos->findChild<QLineEdit *>("editNombre")->setText(nombre);
+        protocolos->findChild<QLineEdit *>("editPrecio")->setText("50000");
+        protocolos->findChild<QLineEdit *>("editDuracion")->setText("45");
+        responderDialogos({});
+        protocolos->findChild<QPushButton *>("btnGuardar")->click();
+        QVector<ProtocoloBD> enLaBase = repo.listarProtocolos(nombre);
+        QCOMPARE(enLaBase.size(), 1);
+        QCOMPARE(enLaBase.first().precio, 50000);
+        protocolos->findChild<QLineEdit *>("editPrecio")->setText("60000");
+        responderDialogos({});
+        protocolos->findChild<QPushButton *>("btnGuardar")->click();
+        enLaBase = repo.listarProtocolos(nombre);
+        QCOMPARE(enLaBase.first().precio, 60000);
+
+        // Pacientes: alta.
+        QWidget *pacientes = w.findChild<QWidget *>("pagPacientes");
+        const QString dni = QString::number(50000000 + int(QRandomGenerator::global()->bounded(9999999)));
+        pacientes->findChild<QLineEdit *>("editNombrePaciente")->setText("Paciente Pestania");
+        pacientes->findChild<QLineEdit *>("editDniPaciente")->setText(dni);
+        pacientes->findChild<QLineEdit *>("editTelefonoPaciente")->setText("1133332222");
+        pacientes->findChild<QDateEdit *>("editNacimientoPaciente")->setDate(QDate(1988, 4, 12));
+        responderDialogos({});
+        pacientes->findChild<QPushButton *>("btnGuardarPaciente")->click();
+        bool pacienteGuardada = false;
+        for (const QVariantMap &fila : repo.buscarPaciente(dni).filas)
+            pacienteGuardada = pacienteGuardada || fila.value("dni").toString() == dni;
+        QVERIFY(pacienteGuardada);
+
+        // Profesionales: una franja de atención nueva.
+        QWidget *profesionales = w.findChild<QWidget *>("pagProfesionales");
+        profesionales->findChild<QListWidget *>("listaProfesionales")->setCurrentRow(0);
+        const QDate dia = QDate::currentDate().addDays(200 + QRandomGenerator::global()->bounded(300));
+        profesionales->findChild<QDateEdit *>("editDia")->setDate(dia);
+        profesionales->findChild<QTimeEdit *>("editDesde")->setTime(QTime(10, 0));
+        profesionales->findChild<QTimeEdit *>("editHasta")->setTime(QTime(12, 0));
+        profesionales->findChild<QPushButton *>("btnFranja")->click();   // no muestra ningún cartel si sale bien
+        bool franjaGuardada = false;
+        for (const QVariantMap &fila : repo.listarDisponibilidad(dia).filas)
+            franjaGuardada = franjaGuardada || (fila.value("fecha").toString() == dia.toString("yyyy-MM-dd")
+                                                && fila.value("hora_inicio").toString() == "10:00:00");
+        QVERIFY(franjaGuardada);
+
+        // Avisos: un recordatorio pendiente se marca como fallido con un motivo.
+        QWidget *avisos = w.findChild<QWidget *>("pagAvisos");
+        auto *tablaAvisos = avisos->findChild<QTableWidget *>("tablaAvisos");
+        int pendiente = -1;
+        for (int f = 0; f < tablaAvisos->rowCount() && pendiente < 0; ++f)
+            if (tablaAvisos->item(f, 2)->text() == "Pendiente")
+                pendiente = f;
+        if (pendiente >= 0) {
+            tablaAvisos->selectRow(pendiente);
+            const QString motivo = "Prueba de la pestania " + letras;
+            responderDialogos({ motivo });
+            for (QPushButton *b : avisos->findChildren<QPushButton *>())
+                if (b->text() == "Marcar como fallido")
+                    b->click();
+            bool avisoGuardado = false;
+            const QDate hoy = QDate::currentDate();
+            for (const QVariantMap &fila : repo.listarNotificaciones(hoy.addDays(-90), hoy.addDays(90)).filas)
+                avisoGuardado = avisoGuardado || fila.value("detalle_error").toString() == motivo;
+            QVERIFY(avisoGuardado);
+        }
     }
 };
 

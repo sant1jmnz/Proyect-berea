@@ -7,6 +7,9 @@
 -- tablas quedan vacías como estaban. Solo queda el schema "pruebas" con el
 -- resultado, que se borra al final.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 DROP DATABASE IF EXISTS pruebas;
 CREATE DATABASE pruebas;
 

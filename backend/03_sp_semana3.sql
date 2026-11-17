@@ -18,6 +18,9 @@
 -- Los SP de consulta (listados, búsquedas, reportes) devuelven directamente
 -- el conjunto de filas.
 
+-- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
+SET NAMES utf8mb4;
+
 DELIMITER //
 
 -- =====================================================================

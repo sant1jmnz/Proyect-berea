@@ -66,3 +66,30 @@ test('reserva de punta a punta por HTTP', { skip: !hayBase && 'definir DERMALIA_
     await pool.end();
   }
 });
+
+test('cupones y tarjetas de regalo se consultan por HTTP', { skip: !hayBase && 'definir DERMALIA_DB_USER' }, async () => {
+  const pool = crearPool();
+  const servidor = crearServidor(pool);
+  await new Promise((ok) => servidor.listen(0, ok));
+  const base = `http://localhost:${servidor.address().port}`;
+  const pedir = async (ruta) => {
+    const r = await fetch(base + ruta);
+    return { estado: r.status, cuerpo: await r.json() };
+  };
+  try {
+    // un DNI sin cupones o inexistente devuelve una lista vacía (no un error)
+    const ninguno = await pedir('/api/cupones?dni=1');
+    assert.equal(ninguno.estado, 200);
+    assert.deepEqual(ninguno.cuerpo, []);
+    const sinDni = await pedir('/api/cupones');
+    assert.equal(sinDni.estado, 200);
+
+    // un código de tarjeta que no existe no devuelve filas
+    const falsa = await pedir('/api/tarjetas?codigo=GC-NOEXISTE');
+    assert.equal(falsa.estado, 200);
+    assert.deepEqual(falsa.cuerpo, []);
+  } finally {
+    servidor.close();
+    await pool.end();
+  }
+});

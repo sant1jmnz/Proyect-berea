@@ -1,6 +1,8 @@
 /* Genera src/datos/catalogo.generado.js leyendo los datos de ejemplo de la base
  * (backend/02_datos.sql), que es la fuente única: categorías, protocolos,
- * profesionales y qué protocolo hace cada uno. Se corre solo antes de dev y build. */
+ * profesionales y qué protocolo hace cada uno. Se corre solo antes de dev y build.
+ * También genera frontend/comun/catalogogenerado.h: el mismo catálogo para las apps de escritorio
+ * cuando no hay base (así la terminal, la recepción y el sitio muestran los mismos protocolos). */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -63,3 +65,32 @@ export const profesionalesBase = ${JSON.stringify(profesionales, null, 2)};
 `;
 writeFileSync(resolve(raiz, 'src/datos/catalogo.generado.js'), salida);
 console.log(`Catálogo: ${protocolos.length} protocolos, ${categorias.length} categorías, ${profesionales.length} profesionales.`);
+
+/* El mismo catálogo para las apps Qt (frontend/comun/catalogogenerado.h). Solo protocolos activos, en el
+ * orden de la base. Los textos van como literales UTF-8. */
+const c = (t) => `"${String(t ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+const filasCpp = protocolos.map((p) =>
+  `    { ${p.idBase}, ${categorias.find((k) => k.id === p.categoria).idBase}, ${c(p.nombre)},\n      ${c(p.descripcion)},\n      ${p.precio}, ${p.duracionMin} },`);
+const cabecera = `/* GENERADO por web/scripts/generar-catalogo.mjs desde backend/02_datos.sql. No editar a mano.
+ * Catálogo de ejemplo de las apps de escritorio cuando no hay base: son los mismos ${protocolos.length} protocolos
+ * que la base y el sitio web. */
+#ifndef CATALOGOGENERADO_H
+#define CATALOGOGENERADO_H
+
+struct FilaCatalogo {
+    int id;            /* id en la base */
+    int idCategoria;   /* 1 faciales y corporales, 2 aparatología, 3 medicina estética, 4 cirugías */
+    const char *nombre;
+    const char *descripcion;
+    int precio;
+    int duracionMin;
+};
+
+inline const FilaCatalogo CATALOGO[] = {
+${filasCpp.join('\n')}
+};
+
+#endif
+`;
+writeFileSync(resolve(raiz, '../frontend/comun/catalogogenerado.h'), cabecera);
+console.log(`Catálogo Qt: ${protocolos.length} protocolos.`);

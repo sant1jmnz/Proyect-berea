@@ -23,9 +23,29 @@ consulta reportes y auditoría desde Gestión. Para instalar o mantener el siste
 Tres opciones: **Sacar un turno**, **Consultar precios** y **Buscar o cancelar mi turno**.
 Desde cualquier pantalla, el botón **Inicio** de arriba vuelve acá.
 
+### Tu cuenta (opcional)
+
+Arriba a la derecha está **Ingresar**. Sin cuenta se puede sacar turno igual, con el DNI; con
+cuenta, la terminal ya sabe tus datos (no los escribís) y *Buscar mi turno* te muestra tus turnos solo.
+
+![Ingresar](capturas/cliente-06-ingresar.png)
+
+- **Ingresar:** usuario y contraseña. Arriba aparece "Hola, (tu nombre)".
+- **¿No tenés cuenta?** Tocá *Crear una cuenta*: nombre y apellido, DNI, teléfono, fecha de nacimiento,
+  email, usuario y contraseña (dos veces). La cuenta queda guardada en la base y quedás ingresada.
+  Si ya te atendiste en el instituto, usá el mismo DNI y teléfono que diste: si el teléfono no
+  coincide, la terminal te pide que lo actualices en la recepción.
+- **Salir:** tocá "Hola, (tu nombre)" y confirmá. Como la terminal es compartida, si nadie la toca
+  por 3 minutos la sesión se cierra sola.
+- Las cuentas del personal (recepción, administración) no sirven acá: se usan en Gestión.
+
+![Crear una cuenta](capturas/cliente-07-crear-cuenta.png)
+
 ### Sacar un turno (3 pasos)
 
-**1. Elegí tu protocolo.** Tocá el tratamiento: se ve la duración y el precio. *Continuar*.
+**1. Elegí tu protocolo.** Tocá el tratamiento: se ve la duración y el precio. *Ver resumen* muestra
+qué es, cuántas sesiones lleva, la zona, en qué capa de la piel actúa, qué hacer antes y después y
+para quién no es: el mismo resumen que la ficha del sitio web. *Continuar*.
 
 ![Paso 1: elegir el protocolo](capturas/cliente-01-protocolo.png)
 
@@ -55,8 +75,11 @@ Al confirmar ves el código de la seña (`SIM-…`) y el programa te lleva a tu 
 
 ![Buscador de precios](capturas/cliente-04-precios.png)
 
-Escribí el nombre de un tratamiento y aparecen el precio y la duración. Si no encuentra nada,
-ofrece consultar por WhatsApp con el instituto.
+Escribí una palabra (no importan las mayúsculas ni las tildes: "laser" encuentra "láser") y aparecen
+los tratamientos que coinciden, con el precio, la duración y *Ver resumen*. Sin escribir nada se ven
+todos. Si no aparece lo que buscás, *Consultar por WhatsApp* abre WhatsApp con tu consulta.
+
+![Resumen de un tratamiento](capturas/cliente-resumen.png)
 
 ### Buscar o cancelar mi turno
 
@@ -123,7 +146,8 @@ regla de las 24 horas).
 ![Protocolos](capturas/gestion-06-protocolos.png)
 
 - **Protocolos:** alta, cambio de precio y duración, y baja. Los turnos ya reservados conservan el
-  precio con el que se sacaron.
+  precio con el que se sacaron. *Ver resumen* muestra la ficha del tratamiento elegido (la misma de la
+  web y de la terminal). El *Buscador de precios* de Gestión es el mismo de la terminal.
 
 ![Profesionales](capturas/gestion-07-profesionales.png)
 
@@ -212,7 +236,8 @@ Parámetros y columnas de cada uno: [`12-contrato-sp.md`](12-contrato-sp.md).
 
 ## 5. Preguntas frecuentes
 
-- **¿Puedo reservar sin cuenta?** Sí, con el DNI. La cuenta es opcional y da cupones, avisos e historial.
+- **¿Puedo reservar sin cuenta?** Sí, con el DNI. La cuenta es opcional: se crea en la terminal con
+  *Ingresar* → *Crear una cuenta*, y con ella no hace falta escribir los datos cada vez.
 - **¿Qué es un cupón?** Un descuento personal de un solo uso. Se gana por visitas, por gasto o en
   promociones. Tiene un código y un QR con un token que **cambia cada 5 minutos**: no sirve una
   captura vieja.

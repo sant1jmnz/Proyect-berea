@@ -5,6 +5,7 @@
 #include "avisoconexion.h"
 #include "conexionapp.h"
 #include "datosbase.h"
+#include "dialogocuenta.h"
 #include "repositorio.h"
 #include "reembolso.h"
 #include "sena.h"
@@ -99,13 +100,36 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
         QMessageBox::information(this, "Ayuda",
             "Sacar un turno: elegí el protocolo, después el horario y confirmá.\n"
             "Buscar mi turno: con tu DNI o tu teléfono; desde ahí lo podés cancelar.\n"
+            "Ingresar (arriba): tu cuenta es opcional; con ella no escribís tus datos y ves tus turnos al instante.\n"
+            "Ver resumen: qué es cada tratamiento, cuántas sesiones lleva y qué hacer antes y después.\n"
             "Si necesitás una mano, acercate a la recepción.");
     });
 
     /* Las tres opciones de la pantalla de inicio. */
     connect(ui->btnSacarTurno, &QPushButton::clicked, this, [this] { irA(PagProtocolo); });
     connect(ui->btnVerPrecios, &QPushButton::clicked, this, [this] { irA(PagBuscador); });
-    connect(ui->btnMiTurno, &QPushButton::clicked, this, [this] { irA(PagMiTurno); });
+    connect(ui->btnMiTurno, &QPushButton::clicked, this, [this] {
+        irA(PagMiTurno);
+        if (sesion.activa() && !mostrarTurnosDe(sesion.dni))   /* con cuenta, sus turnos aparecen solos */
+            ocultarTurno();
+    });
+
+    /* Cuenta de la paciente, arriba a la derecha: solo con la base (ahí se guardan las cuentas). */
+    btnCuenta = new QPushButton("Ingresar");
+    btnCuenta->setObjectName("btnCuenta");
+    btnCuenta->setCursor(Qt::PointingHandCursor);
+    btnCuenta->setToolTip("Ingresá o creá tu cuenta (es opcional)");
+    btnCuenta->hide();
+    ui->layoutBarra->insertWidget(ui->layoutBarra->indexOf(ui->btnAyuda), btnCuenta);
+    connect(btnCuenta, &QPushButton::clicked, this, &VentanaCliente::tocarCuenta);
+    relojSesion = new QTimer(this);
+    relojSesion->setSingleShot(true);
+    relojSesion->setInterval(3 * 60 * 1000);
+    connect(relojSesion, &QTimer::timeout, this, [this] {
+        cerrarSesion();
+        irA(PagInicio);
+    });
+    qApp->installEventFilter(this);
 
     /* Los 3 pasos de sacar un turno (RF-01): Continuar avanza, Volver retrocede. */
     connect(ui->btnVolver1, &QPushButton::clicked, this, [this] { irA(PagInicio); });
@@ -478,6 +502,7 @@ void VentanaCliente::reiniciarCarga()
     ui->listaProtocolos->clearSelection();
     ui->listaProtocolos->setCurrentRow(-1);
     ui->btnSena->setChecked(false);
+    completarConLaCuenta();
     ajustandoFecha = true;
     ui->calendario->setSelectedDate(QDate::currentDate());
     ajustandoFecha = false;
@@ -691,6 +716,8 @@ void VentanaCliente::conectarBase()
     actualizarHorarios();
     ocultarTurno();
 
+    btnCuenta->show();
+
     /* Gestión y la Terminal usan la misma base: cada 3 segundos se mira si cambió algo. */
     if (!relojBase) {
         relojBase = new QTimer(this);
@@ -845,3 +872,72 @@ bool VentanaCliente::confirmarEnBase(const Protocolo *p, const QDateTime &inicio
     QMessageBox::information(this, "Turno confirmado", mensaje);
     return true;
 }
+
+
+/* ---------------------------------------------------------------------------
+ * Cuenta de la paciente (opcional, RF-15)
+ * --------------------------------------------------------------------------- */
+
+/* Sin sesión abre "Ingresar / Crear cuenta"; con sesión pregunta si se quiere salir. */
+void VentanaCliente::tocarCuenta()
+{
+    if (!repositorio)
+        return;
+    if (sesion.activa()) {
+        const auto r = QMessageBox::question(this, "Tu cuenta",
+            QString("Ingresaste como %1.\n¿Querés salir de tu cuenta?").arg(sesion.nombre));
+        if (r == QMessageBox::Yes)
+            cerrarSesion();
+        return;
+    }
+    DialogoCuenta dialogo(repositorio, this);
+    if (dialogo.exec() == QDialog::Accepted)
+        empezarSesion(dialogo.sesion());
+}
+
+void VentanaCliente::empezarSesion(const SesionPaciente &nueva)
+{
+    sesion = nueva;
+    btnCuenta->setText("Hola, " + sesion.nombre.section(' ', 0, 0));
+    btnCuenta->setToolTip("Tocá para salir de tu cuenta");
+    completarConLaCuenta();
+    relojSesion->start();
+}
+
+void VentanaCliente::cerrarSesion()
+{
+    if (!sesion.activa())
+        return;
+    if (repositorio)
+        repositorio->cerrarSesion(sesion.idUsuario, "terminal");   /* queda en el log */
+    sesion = SesionPaciente();
+    relojSesion->stop();
+    btnCuenta->setText("Ingresar");
+    btnCuenta->setToolTip("Ingresá o creá tu cuenta (es opcional)");
+    ui->editNombre->clear();
+    ui->editDni->clear();
+    ui->editTelefono->clear();
+    ui->editBuscarTurno->clear();
+    buscadoActual.clear();
+    ultimoBuscado.clear();
+    ocultarTurno();
+}
+
+void VentanaCliente::completarConLaCuenta()
+{
+    if (!sesion.activa())
+        return;
+    ui->editNombre->setText(sesion.nombre);
+    ui->editDni->setText(sesion.dni);
+    ui->editTelefono->setText(sesion.telefono);
+    ui->editBuscarTurno->setText(sesion.dni);
+}
+
+bool VentanaCliente::eventFilter(QObject *objeto, QEvent *evento)
+{
+    if (sesion.activa() && (evento->type() == QEvent::MouseButtonPress || evento->type() == QEvent::KeyPress
+                            || evento->type() == QEvent::TouchBegin))
+        relojSesion->start();   /* vuelve a contar los 3 minutos */
+    return QMainWindow::eventFilter(objeto, evento);
+}
+

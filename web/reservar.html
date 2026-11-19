@@ -25,6 +25,7 @@
         <nav class="nav" aria-label="Principal">
           <a class="nav__link" href="/protocolos.html">Protocolos</a>
           <a class="nav__link" href="/mi-turno.html">Mi turno</a>
+          <a class="nav__link" href="/cuenta.html" data-cuenta>Ingresar</a>
           <a class="boton boton--chico" href="/">Inicio</a>
         </nav>
       </div>
@@ -111,7 +112,7 @@
               </label>
               <label class="campo-grupo">
                 <span class="etiqueta-campo">Teléfono</span>
-                <input class="campo" name="telefono" type="tel" inputmode="tel" autocomplete="tel" pattern="[0-9]{8,12}" required />
+                <input class="campo" name="telefono" type="tel" inputmode="tel" autocomplete="tel" required />
               </label>
               <label class="campo-grupo campo-grupo--ancho">
                 <span class="etiqueta-campo">Fecha de nacimiento (solo si es tu primera vez)</span>
@@ -120,7 +121,7 @@
               <div class="campo-grupo campo-grupo--ancho">
                 <label class="etiqueta-campo" for="cupon">Cupón o tarjeta de regalo (opcional)</label>
                 <div class="cupon">
-                  <input class="campo" id="cupon" name="cupon" autocomplete="off" spellcheck="false" autocapitalize="characters" placeholder="Por ejemplo: BIENVENIDA…" />
+                  <input class="campo" id="cupon" name="cupon" autocomplete="off" spellcheck="false" autocapitalize="characters" placeholder="Código del cupón o de la tarjeta" />
                   <button class="boton" type="button" data-aplicar-cupon>Aplicar</button>
                 </div>
                 <p class="nota" data-cupon-estado aria-live="polite"></p>

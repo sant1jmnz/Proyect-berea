@@ -65,9 +65,32 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
 
     Formato::sombrearTarjetas(this, ui->hero);   /* sombra suave debajo de cada tarjeta, para que no se vea plano */
 
-    /* Datos locales: sin base, todo se guarda en un archivo de esta PC (AlmacenLocal)
-     * y arranca vacío, salvo el catálogo de protocolos. Las pruebas piden los datos
-     * de ejemplo de DatosPrueba. */
+    cargarDatosLocales(datosDeEjemplo);
+    armarPantallasNuevas();
+    cargarProtocolos();
+    const QDate hoy = QDate::currentDate();
+    ui->lblFechaHoy->setText(QLocale().toString(hoy, "dddd d 'de' MMMM 'de' yyyy"));
+    ui->calendario->setMinimumDate(hoy);   /* no se cargan turnos en el pasado */
+    armarFormularioCarga();
+    conectarSenales();
+    probarConexion(archivoContingencia);
+
+    actualizarHorarios();
+    buscarTurnos();
+
+    /* Si la Terminal (otra aplicación) carga o cancela un turno, aparece acá sin reiniciar. */
+    if (persistir) {
+        auto *relojLocal = new QTimer(this);
+        connect(relojLocal, &QTimer::timeout, this, &VentanaGestion::sincronizarLocal);
+        relojLocal->start(1000);   /* el archivo es local: alcanza con mirarlo cada segundo */
+    }
+}
+
+/* Datos locales: sin base, todo se guarda en un archivo de esta PC (AlmacenLocal)
+ * y arranca vacío, salvo el catálogo de protocolos. Las pruebas piden los datos
+ * de ejemplo de DatosPrueba. */
+void VentanaGestion::cargarDatosLocales(bool datosDeEjemplo)
+{
     const QDateTime ahora = QDateTime::currentDateTime();
     protocolos = DatosPrueba::protocolos();
     persistir = !datosDeEjemplo;
@@ -90,27 +113,25 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
     for (const Turno &t : std::as_const(turnos))   /* los turnos futuros ya tienen su aviso */
         if (t.estado == EstadoTurno::Confirmado && t.inicio > ahora)
             avisos.programar(t.paciente, t.dni, t.telefono, t.protocolo, t.inicio, ahora);
-    armarPantallasNuevas();
-    cargarProtocolos();
-    ui->lblFechaHoy->setText(QLocale().toString(ahora.date(), "dddd d 'de' MMMM 'de' yyyy"));
-    ui->calendario->setMinimumDate(ahora.date());   /* no se cargan turnos en el pasado */
+}
 
-    /* Mientras se escribe, el DNI y el teléfono solo aceptan números (el teléfono, también
-     * un + adelante). La regla completa se revisa al continuar. */
+/* Paso 1 de la carga: mientras se escribe, el DNI y el teléfono solo aceptan números
+ * (el teléfono, también un + adelante). La regla completa se revisa al continuar. */
+void VentanaGestion::armarFormularioCarga()
+{
     ui->editDni->setValidator(new QRegularExpressionValidator(Validaciones::filtroDni(), this));
     ui->editTelefono->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
     ui->editTelefono->setPlaceholderText("1155550102");
     ui->editPaciente->setPlaceholderText("Nombre y apellido");
     ui->editPaciente->setMaxLength(60);
     ui->editPaciente->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));   /* sin números ni símbolos */
-    ui->editPaciente->clear();
-    ui->editDni->clear();
-    ui->editTelefono->clear();
     for (QLineEdit *campo : { ui->editPaciente, ui->editDni, ui->editTelefono })
         connect(campo, &QLineEdit::textEdited, this, [this, campo] { marcarError(campo, false); });
+}
 
-    /* Señales y slots: connect(quién avisa, qué pasó, quién reacciona, qué hace). */
-
+/* Señales y slots: connect(quién avisa, qué pasó, quién reacciona, qué hace). */
+void VentanaGestion::conectarSenales()
+{
     /* Menú lateral y accesos del inicio. */
     connect(ui->menu, &QListWidget::currentRowChanged, this, &VentanaGestion::cambiarSeccion);
     connect(ui->btnIrCargar, &QPushButton::clicked, this, [this] { ui->menu->setCurrentRow(MenuCargarTurno); });
@@ -144,9 +165,12 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
     ui->tablaTurnos->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tablaTurnos->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tablaTurnos->setEditTriggers(QAbstractItemView::NoEditTriggers);
+}
 
-    /* Franja de aviso y modo contingencia (RNF-09). La conexión se prueba
-     * apenas se muestra la ventana, para no demorar el arranque. */
+/* Franja de aviso y modo contingencia (RNF-09). La conexión se prueba
+ * apenas se muestra la ventana, para no demorar el arranque. */
+void VentanaGestion::probarConexion(const QString &archivoContingencia)
+{
     conexion = new ConexionApp(franja, ConfigBD::desdeEntorno(), archivoContingencia, this);
     /* Cuando la conexión se logra (ahora o con "Reintentar"), se pide el ingreso y se leen los datos de la base. */
     connect(conexion, &ConexionApp::conectada, this, &VentanaGestion::conectarBase);
@@ -157,16 +181,6 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
         QMessageBox::information(this, "Turnos sincronizados", texto);
     });
     QTimer::singleShot(0, conexion, &ConexionApp::probar);
-
-    actualizarHorarios();
-    buscarTurnos();
-
-    /* Si la Terminal (otra aplicación) carga o cancela un turno, aparece acá sin reiniciar. */
-    if (persistir) {
-        auto *relojLocal = new QTimer(this);
-        connect(relojLocal, &QTimer::timeout, this, &VentanaGestion::sincronizarLocal);
-        relojLocal->start(1000);   /* el archivo es local: alcanza con mirarlo cada segundo */
-    }
 }
 
 VentanaGestion::~VentanaGestion()

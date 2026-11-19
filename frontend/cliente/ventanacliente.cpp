@@ -65,8 +65,25 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
 
     Formato::sombrearTarjetas(this, ui->hero);   /* sombra suave debajo de cada tarjeta, igual que en Gestión */
 
-    /* Máscaras de entrada: mientras se escribe solo entran los caracteres válidos
-     * (sin números en el nombre, sin letras en el DNI ni en el teléfono). */
+    armarMascaras();
+    conectarNavegacion();
+    armarBotonCuenta();
+    armarPasos();
+    armarCalendario();
+    armarMiTurno();
+
+    /* Sin base arranca con el archivo local; el catálogo y los horarios ya se muestran. */
+    recargarLocal();
+    cargarProtocolos();
+    actualizarHorarios();
+
+    probarConexion(archivoContingencia);
+}
+
+/* Máscaras de entrada: mientras se escribe solo entran los caracteres válidos
+ * (sin números en el nombre, sin letras en el DNI ni en el teléfono). */
+void VentanaCliente::armarMascaras()
+{
     ui->editNombre->setMaxLength(60);
     ui->editNombre->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));
     ui->editDni->setMaxLength(8);
@@ -75,9 +92,12 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
     ui->editTelefono->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
     ui->editBuscarTurno->setMaxLength(14);
     ui->editBuscarTurno->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
+}
 
-    /* Señales y slots: connect(quién avisa, qué pasó, quién reacciona, qué hace). */
-
+/* Señales y slots: connect(quién avisa, qué pasó, quién reacciona, qué hace).
+ * Franja de arriba (Inicio, Ayuda) y las tres opciones de la pantalla de inicio. */
+void VentanaCliente::conectarNavegacion()
+{
     /* Franja de arriba: "Inicio" vuelve al principio desde cualquier pantalla. */
     connect(ui->btnInicio, &QPushButton::clicked, this, [this] { irA(PagInicio); });
     connect(ui->btnAyuda, &QPushButton::clicked, this, [this] {
@@ -97,8 +117,11 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
         if (sesion.activa() && !mostrarTurnosDe(sesion.dni))   /* con cuenta, sus turnos aparecen solos */
             ocultarTurno();
     });
+}
 
-    /* Cuenta de la paciente, arriba a la derecha: solo con la base (ahí se guardan las cuentas). */
+/* Cuenta de la paciente, arriba a la derecha: solo con la base (ahí se guardan las cuentas). */
+void VentanaCliente::armarBotonCuenta()
+{
     btnCuenta = new QPushButton("Ingresar");
     btnCuenta->setObjectName("btnCuenta");
     btnCuenta->setCursor(Qt::PointingHandCursor);
@@ -114,8 +137,11 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
         irA(PagInicio);
     });
     qApp->installEventFilter(this);
+}
 
-    /* Los 3 pasos de sacar un turno (RF-01): Continuar avanza, Volver retrocede. */
+/* Los 3 pasos de sacar un turno (RF-01): Continuar avanza, Volver retrocede. */
+void VentanaCliente::armarPasos()
+{
     connect(ui->btnVolver1, &QPushButton::clicked, this, [this] { irA(PagInicio); });
     connect(ui->btnContinuar1, &QPushButton::clicked, this, &VentanaCliente::continuarProtocolo);
     /* Paso 1: "Ver resumen" del tratamiento elegido (el mismo resumen que la web). */
@@ -139,35 +165,38 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
     connect(ui->btnVolver3, &QPushButton::clicked, this, [this] { irA(PagHorario); });
     connect(ui->btnConfirmar, &QPushButton::clicked, this, &VentanaCliente::confirmar);
 
-    /* Calendario: solo desde el mes actual (y desde 2026); si se elige un día ya pasado de este mes, se ofrece el mismo día del año que viene. */
+    /* El botón de la seña queda apretado (checkable): cambia el texto (RF-08). */
+    connect(ui->btnSena, &QPushButton::toggled, this, [this](bool pagada) {
+        ui->btnSena->setText(pagada ? "✓  Seña pagada" : "Pagar seña (simulado)");
+    });
+}
+
+/* Calendario: solo desde el mes actual (y desde 2026); si se elige un día ya pasado de este mes,
+ * se ofrece el mismo día del año que viene. */
+void VentanaCliente::armarCalendario()
+{
     notaHorarioOriginal = ui->lblNotaHorario->text();
     ui->calendario->setMinimumDate(primerMesElegible());   /* meses pasados bloqueados; para ese mes, se usa el año que viene */
     ui->calendario->setSelectedDate(QDate::currentDate());
     marcarDiasPasados();
     connect(ui->calendario, &QCalendarWidget::selectionChanged, this, &VentanaCliente::diaElegido);
+}
 
-    /* Buscar mi turno: con el botón o con Enter; se puede cancelar desde ahí. */
+/* Buscar mi turno: con el botón o con Enter; se puede cancelar desde ahí. */
+void VentanaCliente::armarMiTurno()
+{
     ui->editBuscarTurno->clear();   /* no hay turnos hasta que se cargan */
     ocultarTurno();
     connect(ui->btnBuscarTurno, &QPushButton::clicked, this, &VentanaCliente::buscarMiTurno);
     connect(ui->editBuscarTurno, &QLineEdit::returnPressed, this, &VentanaCliente::buscarMiTurno);
     connect(ui->btnCancelarMiTurno, &QPushButton::clicked, this, &VentanaCliente::cancelarMiTurno);
+}
 
-    recargarLocal();
-    cargarProtocolos();
-    ui->editNombre->clear();
-    ui->editDni->clear();
-    ui->editTelefono->clear();
-    actualizarHorarios();
-
-    /* El botón de la seña queda apretado (checkable): cambia el texto (RF-08). */
-    connect(ui->btnSena, &QPushButton::toggled, this, [this](bool pagada) {
-        ui->btnSena->setText(pagada ? "✓  Seña pagada" : "Pagar seña (simulado)");
-    });
-
-    /* Franja de aviso arriba de todo y conexión con la base (RNF-09). La terminal no pide
-     * usuario: la paciente se identifica con su DNI. La conexión se prueba apenas se
-     * muestra la ventana, para no demorar el arranque. */
+/* Franja de aviso arriba de todo y conexión con la base (RNF-09). La terminal no pide
+ * usuario: la paciente se identifica con su DNI. La conexión se prueba apenas se
+ * muestra la ventana, para no demorar el arranque. */
+void VentanaCliente::probarConexion(const QString &archivoContingencia)
+{
     franja = new AvisoConexion;
     franja->setObjectName("avisoConexion");
     qobject_cast<QVBoxLayout *>(ui->central->layout())->insertWidget(0, franja);

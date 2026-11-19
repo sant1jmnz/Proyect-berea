@@ -10,6 +10,7 @@
 #include <QVariant>
 
 class QListWidget;
+class QVBoxLayout;
 class QTableWidget;
 class QWidget;
 
@@ -40,6 +41,10 @@ void llenarFila(QTableWidget *tabla, int fila, const QStringList &columnas);
 
 /* Si hay errores, los muestra todos juntos en un cartel y devuelve true. */
 bool avisarErrores(QWidget *padre, const QStringList &errores, const QString &titulo = QStringLiteral("Revisá los datos"));
+
+/* Arma el encabezado de una pantalla de Gestión (título grande y subtítulo) con los
+ * márgenes de siempre, y devuelve la columna donde la pantalla agrega lo demás. */
+QVBoxLayout *armarPagina(QWidget *pagina, const QString &titulo, const QString &subtitulo);
 
 /* Sombra suave debajo de cada tarjeta (QFrame con la propiedad "tarjeta") y del widget `ademas`. */
 void sombrearTarjetas(QWidget *ventana, QWidget *ademas = nullptr);

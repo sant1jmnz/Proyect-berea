@@ -21,19 +21,10 @@ enum { ColCodigo, ColRegla, ColDescuento, ColVence, ColEstado };
 
 PaginaCupones::PaginaCupones(QWidget *parent) : QWidget(parent)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Cupones");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Los cupones se ganan por visitas, por gasto acumulado o por promoción, y solo los tienen "
-                                 "las pacientes con cuenta. Para usarlo, la paciente muestra el QR con el token: "
-                                 "cambia cada 5 minutos.");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Cupones",
+                                      "Los cupones se ganan por visitas, por gasto acumulado o por promoción, y solo los tienen "
+                                      "las pacientes con cuenta. Para usarlo, la paciente muestra el QR con el token: "
+                                      "cambia cada 5 minutos.");
 
     /* Búsqueda por DNI */
     auto *busqueda = new QHBoxLayout;

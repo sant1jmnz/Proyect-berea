@@ -7,7 +7,9 @@
 #include <QListWidget>
 #include <QLocale>
 #include <QMessageBox>
+#include <QLabel>
 #include <QTableWidget>
+#include <QVBoxLayout>
 
 namespace Formato {
 
@@ -58,6 +60,21 @@ bool avisarErrores(QWidget *padre, const QStringList &errores, const QString &ti
         return false;
     QMessageBox::warning(padre, titulo, errores.join("\n"));
     return true;
+}
+
+QVBoxLayout *armarPagina(QWidget *pagina, const QString &titulo, const QString &subtitulo)
+{
+    auto *raiz = new QVBoxLayout(pagina);
+    raiz->setContentsMargins(28, 24, 28, 24);
+    raiz->setSpacing(14);
+    auto *lblTitulo = new QLabel(titulo);
+    lblTitulo->setProperty("rol", "titulo");
+    auto *lblSubtitulo = new QLabel(subtitulo);
+    lblSubtitulo->setProperty("rol", "subtitulo");
+    lblSubtitulo->setWordWrap(true);
+    raiz->addWidget(lblTitulo);
+    raiz->addWidget(lblSubtitulo);
+    return raiz;
 }
 
 void sombrearTarjetas(QWidget *ventana, QWidget *ademas)

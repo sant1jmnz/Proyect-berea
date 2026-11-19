@@ -72,18 +72,9 @@ QStringList PaginaProtocolos::revisar(const QString &nombre, const QString &prec
 PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *parent)
     : QWidget(parent), datos(protocolos)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Protocolos");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Alta, modificación y baja de los tratamientos que se ofrecen. "
-                                 "La seña sale de la categoría: 30%, o 40% en cirugías (RF-10).");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Protocolos",
+                                      "Alta, modificación y baja de los tratamientos que se ofrecen. "
+                                      "La seña sale de la categoría: 30%, o 40% en cirugías (RF-10).");
 
     tabla = new QTableWidget(0, 6);
     tabla->setObjectName("tablaProtocolos");

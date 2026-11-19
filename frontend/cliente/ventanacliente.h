@@ -43,6 +43,15 @@ protected:
     bool eventFilter(QObject *objeto, QEvent *evento) override;
 
 private:
+    /* Partes del constructor */
+    void armarMascaras();
+    void conectarNavegacion();
+    void armarBotonCuenta();
+    void armarPasos();
+    void armarCalendario();
+    void armarMiTurno();
+    void probarConexion(const QString &archivoContingencia);
+
     void irA(int pagina);
     void cargarProtocolos();
     const Protocolo *protocoloElegido() const;

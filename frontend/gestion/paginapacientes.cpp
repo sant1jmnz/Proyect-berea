@@ -62,17 +62,8 @@ QVector<int> PaginaPacientes::buscar(const QVector<Paciente> &pacientes, const Q
 PaginaPacientes::PaginaPacientes(QVector<Paciente> *pacientes, QWidget *parent)
     : QWidget(parent), datos(pacientes)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Pacientes");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Alta y búsqueda por nombre, DNI o teléfono. No hace falta cuenta: la paciente se identifica por DNI.");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Pacientes",
+                                      "Alta y búsqueda por nombre, DNI o teléfono. No hace falta cuenta: la paciente se identifica por DNI.");
 
     editBuscar = new QLineEdit;
     editBuscar->setPlaceholderText("Buscar por nombre, DNI o teléfono");

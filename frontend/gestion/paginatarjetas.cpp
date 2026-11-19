@@ -25,18 +25,9 @@ static const int MONTO_MAXIMO = 5000000;
 
 PaginaTarjetas::PaginaTarjetas(QWidget *parent) : QWidget(parent)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Tarjetas de regalo");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Una tarjeta se compra con un monto y vale 12 meses. Se usa para pagar señas: "
-                                 "cada uso descuenta del saldo y si se cancela a tiempo, el monto vuelve.");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Tarjetas de regalo",
+                                      "Una tarjeta se compra con un monto y vale 12 meses. Se usa para pagar señas: "
+                                      "cada uso descuenta del saldo y si se cancela a tiempo, el monto vuelve.");
 
     auto *columnas = new QHBoxLayout;
     columnas->setSpacing(18);

@@ -30,12 +30,14 @@ public:
     static QVector<int> buscar(const QVector<Tratamiento> &tratamientos, const QString &texto);
 
 private:
-    void mostrarResultados();
+    void armarFilas();          /* una fila por tratamiento, una sola vez por catálogo */
+    void mostrarResultados();   /* al escribir, solo muestra u oculta filas */
     void consultarPorWhatsApp();
 
     Ui::BuscadorPrecios *ui;
     QVector<Tratamiento> catalogo;
-    QVBoxLayout *filas = nullptr;   /* una fila por resultado, dentro de un área con scroll */
+    QVBoxLayout *filas = nullptr;   /* las filas van dentro de un área con scroll */
+    QVector<QWidget *> filasPorTratamiento;   /* misma posición que en `catalogo` */
 };
 
 #endif

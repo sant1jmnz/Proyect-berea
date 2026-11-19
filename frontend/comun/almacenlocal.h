@@ -1,12 +1,10 @@
-/* Almacén local de pruebas: guarda en un archivo JSON de esta PC los turnos,
- * pacientes, profesionales y protocolos, para que sigan estando al cerrar y
- * volver a abrir, y para que las dos aplicaciones (Gestión y Terminal) vean
- * lo mismo. Es un reemplazo temporal: cuando se conecte la base de datos, los
- * datos pasan a salir de los stored procedures y este archivo deja de usarse. */
+/* Archivo local de esta PC (JSON): cuando no hay conexión con la base, Gestión y la
+ * terminal guardan acá protocolos, turnos, profesionales y pacientes, así siguen estando
+ * al volver a abrir y las dos aplicaciones ven lo mismo. Con la base conectada no se usa. */
 #ifndef ALMACENLOCAL_H
 #define ALMACENLOCAL_H
 
-#include "datosprueba.h"
+#include "modelo.h"
 
 #include <QString>
 #include <QVector>

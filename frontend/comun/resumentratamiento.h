@@ -48,9 +48,12 @@ QVector<ProtocoloDelCatalogo> catalogo();
 /* Ficha por id de la base; si no está (datos de prueba), por nombre. */
 Ficha fichaDe(int idBase, const QString &nombre);
 
-/* Muestra el resumen en una ventana. `precioConsulta`: valor de la consulta
+/* Precio de la consulta prequirúrgica del catálogo (0 si no está): el aviso de las cirugías lo muestra. */
+int precioConsulta(const QVector<Tratamiento> &catalogo);
+
+/* Muestra el resumen en una ventana. `valorConsulta`: valor de la consulta
  * prequirúrgica (para el aviso de las cirugías); 0 si no se conoce. */
-void mostrar(QWidget *parent, const Tratamiento &t, int precioConsulta = 0);
+void mostrar(QWidget *parent, const Tratamiento &t, int valorConsulta = 0);
 
 }
 

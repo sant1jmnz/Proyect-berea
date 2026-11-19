@@ -1,6 +1,6 @@
-/* Datos de la base para el apartado Gestión.
+/* Datos de la base para Gestión y la terminal.
  * Pasa lo que devuelven los stored procedures (comun/repositorio.h) a las mismas
- * estructuras que ya usan las pantallas con los datos de prueba (datosprueba.h):
+ * estructuras del modelo que usan las pantallas (modelo.h):
  * así las pantallas no cambian y solo cambia de dónde salen los datos.
  * Cada función devuelve false (y deja el motivo en `error`) si la base no respondió. */
 #ifndef DATOSBASE_H

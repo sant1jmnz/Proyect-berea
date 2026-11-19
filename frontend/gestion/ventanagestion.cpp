@@ -95,12 +95,11 @@ VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingenc
     ui->lblFechaHoy->setText(QLocale().toString(ahora.date(), "dddd d 'de' MMMM 'de' yyyy"));
     ui->calendario->setMinimumDate(ahora.date());   /* no se cargan turnos en el pasado */
 
-    /* Mientras se escribe, el DNI solo acepta números y el teléfono números,
-     * espacios, guiones y paréntesis. La regla completa se revisa al continuar. */
-    ui->editDni->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{0,8}"), this));
-    ui->editTelefono->setValidator(
-        new QRegularExpressionValidator(QRegularExpression("\\+?[\\d \\-()]{0,20}"), this));
-    ui->editTelefono->setPlaceholderText("11 5555-0102");
+    /* Mientras se escribe, el DNI y el teléfono solo aceptan números (el teléfono, también
+     * un + adelante). La regla completa se revisa al continuar. */
+    ui->editDni->setValidator(new QRegularExpressionValidator(Validaciones::filtroDni(), this));
+    ui->editTelefono->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
+    ui->editTelefono->setPlaceholderText("1155550102");
     ui->editPaciente->setPlaceholderText("Nombre y apellido");
     ui->editPaciente->setMaxLength(60);
     ui->editPaciente->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));   /* sin números ni símbolos */
@@ -655,7 +654,7 @@ void VentanaGestion::cancelarTurno()
  * procedures y cada acción queda en el log con su usuario.
  * --------------------------------------------------------------------------- */
 
-/* Se llama cuando hay conexión. Si el ingreso se cancela, se sigue con datos de prueba. */
+/* Se llama cuando hay conexión. Si el ingreso se cancela, se sigue con el archivo local y la franja lo avisa. */
 void VentanaGestion::conectarBase()
 {
     if (enModoBase)

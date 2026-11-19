@@ -1,5 +1,8 @@
 #include "datosbase.h"
 
+#include "formato.h"
+#include "validaciones.h"
+
 namespace DatosBase {
 
 QString nombreYApellido(const QString &apellidoComaNombre)
@@ -11,16 +14,6 @@ QString nombreYApellido(const QString &apellidoComaNombre)
 }
 
 /* Deja solo los dígitos del teléfono (así se compara y se guarda en las pantallas). */
-static QString soloDigitos(const QString &texto)
-{
-    QString limpio;
-    for (QChar c : texto) {
-        if (c.isDigit())
-            limpio += c;
-    }
-    return limpio;
-}
-
 bool cargarProtocolos(Repositorio &repo, QVector<Protocolo> &protocolos, QString *error)
 {
     /* Con las bajas incluidas: la pantalla Protocolos permite reactivarlos. */
@@ -60,7 +53,7 @@ bool cargarPacientes(Repositorio &repo, QVector<Paciente> &pacientes, QString *e
         p.id = f.value("id_paciente").toInt();
         p.nombre = f.value("nombre").toString() + " " + f.value("apellido").toString();
         p.dni = f.value("dni").toString();
-        p.telefono = soloDigitos(f.value("telefono").toString());
+        p.telefono = Validaciones::soloDigitos(f.value("telefono").toString());
         p.email = f.value("email").toString();
         p.nacimiento = QDate::fromString(f.value("fecha_nacimiento").toString(), "yyyy-MM-dd");
         pacientes.append(p);
@@ -127,7 +120,7 @@ Turno aTurno(const TurnoBD &t)
     turno.idPaciente = t.idPaciente;
     turno.paciente = nombreYApellido(t.paciente);
     turno.dni = t.dni;
-    turno.telefono = soloDigitos(t.telefono);
+    turno.telefono = Validaciones::soloDigitos(t.telefono);
     turno.protocolo = t.protocolos;
     turno.precioAplicado = qRound(t.precioFinal);
     turno.sena = qRound(t.sena);
@@ -189,10 +182,10 @@ bool cargarAvisos(Repositorio &repo, const QDate &hoy, int dias, RegistroAvisos 
         a.id = f.value("id_notificacion").toInt();
         a.paciente = nombreYApellido(f.value("paciente").toString());
         a.dni = f.value("dni").toString();
-        a.telefono = soloDigitos(f.value("telefono").toString());
-        a.inicioTurno = QDateTime::fromString(f.value("fecha_hora_inicio").toString(), "yyyy-MM-dd HH:mm:ss");
-        a.programado = QDateTime::fromString(f.value("fecha_programada").toString(), "yyyy-MM-dd HH:mm:ss");
-        a.enviado = QDateTime::fromString(f.value("fecha_envio").toString(), "yyyy-MM-dd HH:mm:ss");
+        a.telefono = Validaciones::soloDigitos(f.value("telefono").toString());
+        a.inicioTurno = QDateTime::fromString(f.value("fecha_hora_inicio").toString(), Formato::FECHA_HORA_BASE);
+        a.programado = QDateTime::fromString(f.value("fecha_programada").toString(), Formato::FECHA_HORA_BASE);
+        a.enviado = QDateTime::fromString(f.value("fecha_envio").toString(), Formato::FECHA_HORA_BASE);
         a.intentos = f.value("intentos").toInt();
         a.mensaje = f.value("mensaje").toString();
         a.detalleError = f.value("detalle_error").toString();

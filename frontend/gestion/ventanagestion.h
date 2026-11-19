@@ -105,7 +105,7 @@ private:
     QString archivoLocal;
     QDateTime ultimaVersionLocal;         /* fecha del archivo la última vez que se leyó o escribió */
     QTimer *relojBase = nullptr;          /* cada 3 segundos mira si la base cambió */
-    bool enModoBase = false;              /* true: los datos vienen de la base; false: datos de prueba */
+    bool enModoBase = false;              /* true: los datos vienen de la base; false: del archivo local */
     int idUsuario = 0;                    /* quién ingresó (va al log de auditoría) */
     QString rolUsuario;
 

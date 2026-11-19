@@ -39,6 +39,7 @@ private:
     QPushButton *btnBuscar, *btnToken, *btnValidar, *btnEmitir;
     QTableWidget *tabla;
     QLabel *lblCuenta;
+    QList<QWidget *> controles;   /* se habilitan cuando hay base */
 };
 
 #endif

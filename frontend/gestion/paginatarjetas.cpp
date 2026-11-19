@@ -1,5 +1,7 @@
 #include "paginatarjetas.h"
 
+#include "formato.h"
+
 #include "repositorio.h"
 #include "validaciones.h"
 
@@ -20,11 +22,6 @@
 /* Lo que la tarjeta permite: entre $20.000 y $5.000.000 (lo mismo controla la base). */
 static const int MONTO_MINIMO = 20000;
 static const int MONTO_MAXIMO = 5000000;
-
-static QString pesos(double monto)
-{
-    return "$" + QLocale().toString(qRound(monto));
-}
 
 PaginaTarjetas::PaginaTarjetas(QWidget *parent) : QWidget(parent)
 {
@@ -65,7 +62,7 @@ PaginaTarjetas::PaginaTarjetas(QWidget *parent) : QWidget(parent)
     editTelefono = new QLineEdit;
     editTelefono->setObjectName("editTelefonoTarjeta");
     editTelefono->setPlaceholderText("Opcional, solo números");
-    editTelefono->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9]{0,13}"), this));
+    editTelefono->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
     comboMedio = new QComboBox;
     comboMedio->setObjectName("comboMedioTarjeta");
     comboMedio->addItems({ "efectivo", "transferencia", "tarjeta simulada" });
@@ -147,16 +144,14 @@ void PaginaTarjetas::vender()
     QStringList errores;
     const int monto = editMonto->text().toInt();
     if (monto < MONTO_MINIMO || monto > MONTO_MAXIMO)
-        errores << QString("• El monto tiene que estar entre %1 y %2.").arg(pesos(MONTO_MINIMO), pesos(MONTO_MAXIMO));
+        errores << QString("• El monto tiene que estar entre %1 y %2.").arg(Formato::pesos(MONTO_MINIMO), Formato::pesos(MONTO_MAXIMO));
     QString error;
     if (!Validaciones::nombreApellidoValido(editComprador->text(), &error))
         errores << "• " + error;
     if (!editTelefono->text().isEmpty() && !Validaciones::telefonoValido(editTelefono->text(), &error))
         errores << "• " + error;
-    if (!errores.isEmpty()) {
-        QMessageBox::warning(this, "Revisá los datos", errores.join("\n"));
+    if (Formato::avisarErrores(this, errores))
         return;
-    }
 
     const Respuesta r = repo->comprarTarjeta(monto, comboMedio->currentText(), editComprador->text().simplified(),
                                              editTelefono->text(), "gestion", idUsuario);
@@ -165,7 +160,7 @@ void PaginaTarjetas::vender()
         return;
     }
     QMessageBox::information(this, "Tarjeta vendida",
-                             QString("Tarjeta de %1 vendida.\n\nCódigo: %2\n\nVale 12 meses.").arg(pesos(r.valor), r.dato));
+                             QString("Tarjeta de %1 vendida.\n\nCódigo: %2\n\nVale 12 meses.").arg(Formato::pesos(r.valor), r.dato));
     editMonto->clear();
     editComprador->clear();
     editTelefono->clear();
@@ -194,22 +189,20 @@ void PaginaTarjetas::consultar()
         return;
     }
     const QVariantMap &t = saldo.filas.first();
-    const QString vence = QDateTime::fromString(t["fecha_vencimiento"].toString(), "yyyy-MM-dd HH:mm:ss").toString("dd/MM/yyyy");
+    const QString vence = Formato::fechaDeBase(t["fecha_vencimiento"]);
     lblSaldo->setText(QString("Saldo %1 de %2 · %3 el %4")
-                          .arg(pesos(t["saldo"].toDouble()), pesos(t["monto_inicial"].toDouble()),
+                          .arg(Formato::pesos(t["saldo"].toDouble()), Formato::pesos(t["monto_inicial"].toDouble()),
                                t["vigente"].toInt() == 1 ? "vence" : "venció", vence));
 
     const Resultado movimientos = repo->movimientosTarjeta(codigo);
     tabla->setRowCount(movimientos.filas.size());
     for (int fila = 0; fila < movimientos.filas.size(); ++fila) {
         const QVariantMap &m = movimientos.filas[fila];
-        const QString columnas[] = {
-            QDateTime::fromString(m["fecha_movimiento"].toString(), "yyyy-MM-dd HH:mm:ss").toString("dd/MM/yyyy HH:mm"),
+        Formato::llenarFila(tabla, fila, {
+            Formato::fechaDeBase(m["fecha_movimiento"], "dd/MM/yyyy HH:mm"),
             m["tipo"].toString() == "gasto" ? "Gasto" : "Devolución",
-            pesos(qAbs(m["monto"].toDouble())),
+            Formato::pesos(qAbs(m["monto"].toDouble())),
             m["paciente_nombre"].toString() + " " + m["paciente"].toString(),
-        };
-        for (int col = 0; col < 4; ++col)
-            tabla->setItem(fila, col, new QTableWidgetItem(columnas[col]));
+        });
     }
 }

@@ -24,7 +24,8 @@ devuelven **una fila con 6 columnas**:
 | `dato` | Un texto (código de operación, rol, token, código de tarjeta...) |
 
 Si las reglas del negocio lo impiden, **no hay excepción**: el SP hace `ROLLBACK`, deja el
-intento fallido en el log, devuelve la fila `ERROR` con su código y termina (`IF` y `LEAVE`).
+intento fallido en el log, devuelve la fila `ERROR` con su código y termina. Cada regla es un `IF` que guarda su código en `v_codigo`;
+las siguientes solo se revisan si `v_codigo` sigue en `NULL`, así no hace falta `LEAVE`.
 Los errores del motor los atrapa un `EXIT HANDLER`, como en el PPT 006 de la cátedra.
 Los SP internos (`pagos.sp_aplicar_reembolso`, `auditoria.sp_registrar_log`) los usan otros SP;
 `sp_aplicar_reembolso` devuelve una fila `ERROR` solo si le llegan datos inválidos.

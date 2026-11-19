@@ -8,8 +8,7 @@
  * la vía principal: la vitrina es una forma visual de recorrerla. */
 import * as THREE from 'three';
 import { gsap, movimientoReducido } from '../movimiento/gsap.js';
-import { crearRenderer, entornoDeEstudio, bucleVisible, ajustarTamano } from './escena.js';
-import { hayWebGL } from '../movimiento/liviano.js';
+import { hayWebGL, crearRenderer, entornoDeEstudio, bucleVisible, ajustarTamano } from './escena.js';
 import { pesos } from '../sena.js';
 
 export const POR_PAGINA = 12;
@@ -22,11 +21,11 @@ export const COLOR_CATEGORIA = {
   cirugias: '#5F7F63',
 };
 
-/* Materiales estándar. El vidrio "de verdad" (transmission) obligaba a dibujar toda la
- * escena dos veces por cuadro; un vidrio semitransparente se ve casi igual. */
-const material = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.25, ...extra });
+const material = (color, extra = {}) => new THREE.MeshPhysicalMaterial({
+  color, roughness: 0.28, clearcoat: 0.8, clearcoatRoughness: 0.15, ...extra,
+});
 const metal = () => new THREE.MeshStandardMaterial({ color: '#D9C3A0', roughness: 0.3, metalness: 0.8 });
-const vidrio = () => new THREE.MeshStandardMaterial({ color: '#FFFDFA', roughness: 0.05, transparent: true, opacity: 0.45, depthWrite: false });
+const vidrio = () => new THREE.MeshPhysicalMaterial({ color: '#FFFDFA', roughness: 0.05, transmission: 0.6, thickness: 0.2, transparent: true, opacity: 0.55 });
 
 /* Cada constructor devuelve un grupo de ~1 unidad de alto, apoyado en y = 0. */
 const constructores = {
@@ -103,7 +102,7 @@ const constructores = {
   },
 };
 
-export function iniciarVitrina({ alElegir, alSerLento } = {}) {
+export function iniciarVitrina({ alElegir } = {}) {
   const contenedor = document.querySelector('[data-vitrina]');
   const sinEfecto = { mostrar() {}, disponible: false };
   if (!contenedor || !hayWebGL()) return sinEfecto;
@@ -245,15 +244,9 @@ export function iniciarVitrina({ alElegir, alSerLento } = {}) {
   }
 
   if (!reducido) {
-    // Si la compu no da abasto, la vitrina se saca y queda la lista.
     bucleVisible(lienzo, renderer, (t, dt) => {
       actualizar(t, dt);
       renderer.render(escena, camara);
-    }, () => {
-      limpiar();
-      renderer.dispose();
-      renderer.domElement.remove();
-      alSerLento?.();
     });
   }
 

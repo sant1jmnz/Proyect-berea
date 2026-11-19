@@ -157,6 +157,24 @@ a,
   }
 }
 
+/* Modo liviano (compu lenta, ver el <script> del <head>): sin revelados ni animaciones
+ * de entrada, y sin el scroll suave. Los cambios de color al pasar el mouse quedan. */
+.liviano {
+  scroll-behavior: auto;
+}
+
+.liviano [data-aparecer] {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.liviano *,
+.liviano *::before,
+.liviano *::after {
+  animation: none !important;
+}
+
 /* El atributo hidden siempre gana, aunque el elemento tenga display propio. */
 [hidden] {
   display: none !important;

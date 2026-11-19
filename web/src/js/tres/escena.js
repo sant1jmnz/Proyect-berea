@@ -1,20 +1,14 @@
 /* Piezas comunes de las escenas 3D: renderer, entorno de luz y un bucle que
- * se pausa cuando el canvas no se ve. */
+ * se pausa cuando el canvas no se ve y se apaga si la compu no da abasto. */
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-
-export function hayWebGL() {
-  try {
-    const c = document.createElement('canvas');
-    return Boolean(window.WebGL2RenderingContext && c.getContext('webgl2'));
-  } catch {
-    return false;
-  }
-}
+import { pasarALiviano } from '../movimiento/liviano.js';
 
 export function crearRenderer(contenedor) {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.innerWidth < 760 ? 1.5 : 2));
+  // En pantallas de alta densidad los bordes ya salen suaves: ahí el antialias solo gasta.
+  const densidad = Math.min(window.devicePixelRatio || 1, 1.5);
+  const renderer = new THREE.WebGLRenderer({ antialias: densidad < 1.5, alpha: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(densidad);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -30,22 +24,42 @@ export function entornoDeEstudio(renderer) {
   return textura;
 }
 
-/* Llama a dibujar(t, dt) en cada cuadro solo mientras el contenedor está en pantalla. */
-export function bucleVisible(contenedor, renderer, dibujar) {
+/* Llama a dibujar(t, dt) en cada cuadro solo mientras el contenedor está en pantalla.
+ * Mide los primeros 60 cuadros: si van a menos de 30 por segundo, para el bucle,
+ * pasa la página a modo liviano y llama a alSerLento() para que la escena se saque. */
+const CUADROS_A_MEDIR = 60;
+const CUADRO_MAS_LENTO = 1 / 30;
+
+export function bucleVisible(contenedor, renderer, dibujar, alSerLento) {
   const reloj = new THREE.Timer();
   let visible = false;
+  let apagado = false;
+  let medidos = 0;
+  let tiempoMedido = 0;
   const paso = (ms) => {
     reloj.update(ms);
+    const dt = reloj.getDelta();
+    // Los primeros cuadros se saltean (cargan texturas y shaders) y los saltos de pestaña no cuentan.
+    if (medidos < CUADROS_A_MEDIR && reloj.getElapsed() > 0.5 && dt < 0.5) {
+      medidos++;
+      tiempoMedido += dt;
+      if (medidos === CUADROS_A_MEDIR && tiempoMedido / medidos > CUADRO_MAS_LENTO) {
+        apagado = true;
+        renderer.setAnimationLoop(null);
+        pasarALiviano();
+        alSerLento?.();
+        return;
+      }
+    }
     // Tope de 0,1 s: al volver de otra pestaña no hay un salto gigante.
-    dibujar(reloj.getElapsed(), Math.min(reloj.getDelta(), 0.1));
+    dibujar(reloj.getElapsed(), Math.min(dt, 0.1));
   };
+  const prenderOApagar = () => renderer.setAnimationLoop(visible && !document.hidden && !apagado ? paso : null);
   new IntersectionObserver(([e]) => {
     visible = e.isIntersecting;
-    renderer.setAnimationLoop(visible ? paso : null);
+    prenderOApagar();
   }).observe(contenedor);
-  document.addEventListener('visibilitychange', () => {
-    renderer.setAnimationLoop(visible && !document.hidden ? paso : null);
-  });
+  document.addEventListener('visibilitychange', prenderOApagar);
 }
 
 export function ajustarTamano(contenedor, renderer, camara, alCambiar) {

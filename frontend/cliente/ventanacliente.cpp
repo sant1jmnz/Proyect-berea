@@ -70,11 +70,11 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
     ui->editNombre->setMaxLength(60);
     ui->editNombre->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));
     ui->editDni->setMaxLength(8);
-    ui->editDni->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9]{0,8}"), this));
+    ui->editDni->setValidator(new QRegularExpressionValidator(Validaciones::filtroDni(), this));
     ui->editTelefono->setMaxLength(14);
-    ui->editTelefono->setValidator(new QRegularExpressionValidator(QRegularExpression("\\+?[0-9]{0,13}"), this));
+    ui->editTelefono->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
     ui->editBuscarTurno->setMaxLength(14);
-    ui->editBuscarTurno->setValidator(new QRegularExpressionValidator(QRegularExpression("\\+?[0-9]{0,13}"), this));
+    ui->editBuscarTurno->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
 
     /* Señales y slots: connect(quién avisa, qué pasó, quién reacciona, qué hace). */
 
@@ -759,10 +759,8 @@ bool VentanaCliente::buscarOCrearPaciente(int *idPaciente)
         }
     }
 
-    const QString completo = ui->editNombre->text().simplified();
-    const int espacio = completo.lastIndexOf(' ');
-    const QString nombre = completo.left(espacio);
-    const QString apellido = completo.mid(espacio + 1);
+    QString nombre, apellido;
+    Formato::separarNombre(ui->editNombre->text(), &nombre, &apellido);
 
     QDate nacimiento;
     QString texto;

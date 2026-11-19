@@ -45,7 +45,7 @@ struct ProtocoloDelCatalogo {
 };
 QVector<ProtocoloDelCatalogo> catalogo();
 
-/* Ficha por id de la base; si no está (datos de prueba), por nombre. */
+/* Ficha por id de la base; sin id (catálogo del archivo local), por nombre. */
 Ficha fichaDe(int idBase, const QString &nombre);
 
 /* Precio de la consulta prequirúrgica del catálogo (0 si no está): el aviso de las cirugías lo muestra. */

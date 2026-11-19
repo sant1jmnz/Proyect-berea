@@ -1,7 +1,6 @@
 /* Administración de protocolos (RF-05/06, RNF-08): la recepción da de alta,
- * modifica y da de baja protocolos sin ayuda del equipo técnico. Trabaja
- * sobre la lista de datos de prueba; cuando exista la base serán stored
- * procedures. Las bajas son lógicas (activo = falso): los turnos viejos
+ * modifica y da de baja protocolos sin ayuda del equipo técnico. Con la base
+ * guarda con los stored procedures; sin base, en el archivo local. Las bajas son lógicas (activo = falso): los turnos viejos
  * siguen mostrando el protocolo. */
 #ifndef PAGINAPROTOCOLOS_H
 #define PAGINAPROTOCOLOS_H
@@ -26,7 +25,7 @@ public:
 
     /* Con la base conectada, las altas y cambios de esta pantalla pasan por los
      * stored procedures (y quedan en el log con el usuario que ingresó). Sin base
-     * (`repo` nulo) trabaja solo en memoria, con los datos de prueba. */
+     * (`repo` nulo) trabaja solo en memoria, con el archivo local. */
     void usarBase(Repositorio *repositorio, int idUsuarioActual) { repo = repositorio; idUsuario = idUsuarioActual; }
     /* Vuelve a dibujar la tabla (cuando los datos se leyeron de la base). */
     void recargar() { recargarTabla(); }

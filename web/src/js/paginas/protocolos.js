@@ -1,5 +1,4 @@
 import { iniciarComun } from '../movimiento/comun.js';
-import { esLiviano } from '../movimiento/liviano.js';
 import { categorias, protocolos, protocoloPorIdBase, categoriaDe, capas, buscarProtocolos, CONSULTA_PREQUIRURGICA, protocoloPorId } from '../../datos/protocolos.js';
 import { iconoCerrar } from '../../datos/iconos.js';
 import { calcularSena, pesos } from '../sena.js';
@@ -112,14 +111,8 @@ function cambiarVista(vista) {
 }
 
 // Three.js viaja en un archivo aparte: la lista aparece primero y la vitrina se suma si hay WebGL.
-// En modo liviano (compu lenta) ni se descarga. Si la vitrina anda lenta, se vuelve a la lista.
-function sacarVitrina() {
-  vitrina = null;
-  vistas.hidden = true;
-  cambiarVista('lista');
-}
-if (!esLiviano()) import('../tres/vitrina.js').then((m) => {
-  vitrina = m.iniciarVitrina({ alElegir: (p) => abrirFicha(p.idBase), alSerLento: sacarVitrina });
+import('../tres/vitrina.js').then((m) => {
+  vitrina = m.iniciarVitrina({ alElegir: (p) => abrirFicha(p.idBase) });
   if (!vitrina.disponible) return;
   vistas.hidden = false;
   vistas.addEventListener('click', (e) => {

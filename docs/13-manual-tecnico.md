@@ -200,14 +200,12 @@ mismo dominio (`/api`).
 cupón del formulario se envía a la base, que valida los cupones reales; los códigos de ejemplo del maquetado
 (`BIENVENIDA`...) solo bajan el precio en pantalla.
 
-**Compus lentas (modo liviano).** El `<script>` del `<head>` de cada página prende la clase `liviano` si la compu
-tiene 4 núcleos o menos, 4 GB de memoria o menos, o "ahorro de datos". En modo liviano no se descarga Three.js,
-la piel del inicio se muestra en SVG (los rótulos funcionan igual), el catálogo queda en lista y no hay
-revelados ni animaciones de entrada. Además, una escena 3D que en sus primeros 60 cuadros anda a menos de 30 por
-segundo se saca sola y pasa a modo liviano. Para probar: `?liviano=1` lo fuerza y `?liviano=0` intenta el 3D igual.
-Otras decisiones por rendimiento: materiales estándar en vez de "físicos" (sin vidrio con *transmission*, que
-dibuja la escena dos veces por cuadro), antialias solo en pantallas comunes, la cabecera sin `backdrop-filter`, y
-las líneas de la piel miden la página solo cuando algo cambia de tamaño, no en cada cuadro.
+**Compus lentas.** El sitio se ve y anda igual en todas las PCs: todo se descarga y todas las animaciones
+corren. Lo que cambia por dentro: las escenas 3D (`web/src/js/tres/escena.js`) miden cada 30 cuadros cuántos
+dibujan por segundo y, si no llegan a 45, bajan la resolución interna del 3D de a 0,25 (hasta 0,75 por píxel):
+la animación sigue completa y fluida, apenas menos nítida. Además, las líneas de la piel miden la página solo
+cuando algo cambia de tamaño (antes la medían en cada cuadro, lo que traba a una compu lenta) y solo tocan el
+SVG si la línea se movió. Las escenas se pausan cuando no están en pantalla o la pestaña está oculta.
 
 ## 5. Recordatorios con n8n
 

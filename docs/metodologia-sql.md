@@ -163,7 +163,9 @@ carpeta no se usó en clase, así que **no cuenta**. Se aceptan además:
 
 Por eso el backend **no usa** `CASE`, `WHILE`, `LOOP`, cursores, `LEAVE`, `FOR UPDATE`, `CREATE FUNCTION` ni
 `SELECT ... FROM DUAL`. Las consultas y los reportes se escriben como los scripts de la cátedra (`JOIN`,
-`GROUP BY`, `HAVING`, tablas derivadas, `LEFT JOIN` + `COUNT(columna)`). Solo los stored procedures que
+`GROUP BY`, `HAVING`, tablas derivadas, `LEFT JOIN` + `COUNT(columna)`). Lo que usan varios SP va en una
+**vista** (sección 4), así se escribe una sola vez: `agenda.PrecioTurno` (precio final y seña de cada turno),
+`agenda.DetalleTurno` (lo que muestran las pantallas de un turno) y `personas.PrimerTelefonoPaciente`. Solo los stored procedures que
 escriben usan `IF ... THEN` para validar las reglas de negocio (ver [`12-contrato-sp.md`](12-contrato-sp.md)):
 los ejemplos de la cátedra no tienen validaciones con control de flujo, así que es la única construcción que
 se agregó. Si el equipo decide no usarla, hay que mover esas reglas a restricciones de las tablas.

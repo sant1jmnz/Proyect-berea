@@ -1,14 +1,11 @@
-/* Datos de prueba del apartado Gestión (Semana 3).
- * Todavía no hay base de datos: los protocolos y los turnos viven en memoria
- * mientras la ventana está abierta. Cuando se conecte la base (persistencia,
- * semana del 20 de octubre) este archivo se reemplaza por consultas a MySQL
- * que devuelvan lo mismo. Las estructuras siguen las entidades de
- * docs/modelo-entidades.md (Categoría de protocolo, Protocolo, Turno). */
-#ifndef DATOSPRUEBA_H
-#define DATOSPRUEBA_H
+/* Modelo de datos que usan Gestión y la terminal: las mismas entidades de la base
+ * (docs/modelo-entidades.md): categoría de protocolo, protocolo, profesional, paciente
+ * y turno. Con la base, se llenan desde los stored procedures (datosbase.h); sin base,
+ * desde el archivo local de la PC (almacenlocal.h). */
+#ifndef MODELO_H
+#define MODELO_H
 
 #include "disponibilidad.h"
-#include "resumentratamiento.h"
 
 #include <QDateTime>
 #include <QString>
@@ -76,28 +73,5 @@ struct Turno {
     int idPaciente = 0;
     QString profesional;       /* quién atiende (solo con datos de la base) */
 };
-
-namespace DatosPrueba {
-
-QVector<Categoria> categorias();
-QVector<Protocolo> protocolos();
-/* Turnos de ejemplo en los días siguientes a hoy. */
-QVector<Turno> turnos(const QDate &hoy);
-QVector<Profesional> profesionales(const QDate &hoy);
-QVector<Paciente> pacientes();
-/* Horarios en que atiende el instituto, de lunes a sábado. */
-QStringList horariosDelDia();
-
-QString texto(EstadoTurno estado);
-
-/* true si el archivo local tiene el catálogo viejo de prueba (4 protocolos con precios de 2025):
- * en ese caso se usa el catálogo actual. Si se agregaron o cambiaron protocolos, se respetan. */
-bool esCatalogoViejo(const QVector<Protocolo> &guardados);
-
-/* Los protocolos activos, como los usa el resumen y el buscador de precios (comun/). */
-QVector<Tratamiento> comoTratamientos(const QVector<Protocolo> &protocolos);
-Tratamiento comoTratamiento(const Protocolo &p);
-
-}
 
 #endif

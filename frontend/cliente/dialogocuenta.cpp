@@ -1,5 +1,6 @@
 #include "dialogocuenta.h"
 
+#include "formato.h"
 #include "repositorio.h"
 #include "validaciones.h"
 
@@ -11,15 +12,6 @@
 #include <QRegularExpressionValidator>
 #include <QStackedWidget>
 #include <QVBoxLayout>
-
-static QString soloDigitos(const QString &texto)
-{
-    QString salida;
-    for (const QChar c : texto)
-        if (c.isDigit())
-            salida += c;
-    return salida;
-}
 
 static QLabel *titulo(const QString &texto)
 {
@@ -49,7 +41,18 @@ DialogoCuenta::DialogoCuenta(Repositorio *repositorio, QWidget *parent)
     partes = new QStackedWidget;
     raiz->addWidget(partes);
 
-    /* ---- Ingresar ---- */
+    partes->addWidget(armarIngreso());
+    partes->addWidget(armarAlta());
+
+    auto *btnCerrar = new QPushButton("Cerrar");
+    btnCerrar->setObjectName("btnCerrarCuenta");
+    raiz->addWidget(btnCerrar, 0, Qt::AlignRight);
+    connect(btnCerrar, &QPushButton::clicked, this, &QDialog::reject);
+}
+
+/* Parte "Ingresar": usuario, contraseña y el paso a "Crear cuenta". */
+QWidget *DialogoCuenta::armarIngreso()
+{
     auto *ingreso = new QWidget;
     auto *capaIngreso = new QVBoxLayout(ingreso);
     capaIngreso->setContentsMargins(0, 0, 0, 0);
@@ -83,9 +86,16 @@ DialogoCuenta::DialogoCuenta(Repositorio *repositorio, QWidget *parent)
     capaIngreso->addWidget(sinCuenta);
     capaIngreso->addWidget(btnIrACrear);
     capaIngreso->addStretch();
-    partes->addWidget(ingreso);
 
-    /* ---- Crear cuenta ---- */
+    connect(btnIngresar, &QPushButton::clicked, this, &DialogoCuenta::ingresar);
+    connect(editClave, &QLineEdit::returnPressed, this, &DialogoCuenta::ingresar);
+    connect(btnIrACrear, &QPushButton::clicked, this, [this] { partes->setCurrentIndex(1); editNombre->setFocus(); });
+    return ingreso;
+}
+
+/* Parte "Crear cuenta": los datos de la paciente y los de la cuenta. */
+QWidget *DialogoCuenta::armarAlta()
+{
     auto *alta = new QWidget;
     auto *capaAlta = new QVBoxLayout(alta);
     capaAlta->setContentsMargins(0, 0, 0, 0);
@@ -103,11 +113,11 @@ DialogoCuenta::DialogoCuenta(Repositorio *repositorio, QWidget *parent)
     editDni = new QLineEdit;
     editDni->setObjectName("editDniCuenta");
     editDni->setPlaceholderText("Solo números");
-    editDni->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9]{0,8}"), this));
+    editDni->setValidator(new QRegularExpressionValidator(Validaciones::filtroDni(), this));
     editTelefono = new QLineEdit;
     editTelefono->setObjectName("editTelefonoCuenta");
     editTelefono->setPlaceholderText("Con característica, solo números");
-    editTelefono->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9]{0,13}"), this));
+    editTelefono->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
     editNacimiento = new QDateEdit(QDate(1990, 1, 1));
     editNacimiento->setObjectName("editNacimientoCuenta");
     editNacimiento->setDisplayFormat("dd/MM/yyyy");
@@ -147,18 +157,10 @@ DialogoCuenta::DialogoCuenta(Repositorio *repositorio, QWidget *parent)
     btnVolverAIngresar->setObjectName("btnVolverAIngresar");
     capaAlta->addWidget(btnCrear);
     capaAlta->addWidget(btnVolverAIngresar);
-    partes->addWidget(alta);
 
-    auto *btnCerrar = new QPushButton("Cerrar");
-    btnCerrar->setObjectName("btnCerrarCuenta");
-    raiz->addWidget(btnCerrar, 0, Qt::AlignRight);
-
-    connect(btnIngresar, &QPushButton::clicked, this, &DialogoCuenta::ingresar);
-    connect(editClave, &QLineEdit::returnPressed, this, &DialogoCuenta::ingresar);
-    connect(btnIrACrear, &QPushButton::clicked, this, [this] { partes->setCurrentIndex(1); editNombre->setFocus(); });
     connect(btnVolverAIngresar, &QPushButton::clicked, this, [this] { partes->setCurrentIndex(0); editUsuario->setFocus(); });
     connect(btnCrear, &QPushButton::clicked, this, &DialogoCuenta::crearCuenta);
-    connect(btnCerrar, &QPushButton::clicked, this, &QDialog::reject);
+    return alta;
 }
 
 /* Ingreso con seguridad.sp_login: tiene que ser una cuenta de paciente. */
@@ -184,7 +186,7 @@ bool DialogoCuenta::entrar(const QString &usuario, const QString &clave, QLabel 
         datos.idPaciente = idPaciente;
         datos.nombre = (p.value("nombre").toString() + " " + p.value("apellido").toString()).simplified();
         datos.dni = p.value("dni").toString();
-        datos.telefono = soloDigitos(p.value("telefono").toString());
+        datos.telefono = Validaciones::soloDigitos(p.value("telefono").toString());
         accept();
         return true;
     }
@@ -210,7 +212,7 @@ void DialogoCuenta::crearCuenta()
     QString error;
     const QString nombreCompleto = editNombre->text().simplified();
     const QString dni = editDni->text().trimmed();
-    const QString telefono = soloDigitos(editTelefono->text());
+    const QString telefono = Validaciones::soloDigitos(editTelefono->text());
     if (!Validaciones::nombreApellidoValido(nombreCompleto, &error))
         errores << "• " + error;
     if (!Validaciones::dniValido(dni, &error))
@@ -246,15 +248,16 @@ void DialogoCuenta::crearCuenta()
             lblErrorAlta->setText("Ya tenés una cuenta con ese DNI: ingresá con tu usuario.");
             return;
         }
-        if (!soloDigitos(p.value("telefonos").toString()).contains(telefono)) {
+        if (!Validaciones::soloDigitos(p.value("telefonos").toString()).contains(telefono)) {
             lblErrorAlta->setText("El teléfono no coincide con el que tenemos registrado para ese DNI. "
                                   "Acercate a la recepción para actualizarlo.");
             return;
         }
     }
     if (!existe) {
-        const int espacio = nombreCompleto.lastIndexOf(' ');
-        const Respuesta alta = repo->altaPaciente(dni, nombreCompleto.left(espacio), nombreCompleto.mid(espacio + 1),
+        QString nombre, apellido;
+        Formato::separarNombre(nombreCompleto, &nombre, &apellido);
+        const Respuesta alta = repo->altaPaciente(dni, nombre, apellido,
                                                   editNacimiento->date(), editEmail->text().trimmed(), telefono, "terminal");
         if (!alta.ok) {
             lblErrorAlta->setText(alta.mensaje);

@@ -2,10 +2,12 @@
  * y los contadores. El resto del movimiento es CSS. */
 import gsap from 'gsap';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
+import { esLiviano } from './liviano.js';
 
 gsap.registerPlugin(DrawSVGPlugin);
 gsap.defaults({ ease: 'power3.out', duration: 0.5 });
 
-export const movimientoReducido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* Sin animaciones si la persona lo pidió en su sistema o si la compu es lenta (modo liviano). */
+export const movimientoReducido = () => esLiviano() || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export { gsap };

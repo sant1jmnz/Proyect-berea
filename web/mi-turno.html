@@ -7,7 +7,19 @@
     <meta name="description" content="Buscá tu turno en Dermalia con tu DNI o teléfono, sin cuenta, y cancelalo si lo necesitás." />
     <meta name="theme-color" content="#FCF8F2" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <script>document.documentElement.classList.replace('sin-js', 'con-js');</script>
+    <script>
+      /* Con JS. Y si la compu es lenta (4 núcleos o menos, 4 GB o menos, o "ahorro de datos"),
+       * modo liviano: sin 3D ni desenfoques. ?liviano=1 lo fuerza y ?liviano=0 lo apaga. */
+      (function () {
+        var raiz = document.documentElement;
+        var n = navigator;
+        var pedido = new URLSearchParams(location.search).get('liviano');
+        var lenta = (n.hardwareConcurrency || 8) <= 4 || (n.deviceMemory || 8) <= 4 || Boolean(n.connection && n.connection.saveData);
+        raiz.classList.replace('sin-js', 'con-js');
+        if (pedido === '1' || (pedido !== '0' && lenta)) raiz.classList.add('liviano');
+        if (pedido === '0') raiz.classList.add('con-3d');
+      })();
+    </script>
     <link rel="stylesheet" href="/src/estilos/base.css" />
     <link rel="stylesheet" href="/src/estilos/componentes.css" />
     <link rel="stylesheet" href="/src/estilos/paginas.css" />

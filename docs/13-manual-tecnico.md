@@ -200,6 +200,15 @@ mismo dominio (`/api`).
 cupón del formulario se envía a la base, que valida los cupones reales; los códigos de ejemplo del maquetado
 (`BIENVENIDA`...) solo bajan el precio en pantalla.
 
+**Compus lentas (modo liviano).** El `<script>` del `<head>` de cada página prende la clase `liviano` si la compu
+tiene 4 núcleos o menos, 4 GB de memoria o menos, o "ahorro de datos". En modo liviano no se descarga Three.js,
+la piel del inicio se muestra en SVG (los rótulos funcionan igual), el catálogo queda en lista y no hay
+revelados ni animaciones de entrada. Además, una escena 3D que en sus primeros 60 cuadros anda a menos de 30 por
+segundo se saca sola y pasa a modo liviano. Para probar: `?liviano=1` lo fuerza y `?liviano=0` intenta el 3D igual.
+Otras decisiones por rendimiento: materiales estándar en vez de "físicos" (sin vidrio con *transmission*, que
+dibuja la escena dos veces por cuadro), antialias solo en pantallas comunes, la cabecera sin `backdrop-filter`, y
+las líneas de la piel miden la página solo cuando algo cambia de tamaño, no en cada cuadro.
+
 ## 5. Recordatorios con n8n
 
 Las plantillas están en [`n8n/`](../n8n/README.md) (importar en n8n, poner las credenciales de MySQL y de

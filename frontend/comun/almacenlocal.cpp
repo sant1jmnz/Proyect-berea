@@ -11,7 +11,10 @@
 
 namespace AlmacenLocal {
 
-static const int VERSION = 1;
+/* Versión del archivo. La 2 es la del catálogo de 44 protocolos (el de la base y la web):
+ * en un archivo de la versión 1 los protocolos guardados son los 4 de prueba viejos, así
+ * que se ignoran y se usa el catálogo actual. */
+static const int VERSION = 2;
 static const char *FORMATO_FECHA = "yyyy-MM-dd";
 
 QString rutaPorDefecto()
@@ -168,8 +171,9 @@ bool leer(const QString &ruta, Datos *datos)
     const QJsonObject raiz = doc.object();
 
     Datos leidos;
-    for (const QJsonValue &v : raiz["protocolos"].toArray())
-        leidos.protocolos.append(protocoloDe(v.toObject()));
+    if (raiz["version"].toInt() >= VERSION)
+        for (const QJsonValue &v : raiz["protocolos"].toArray())
+            leidos.protocolos.append(protocoloDe(v.toObject()));
     for (const QJsonValue &v : raiz["turnos"].toArray()) {
         const Turno t = turnoDe(v.toObject());
         if (t.inicio.isValid())   /* un turno sin fecha no se puede mostrar ni ocupar */

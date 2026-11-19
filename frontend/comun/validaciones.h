@@ -6,7 +6,7 @@
 #include <QString>
 
 /**
- * @brief Validaciones de entrada compartidas (Semana 3, QA).
+ * @brief Validaciones de entrada que comparten Gestión y la terminal.
  * Cada función devuelve true si el dato es válido; si no, deja en `error`
  * (si se pasa) el mensaje para mostrarle al usuario. No dependen de la base.
  */
@@ -19,9 +19,14 @@ QRegularExpression filtroNombre(int maximo = 60);
 QRegularExpression filtroEmail();
 QRegularExpression filtroMatricula();
 QRegularExpression filtroUsuario();
+// DNI: hasta 8 dígitos. Teléfono: un + opcional y hasta 13 dígitos.
+QRegularExpression filtroDni();
+QRegularExpression filtroTelefono();
 
 // Saca espacios, guiones, puntos y paréntesis. Útil antes de validar o comparar.
 QString normalizar(const QString &texto);
+// Deja solo los dígitos: "+54 11 4444-3322" → "541144443322". Así se guardan y comparan DNI y teléfonos.
+QString soloDigitos(const QString &texto);
 
 // DNI argentino: solo dígitos, 7 u 8 de largo.
 bool dniValido(const QString &dni, QString *error = nullptr);

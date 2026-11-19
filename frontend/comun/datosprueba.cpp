@@ -112,18 +112,6 @@ QString texto(EstadoTurno estado)
     return {};
 }
 
-bool esCatalogoViejo(const QVector<Protocolo> &guardados)
-{
-    const QStringList viejos = { "Limpieza facial profunda|25000", "Peeling químico|40000",
-                                 "Mesoterapia facial|55000", "Depilación láser (zona chica)|18000" };
-    if (guardados.isEmpty() || guardados.size() > viejos.size())
-        return false;
-    for (const Protocolo &p : guardados)
-        if (!viejos.contains(p.nombre + "|" + QString::number(p.precio)))
-            return false;
-    return true;
-}
-
 Tratamiento comoTratamiento(const Protocolo &p)
 {
     Tratamiento t;

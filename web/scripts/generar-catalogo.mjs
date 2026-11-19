@@ -1,6 +1,8 @@
 /* Genera src/datos/catalogo.generado.js leyendo los datos de ejemplo de la base
  * (backend/02_datos.sql), que es la fuente única: categorías, protocolos,
- * profesionales y qué protocolo hace cada uno. Se corre solo antes de dev y build. */
+ * profesionales y qué protocolo hace cada uno. Se corre solo antes de dev y build.
+ * También genera frontend/comun/fichas.generado.json: el mismo catálogo para las apps de escritorio
+ * cuando no hay base (así la terminal, la recepción y el sitio muestran los mismos protocolos). */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fichaDe } from '../src/datos/fichas.js';
@@ -78,3 +80,4 @@ writeFileSync(resolve(raiz, '../frontend/comun/fichas.generado.json'),
   JSON.stringify({ aviso: 'GENERADO por web/scripts/generar-catalogo.mjs desde backend/02_datos.sql y web/src/datos/fichas.js. No editar a mano.',
                    protocolos: fichasQt }, null, 2) + '\n');
 console.log(`Catálogo: ${protocolos.length} protocolos, ${categorias.length} categorías, ${profesionales.length} profesionales.`);
+

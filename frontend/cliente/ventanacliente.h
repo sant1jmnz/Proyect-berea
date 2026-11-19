@@ -19,6 +19,8 @@ class Repositorio;
 
 namespace Ui { class VentanaCliente; }
 
+class QLabel;
+class QLineEdit;
 class QPushButton;
 class QTimer;
 
@@ -27,6 +29,9 @@ class VentanaCliente : public QMainWindow
     Q_OBJECT
 
 public:
+    /* Protocolos que se pueden sumar a un mismo turno (los stored procedures reciben hasta 3). */
+    static const int MAX_PROTOCOLOS = 3;
+
     /* `archivoLocal` y `archivoContingencia` vacíos: los de siempre (las pruebas pasan otros). */
     explicit VentanaCliente(QWidget *parent = nullptr, const QString &archivoLocal = QString(),
                             const QString &archivoContingencia = QString());
@@ -48,13 +53,33 @@ private:
     void conectarNavegacion();
     void armarBotonCuenta();
     void armarPasos();
+    void armarCodigo();            /* cupón o tarjeta de regalo en el paso 3 */
     void armarCalendario();
     void armarMiTurno();
     void probarConexion(const QString &archivoContingencia);
 
     void irA(int pagina);
     void cargarProtocolos();
-    const Protocolo *protocoloElegido() const;
+    /* Los protocolos tocados en el paso 1, en el orden en que se tocaron (hasta MAX_PROTOCOLOS). */
+    QVector<const Protocolo *> protocolosElegidos() const;
+    void protocolosCambiaron();          /* una cirugía no se reserva directo: pide la consulta previa (RF-25) */
+    void avisarCirugia(const Protocolo &cirugia);
+    void sumarConsultaPrequirurgica();
+    /* Lo que se va a cobrar con los protocolos y el cupón elegidos (las mismas cuentas que el sitio web). */
+    struct Cuentas {
+        QStringList nombres;
+        int total = 0;        /* suma de precios */
+        int totalFinal = 0;   /* con el descuento del cupón */
+        int sena = 0;         /* seña por protocolo, con el porcentaje de su categoría */
+        int duracionMin = 0;
+        int descuento = 0;    /* % del cupón aplicado */
+        bool hayCirugia = false;
+    };
+    Cuentas cuentas() const;
+    void pintarResumen();
+    void aplicarCodigo();                /* cupón o tarjeta de regalo del paso 3 (RF-17, RF-23) */
+    void olvidarCodigo();
+    void agregarACalendar();             /* RF-19 */
     QDateTime horarioElegido() const;
     void continuarProtocolo();
     void diaElegido();
@@ -78,7 +103,7 @@ private:
     void conectarBase();
     void horariosDeBase(const QDate &dia);
     void sincronizarBase();            /* cada 3 segundos: trae lo que cambió Gestión */
-    bool confirmarEnBase(const Protocolo *p, const QDateTime &inicio);
+    bool confirmarEnBase(const Cuentas &c, const QVector<const Protocolo *> &elegidos, const QDateTime &inicio);
     bool buscarOCrearPaciente(int *idPaciente);
 
     /* Cuenta de la paciente (opcional) */
@@ -96,6 +121,19 @@ private:
     int turnoMostrado = -1;            /* índice en `turnos` del que se ve en "Buscar mi turno" */
     bool ajustandoFecha = false;       /* evita que setSelectedDate vuelva a disparar el aviso */
     QString notaHorarioOriginal;
+
+    /* Widgets que se arman en el constructor (no están en el .ui) */
+    QLabel *lblAvisoCirugia = nullptr;
+    QPushButton *btnSumarConsulta = nullptr;
+    QLineEdit *editCodigo = nullptr;
+    QLabel *lblEstadoCodigo = nullptr;
+    QPushButton *btnCalendar = nullptr;
+    /* Cupón (descuento) o tarjeta de regalo (paga la seña con su saldo) aplicados en el paso 3 */
+    QString cuponCodigo;
+    int cuponDescuento = 0;
+    QString tarjetaCodigo;
+    QVector<int> ordenElegidos;          /* filas marcadas, en el orden en que se tocaron (como en el sitio) */
+    bool cambiandoSeleccion = false;     /* evita que desmarcar una cirugía vuelva a disparar el aviso */
 
     AvisoConexion *franja = nullptr;   /* "sin conexión con la base" */
     ConexionApp *conexion = nullptr;

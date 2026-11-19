@@ -135,20 +135,29 @@ QT_QPA_PLATFORM=offscreen ctest --test-dir build      # pruebas automáticas
 `_NAME`, `_SSL` o un archivo `dermalia.ini` (ver `docs/conexion-base.md`). Sin conexión,
 las aplicaciones avisan con una franja amarilla y trabajan en **modo contingencia**.
 
-**Capas del código** (`frontend/comun/`):
+**Cómo está organizado el código.** `frontend/comun/` es una biblioteca (`dermalia_comun`) que usan
+las dos aplicaciones; `gestion/` y `cliente/` solo tienen sus pantallas (`dermalia_gestion_pantallas` y
+`dermalia_cliente_pantallas`). El `CMakeLists.txt` arma esas bibliotecas una vez y cada programa y cada
+prueba las usa, sin repetir la lista de archivos.
 
-| Archivo | Responsabilidad |
+| Archivo de `comun/` | Responsabilidad |
 |---|---|
 | `basedatos.*` | Conexión con `mysql.h` como en el PPT 006 (`mysql_init`, `mysql_real_connect`, `mysql_query`, `mysql_store_result`, `mysql_fetch_row`) y `llamar("sp", {parámetros})`, que arma el `CALL` |
 | `repositorio.*` | Un método por cada SP que usan las pantallas; devuelve datos ya interpretados |
+| `modelo.h` | Las entidades que muestran las pantallas: protocolo, profesional, paciente, turno |
+| `datosbase.*` | Pasa las filas de los SP al modelo |
+| `almacenlocal.*`, `datosprueba.*` | Sin base: el archivo local de la PC y el catálogo inicial (el mismo de la base y la web) |
+| `reglasturno.*` | Reglas de un turno que comparten las dos aplicaciones: horarios libres sin base, turno vigente, código de la seña, qué pasa con la seña al cancelar |
+| `formato.*` | Cómo se muestran los datos: pesos, fechas, nombres; encabezado de las pantallas, filas de tabla, cartel de errores |
 | `conexionapp.*`, `avisoconexion.*`, `contingencia.*` | Aviso "sin conexión" y turnos guardados en el equipo |
 | `validaciones.*`, `sena.h`, `reembolso.h` | Reglas que también valida la base (la pantalla las avisa antes) |
+| `buscadorprecios.*`, `resumentratamiento.*` | Buscador de precios y resumen de cada tratamiento (los dos programas) |
 
 **Cómo funcionan con la base.** Al arrancar, cada aplicación prueba la conexión (`ConexionApp::probar`):
 
 - **Gestión:** si hay conexión pide el **ingreso del personal** (`dialogologin`; para demos y pruebas, las
   variables `DERMALIA_USUARIO` y `DERMALIA_CLAVE` ingresan sin abrir la ventana) y lee de la base protocolos,
-  pacientes, profesionales con sus franjas, turnos (±60 días) y avisos (`gestion/datosbase.*`). Desde ahí,
+  pacientes, profesionales con sus franjas, turnos (±60 días) y avisos (`comun/datosbase.*`). Desde ahí,
   cargar turno, seña, cancelación, protocolos, pacientes, profesionales, avisos y reportes llaman a los
   stored procedures, con el usuario que ingresó en el log.
 - **Cliente (terminal):** no pide ingreso (la paciente se identifica con el DNI): el catálogo y los
@@ -156,7 +165,7 @@ las aplicaciones avisan con una franja amarilla y trabajan en **modo contingenci
   nacimiento), crea el turno y paga la seña simulada; buscar y cancelar también usan los SP.
 - **Cupones, Tarjetas de regalo y Consultas previas** (Gestión) solo funcionan con la base: sin conexión
   quedan deshabilitadas y lo avisan.
-- **Sin conexión:** las dos siguen con el almacén local de pruebas (`frontend/gestion/almacenlocal.*`: un
+- **Sin conexión:** las dos siguen con el archivo local (`frontend/comun/almacenlocal.*`: un
   `datos_local.json` en la carpeta de datos de la aplicación, o la ruta de `DERMALIA_DATOS_LOCAL`, que
   comparten Gestión y Terminal) y la franja amarilla. Los turnos que se cargan
   quedan en `pendientes.json` y, **al volver la conexión, se envían solos** (`ConexionApp::sincronizar`): los

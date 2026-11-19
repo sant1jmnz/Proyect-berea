@@ -1,12 +1,16 @@
 /* Lo que comparten todas las páginas: enlaces de WhatsApp, cabecera, revelado
  * al hacer scroll y botón flotante del celular. */
 
+import { leerSesion } from '../../datos/cuenta.js';
+
 /* Número de WhatsApp del instituto: a completar con el real (RF-07). */
 export const WHATSAPP = '';
 
 const enlaceWhatsapp = (texto = '') => `https://wa.me/${WHATSAPP}${texto ? `?text=${encodeURIComponent(texto)}` : ''}`;
 
 export function iniciarComun() {
+  // El enlace de la cuenta dice "Ingresar" o "Mi cuenta" según haya una sesión iniciada.
+  if (leerSesion()) document.querySelectorAll('[data-cuenta]').forEach((a) => (a.textContent = 'Mi cuenta'));
   document.querySelectorAll('[data-whatsapp]').forEach((a) => (a.href = enlaceWhatsapp(a.dataset.whatsapp)));
   cabecera();
   revelar();

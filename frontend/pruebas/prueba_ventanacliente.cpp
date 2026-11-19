@@ -345,6 +345,122 @@ private slots:
         QCOMPARE(w.turnosCargados().first().inicio.date(), QDate(2027, 3, 3));
         QVERIFY(w.findChild<QLabel *>("lblResTurnoFecha")->text().contains("2027"));
     }
+    // ---- Lo que la terminal hace igual que el sitio web ----
+
+    /* Marca el protocolo con ese nombre en la lista del paso 1. */
+    static bool marcarProtocolo(VentanaCliente &w, const QString &nombre)
+    {
+        auto *lista = w.findChild<QListWidget *>("listaProtocolos");
+        for (int i = 0; i < lista->count(); ++i) {
+            if (lista->item(i)->text().startsWith(nombre + "\n")) {
+                lista->item(i)->setSelected(true);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void elCatalogoSinBaseEsElMismoQueElDelSitio()
+    {
+        VentanaCliente w;
+        QCOMPARE(w.findChild<QListWidget *>("listaProtocolos")->count(), 44);
+        QVERIFY(marcarProtocolo(w, "Limpieza facial profunda"));
+        QVERIFY(w.findChild<QListWidget *>("listaProtocolos")->selectedItems().first()->text().contains("$90.000"));
+    }
+
+    void unTurnoLlevaHastaTresProtocolosConSusTotales()
+    {
+        VentanaCliente w;
+        for (const char *p : { "Limpieza facial profunda", "Peeling químico", "Mesoterapia facial", "Dermaplaning" })
+            QVERIFY(marcarProtocolo(w, p));
+        auto *lista = w.findChild<QListWidget *>("listaProtocolos");
+        QCOMPARE(lista->selectedItems().size(), 3);   // el cuarto no entra
+        QVERIFY(w.findChild<QLabel *>("lblAvisoCirugia")->text().contains("hasta 3 protocolos"));
+
+        boton(w, "btnContinuar1")->click();
+        w.findChild<QCalendarWidget *>("calendario")->setSelectedDate(diaHabil(10));
+        auto *horarios = w.findChild<QListWidget *>("listaHorarios");
+        horarios->setCurrentRow(0);
+        horarios->item(0)->setSelected(true);
+        boton(w, "btnContinuar2")->click();
+        QCOMPARE(pagina(w), 3);
+        QCOMPARE(w.findChild<QLabel *>("lblResProtocolo")->text(), QString("Limpieza facial profunda + Peeling químico + Mesoterapia facial"));
+        QVERIFY(w.findChild<QLabel *>("lblResHora")->text().contains("min)"));
+        QVERIFY(w.findChild<QLabel *>("lblReglaSena")->text().startsWith("30 % del total"));
+        QVERIFY(!w.findChild<QLabel *>("lblSena")->text().contains("5.000 mínimo"));
+    }
+
+    void unaCirugiaPideLaConsultaPrequirurgica()
+    {
+        VentanaCliente w;
+        w.show();
+        auto *lista = w.findChild<QListWidget *>("listaProtocolos");
+        QVERIFY(marcarProtocolo(w, "Rinoplastia"));
+        QVERIFY(lista->selectedItems().isEmpty());                                  // no se reserva directo
+        auto *aviso = w.findChild<QLabel *>("lblAvisoCirugia");
+        QVERIFY(!aviso->isHidden());
+        QVERIFY2(aviso->text().contains("consulta prequirúrgica de $80.000"), qPrintable(aviso->text()));
+        w.findChild<QPushButton *>("btnSumarConsulta")->click();
+        QCOMPARE(lista->selectedItems().size(), 1);
+        QVERIFY(lista->selectedItems().first()->text().startsWith("Consulta prequirúrgica"));
+        QVERIFY(aviso->isHidden());
+    }
+
+    void elCuponDeEjemploDescuentaYUnCodigoMaloSeAvisa()
+    {
+        VentanaCliente w;
+        QVERIFY(marcarProtocolo(w, "Limpieza facial profunda"));   // $90.000
+        boton(w, "btnContinuar1")->click();
+        w.findChild<QCalendarWidget *>("calendario")->setSelectedDate(diaHabil(10));
+        auto *horarios = w.findChild<QListWidget *>("listaHorarios");
+        horarios->setCurrentRow(0);
+        horarios->item(0)->setSelected(true);
+        boton(w, "btnContinuar2")->click();
+        QCOMPARE(w.findChild<QLabel *>("lblSena")->text(), QString("$27.000"));   // 30 % de $90.000
+
+        campo(w, "editCodigo")->setText("nadaquever");
+        boton(w, "btnAplicarCodigo")->click();
+        QVERIFY(w.findChild<QLabel *>("lblEstadoCodigo")->text().contains("no existe"));
+        QCOMPARE(w.findChild<QLabel *>("lblSena")->text(), QString("$27.000"));
+
+        campo(w, "editCodigo")->setText("bienvenida");
+        boton(w, "btnAplicarCodigo")->click();
+        QVERIFY(w.findChild<QLabel *>("lblEstadoCodigo")->text().contains("10 %"));
+        QCOMPARE(w.findChild<QLabel *>("lblResPrecio")->text(), QString("$81.000 (cupón −10 %)"));
+        QCOMPARE(w.findChild<QLabel *>("lblSena")->text(), QString("$24.300"));   // 30 % de $81.000
+
+        campo(w, "editCodigo")->setText("otro");   // cambiar el código lo desaplica
+        QCOMPARE(w.findChild<QLabel *>("lblSena")->text(), QString("$27.000"));
+    }
+
+    void elTurnoConVariosProtocolosYCuponQuedaGuardado()
+    {
+        VentanaCliente w;
+        QVERIFY(marcarProtocolo(w, "Limpieza facial profunda"));
+        QVERIFY(marcarProtocolo(w, "Peeling químico"));
+        boton(w, "btnContinuar1")->click();
+        const QDate dia = diaHabil(10);
+        w.findChild<QCalendarWidget *>("calendario")->setSelectedDate(dia);
+        auto *horarios = w.findChild<QListWidget *>("listaHorarios");
+        horarios->setCurrentRow(0);
+        horarios->item(0)->setSelected(true);
+        boton(w, "btnContinuar2")->click();
+        campo(w, "editNombre")->setText("Ana Paz");
+        campo(w, "editDni")->setText("35111222");
+        campo(w, "editTelefono")->setText("1166667777");
+        campo(w, "editCodigo")->setText("BIENVENIDA");
+        boton(w, "btnAplicarCodigo")->click();
+        boton(w, "btnSena")->setChecked(true);
+        tocarEnDialogo("OK");
+        boton(w, "btnConfirmar")->click();
+        QCOMPARE(w.turnosCargados().size(), 1);
+        const Turno &t = w.turnosCargados().first();
+        QCOMPARE(t.protocolo, QString("Limpieza facial profunda + Peeling químico"));
+        QCOMPARE(t.precioAplicado, 189000);                 // ($90.000 + $120.000) − 10 %
+        QCOMPARE(t.sena, 56700);                            // 30 % por protocolo, con el descuento
+        QCOMPARE(t.inicio.secsTo(t.fin), 105 * 60);          // 60 + 45 minutos
+        QVERIFY(w.findChild<QPushButton *>("btnCalendar")->isEnabled());   // ya se puede agregar a Google Calendar
+    }
 };
 
 QTEST_MAIN(PruebaVentanaCliente)

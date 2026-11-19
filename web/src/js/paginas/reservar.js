@@ -2,15 +2,19 @@ import { iniciarComun } from '../movimiento/comun.js';
 import { gsap, movimientoReducido } from '../movimiento/gsap.js';
 import { protocolos, categorias, categoriaDe, buscarProtocolos, protocoloPorId, CONSULTA_PREQUIRURGICA } from '../../datos/protocolos.js';
 import { proximosDias, horariosDe, guardarReserva } from '../../datos/reservas.js';
-import { horariosDeBase, reservarEnBase } from '../../datos/api.js';
+import { horariosDeBase, reservarEnBase, revisarCodigo } from '../../datos/api.js';
+import { leerSesion } from '../../datos/cuenta.js';
+import { errorDni, errorTelefono, errorNombreApellido, errorNacimiento, soloDigitos } from '../validaciones.js';
 import { calcularSena, pesos } from '../sena.js';
 
 iniciarComun();
 
-/* Cupones de ejemplo (RF-17, RF-23) hasta que existan en la base. */
+/* Cupón de ejemplo para cuando no hay conexión con la base (el mismo que usa la terminal). Con la
+ * base, los cupones y las tarjetas de regalo se revisan contra los datos reales (RF-17, RF-23). */
 const CUPONES = { BIENVENIDA: { descuento: 10, texto: '10 % de descuento en tu primer turno' } };
 
-const estado = { elegidos: new Set(), dia: null, hora: null, cupon: null, paso: 1, profesionales: null };
+/* `cupon`: { codigo, descuento, texto } · `tarjeta`: { codigo, saldo } (la seña sale de su saldo). */
+const estado = { elegidos: new Set(), dia: null, hora: null, cupon: null, tarjeta: null, paso: 1, profesionales: null };
 const $ = (s) => document.querySelector(s);
 const fechaLarga = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 const diaCorto = new Intl.DateTimeFormat('es-AR', { weekday: 'short' });
@@ -24,7 +28,7 @@ const MARCA = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="
 
 function cuentas() {
   const lista = [...estado.elegidos].map((id) => protocolos.find((p) => p.id === id));
-  const descuento = estado.cupon ? CUPONES[estado.cupon].descuento : 0;
+  const descuento = estado.cupon ? estado.cupon.descuento : 0;
   const total = lista.reduce((s, p) => s + p.precio, 0);
   const totalFinal = Math.round(total * (1 - descuento / 100));
   // La seña se calcula por protocolo, con el porcentaje de su categoría (RF-10).
@@ -40,7 +44,8 @@ function pintarResumen() {
   const c = cuentas();
   $('[data-resumen-lista]').innerHTML = c.lista.length
     ? c.lista.map((p) => `<li><span>${p.nombre}</span><span class="numero">${pesos(p.precio)}</span></li>`).join('')
-      + (c.descuento ? `<li><span>Cupón ${estado.cupon}</span><span class="numero">−${c.descuento} %</span></li>` : '')
+      + (c.descuento ? `<li><span>Cupón ${estado.cupon.codigo}</span><span class="numero">−${c.descuento} %</span></li>` : '')
+      + (estado.tarjeta ? `<li><span>Seña con tarjeta de regalo</span><span class="numero">${estado.tarjeta.codigo.slice(0, 7)}…</span></li>` : '')
     : '<li class="apagado">Todavía no elegiste protocolos.</li>';
   $('[data-resumen-cuando]').textContent = estado.dia && estado.hora ? `${fechaLarga.format(estado.dia)}, ${estado.hora} h` : '—';
   const hayCirugia = c.lista.some((p) => categoriaDe(p).esCirugia);
@@ -119,8 +124,16 @@ function avisarCirugia(p) {
   avisoCirugia.hidden = false;
 }
 
+/* Un turno lleva hasta 3 protocolos: los stored procedures reciben como máximo 3 (igual que la terminal). */
+const MAX_PROTOCOLOS = 3;
+
 function alternar(id) {
   const elegido = !estado.elegidos.has(id);
+  if (elegido && estado.elegidos.size >= MAX_PROTOCOLOS) {
+    avisoCirugia.innerHTML = `<p>Podés sumar hasta ${MAX_PROTOCOLOS} protocolos en un mismo turno.</p>`;
+    avisoCirugia.hidden = false;
+    return;
+  }
   if (elegido) estado.elegidos.add(id);
   else estado.elegidos.delete(id);
   $('[data-siguiente="2"]').disabled = estado.elegidos.size === 0;
@@ -278,27 +291,48 @@ const formulario = $('[data-formulario]');
 const error = $('[data-error]');
 const estadoCupon = $('[data-cupon-estado]');
 
-$('[data-aplicar-cupon]').addEventListener('click', () => {
+$('[data-aplicar-cupon]').addEventListener('click', async () => {
   const codigo = formulario.cupon.value.trim().toUpperCase();
+  estado.cupon = null;
+  estado.tarjeta = null;
   if (!codigo) {
-    estado.cupon = null;
     estadoCupon.textContent = '';
-  } else if (CUPONES[codigo]) {
-    estado.cupon = codigo;
-    estadoCupon.textContent = `Cupón aplicado: ${CUPONES[codigo].texto}.`;
+    pintarResumen();
+    return;
+  }
+  // Con la base se revisa el código de verdad; sin ella, solo el cupón de ejemplo.
+  const r = await revisarCodigo(codigo, soloDigitos(formulario.dni.value));
+  if (r === null) {
+    if (CUPONES[codigo]) {
+      estado.cupon = { codigo, ...CUPONES[codigo] };
+      estadoCupon.textContent = `Cupón aplicado: ${CUPONES[codigo].texto}.`;
+    } else {
+      estadoCupon.textContent = 'Ese código no existe o ya se usó. Revisá que esté bien escrito.';
+    }
+  } else if (r.error) {
+    estadoCupon.textContent = r.error;
+  } else if (r.tipo === 'tarjeta') {
+    estado.tarjeta = { codigo, saldo: r.saldo };
+    estadoCupon.textContent = `Tarjeta de regalo aplicada: tiene ${pesos(r.saldo)} de saldo y la seña se descuenta de ahí.`;
   } else {
-    estado.cupon = null;
-    estadoCupon.textContent = 'Ese código no existe o ya se usó. Revisá que esté bien escrito.';
+    estado.cupon = { codigo, descuento: r.porcentaje, texto: `${r.porcentaje} % de descuento` };
+    estadoCupon.textContent = `Cupón aplicado: ${r.porcentaje} % de descuento.`;
   }
   pintarResumen();
 });
+// Si cambia el código o el DNI, hay que volver a aplicarlo.
+formulario.cupon.addEventListener('input', () => { estado.cupon = null; estado.tarjeta = null; estadoCupon.textContent = ''; pintarResumen(); });
 
+/* Mismas reglas y mensajes que la terminal (frontend/comun/validaciones.cpp). */
 function validar() {
   const f = formulario;
-  if (!f.nombre.value.trim()) return ['nombre', 'Escribí tu nombre y apellido.'];
-  if (!/^\d{7,8}$/.test(f.dni.value.trim())) return ['dni', 'El DNI tiene que tener 7 u 8 números, sin puntos.'];
-  if (!/^\d{8,12}$/.test(f.telefono.value.replace(/\D/g, ''))) return ['telefono', 'Escribí el teléfono con código de área, sin 0 ni 15. Por ejemplo: 1155550102.'];
-  return null;
+  const revisiones = [
+    ['nombre', errorNombreApellido(f.nombre.value)],
+    ['dni', errorDni(f.dni.value)],
+    ['telefono', errorTelefono(f.telefono.value)],
+    ['nacimiento', errorNacimiento(f.nacimiento.value)],
+  ];
+  return revisiones.find(([, mensaje]) => mensaje) ?? null;
 }
 
 formulario.addEventListener('input', () => (error.textContent = ''));
@@ -357,9 +391,10 @@ async function confirmar() {
   const nombres = c.lista.map((p) => p.nombre).join(' + ');
   // Con la API el turno y la seña se guardan en la base, que aplica las reglas (horario libre, seña, cupón).
   const enBase = estado.profesionales
-    ? await reservarEnBase({ nombre: formulario.nombre.value.trim(), dni: formulario.dni.value.trim(),
-        telefono: formulario.telefono.value.replace(/\D/g, ''), nacimiento: formulario.nacimiento.value,
-        idsWeb: [...estado.elegidos], profesional: estado.profesionales.get(estado.hora), inicio, cupon: formulario.cupon.value.trim() })
+    ? await reservarEnBase({ nombre: formulario.nombre.value.trim(), dni: soloDigitos(formulario.dni.value),
+        telefono: soloDigitos(formulario.telefono.value), nacimiento: formulario.nacimiento.value,
+        idsWeb: [...estado.elegidos], profesional: estado.profesionales.get(estado.hora), inicio,
+        cupon: estado.cupon?.codigo, tarjeta: estado.tarjeta?.codigo })
     : null;
   if (enBase && !enBase.ok) {
     irA(3);
@@ -370,15 +405,15 @@ async function confirmar() {
   if (!enBase) guardarReserva({
     id: `web-${Date.now()}`,
     nombre: formulario.nombre.value.trim(),
-    dni: formulario.dni.value.trim(),
-    telefono: formulario.telefono.value.replace(/\D/g, ''),
+    dni: soloDigitos(formulario.dni.value),
+    telefono: soloDigitos(formulario.telefono.value),
     protocolos: c.lista.map((p) => p.id),
     inicio: inicio.toISOString(),
     sena: c.sena,
     senaPagada: true,
     estado: 'confirmado',
   });
-  $('[data-listo-detalle]').textContent = `${nombres}, el ${fechaLarga.format(inicio)} a las ${estado.hora} h. Pagaste ${pesos(enBase ? enBase.cuerpo.sena : c.sena)} de seña (simulada). Te vamos a mandar un recordatorio antes del turno.`;
+  $('[data-listo-detalle]').textContent = `${nombres}, el ${fechaLarga.format(inicio)} a las ${estado.hora} h. Pagaste ${pesos(enBase ? enBase.cuerpo.sena : c.sena)} de seña ${estado.tarjeta ? 'con tu tarjeta de regalo' : '(simulada)'}. Te vamos a mandar un recordatorio antes del turno.`;
   $('[data-calendar]').href = enlaceCalendar(inicio, c.duracion, nombres);
   document.querySelector('[data-resumen]').hidden = true;
   irA('listo');
@@ -388,6 +423,14 @@ async function confirmar() {
 function celebrar() {
   const panel = $('[data-panel="listo"]');
   gsap.from(panel.querySelectorAll('.listo__check circle, .listo__check path'), { drawSVG: 0, duration: 0.8, stagger: 0.2, ease: 'power2.inOut' });
+}
+
+// Con cuenta, los datos de la paciente ya vienen cargados.
+const sesionPaciente = leerSesion()?.paciente;
+if (sesionPaciente) {
+  formulario.nombre.value = `${sesionPaciente.nombre} ${sesionPaciente.apellido}`;
+  formulario.dni.value = sesionPaciente.dni;
+  formulario.telefono.value = sesionPaciente.telefono;
 }
 
 // Si llegaste desde una ficha (?protocolo=...), ya viene elegido.

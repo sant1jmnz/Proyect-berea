@@ -87,9 +87,13 @@ usuarios y turnos.
   un `EXIT HANDLER FOR SQLEXCEPTION` para los errores del motor, como en el PPT 006 de la cátedra.
 - Todos devuelven 6 columnas: `estado, codigo, mensaje, id, valor, dato`.
 - **El log solo se escribe desde los SP** (`auditoria.sp_registrar_log`); nunca con `INSERT` a mano.
-- **Los estados y saldos no se guardan, se calculan** (`fn_sena`, `fn_saldo_tarjeta`,
-  vigencia de cupones y evaluaciones).
-- La hora sale de `auditoria.fn_ahora()`: es `NOW()`, salvo que la sesión defina
+- **Los estados y saldos no se guardan, se calculan**: el precio final y la seña de cada turno salen
+  de la vista `agenda.PrecioTurno`; el saldo de una tarjeta, de sus movimientos; la vigencia de cupones
+  y evaluaciones, de sus fechas.
+- **Lo que usan varios SP está en una vista**, escrita una sola vez al principio de `03_sp_semana3.sql`:
+  `agenda.PrecioTurno`, `agenda.DetalleTurno` (lo que muestran las pantallas de un turno; la usan
+  `sp_buscar_turnos` y `sp_turnos_del_periodo`) y `personas.PrimerTelefonoPaciente`.
+- La hora es `COALESCE(@ahora_simulado, NOW())`: la de la PC, salvo que la sesión defina
   `@ahora_simulado` (para pruebas y para cargar historia).
 
 ### Agregar un SP nuevo
@@ -135,20 +139,29 @@ QT_QPA_PLATFORM=offscreen ctest --test-dir build      # pruebas automáticas
 `_NAME`, `_SSL` o un archivo `dermalia.ini` (ver `docs/conexion-base.md`). Sin conexión,
 las aplicaciones avisan con una franja amarilla y trabajan en **modo contingencia**.
 
-**Capas del código** (`frontend/comun/`):
+**Cómo está organizado el código.** `frontend/comun/` es una biblioteca (`dermalia_comun`) que usan
+las dos aplicaciones; `gestion/` y `cliente/` solo tienen sus pantallas (`dermalia_gestion_pantallas` y
+`dermalia_cliente_pantallas`). El `CMakeLists.txt` arma esas bibliotecas una vez y cada programa y cada
+prueba las usa, sin repetir la lista de archivos.
 
-| Archivo | Responsabilidad |
+| Archivo de `comun/` | Responsabilidad |
 |---|---|
 | `basedatos.*` | Conexión con `mysql.h` como en el PPT 006 (`mysql_init`, `mysql_real_connect`, `mysql_query`, `mysql_store_result`, `mysql_fetch_row`) y `llamar("sp", {parámetros})`, que arma el `CALL` |
 | `repositorio.*` | Un método por cada SP que usan las pantallas; devuelve datos ya interpretados |
+| `modelo.h` | Las entidades que muestran las pantallas: protocolo, profesional, paciente, turno |
+| `datosbase.*` | Pasa las filas de los SP al modelo |
+| `almacenlocal.*`, `datosprueba.*` | Sin base: el archivo local de la PC y el catálogo inicial (el mismo de la base y la web) |
+| `reglasturno.*` | Reglas de un turno que comparten las dos aplicaciones: horarios libres sin base, turno vigente, código de la seña, qué pasa con la seña al cancelar |
+| `formato.*` | Cómo se muestran los datos: pesos, fechas, nombres; encabezado de las pantallas, filas de tabla, cartel de errores |
 | `conexionapp.*`, `avisoconexion.*`, `contingencia.*` | Aviso "sin conexión" y turnos guardados en el equipo |
 | `validaciones.*`, `sena.h`, `reembolso.h` | Reglas que también valida la base (la pantalla las avisa antes) |
+| `buscadorprecios.*`, `resumentratamiento.*` | Buscador de precios y resumen de cada tratamiento (los dos programas) |
 
 **Cómo funcionan con la base.** Al arrancar, cada aplicación prueba la conexión (`ConexionApp::probar`):
 
 - **Gestión:** si hay conexión pide el **ingreso del personal** (`dialogologin`; para demos y pruebas, las
   variables `DERMALIA_USUARIO` y `DERMALIA_CLAVE` ingresan sin abrir la ventana) y lee de la base protocolos,
-  pacientes, profesionales con sus franjas, turnos (±60 días) y avisos (`gestion/datosbase.*`). Desde ahí,
+  pacientes, profesionales con sus franjas, turnos (±60 días) y avisos (`comun/datosbase.*`). Desde ahí,
   cargar turno, seña, cancelación, protocolos, pacientes, profesionales, avisos y reportes llaman a los
   stored procedures, con el usuario que ingresó en el log.
 - **Cliente (terminal):** no pide ingreso (la paciente se identifica con el DNI): el catálogo y los
@@ -156,7 +169,7 @@ las aplicaciones avisan con una franja amarilla y trabajan en **modo contingenci
   nacimiento), crea el turno y paga la seña simulada; buscar y cancelar también usan los SP.
 - **Cupones, Tarjetas de regalo y Consultas previas** (Gestión) solo funcionan con la base: sin conexión
   quedan deshabilitadas y lo avisan.
-- **Sin conexión:** las dos siguen con el almacén local de pruebas (`frontend/gestion/almacenlocal.*`: un
+- **Sin conexión:** las dos siguen con el archivo local (`frontend/comun/almacenlocal.*`: un
   `datos_local.json` en la carpeta de datos de la aplicación, o la ruta de `DERMALIA_DATOS_LOCAL`, que
   comparten Gestión y Terminal) y la franja amarilla. Los turnos que se cargan
   quedan en `pendientes.json` y, **al volver la conexión, se envían solos** (`ConexionApp::sincronizar`): los
@@ -186,6 +199,13 @@ mismo dominio (`/api`).
 **Limitación:** el sitio ofrece los 4 protocolos del maquetado (se relacionan con la base por nombre). El
 cupón del formulario se envía a la base, que valida los cupones reales; los códigos de ejemplo del maquetado
 (`BIENVENIDA`...) solo bajan el precio en pantalla.
+
+**Compus lentas.** El sitio se ve y anda igual en todas las PCs: todo se descarga y todas las animaciones
+corren. Lo que cambia por dentro: las escenas 3D (`web/src/js/tres/escena.js`) miden cada 30 cuadros cuántos
+dibujan por segundo y, si no llegan a 45, bajan la resolución interna del 3D de a 0,25 (hasta 0,75 por píxel):
+la animación sigue completa y fluida, apenas menos nítida. Además, las líneas de la piel miden la página solo
+cuando algo cambia de tamaño (antes la medían en cada cuadro, lo que traba a una compu lenta) y solo tocan el
+SVG si la línea se movió. Las escenas se pausan cuando no están en pantalla o la pestaña está oculta.
 
 ## 5. Recordatorios con n8n
 

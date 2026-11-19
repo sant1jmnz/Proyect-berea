@@ -571,7 +571,10 @@ private slots:
 
         // Buscador de precios: escribir filtra y cada resultado tiene "Ver resumen".
         w.findChild<QLineEdit *>("editConsulta")->setText("rinoplastia");
-        const QList<QPushButton *> botones = w.findChild<QWidget *>("listaResultados")->findChildren<QPushButton *>("btnResumen");
+        QList<QPushButton *> botones;   // las filas que no coinciden quedan ocultas
+        for (QPushButton *b : w.findChild<QWidget *>("listaResultados")->findChildren<QPushButton *>("btnResumen"))
+            if (!b->parentWidget()->isHidden())
+                botones << b;
         QCOMPARE(botones.size(), 1);
         QString aviso;
         QTimer::singleShot(100, [&aviso] {

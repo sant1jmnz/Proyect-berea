@@ -1,5 +1,7 @@
 #include "paginaevaluaciones.h"
 
+#include "formato.h"
+
 #include "repositorio.h"
 
 #include <QCheckBox>
@@ -13,29 +15,12 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 
-/* "2026-11-18 13:30:00" → "18/11/2026"; vacío si la base devolvió NULL. */
-static QString fecha(const QVariant &valor)
-{
-    if (valor.isNull())
-        return "—";
-    return QDateTime::fromString(valor.toString(), "yyyy-MM-dd HH:mm:ss").toString("dd/MM/yyyy");
-}
-
 PaginaEvaluaciones::PaginaEvaluaciones(QWidget *parent) : QWidget(parent)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Consultas previas de cirugía");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Toda cirugía empieza con una consulta. Si no es apta, se retiene el 10% de la seña. "
-                                 "Si es apta, la paciente tiene 6 meses para agendar la cirugía; si vence, puede "
-                                 "reclamar una vez y se le devuelve el 50%.");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Consultas previas de cirugía",
+                                      "Toda cirugía empieza con una consulta. Si no es apta, se retiene el 10% de la seña. "
+                                      "Si es apta, la paciente tiene 6 meses para agendar la cirugía; si vence, puede "
+                                      "reclamar una vez y se le devuelve el 50%.");
 
     checkPendientes = new QCheckBox("Ver solo las que esperan resultado");
     checkPendientes->setObjectName("checkPendientes");
@@ -73,9 +58,8 @@ PaginaEvaluaciones::PaginaEvaluaciones(QWidget *parent) : QWidget(parent)
     abajo->addWidget(btnApta);
     raiz->addLayout(abajo);
 
-    for (QWidget *w : { static_cast<QWidget *>(checkPendientes), static_cast<QWidget *>(btnVencer),
-                        static_cast<QWidget *>(btnReclamo), static_cast<QWidget *>(btnNoApta),
-                        static_cast<QWidget *>(btnApta) })
+    controles = { checkPendientes, btnVencer, btnReclamo, btnNoApta, btnApta };
+    for (QWidget *w : controles)
         w->setEnabled(false);
 
     connect(checkPendientes, &QCheckBox::toggled, this, &PaginaEvaluaciones::recargar);
@@ -89,9 +73,7 @@ void PaginaEvaluaciones::usarBase(Repositorio *repositorio, int idUsuarioActual)
 {
     repo = repositorio;
     idUsuario = idUsuarioActual;
-    for (QWidget *w : { static_cast<QWidget *>(checkPendientes), static_cast<QWidget *>(btnVencer),
-                        static_cast<QWidget *>(btnReclamo), static_cast<QWidget *>(btnNoApta),
-                        static_cast<QWidget *>(btnApta) })
+    for (QWidget *w : controles)
         w->setEnabled(repo != nullptr);
     recargar();
 }
@@ -118,17 +100,15 @@ void PaginaEvaluaciones::recargar()
     for (int fila = 0; fila < evaluaciones.filas.size(); ++fila) {
         const QVariantMap &e = evaluaciones.filas[fila];
         const QString resultado = e["resultado"].toString();
-        const QString columnas[] = {
+        Formato::llenarFila(tabla, fila, {
             e["nombre"].toString() + " " + e["apellido"].toString(),
             e["dni"].toString(),
             e["protocolo"].toString(),
-            fecha(e["fecha_consulta"]),
+            Formato::fechaDeBase(e["fecha_consulta"]),
             resultado == "apto" ? "Apta" : resultado == "no apto" ? "No apta" : "Pendiente",
-            resultado == "apto" ? fecha(e["vence"]) : "—",
-            fecha(e["fecha_reclamo"]),
-        };
-        for (int col = 0; col < 7; ++col)
-            tabla->setItem(fila, col, new QTableWidgetItem(columnas[col]));
+            resultado == "apto" ? Formato::fechaDeBase(e["vence"]) : "—",
+            Formato::fechaDeBase(e["fecha_reclamo"]),
+        });
     }
     lblCuenta->setText(evaluaciones.filas.size() == 1 ? "1 consulta" : QString("%1 consultas").arg(evaluaciones.filas.size()));
 }

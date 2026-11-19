@@ -1,10 +1,8 @@
-/* Ventana principal del apartado Gestión (PC de recepción).
- * Semana 1: interfaz y navegación entre pantallas.
- * Semana 2: aviso cuando la base no responde (modo contingencia) y las
- * pantallas de protocolos, profesionales con su disponibilidad y pacientes.
- * Semana 3: validaciones de la carga de un turno, seña simulada, cancelación
- * con reembolso (RF-10) y avisos de turno (RF-11). Los datos son de prueba
- * (datosprueba.h) hasta que se conecte la base. */
+/* Ventana principal del apartado Gestión (PC de recepción): menú lateral, carga de un
+ * turno en 3 pasos, búsqueda y cancelación, y las demás pantallas (protocolos,
+ * profesionales, pacientes, avisos, cupones, tarjetas, consultas previas, reportes y
+ * usuarios). Con la base, el personal ingresa con su usuario y todo sale de los stored
+ * procedures; sin base, trabaja con el archivo local de la PC (modo contingencia). */
 #ifndef VENTANAGESTION_H
 #define VENTANAGESTION_H
 
@@ -61,9 +59,16 @@ private slots:
     void conectarBase();             /* hay conexión: ingreso del personal y datos de la base */
     void guardarLocal();             /* sin base: deja todo en el archivo local */
     void sincronizarLocal();         /* si la Terminal cargó o canceló un turno, lo toma */
-    void sincronizarBase();          /* con la base: trae lo que cambiaron la Terminal u otra PC */
+    void sincronizarBase();
+    void sincronizarPacientes();          /* con la base: trae lo que cambiaron la Terminal u otra PC */
 
 private:
+    /* Partes del constructor */
+    void cargarDatosLocales(bool datosDeEjemplo);
+    void armarFormularioCarga();
+    void conectarSenales();
+    void probarConexion(const QString &archivoContingencia);
+
     void irA(int pagina);
     void cargarProtocolos();
     void marcarError(QLineEdit *campo, bool hayError);
@@ -71,7 +76,6 @@ private:
     const Protocolo *protocoloElegido() const;
     QDateTime horarioElegido() const;
     void armarPantallasNuevas();
-    QString nuevoCodigoOperacion() const;
     /* Con la base conectada */
     bool pedirLogin();
     void cargarDesdeBase();
@@ -106,9 +110,8 @@ private:
     bool persistir = false;               /* true: usa el archivo local */
     QString archivoLocal;
     QDateTime ultimaVersionLocal;         /* fecha del archivo la última vez que se leyó o escribió */
-    QTimer *relojLocal = nullptr;
     QTimer *relojBase = nullptr;          /* cada 3 segundos mira si la base cambió */
-    bool enModoBase = false;              /* true: los datos vienen de la base; false: datos de prueba */
+    bool enModoBase = false;              /* true: los datos vienen de la base; false: del archivo local */
     int idUsuario = 0;                    /* quién ingresó (va al log de auditoría) */
     QString rolUsuario;
 

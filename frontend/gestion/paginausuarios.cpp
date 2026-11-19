@@ -1,5 +1,7 @@
 #include "paginausuarios.h"
 
+#include "formato.h"
+
 #include "repositorio.h"
 #include "validaciones.h"
 
@@ -19,18 +21,9 @@
 
 PaginaUsuarios::PaginaUsuarios(QWidget *parent) : QWidget(parent)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Usuarios");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Quién puede ingresar a Gestión. Los usuarios se guardan en la base: con el mismo "
-                                 "usuario se entra desde cualquier PC conectada a esa base.");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Usuarios",
+                                      "Quién puede ingresar a Gestión. Los usuarios se guardan en la base: con el mismo "
+                                      "usuario se entra desde cualquier PC conectada a esa base.");
 
     auto *columnas = new QHBoxLayout;
     columnas->setSpacing(18);
@@ -112,11 +105,10 @@ PaginaUsuarios::PaginaUsuarios(QWidget *parent) : QWidget(parent)
     abajo->addWidget(btnCambiarClave);
     raiz->addLayout(abajo);
 
-    for (QWidget *w : { static_cast<QWidget *>(editUsuario), static_cast<QWidget *>(editEmail),
-                        static_cast<QWidget *>(editClave), static_cast<QWidget *>(editRepetir),
-                        static_cast<QWidget *>(comboRol), static_cast<QWidget *>(btnCrear),
-                        static_cast<QWidget *>(btnCambiarClave) })
+    controlesAlta = { editUsuario, editEmail, editClave, editRepetir, comboRol, btnCrear };
+    for (QWidget *w : controlesAlta)
         w->setEnabled(false);
+    btnCambiarClave->setEnabled(false);
 
     connect(btnCrear, &QPushButton::clicked, this, &PaginaUsuarios::crear);
     connect(btnCambiarClave, &QPushButton::clicked, this, &PaginaUsuarios::cambiarMiClave);
@@ -127,9 +119,7 @@ void PaginaUsuarios::usarBase(Repositorio *repositorio, int idUsuarioActual, con
     repo = repositorio;
     idUsuario = idUsuarioActual;
     const bool esAdmin = repo && rol == "administrador";
-    for (QWidget *w : { static_cast<QWidget *>(editUsuario), static_cast<QWidget *>(editEmail),
-                        static_cast<QWidget *>(editClave), static_cast<QWidget *>(editRepetir),
-                        static_cast<QWidget *>(comboRol), static_cast<QWidget *>(btnCrear) })
+    for (QWidget *w : controlesAlta)
         w->setEnabled(esAdmin);
     btnCambiarClave->setEnabled(repo != nullptr);
     lblNota->setText(esAdmin ? "El usuario nuevo ya puede ingresar, desde cualquier PC conectada a esta base."
@@ -151,14 +141,12 @@ void PaginaUsuarios::recargar()
     for (int fila = 0; fila < r.filas.size(); ++fila) {
         const QVariantMap &u = r.filas[fila];
         const QString rol = u["rol"].toString();
-        const QString columnas[] = {
+        Formato::llenarFila(tabla, fila, {
             u["nombre_usuario"].toString(),
             u["email"].toString(),
             rol == "administrador" ? "Administración" : rol == "recepcion" ? "Recepción" : "Profesional",
             u["activo"].toInt() == 1 ? "Sí" : "No",
-        };
-        for (int col = 0; col < 4; ++col)
-            tabla->setItem(fila, col, new QTableWidgetItem(columnas[col]));
+        });
     }
 }
 
@@ -178,10 +166,8 @@ void PaginaUsuarios::crear()
         errores << "• " + error;
     else if (editClave->text() != editRepetir->text())
         errores << "• Las dos contraseñas no son iguales.";
-    if (!errores.isEmpty()) {
-        QMessageBox::warning(this, "Revisá los datos", errores.join("\n"));
+    if (Formato::avisarErrores(this, errores))
         return;
-    }
 
     const Respuesta r = repo->altaUsuario(idUsuario, usuario, editEmail->text().trimmed(), editClave->text(),
                                           comboRol->currentData().toString(), "gestion");

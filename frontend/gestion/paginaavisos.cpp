@@ -1,5 +1,7 @@
 #include "paginaavisos.h"
 
+#include "formato.h"
+
 #include "validaciones.h"
 
 #include "repositorio.h"
@@ -22,18 +24,9 @@ enum { ColPaciente, ColCanal, ColEstado, ColTurno, ColProgramado, ColEnviado };
 PaginaAvisos::PaginaAvisos(RegistroAvisos *registro, QWidget *parent)
     : QWidget(parent), avisos(registro)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Avisos de turno");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Cada turno cargado programa un recordatorio 24 horas antes (RF-11). "
-                                 "Sin Telegram vinculado, la recepción lo envía por WhatsApp asistido.");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Avisos de turno",
+                                      "Cada turno cargado programa un recordatorio 24 horas antes (RF-11). "
+                                      "Sin Telegram vinculado, la recepción lo envía por WhatsApp asistido.");
 
     tabla = new QTableWidget(0, 6);
     tabla->setObjectName("tablaAvisos");

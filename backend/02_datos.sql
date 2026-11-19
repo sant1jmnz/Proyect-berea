@@ -12,6 +12,42 @@
 -- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
 SET NAMES utf8mb4;
 
+-- Se puede correr varias veces: primero vacía las tablas (en orden inverso al de creación,
+-- sin revisar las claves foráneas mientras tanto) y después las vuelve a cargar.
+SET FOREIGN_KEY_CHECKS = 0;
+DELETE FROM asistente.ConsultaAsistente;
+DELETE FROM auditoria.Log;
+DELETE FROM auditoria.TipoEvento;
+DELETE FROM notificaciones.Notificacion;
+DELETE FROM notificaciones.TipoNotificacion;
+DELETE FROM notificaciones.EstadoNotificacion;
+DELETE FROM notificaciones.CanalNotificacion;
+DELETE FROM beneficios.Cupon;
+DELETE FROM beneficios.ReglaBeneficio;
+DELETE FROM beneficios.TipoRegla;
+DELETE FROM pagos.MovimientoTarjeta;
+DELETE FROM pagos.TarjetaRegalo;
+DELETE FROM pagos.PagoSena;
+DELETE FROM pagos.MedioPago;
+DELETE FROM pagos.EstadoPago;
+DELETE FROM clinica.EvaluacionPrevia;
+DELETE FROM agenda.TurnoProtocolo;
+DELETE FROM agenda.Turno;
+DELETE FROM agenda.Origen;
+DELETE FROM agenda.EstadoTurno;
+DELETE FROM clinica.ResultadoEvaluacion;
+DELETE FROM clinica.ProfesionalProtocolo;
+DELETE FROM clinica.Protocolo;
+DELETE FROM clinica.CategoriaProtocolo;
+DELETE FROM personas.Disponibilidad;
+DELETE FROM personas.TelefonoProfesional;
+DELETE FROM personas.Profesional;
+DELETE FROM personas.TelefonoPaciente;
+DELETE FROM personas.Paciente;
+DELETE FROM seguridad.Usuario;
+DELETE FROM seguridad.Rol;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- Roles
 INSERT INTO seguridad.Rol (id_rol, nombre) VALUES
   (1, 'paciente'),

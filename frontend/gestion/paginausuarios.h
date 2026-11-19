@@ -38,6 +38,7 @@ private:
     QPushButton *btnCrear, *btnCambiarClave;
     QLabel *lblNota;
     QTableWidget *tabla;
+    QList<QWidget *> controlesAlta;   /* se habilitan cuando hay base */
 };
 
 #endif

@@ -1,25 +1,16 @@
 #include "buscadorprecios.h"
 #include "ui_buscadorprecios.h"
 
+#include "formato.h"
+
 #include <QDesktopServices>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QLocale>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QUrl>
 #include <algorithm>
-
-/* "Depilación Láser" → "depilacion laser": así "laser" encuentra "láser". */
-static QString sinTildes(const QString &texto)
-{
-    QString salida;
-    for (const QChar c : texto.normalized(QString::NormalizationForm_D))
-        if (c.category() != QChar::Mark_NonSpacing)
-            salida += c.toLower();
-    return salida;
-}
 
 BuscadorPrecios::BuscadorPrecios(QWidget *parent)
     : QWidget(parent), ui(new Ui::BuscadorPrecios)
@@ -41,8 +32,8 @@ BuscadorPrecios::BuscadorPrecios(QWidget *parent)
     area->setStyleSheet("QScrollArea#areaResultados, QWidget#listaResultados { background: transparent; }");
     ui->layoutResultados->insertWidget(ui->layoutResultados->indexOf(ui->lblCuentaResultados), area, 1);
 
+    /* Filtra mientras se escribe; "Buscar" y Enter quedan para quien los busca por costumbre. */
     connect(ui->btnConsultar, &QPushButton::clicked, this, &BuscadorPrecios::mostrarResultados);
-    connect(ui->editConsulta, &QLineEdit::returnPressed, this, &BuscadorPrecios::mostrarResultados);
     connect(ui->editConsulta, &QLineEdit::textChanged, this, &BuscadorPrecios::mostrarResultados);
     connect(ui->btnWhatsapp, &QPushButton::clicked, this, &BuscadorPrecios::consultarPorWhatsApp);
 }
@@ -55,16 +46,17 @@ BuscadorPrecios::~BuscadorPrecios()
 void BuscadorPrecios::setCatalogo(const QVector<Tratamiento> &tratamientos)
 {
     catalogo = tratamientos;
+    armarFilas();
     mostrarResultados();
 }
 
 QVector<int> BuscadorPrecios::buscar(const QVector<Tratamiento> &tratamientos, const QString &texto)
 {
-    const QString buscado = sinTildes(texto.simplified());
+    const QString buscado = Formato::sinTildes(texto.simplified());
     QVector<int> encontrados;
     for (int i = 0; i < tratamientos.size(); ++i)
-        if (buscado.isEmpty() || sinTildes(tratamientos[i].nombre).contains(buscado)
-            || sinTildes(tratamientos[i].descripcion).contains(buscado))
+        if (buscado.isEmpty() || Formato::sinTildes(tratamientos[i].nombre).contains(buscado)
+            || Formato::sinTildes(tratamientos[i].descripcion).contains(buscado))
             encontrados << i;
     std::sort(encontrados.begin(), encontrados.end(), [&](int a, int b) {
         return QString::localeAwareCompare(tratamientos[a].nombre, tratamientos[b].nombre) < 0;
@@ -72,22 +64,18 @@ QVector<int> BuscadorPrecios::buscar(const QVector<Tratamiento> &tratamientos, c
     return encontrados;
 }
 
-/* Una fila por resultado: nombre, duración y categoría, precio y "Ver resumen". */
-void BuscadorPrecios::mostrarResultados()
+/* Una fila por tratamiento, en orden alfabético: nombre, duración y categoría, precio y
+ * "Ver resumen". Se arma una vez por catálogo; buscar después solo muestra u oculta filas. */
+void BuscadorPrecios::armarFilas()
 {
     while (QLayoutItem *item = filas->takeAt(0)) {
         delete item->widget();
         delete item;
     }
-    const QString texto = ui->editConsulta->text().simplified();
-    const QVector<int> encontrados = buscar(catalogo, texto);
+    filasPorTratamiento = QVector<QWidget *>(catalogo.size(), nullptr);
+    const int valorConsulta = ResumenTratamiento::precioConsulta(catalogo);   /* para el aviso de las cirugías */
 
-    int precioConsulta = 0;   /* para el aviso de las cirugías */
-    for (const Tratamiento &t : std::as_const(catalogo))
-        if (sinTildes(t.nombre).startsWith("consulta prequirurgica"))
-            precioConsulta = t.precio;
-
-    for (int i : encontrados) {
+    for (int i : buscar(catalogo, QString())) {
         const Tratamiento t = catalogo[i];
         auto *fila = new QFrame;
         fila->setObjectName("filaResultado");
@@ -104,19 +92,29 @@ void BuscadorPrecios::mostrarResultados()
         textos->addWidget(nombre);
         textos->addWidget(detalle);
         capa->addLayout(textos, 1);
-        auto *precio = new QLabel("$" + QLocale().toString(t.precio));
+        auto *precio = new QLabel(Formato::pesos(t.precio));
         precio->setProperty("rol", "hora");
         capa->addWidget(precio);
         auto *resumen = new QPushButton("Ver resumen");
         resumen->setObjectName("btnResumen");
         resumen->setCursor(Qt::PointingHandCursor);
-        connect(resumen, &QPushButton::clicked, this, [this, t, precioConsulta] {
-            ResumenTratamiento::mostrar(this, t, precioConsulta);
+        connect(resumen, &QPushButton::clicked, this, [this, t, valorConsulta] {
+            ResumenTratamiento::mostrar(this, t, valorConsulta);
         });
         capa->addWidget(resumen);
         filas->addWidget(fila);
+        filasPorTratamiento[i] = fila;
     }
     filas->addStretch();
+}
+
+/* Muestra las filas que coinciden con lo escrito y la cuenta de resultados. */
+void BuscadorPrecios::mostrarResultados()
+{
+    const QString texto = ui->editConsulta->text().simplified();
+    const QVector<int> encontrados = buscar(catalogo, texto);
+    for (int i = 0; i < filasPorTratamiento.size(); ++i)
+        filasPorTratamiento[i]->setVisible(encontrados.contains(i));
 
     if (catalogo.isEmpty())
         ui->lblCuentaResultados->setText("Todavía no se cargó el catálogo.");

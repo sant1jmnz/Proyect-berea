@@ -43,6 +43,7 @@ private:
     QTableWidget *tabla;
     QPushButton *btnApta, *btnNoApta, *btnReclamo, *btnVencer;
     QLabel *lblCuenta;
+    QList<QWidget *> controles;   /* se habilitan cuando hay base */
 };
 
 #endif

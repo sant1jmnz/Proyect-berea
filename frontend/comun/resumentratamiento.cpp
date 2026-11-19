@@ -1,5 +1,6 @@
 #include "resumentratamiento.h"
 
+#include "formato.h"
 #include "sena.h"
 
 #include <QDialog>
@@ -69,11 +70,6 @@ Ficha fichaDe(int idBase, const QString &nombre)
     return f;
 }
 
-static QString pesos(int monto)
-{
-    return "$" + QLocale().toString(monto);
-}
-
 /* Un dato de la ficha: el título chico arriba y el valor abajo (como el <dt>/<dd> de la web). */
 static QWidget *dato(const QString &titulo, const QString &valor)
 {
@@ -91,7 +87,15 @@ static QWidget *dato(const QString &titulo, const QString &valor)
     return caja;
 }
 
-void mostrar(QWidget *parent, const Tratamiento &t, int precioConsulta)
+int precioConsulta(const QVector<Tratamiento> &catalogo)
+{
+    for (const Tratamiento &t : catalogo)
+        if (Formato::sinTildes(t.nombre).startsWith("consulta prequirurgica"))
+            return t.precio;
+    return 0;
+}
+
+void mostrar(QWidget *parent, const Tratamiento &t, int valorConsulta)
 {
     const Ficha f = fichaDe(t.id, t.nombre);
 
@@ -133,8 +137,8 @@ void mostrar(QWidget *parent, const Tratamiento &t, int precioConsulta)
     auto *grilla = new QGridLayout;
     grilla->setHorizontalSpacing(24);
     grilla->setVerticalSpacing(14);
-    grilla->addWidget(dato("Precio por sesión", pesos(t.precio)), 0, 0);
-    grilla->addWidget(dato(QString("Seña (%1 %)").arg(t.porcentajeSena), pesos(Sena::calcular(t.precio, t.porcentajeSena))), 0, 1);
+    grilla->addWidget(dato("Precio por sesión", Formato::pesos(t.precio)), 0, 0);
+    grilla->addWidget(dato(QString("Seña (%1 %)").arg(t.porcentajeSena), Formato::pesos(Sena::calcular(t.precio, t.porcentajeSena))), 0, 1);
     grilla->addWidget(dato("Duración", QString("%1 min").arg(t.duracionMin)), 1, 0);
     grilla->addWidget(dato("Sesiones", f.sesiones), 1, 1);
     grilla->addWidget(dato("Zona", f.zona), 2, 0);
@@ -148,8 +152,8 @@ void mostrar(QWidget *parent, const Tratamiento &t, int precioConsulta)
 
     if (t.esCirugia) {
         QString aviso = "Toda cirugía empieza con una consulta prequirúrgica";
-        if (precioConsulta > 0)
-            aviso += " de " + pesos(precioConsulta);
+        if (valorConsulta > 0)
+            aviso += " de " + Formato::pesos(valorConsulta);
         aviso += ", con su propia seña. Si seguís con la cirugía, el valor de la consulta se devuelve.";
         auto *lblAviso = new QLabel(aviso);
         lblAviso->setWordWrap(true);

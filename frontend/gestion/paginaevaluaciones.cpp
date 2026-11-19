@@ -17,19 +17,10 @@
 
 PaginaEvaluaciones::PaginaEvaluaciones(QWidget *parent) : QWidget(parent)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Consultas previas de cirugía");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Toda cirugía empieza con una consulta. Si no es apta, se retiene el 10% de la seña. "
-                                 "Si es apta, la paciente tiene 6 meses para agendar la cirugía; si vence, puede "
-                                 "reclamar una vez y se le devuelve el 50%.");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Consultas previas de cirugía",
+                                      "Toda cirugía empieza con una consulta. Si no es apta, se retiene el 10% de la seña. "
+                                      "Si es apta, la paciente tiene 6 meses para agendar la cirugía; si vence, puede "
+                                      "reclamar una vez y se le devuelve el 50%.");
 
     checkPendientes = new QCheckBox("Ver solo las que esperan resultado");
     checkPendientes->setObjectName("checkPendientes");

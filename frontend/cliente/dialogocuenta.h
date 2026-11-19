@@ -35,6 +35,8 @@ public:
     SesionPaciente sesion() const { return datos; }
 
 private:
+    QWidget *armarIngreso();
+    QWidget *armarAlta();
     void ingresar();
     void crearCuenta();
     bool entrar(const QString &usuario, const QString &clave, QLabel *lblError);

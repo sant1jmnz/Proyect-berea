@@ -21,18 +21,9 @@
 
 PaginaUsuarios::PaginaUsuarios(QWidget *parent) : QWidget(parent)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Usuarios");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Quién puede ingresar a Gestión. Los usuarios se guardan en la base: con el mismo "
-                                 "usuario se entra desde cualquier PC conectada a esa base.");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Usuarios",
+                                      "Quién puede ingresar a Gestión. Los usuarios se guardan en la base: con el mismo "
+                                      "usuario se entra desde cualquier PC conectada a esa base.");
 
     auto *columnas = new QHBoxLayout;
     columnas->setSpacing(18);

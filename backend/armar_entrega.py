@@ -56,7 +56,7 @@ def main():
     escribir(f"05_Backend_Grupo{g}.sql",
              f"-- {cab}-- Punto 5: funcionalidades en stored procedures, 8 reportes, auditoría con parámetros y los\n-- dos reportes con versión _tuneado. Se corre después del 04; se puede repetir (DROP ... IF EXISTS).\n\n"
              + unir("Tabla auxiliar de números", [("02b_numero.sql", leer("02b_numero.sql"))])
-             + unir("Funciones y stored procedures: seguridad, personas, clínica, agenda, protocolos", [("03_sp_semana3.sql", leer("03_sp_semana3.sql"))])
+             + unir("Vistas y stored procedures: seguridad, personas, clínica, agenda, protocolos", [("03_sp_semana3.sql", leer("03_sp_semana3.sql"))])
              + unir("Seña, cancelación, evaluaciones, tarjetas, cupones, notificaciones y asistente", [("04_sp_semana4.sql", leer("04_sp_semana4.sql"))])
              + unir("Reportes (8) y reporte de auditoría", [("05_reportes_semana5.sql", leer("05_reportes_semana5.sql"))])
              + unir("Reportes con tuning (_tuneado)", [("06_tuning_semana6.sql", leer("06_tuning_semana6.sql"))])

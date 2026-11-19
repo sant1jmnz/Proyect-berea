@@ -17,7 +17,7 @@ class QWidget;
 namespace Formato {
 
 /* Así guarda la base las fechas con hora (DATETIME): "2026-11-18 13:30:00". */
-inline const QString FECHA_HORA_BASE = QStringLiteral("yyyy-MM-dd HH:mm:ss");
+static const QString FECHA_HORA_BASE = "yyyy-MM-dd HH:mm:ss";
 
 /* 25000 → "$25.000" (con el separador de miles del idioma de la PC). */
 QString pesos(double monto);

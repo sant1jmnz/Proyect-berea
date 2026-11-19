@@ -70,7 +70,7 @@ PaginaCupones::PaginaCupones(QWidget *parent) : QWidget(parent)
 
     /* Hasta que haya base, no se puede hacer nada. */
     controles = { editDni, btnBuscar, btnEmitir, btnToken, btnValidar };
-    for (QWidget *w : std::as_const(controles))
+    for (QWidget *w : controles)
         w->setEnabled(false);
 
     connect(btnBuscar, &QPushButton::clicked, this, &PaginaCupones::buscar);
@@ -84,7 +84,7 @@ void PaginaCupones::usarBase(Repositorio *repositorio, int idUsuarioActual)
 {
     repo = repositorio;
     idUsuario = idUsuarioActual;
-    for (QWidget *w : std::as_const(controles))
+    for (QWidget *w : controles)
         w->setEnabled(repo != nullptr);
     lblCuenta->setText("Buscá a la paciente por su DNI.");
 }

@@ -87,9 +87,13 @@ usuarios y turnos.
   un `EXIT HANDLER FOR SQLEXCEPTION` para los errores del motor, como en el PPT 006 de la cátedra.
 - Todos devuelven 6 columnas: `estado, codigo, mensaje, id, valor, dato`.
 - **El log solo se escribe desde los SP** (`auditoria.sp_registrar_log`); nunca con `INSERT` a mano.
-- **Los estados y saldos no se guardan, se calculan** (`fn_sena`, `fn_saldo_tarjeta`,
-  vigencia de cupones y evaluaciones).
-- La hora sale de `auditoria.fn_ahora()`: es `NOW()`, salvo que la sesión defina
+- **Los estados y saldos no se guardan, se calculan**: el precio final y la seña de cada turno salen
+  de la vista `agenda.PrecioTurno`; el saldo de una tarjeta, de sus movimientos; la vigencia de cupones
+  y evaluaciones, de sus fechas.
+- **Lo que usan varios SP está en una vista**, escrita una sola vez al principio de `03_sp_semana3.sql`:
+  `agenda.PrecioTurno`, `agenda.DetalleTurno` (lo que muestran las pantallas de un turno; la usan
+  `sp_buscar_turnos` y `sp_turnos_del_periodo`) y `personas.PrimerTelefonoPaciente`.
+- La hora es `COALESCE(@ahora_simulado, NOW())`: la de la PC, salvo que la sesión defina
   `@ahora_simulado` (para pruebas y para cargar historia).
 
 ### Agregar un SP nuevo

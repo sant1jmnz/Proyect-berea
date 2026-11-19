@@ -106,7 +106,7 @@ PaginaUsuarios::PaginaUsuarios(QWidget *parent) : QWidget(parent)
     raiz->addLayout(abajo);
 
     controlesAlta = { editUsuario, editEmail, editClave, editRepetir, comboRol, btnCrear };
-    for (QWidget *w : std::as_const(controlesAlta))
+    for (QWidget *w : controlesAlta)
         w->setEnabled(false);
     btnCambiarClave->setEnabled(false);
 
@@ -119,7 +119,7 @@ void PaginaUsuarios::usarBase(Repositorio *repositorio, int idUsuarioActual, con
     repo = repositorio;
     idUsuario = idUsuarioActual;
     const bool esAdmin = repo && rol == "administrador";
-    for (QWidget *w : std::as_const(controlesAlta))
+    for (QWidget *w : controlesAlta)
         w->setEnabled(esAdmin);
     btnCambiarClave->setEnabled(repo != nullptr);
     lblNota->setText(esAdmin ? "El usuario nuevo ya puede ingresar, desde cualquier PC conectada a esta base."

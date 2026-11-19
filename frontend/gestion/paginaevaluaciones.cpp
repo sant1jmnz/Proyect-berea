@@ -59,7 +59,7 @@ PaginaEvaluaciones::PaginaEvaluaciones(QWidget *parent) : QWidget(parent)
     raiz->addLayout(abajo);
 
     controles = { checkPendientes, btnVencer, btnReclamo, btnNoApta, btnApta };
-    for (QWidget *w : std::as_const(controles))
+    for (QWidget *w : controles)
         w->setEnabled(false);
 
     connect(checkPendientes, &QCheckBox::toggled, this, &PaginaEvaluaciones::recargar);
@@ -73,7 +73,7 @@ void PaginaEvaluaciones::usarBase(Repositorio *repositorio, int idUsuarioActual)
 {
     repo = repositorio;
     idUsuario = idUsuarioActual;
-    for (QWidget *w : std::as_const(controles))
+    for (QWidget *w : controles)
         w->setEnabled(repo != nullptr);
     recargar();
 }

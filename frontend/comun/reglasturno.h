@@ -9,9 +9,9 @@
 namespace ReglasTurno {
 
 /* Días hacia atrás y hacia adelante de agenda que se leen de la base. */
-constexpr int DIAS_AGENDA = 60;
+const int DIAS_AGENDA = 60;
 /* Cada cuánto las dos aplicaciones miran si la base cambió (milisegundos). */
-constexpr int MS_SINCRONIZAR = 3000;
+const int MS_SINCRONIZAR = 3000;
 
 /* true si en ese horario ya hay un turno que no se canceló. */
 bool horarioOcupado(const QVector<Turno> &turnos, const QDateTime &inicio);

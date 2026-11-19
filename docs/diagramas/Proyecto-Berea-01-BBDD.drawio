@@ -145,7 +145,7 @@
 <mxCell id="at39e" edge="1" parent="1" source="at39" target="n_E_Usuario" style="endArrow=none;html=1;rounded=0;entryX=0.500;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
 <mxCell id="at40" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="email" vertex="1"><mxGeometry x="3510" y="1976" width="96" height="32" as="geometry"/></mxCell>
 <mxCell id="at40e" edge="1" parent="1" source="at40" target="n_E_Usuario" style="endArrow=none;html=1;rounded=0;entryX=0.750;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="at41" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="password_hash" vertex="1"><mxGeometry x="3525" y="2192" width="111" height="32" as="geometry"/></mxCell>
+<mxCell id="at41" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="password" vertex="1"><mxGeometry x="3525" y="2192" width="111" height="32" as="geometry"/></mxCell>
 <mxCell id="at41e" edge="1" parent="1" source="at41" target="n_E_Usuario" style="endArrow=none;html=1;rounded=0;entryX=0.750;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;"><mxGeometry relative="1" as="geometry"/></mxCell>
 <mxCell id="at42" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=10;" value="activo" vertex="1"><mxGeometry x="3290" y="1976" width="96" height="32" as="geometry"/></mxCell>
 <mxCell id="at42e" edge="1" parent="1" source="at42" target="n_E_Usuario" style="endArrow=none;html=1;rounded=0;entryX=0.250;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;"><mxGeometry relative="1" as="geometry"/></mxCell>

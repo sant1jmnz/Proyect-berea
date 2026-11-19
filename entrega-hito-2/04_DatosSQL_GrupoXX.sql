@@ -1,7 +1,7 @@
 -- Dermalia - Proyecto Informático I - Bases de Datos - Hito 2 (entrega final)
 -- MySQL 8. Orden correcto: 03_ModeloSQL, 04_DatosSQL, 05_Backend (la secuencia se puede repetir).
 --
--- Punto 4: datos de ejemplo. Se corre después del 03 (sobre las tablas vacías).
+-- Punto 4: datos de ejemplo. Se corre después del 03. Se puede repetir: primero vacía las tablas.
 -- El modelo de LOGS no se carga acá: lo llenan los stored procedures cuando se usan (4c).
 
 -- Dermalia: datos de ejemplo (MySQL 8). Se corre DESPUÉS de codigobasededatossolotablas.sql.
@@ -17,6 +17,42 @@
 
 -- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
 SET NAMES utf8mb4;
+
+-- Se puede correr varias veces: primero vacía las tablas (en orden inverso al de creación,
+-- sin revisar las claves foráneas mientras tanto) y después las vuelve a cargar.
+SET FOREIGN_KEY_CHECKS = 0;
+DELETE FROM asistente.ConsultaAsistente;
+DELETE FROM auditoria.Log;
+DELETE FROM auditoria.TipoEvento;
+DELETE FROM notificaciones.Notificacion;
+DELETE FROM notificaciones.TipoNotificacion;
+DELETE FROM notificaciones.EstadoNotificacion;
+DELETE FROM notificaciones.CanalNotificacion;
+DELETE FROM beneficios.Cupon;
+DELETE FROM beneficios.ReglaBeneficio;
+DELETE FROM beneficios.TipoRegla;
+DELETE FROM pagos.MovimientoTarjeta;
+DELETE FROM pagos.TarjetaRegalo;
+DELETE FROM pagos.PagoSena;
+DELETE FROM pagos.MedioPago;
+DELETE FROM pagos.EstadoPago;
+DELETE FROM clinica.EvaluacionPrevia;
+DELETE FROM agenda.TurnoProtocolo;
+DELETE FROM agenda.Turno;
+DELETE FROM agenda.Origen;
+DELETE FROM agenda.EstadoTurno;
+DELETE FROM clinica.ResultadoEvaluacion;
+DELETE FROM clinica.ProfesionalProtocolo;
+DELETE FROM clinica.Protocolo;
+DELETE FROM clinica.CategoriaProtocolo;
+DELETE FROM personas.Disponibilidad;
+DELETE FROM personas.TelefonoProfesional;
+DELETE FROM personas.Profesional;
+DELETE FROM personas.TelefonoPaciente;
+DELETE FROM personas.Paciente;
+DELETE FROM seguridad.Usuario;
+DELETE FROM seguridad.Rol;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- Roles
 INSERT INTO seguridad.Rol (id_rol, nombre) VALUES

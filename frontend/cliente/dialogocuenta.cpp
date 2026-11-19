@@ -41,7 +41,18 @@ DialogoCuenta::DialogoCuenta(Repositorio *repositorio, QWidget *parent)
     partes = new QStackedWidget;
     raiz->addWidget(partes);
 
-    /* ---- Ingresar ---- */
+    partes->addWidget(armarIngreso());
+    partes->addWidget(armarAlta());
+
+    auto *btnCerrar = new QPushButton("Cerrar");
+    btnCerrar->setObjectName("btnCerrarCuenta");
+    raiz->addWidget(btnCerrar, 0, Qt::AlignRight);
+    connect(btnCerrar, &QPushButton::clicked, this, &QDialog::reject);
+}
+
+/* Parte "Ingresar": usuario, contraseña y el paso a "Crear cuenta". */
+QWidget *DialogoCuenta::armarIngreso()
+{
     auto *ingreso = new QWidget;
     auto *capaIngreso = new QVBoxLayout(ingreso);
     capaIngreso->setContentsMargins(0, 0, 0, 0);
@@ -75,9 +86,16 @@ DialogoCuenta::DialogoCuenta(Repositorio *repositorio, QWidget *parent)
     capaIngreso->addWidget(sinCuenta);
     capaIngreso->addWidget(btnIrACrear);
     capaIngreso->addStretch();
-    partes->addWidget(ingreso);
 
-    /* ---- Crear cuenta ---- */
+    connect(btnIngresar, &QPushButton::clicked, this, &DialogoCuenta::ingresar);
+    connect(editClave, &QLineEdit::returnPressed, this, &DialogoCuenta::ingresar);
+    connect(btnIrACrear, &QPushButton::clicked, this, [this] { partes->setCurrentIndex(1); editNombre->setFocus(); });
+    return ingreso;
+}
+
+/* Parte "Crear cuenta": los datos de la paciente y los de la cuenta. */
+QWidget *DialogoCuenta::armarAlta()
+{
     auto *alta = new QWidget;
     auto *capaAlta = new QVBoxLayout(alta);
     capaAlta->setContentsMargins(0, 0, 0, 0);
@@ -139,18 +157,10 @@ DialogoCuenta::DialogoCuenta(Repositorio *repositorio, QWidget *parent)
     btnVolverAIngresar->setObjectName("btnVolverAIngresar");
     capaAlta->addWidget(btnCrear);
     capaAlta->addWidget(btnVolverAIngresar);
-    partes->addWidget(alta);
 
-    auto *btnCerrar = new QPushButton("Cerrar");
-    btnCerrar->setObjectName("btnCerrarCuenta");
-    raiz->addWidget(btnCerrar, 0, Qt::AlignRight);
-
-    connect(btnIngresar, &QPushButton::clicked, this, &DialogoCuenta::ingresar);
-    connect(editClave, &QLineEdit::returnPressed, this, &DialogoCuenta::ingresar);
-    connect(btnIrACrear, &QPushButton::clicked, this, [this] { partes->setCurrentIndex(1); editNombre->setFocus(); });
     connect(btnVolverAIngresar, &QPushButton::clicked, this, [this] { partes->setCurrentIndex(0); editUsuario->setFocus(); });
     connect(btnCrear, &QPushButton::clicked, this, &DialogoCuenta::crearCuenta);
-    connect(btnCerrar, &QPushButton::clicked, this, &QDialog::reject);
+    return alta;
 }
 
 /* Ingreso con seguridad.sp_login: tiene que ser una cuenta de paciente. */

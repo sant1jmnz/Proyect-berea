@@ -63,6 +63,12 @@ private slots:
     void sincronizarPacientes();          /* con la base: trae lo que cambiaron la Terminal u otra PC */
 
 private:
+    /* Partes del constructor */
+    void cargarDatosLocales(bool datosDeEjemplo);
+    void armarFormularioCarga();
+    void conectarSenales();
+    void probarConexion(const QString &archivoContingencia);
+
     void irA(int pagina);
     void cargarProtocolos();
     void marcarError(QLineEdit *campo, bool hayError);

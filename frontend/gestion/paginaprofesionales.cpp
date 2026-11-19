@@ -48,17 +48,9 @@ PaginaProfesionales::PaginaProfesionales(QVector<Profesional> *profesionales,
                                          const QVector<Protocolo> *protocolosDisponibles, QWidget *parent)
     : QWidget(parent), datos(profesionales), protocolos(protocolosDisponibles)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Profesionales y disponibilidad");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Qué protocolos hace cada profesional y cuándo atiende. "
-                                 "Las franjas no pueden superponerse.");
-    subtitulo->setProperty("rol", "subtitulo");
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Profesionales y disponibilidad",
+                                      "Qué protocolos hace cada profesional y cuándo atiende. "
+                                      "Las franjas no pueden superponerse.");
 
     auto *cuerpo = new QHBoxLayout;
     cuerpo->setSpacing(16);

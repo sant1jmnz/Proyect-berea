@@ -57,10 +57,11 @@ private:
     void reiniciarCarga();
     void buscarMiTurno();
     bool mostrarTurnosDe(const QString &buscado);   /* false si no tiene turnos */
+    void traerTurnos(const QString &buscado);
+    void mostrarRecienCargado(const QString &dni);
     void mostrarTurno(int indice, int cantidad);
     void ocultarTurno();
     void cancelarMiTurno();
-    QString nuevoCodigoOperacion() const;
     void recargarLocal();   /* toma del archivo los turnos que cargó o canceló Gestión */
     void guardarLocal();    /* deja los turnos (y la paciente nueva) en el archivo */
 
@@ -82,8 +83,7 @@ private:
     QVector<int> protocolosVisibles;   /* fila de la lista → índice en `protocolos` */
     QVector<Turno> turnos;
     QString archivoLocal;
-    QString buscadoActual;             /* DNI o teléfono (solo dígitos) de la última búsqueda con resultados */
-    QString ultimoBuscado;             /* lo último que se buscó, aunque no haya tenido turnos */
+    QString ultimoBuscado;             /* DNI o teléfono (solo dígitos) de la última búsqueda, aunque no haya tenido turnos */
     int turnoMostrado = -1;            /* índice en `turnos` del que se ve en "Buscar mi turno" */
     bool ajustandoFecha = false;       /* evita que setSelectedDate vuelva a disparar el aviso */
     QString notaHorarioOriginal;

@@ -1,5 +1,7 @@
 #include "paginacupones.h"
 
+#include "formato.h"
+
 #include "repositorio.h"
 #include "validaciones.h"
 
@@ -39,7 +41,7 @@ PaginaCupones::PaginaCupones(QWidget *parent) : QWidget(parent)
     editDni->setObjectName("editDniCupon");
     editDni->setPlaceholderText("DNI de la paciente");
     editDni->setMaxLength(8);
-    editDni->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9]{0,8}"), this));
+    editDni->setValidator(new QRegularExpressionValidator(Validaciones::filtroDni(), this));
     btnBuscar = new QPushButton("Buscar cupones");
     btnBuscar->setObjectName("btnBuscarCupones");
     btnBuscar->setProperty("primario", true);
@@ -76,9 +78,8 @@ PaginaCupones::PaginaCupones(QWidget *parent) : QWidget(parent)
     raiz->addLayout(abajo);
 
     /* Hasta que haya base, no se puede hacer nada. */
-    for (QWidget *w : { static_cast<QWidget *>(editDni), static_cast<QWidget *>(btnBuscar),
-                        static_cast<QWidget *>(btnEmitir), static_cast<QWidget *>(btnToken),
-                        static_cast<QWidget *>(btnValidar) })
+    controles = { editDni, btnBuscar, btnEmitir, btnToken, btnValidar };
+    for (QWidget *w : std::as_const(controles))
         w->setEnabled(false);
 
     connect(btnBuscar, &QPushButton::clicked, this, &PaginaCupones::buscar);
@@ -92,9 +93,7 @@ void PaginaCupones::usarBase(Repositorio *repositorio, int idUsuarioActual)
 {
     repo = repositorio;
     idUsuario = idUsuarioActual;
-    for (QWidget *w : { static_cast<QWidget *>(editDni), static_cast<QWidget *>(btnBuscar),
-                        static_cast<QWidget *>(btnEmitir), static_cast<QWidget *>(btnToken),
-                        static_cast<QWidget *>(btnValidar) })
+    for (QWidget *w : std::as_const(controles))
         w->setEnabled(repo != nullptr);
     lblCuenta->setText("Buscá a la paciente por su DNI.");
 }
@@ -135,7 +134,7 @@ void PaginaCupones::buscar()
             c["codigo"].toString(),
             c["regla"].toString(),
             QString::number(c["porcentaje_descuento"].toDouble(), 'f', 0) + "%",
-            QDateTime::fromString(c["fecha_vencimiento"].toString(), "yyyy-MM-dd HH:mm:ss").toString("dd/MM/yyyy"),
+            Formato::fechaDeBase(c["fecha_vencimiento"]),
             estado,
         };
         for (int col = ColCodigo; col <= ColEstado; ++col) {

@@ -152,13 +152,24 @@ private slots:
         const Respuesta paciente = repo.altaPaciente(dni, "Otra", "Computadora", QDate(1991, 5, 2), QString(),
                                                      "1144443333", "terminal");
         QVERIFY2(paciente.ok, qPrintable(paciente.mensaje));
+        // La primera reserva es de esta paciente; las otras, de pacientes distintas
+        // (la base no deja que una misma paciente tenga dos turnos a la misma hora).
         QVector<int> reservados;
-        for (const HorarioLibre &h : repo.horariosLibres(inicio.date(), { idProtocolo }))
-            if (h.inicio == inicio) {
-                const Respuesta r = repo.altaTurno(paciente.id, h.idProfesional, inicio, { idProtocolo }, "terminal");
-                QVERIFY2(r.ok, qPrintable(r.mensaje));
-                reservados << r.id;
+        int idPaciente = paciente.id;
+        for (const HorarioLibre &h : repo.horariosLibres(inicio.date(), { idProtocolo })) {
+            if (h.inicio != inicio)
+                continue;
+            if (!reservados.isEmpty()) {
+                const QString otroDni = QString::number(50000000 + QRandomGenerator::global()->bounded(9999999));
+                const Respuesta otra = repo.altaPaciente(otroDni, "Otra", "Paciente", QDate(1990, 1, 1), QString(),
+                                                         "1144443334", "terminal");
+                QVERIFY2(otra.ok, qPrintable(otra.mensaje));
+                idPaciente = otra.id;
             }
+            const Respuesta r = repo.altaTurno(idPaciente, h.idProfesional, inicio, { idProtocolo }, "terminal");
+            QVERIFY2(r.ok, qPrintable(r.mensaje));
+            reservados << r.id;
+        }
         QVERIFY(!reservados.isEmpty());
 
         // La terminal deja de ofrecer esa hora sin que nadie toque nada.

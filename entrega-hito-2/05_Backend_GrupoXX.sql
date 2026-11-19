@@ -81,7 +81,7 @@ SELECT v.n
  WHERE NOT EXISTS (SELECT 1 FROM agenda.Numero x WHERE x.n = v.n);
 
 -- ======================================================================
--- Funciones y stored procedures: seguridad, personas, clínica, agenda, protocolos
+-- Vistas y stored procedures: seguridad, personas, clínica, agenda, protocolos
 -- ======================================================================
 
 
@@ -103,7 +103,8 @@ SELECT v.n
 --   * toda respuesta tiene las mismas 6 columnas:
 --       estado ('OK' o 'ERROR'), codigo (0 o el número de error), mensaje,
 --       id (lo que se creó o modificó), valor (un monto) y dato (un texto).
---   * las reglas de negocio se avisan con una fila 'ERROR' y un código propio (52xxx), y el SP termina con LEAVE;
+--   * cada regla de negocio es un IF que, si falla, guarda un código propio (52xxx) en v_codigo; las
+--     reglas siguientes solo se miran si v_codigo sigue en NULL, y al final se graba o se devuelve el ERROR;
 --     el catálogo de códigos está en docs/11-pruebas-bbdd.md.
 --   * toda acción relevante escribe en auditoria.Log SOLO desde acá.
 -- Los SP de consulta (listados, búsquedas, reportes) devuelven directamente
@@ -113,6 +114,69 @@ SELECT v.n
 SET NAMES utf8mb4;
 
 DELIMITER //
+
+-- =====================================================================
+--  VISTAS (consultas que usan varios SP; así se escriben una sola vez)
+-- =====================================================================
+
+-- Primer teléfono cargado de cada paciente (el que se muestra en las pantallas).
+CREATE OR REPLACE VIEW personas.PrimerTelefonoPaciente AS
+SELECT tp.id_paciente,
+       tp.telefono
+  FROM personas.TelefonoPaciente AS tp
+ WHERE tp.id_telefono_paciente = (SELECT MIN(tp2.id_telefono_paciente)
+                                    FROM personas.TelefonoPaciente AS tp2
+                                   WHERE tp2.id_paciente = tp.id_paciente)//
+
+-- Precio final y seña de cada turno (RF-05, RF-17):
+--   precio final = suma de los precios de sus protocolos, menos el descuento del cupón (si tiene);
+--   seña         = precio final por el mayor porcentaje de seña de las categorías de sus protocolos.
+CREATE OR REPLACE VIEW agenda.PrecioTurno AS
+SELECT pt.id_turno,
+       pt.precio_final,
+       ROUND(pt.precio_final * pt.porcentaje_sena / 100, 0) AS sena
+  FROM (SELECT t.id_turno,
+               COALESCE(SUM(tp.precio_aplicado), 0)
+                   - ROUND(COALESCE(SUM(tp.precio_aplicado), 0) * COALESCE(MAX(cu.porcentaje_descuento), 0) / 100, 2) AS precio_final,
+               COALESCE(MAX(ca.porcentaje_sena), 0) AS porcentaje_sena
+          FROM agenda.Turno AS t
+          LEFT JOIN agenda.TurnoProtocolo AS tp ON tp.id_turno = t.id_turno
+          LEFT JOIN clinica.Protocolo AS pr ON pr.id_protocolo = tp.id_protocolo
+          LEFT JOIN clinica.CategoriaProtocolo AS ca ON ca.id_categoria = pr.id_categoria
+          LEFT JOIN beneficios.Cupon AS cu ON cu.id_turno = t.id_turno
+         GROUP BY t.id_turno) AS pt//
+
+-- Un turno con todo lo que muestran las pantallas: paciente, profesional, estado,
+-- protocolo, precio, seña y el último recordatorio. La usan sp_buscar_turnos y
+-- sp_turnos_del_periodo, que solo cambian el filtro.
+CREATE OR REPLACE VIEW agenda.DetalleTurno AS
+SELECT t.id_turno, p.id_paciente, p.apellido AS paciente, p.nombre AS paciente_nombre, p.dni,
+       tel.telefono,
+       pr.apellido AS profesional, pr.nombre AS profesional_nombre, t.fecha_hora_inicio, t.fecha_hora_fin,
+       e.nombre AS estado, o.nombre AS origen,
+       (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo AS tp JOIN clinica.Protocolo AS pt ON pt.id_protocolo = tp.id_protocolo
+         WHERE tp.id_turno = t.id_turno) AS protocolos,
+       pre.precio_final,
+       pre.sena,
+       COALESCE(ep.nombre, 'sin seña') AS estado_sena,
+       ps.codigo_operacion,
+       ca.nombre AS recordatorio_canal, es.nombre AS recordatorio_estado, nr.fecha_programada AS recordatorio_programado
+  FROM agenda.Turno AS t
+  JOIN personas.Paciente AS p ON p.id_paciente = t.id_paciente
+  JOIN personas.Profesional AS pr ON pr.id_profesional = t.id_profesional
+  JOIN agenda.EstadoTurno AS e ON e.id_estado_turno = t.id_estado_turno
+  JOIN agenda.Origen AS o ON o.id_origen = t.id_origen
+  JOIN agenda.PrecioTurno AS pre ON pre.id_turno = t.id_turno
+  LEFT JOIN personas.PrimerTelefonoPaciente AS tel ON tel.id_paciente = p.id_paciente
+  LEFT JOIN pagos.PagoSena AS ps ON ps.id_turno = t.id_turno
+  LEFT JOIN pagos.EstadoPago AS ep ON ep.id_estado_pago = ps.id_estado_pago
+  LEFT JOIN notificaciones.Notificacion AS nr ON nr.id_notificacion =
+        (SELECT MAX(n.id_notificacion) FROM notificaciones.Notificacion AS n
+           JOIN notificaciones.TipoNotificacion AS tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion AND tn.nombre = 'recordatorio de turno'
+          WHERE n.id_turno = t.id_turno)
+  LEFT JOIN notificaciones.CanalNotificacion AS ca ON ca.id_canal = nr.id_canal
+  LEFT JOIN notificaciones.EstadoNotificacion AS es ON es.id_estado_notificacion = nr.id_estado_notificacion//
+
 
 -- =====================================================================
 --  AUXILIARES
@@ -352,7 +416,7 @@ BEGIN
     IF v_codigo IS NULL THEN
         START TRANSACTION;
         INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
-VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'paciente'), p_nombre_usuario, p_email, p_password);
+        VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'paciente'), p_nombre_usuario, p_email, p_password);
         SELECT MAX(id_usuario) INTO v_usuario FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario;
         UPDATE personas.Paciente SET id_usuario = v_usuario WHERE id_paciente = v_paciente;
         CALL auditoria.sp_registrar_log('cuenta_creada', v_usuario, v_paciente, p_origen, 'Cuenta de paciente creada',
@@ -362,7 +426,7 @@ VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'paciente'), p_nombre_u
     ELSE
         CALL auditoria.sp_registrar_log('cuenta_creada', NULL, v_paciente, p_origen, v_mensaje,
                                             'seguridad.Usuario', NULL, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -424,10 +488,10 @@ BEGIN
     IF v_codigo IS NULL THEN
         START TRANSACTION;
         INSERT INTO personas.Paciente (dni, nombre, apellido, fecha_nacimiento, fecha_alta, email)
-VALUES (p_dni, p_nombre, p_apellido, p_fecha_nacimiento, COALESCE(@ahora_simulado, NOW()), p_email);
+        VALUES (p_dni, p_nombre, p_apellido, p_fecha_nacimiento, COALESCE(@ahora_simulado, NOW()), p_email);
         SELECT MAX(id_paciente) INTO v_id FROM personas.Paciente WHERE dni = p_dni;
         INSERT INTO personas.TelefonoPaciente (id_paciente, telefono)
-VALUES (v_id, p_telefono);
+        VALUES (v_id, p_telefono);
         CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, v_id, p_origen,
             'Alta de paciente DNI', 'personas.Paciente', v_id, NULL, p_apellido, 1, NULL);
         COMMIT;
@@ -435,7 +499,7 @@ VALUES (v_id, p_telefono);
     ELSE
         CALL auditoria.sp_registrar_log('alta_paciente', p_id_usuario, NULL, p_origen, v_mensaje,
                                             'personas.Paciente', NULL, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -504,7 +568,7 @@ BEGIN
     ELSE
         CALL auditoria.sp_registrar_log('modificacion_paciente', p_id_usuario, p_id_paciente, p_origen, v_mensaje,
                                             'personas.Paciente', p_id_paciente, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -515,10 +579,10 @@ CREATE PROCEDURE personas.sp_buscar_paciente(IN p_texto VARCHAR(100))
 BEGIN
     DECLARE v_texto VARCHAR(100) DEFAULT COALESCE(p_texto, '');
     SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email,
-           (SELECT tp.telefono FROM personas.TelefonoPaciente tp
-             WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefonos,
+           tel.telefono AS telefonos,
            (p.id_usuario IS NOT NULL) AS tiene_cuenta
       FROM personas.Paciente p
+      LEFT JOIN personas.PrimerTelefonoPaciente AS tel ON tel.id_paciente = p.id_paciente
      WHERE CHAR_LENGTH(v_texto) >= 3
        AND (p.dni = v_texto
             OR p.nombre = v_texto
@@ -590,13 +654,13 @@ BEGIN
     IF v_codigo IS NULL THEN
         START TRANSACTION;
         INSERT INTO seguridad.Usuario (id_rol, nombre_usuario, email, password)
-VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'profesional'), p_nombre_usuario, p_email, p_password);
+        VALUES ((SELECT id_rol FROM seguridad.Rol WHERE nombre = 'profesional'), p_nombre_usuario, p_email, p_password);
         SELECT MAX(id_usuario) INTO v_usuario FROM seguridad.Usuario WHERE nombre_usuario = p_nombre_usuario;
         INSERT INTO personas.Profesional (id_usuario, matricula, nombre, apellido, email)
-VALUES (v_usuario, p_matricula, p_nombre, p_apellido, p_email);
+        VALUES (v_usuario, p_matricula, p_nombre, p_apellido, p_email);
         SELECT MAX(id_profesional) INTO v_id FROM personas.Profesional WHERE matricula = p_matricula;
         INSERT INTO personas.TelefonoProfesional (id_profesional, telefono)
-VALUES (v_id, p_telefono);
+        VALUES (v_id, p_telefono);
         CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen,
             'Alta del profesional',
             'personas.Profesional', v_id, NULL, p_nombre_usuario, 1, NULL);
@@ -605,7 +669,7 @@ VALUES (v_id, p_telefono);
     ELSE
         CALL auditoria.sp_registrar_log('alta_profesional', p_id_usuario, NULL, p_origen, v_mensaje,
                                             'personas.Profesional', NULL, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -672,7 +736,7 @@ BEGIN
     ELSE
         CALL auditoria.sp_registrar_log('modificacion_profesional', p_id_usuario, NULL, p_origen, v_mensaje,
                                             'personas.Profesional', p_id_profesional, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -720,7 +784,7 @@ BEGIN
     IF v_codigo IS NULL THEN
         START TRANSACTION;
         INSERT INTO personas.Disponibilidad (id_profesional, fecha, hora_inicio, hora_fin)
-VALUES (p_id_profesional, p_fecha, p_hora_inicio, p_hora_fin);
+        VALUES (p_id_profesional, p_fecha, p_hora_inicio, p_hora_fin);
         SELECT MAX(id_disponibilidad) INTO v_id FROM personas.Disponibilidad
          WHERE id_profesional = p_id_profesional AND fecha = p_fecha AND hora_inicio = p_hora_inicio AND hora_fin = p_hora_fin;
         CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen,
@@ -731,7 +795,7 @@ VALUES (p_id_profesional, p_fecha, p_hora_inicio, p_hora_fin);
     ELSE
         CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_mensaje,
                                             'personas.Disponibilidad', NULL, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -783,7 +847,7 @@ BEGIN
     ELSE
         CALL auditoria.sp_registrar_log('cambio_disponibilidad', p_id_usuario, NULL, p_origen, v_mensaje,
                                             'personas.Disponibilidad', p_id_disponibilidad, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -840,7 +904,7 @@ BEGIN
     ELSE
         CALL auditoria.sp_registrar_log('asignacion_protocolo', p_id_usuario, NULL, p_origen, v_mensaje,
                                             'clinica.ProfesionalProtocolo', p_id_profesional, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -912,7 +976,7 @@ BEGIN
     IF v_codigo IS NULL THEN
         START TRANSACTION;
         INSERT INTO clinica.Protocolo (id_categoria, nombre, descripcion, precio, duracion_min)
-VALUES (p_id_categoria, p_nombre, p_descripcion, p_precio, p_duracion_min);
+        VALUES (p_id_categoria, p_nombre, p_descripcion, p_precio, p_duracion_min);
         SELECT MAX(id_protocolo) INTO v_id FROM clinica.Protocolo WHERE nombre = p_nombre;
         CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, 'Alta del protocolo',
             'clinica.Protocolo', v_id, NULL, CAST(p_precio AS CHAR), 1, NULL);
@@ -921,7 +985,7 @@ VALUES (p_id_categoria, p_nombre, p_descripcion, p_precio, p_duracion_min);
     ELSE
         CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_mensaje,
                                             'clinica.Protocolo', NULL, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -991,7 +1055,7 @@ BEGIN
     ELSE
         CALL auditoria.sp_registrar_log('cambio_protocolo', p_id_usuario, NULL, p_origen, v_mensaje,
                                             'clinica.Protocolo', p_id_protocolo, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -1084,6 +1148,7 @@ BEGIN
     DECLARE v_msg VARCHAR(500) DEFAULT '';
     DECLARE v_pedidos INT DEFAULT 0;
     DECLARE v_n INT DEFAULT 0;
+    DECLARE v_prof INT DEFAULT NULL;
     DECLARE v_dur INT DEFAULT 0;
     DECLARE v_cirugias INT DEFAULT 0;
     DECLARE v_fin DATETIME;
@@ -1127,24 +1192,24 @@ BEGIN
         SET v_mensaje = 'El turno debe ser en el futuro';
     END IF;
 
-    -- Se bloquea al profesional: dos reservas simultáneas del mismo horario se atienden de a una.
-    SELECT id_profesional INTO v_n FROM personas.Profesional WHERE id_profesional = p_id_profesional AND activo = 1;
-    IF v_codigo IS NULL AND (v_n = 0 OR v_n IS NULL) THEN
+    SELECT id_profesional INTO v_prof FROM personas.Profesional WHERE id_profesional = p_id_profesional AND activo = 1;
+    IF v_codigo IS NULL AND (v_prof IS NULL) THEN
         SET v_codigo = 52074;
         SET v_mensaje = 'El profesional no existe o está dado de baja';
     END IF;
 
     -- Protocolos pedidos: hasta 3 (los que no se usan van en NULL).
     SET v_pedidos = (SELECT COUNT(x.id) FROM (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3) x);
-    SELECT COUNT(*), COALESCE(SUM(p.duracion_min), 0), COALESCE(SUM(c.requiere_evaluacion), 0), MIN(p.id_protocolo + (c.requiere_evaluacion <> 1) * 1000000)
-      INTO v_n, v_dur, v_cirugias, v_cirugia
+    SELECT COUNT(*), COALESCE(SUM(p.duracion_min), 0), COALESCE(SUM(c.requiere_evaluacion), 0)
+      INTO v_n, v_dur, v_cirugias
       FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
      WHERE p.activo = 1
        AND p.id_protocolo IN (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3);
     -- La cirugía pedida (si hay): el menor id entre los protocolos que requieren evaluación.
-    IF v_cirugia >= 1000000 THEN
-        SET v_cirugia = NULL;
-    END IF;
+    SELECT MIN(p.id_protocolo) INTO v_cirugia
+      FROM clinica.Protocolo p JOIN clinica.CategoriaProtocolo c ON c.id_categoria = p.id_categoria
+     WHERE p.activo = 1 AND c.requiere_evaluacion = 1
+       AND p.id_protocolo IN (SELECT p_protocolo1 AS id UNION SELECT p_protocolo2 UNION SELECT p_protocolo3);
     IF v_codigo IS NULL AND (v_pedidos = 0 OR v_n <> v_pedidos) THEN
         SET v_codigo = 52075;
         SET v_mensaje = 'Algún protocolo no existe o está dado de baja';
@@ -1184,7 +1249,6 @@ BEGIN
     END IF;
 
     -- Cirugía: hace falta una evaluación apta, de menos de 6 meses y sin usar.
-    -- Una cirugía necesita una evaluación apta de menos de 6 meses que no se haya usado.
     SELECT MAX(ev.id_evaluacion) INTO v_eval
       FROM clinica.EvaluacionPrevia ev
       JOIN agenda.Turno tc ON tc.id_turno = ev.id_turno
@@ -1197,7 +1261,6 @@ BEGIN
         SET v_mensaje = 'La cirugía necesita una consulta previa con resultado apto de menos de 6 meses';
     END IF;
     -- Cupón (opcional): de la paciente, vigente y sin usar.
-    -- Cupón (opcional): de la paciente, sin usar y vigente.
     SELECT id_cupon, id_paciente, id_turno, fecha_vencimiento INTO v_cupon, v_cupon_pac, v_cupon_turno, v_cupon_venc
       FROM beneficios.Cupon WHERE codigo = p_codigo_cupon;
     IF v_codigo IS NULL AND (p_codigo_cupon <> '' AND (v_cupon IS NULL)) THEN
@@ -1220,7 +1283,7 @@ BEGIN
     IF v_codigo IS NULL THEN
         INSERT INTO agenda.Turno (id_paciente, id_profesional, id_estado_turno, id_origen, id_evaluacion_previa,
                                   fecha_hora_inicio, fecha_hora_fin, fecha_creacion)
-VALUES (p_id_paciente, p_id_profesional, v_pendiente, v_id_origen, v_eval, p_inicio, v_fin, COALESCE(@ahora_simulado, NOW()));
+        VALUES (p_id_paciente, p_id_profesional, v_pendiente, v_id_origen, v_eval, p_inicio, v_fin, COALESCE(@ahora_simulado, NOW()));
         SELECT MAX(id_turno) INTO v_id_turno FROM agenda.Turno
          WHERE id_paciente = p_id_paciente AND id_profesional = p_id_profesional AND fecha_hora_inicio = p_inicio;
         INSERT INTO agenda.TurnoProtocolo (id_turno, id_protocolo, precio_aplicado)
@@ -1251,11 +1314,13 @@ VALUES (p_id_paciente, p_id_profesional, v_pendiente, v_id_origen, v_eval, p_ini
             'agenda.Turno', v_id_turno, NULL, CAST(p_inicio AS CHAR), 1, NULL);
         COMMIT;
         SELECT 'OK' AS estado, 0 AS codigo, 'Turno agendado' AS mensaje, v_id_turno AS id,
-               ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = v_id_turno), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = v_id_turno), 0) / 100, 0) AS valor, CAST((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = v_id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = v_id_turno), 0) / 100, 2)) AS CHAR) AS dato;
+               pt.sena AS valor, CAST(pt.precio_final AS CHAR) AS dato
+          FROM agenda.PrecioTurno AS pt
+         WHERE pt.id_turno = v_id_turno;
     ELSE
         CALL auditoria.sp_registrar_log('turno_rechazado', p_id_usuario, p_id_paciente, p_origen,
-                v_mensaje, 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+            v_mensaje, 'agenda.Turno', NULL, NULL, NULL, 0, NULL);
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -1268,35 +1333,17 @@ DROP PROCEDURE IF EXISTS agenda.sp_buscar_turnos//
 CREATE PROCEDURE agenda.sp_buscar_turnos(IN p_texto VARCHAR(100), IN p_solo_vigentes SMALLINT)
 BEGIN
     DECLARE v_texto VARCHAR(100) DEFAULT COALESCE(p_texto, '');
-    SELECT t.id_turno, p.id_paciente, p.apellido AS paciente, p.nombre AS paciente_nombre, p.dni,
-           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
-           pr.apellido AS profesional, pr.nombre AS profesional_nombre, t.fecha_hora_inicio, t.fecha_hora_fin,
-           e.nombre AS estado, o.nombre AS origen,
-           (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo WHERE tp.id_turno = t.id_turno) AS protocolos,
-           (COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = t.id_turno), 0) / 100, 2)) AS precio_final,
-           ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = t.id_turno), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = t.id_turno), 0) / 100, 0) AS sena,
-           COALESCE(ep.nombre, 'sin seña') AS estado_sena,
-           ps.codigo_operacion,
-           ca.nombre AS recordatorio_canal, es.nombre AS recordatorio_estado, nr.fecha_programada AS recordatorio_programado
-      FROM agenda.Turno t
-      JOIN personas.Paciente p ON p.id_paciente = t.id_paciente
-      JOIN personas.Profesional pr ON pr.id_profesional = t.id_profesional
-      JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
-      JOIN agenda.Origen o ON o.id_origen = t.id_origen
-      LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
-      LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
-      LEFT JOIN notificaciones.Notificacion nr ON nr.id_notificacion =
-            (SELECT MAX(n.id_notificacion) FROM notificaciones.Notificacion n
-               JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion AND tn.nombre = 'recordatorio de turno'
-              WHERE n.id_turno = t.id_turno)
-      LEFT JOIN notificaciones.CanalNotificacion ca ON ca.id_canal = nr.id_canal
-      LEFT JOIN notificaciones.EstadoNotificacion es ON es.id_estado_notificacion = nr.id_estado_notificacion
+    SELECT d.id_turno, d.id_paciente, d.paciente, d.paciente_nombre, d.dni, d.telefono,
+           d.profesional, d.profesional_nombre, d.fecha_hora_inicio, d.fecha_hora_fin, d.estado, d.origen,
+           d.protocolos, d.precio_final, d.sena, d.estado_sena, d.codigo_operacion,
+           d.recordatorio_canal, d.recordatorio_estado, d.recordatorio_programado
+      FROM agenda.DetalleTurno AS d
      WHERE CHAR_LENGTH(v_texto) >= 3
-       AND (p.dni = v_texto
-            OR p.nombre = v_texto OR p.apellido = v_texto
-            OR EXISTS (SELECT 1 FROM personas.TelefonoPaciente tp3 WHERE tp3.id_paciente = p.id_paciente AND tp3.telefono = v_texto))
-       AND (COALESCE(p_solo_vigentes, 0) = 0 OR (e.nombre IN ('pendiente', 'confirmado') AND t.fecha_hora_inicio > COALESCE(@ahora_simulado, NOW())))
-     ORDER BY t.fecha_hora_inicio DESC;
+       AND (d.dni = v_texto
+            OR d.paciente_nombre = v_texto OR d.paciente = v_texto
+            OR EXISTS (SELECT 1 FROM personas.TelefonoPaciente AS tp WHERE tp.id_paciente = d.id_paciente AND tp.telefono = v_texto))
+       AND (COALESCE(p_solo_vigentes, 0) = 0 OR (d.estado IN ('pendiente', 'confirmado') AND d.fecha_hora_inicio > COALESCE(@ahora_simulado, NOW())))
+     ORDER BY d.fecha_hora_inicio DESC;
 END//
 
 -- Agenda de un período: todos los turnos con fecha de inicio entre p_desde y
@@ -1305,31 +1352,13 @@ END//
 DROP PROCEDURE IF EXISTS agenda.sp_turnos_del_periodo//
 CREATE PROCEDURE agenda.sp_turnos_del_periodo(IN p_desde DATE, IN p_hasta DATE)
 BEGIN
-    SELECT t.id_turno, p.id_paciente, p.apellido AS paciente, p.nombre AS paciente_nombre, p.dni,
-           (SELECT tp2.telefono FROM personas.TelefonoPaciente tp2 WHERE tp2.id_telefono_paciente = (SELECT MIN(tp2x.id_telefono_paciente) FROM personas.TelefonoPaciente tp2x WHERE tp2x.id_paciente = p.id_paciente)) AS telefono,
-           pr.apellido AS profesional, pr.nombre AS profesional_nombre, t.fecha_hora_inicio, t.fecha_hora_fin,
-           e.nombre AS estado, o.nombre AS origen,
-           (SELECT MIN(pt.nombre) FROM agenda.TurnoProtocolo tp JOIN clinica.Protocolo pt ON pt.id_protocolo = tp.id_protocolo WHERE tp.id_turno = t.id_turno) AS protocolos,
-           (COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = t.id_turno), 0) / 100, 2)) AS precio_final,
-           ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = t.id_turno), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = t.id_turno), 0) / 100, 0) AS sena,
-           COALESCE(ep.nombre, 'sin seña') AS estado_sena,
-           ps.codigo_operacion,
-           ca.nombre AS recordatorio_canal, es.nombre AS recordatorio_estado, nr.fecha_programada AS recordatorio_programado
-      FROM agenda.Turno t
-      JOIN personas.Paciente p ON p.id_paciente = t.id_paciente
-      JOIN personas.Profesional pr ON pr.id_profesional = t.id_profesional
-      JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno
-      JOIN agenda.Origen o ON o.id_origen = t.id_origen
-      LEFT JOIN pagos.PagoSena ps ON ps.id_turno = t.id_turno
-      LEFT JOIN pagos.EstadoPago ep ON ep.id_estado_pago = ps.id_estado_pago
-      LEFT JOIN notificaciones.Notificacion nr ON nr.id_notificacion =
-            (SELECT MAX(n.id_notificacion) FROM notificaciones.Notificacion n
-               JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion AND tn.nombre = 'recordatorio de turno'
-              WHERE n.id_turno = t.id_turno)
-      LEFT JOIN notificaciones.CanalNotificacion ca ON ca.id_canal = nr.id_canal
-      LEFT JOIN notificaciones.EstadoNotificacion es ON es.id_estado_notificacion = nr.id_estado_notificacion
-     WHERE t.fecha_hora_inicio >= p_desde AND t.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
-     ORDER BY t.fecha_hora_inicio, t.id_turno;
+    SELECT d.id_turno, d.id_paciente, d.paciente, d.paciente_nombre, d.dni, d.telefono,
+           d.profesional, d.profesional_nombre, d.fecha_hora_inicio, d.fecha_hora_fin, d.estado, d.origen,
+           d.protocolos, d.precio_final, d.sena, d.estado_sena, d.codigo_operacion,
+           d.recordatorio_canal, d.recordatorio_estado, d.recordatorio_programado
+      FROM agenda.DetalleTurno AS d
+     WHERE d.fecha_hora_inicio >= p_desde AND d.fecha_hora_inicio < p_hasta + INTERVAL 1 DAY
+     ORDER BY d.fecha_hora_inicio, d.id_turno;
 END//
 
 -- Todas las pacientes, para la pantalla Pacientes (primer teléfono y si tienen cuenta).
@@ -1337,9 +1366,10 @@ DROP PROCEDURE IF EXISTS personas.sp_listar_pacientes//
 CREATE PROCEDURE personas.sp_listar_pacientes()
 BEGIN
     SELECT p.id_paciente, p.dni, p.nombre, p.apellido, p.fecha_nacimiento, p.email,
-           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefono,
+           tel.telefono,
            (p.id_usuario IS NOT NULL) AS tiene_cuenta
       FROM personas.Paciente p
+      LEFT JOIN personas.PrimerTelefonoPaciente AS tel ON tel.id_paciente = p.id_paciente
      ORDER BY p.apellido, p.nombre;
 END//
 
@@ -1376,13 +1406,14 @@ BEGIN
     SELECT n.id_notificacion, n.id_turno, c.nombre AS canal, e.nombre AS estado, tn.nombre AS tipo, n.mensaje,
            n.fecha_programada, n.fecha_envio, n.intentos, n.detalle_error,
            p.apellido AS paciente, p.nombre AS paciente_nombre, p.dni,
-           (SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)) AS telefono,
+           tel.telefono,
            t.fecha_hora_inicio
       FROM notificaciones.Notificacion n
       JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal
       JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion
       JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion
       JOIN personas.Paciente p ON p.id_paciente = n.id_paciente
+      LEFT JOIN personas.PrimerTelefonoPaciente AS tel ON tel.id_paciente = p.id_paciente
       LEFT JOIN agenda.Turno t ON t.id_turno = n.id_turno
      WHERE n.fecha_programada >= p_desde AND n.fecha_programada < p_hasta + INTERVAL 1 DAY
      ORDER BY n.fecha_programada, n.id_notificacion;
@@ -1480,7 +1511,7 @@ BEGIN
         SET v_mensaje = 'Medio de pago inválido';
     END IF;
     -- Seña = precio final (lista menos el cupón) por el mayor porcentaje de seña de sus protocolos.
-    SET v_monto = ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = p_id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = p_id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = p_id_turno), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = p_id_turno), 0) / 100, 0);
+    SET v_monto = COALESCE((SELECT pt.sena FROM agenda.PrecioTurno AS pt WHERE pt.id_turno = p_id_turno), 0);
     IF v_codigo IS NULL AND (v_monto <= 0) THEN
         SET v_codigo = 52115;
         SET v_mensaje = 'El turno no tiene una seña para cobrar';
@@ -1521,7 +1552,7 @@ BEGIN
         SET v_codigo_op = COALESCE(p_codigo_operacion,
                                    CAST(CAST(DATE_FORMAT(COALESCE(@ahora_simulado, NOW()), '%Y%m%d') AS UNSIGNED) * 100000 + p_id_turno AS CHAR));
         INSERT INTO pagos.PagoSena (id_turno, id_estado_pago, id_medio_pago, monto, fecha_pago, codigo_operacion)
-VALUES (p_id_turno, (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 'pagada'), v_medio, v_monto, COALESCE(@ahora_simulado, NOW()), v_codigo_op);
+        VALUES (p_id_turno, (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 'pagada'), v_medio, v_monto, COALESCE(@ahora_simulado, NOW()), v_codigo_op);
         SELECT MAX(id_pago) INTO v_pago FROM pagos.PagoSena WHERE codigo_operacion = v_codigo_op;
         UPDATE agenda.Turno SET id_estado_turno = (SELECT id_estado_turno FROM agenda.EstadoTurno WHERE nombre = 'confirmado')
          WHERE id_turno = p_id_turno;
@@ -1538,13 +1569,23 @@ VALUES (p_id_turno, (SELECT id_estado_pago FROM pagos.EstadoPago WHERE nombre = 
             SET v_canal = (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'Telegram');
         END IF;
         INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, id_turno, mensaje, fecha_programada)
-VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'), (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'confirmación'), v_paciente, p_id_turno, CONCAT('Tu turno quedó confirmado: ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), '.'), COALESCE(@ahora_simulado, NOW()));
+        VALUES (v_canal,
+                (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
+                (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'confirmación'),
+                v_paciente, p_id_turno,
+                CONCAT('Tu turno quedó confirmado: ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), '.'),
+                COALESCE(@ahora_simulado, NOW()));
         SET v_programada = COALESCE(@ahora_simulado, NOW());
         IF v_inicio - INTERVAL 24 HOUR > COALESCE(@ahora_simulado, NOW()) THEN
             SET v_programada = v_inicio - INTERVAL 24 HOUR;
         END IF;
         INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, id_turno, mensaje, fecha_programada)
-VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'), (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'recordatorio de turno'), v_paciente, p_id_turno, CONCAT('Recordatorio: tu turno es el ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), '.'), v_programada);
+        VALUES (v_canal,
+                (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
+                (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'recordatorio de turno'),
+                v_paciente, p_id_turno,
+                CONCAT('Recordatorio: tu turno es el ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), '.'),
+                v_programada);
         CALL auditoria.sp_registrar_log('pago_registrado', p_id_usuario, v_paciente, p_origen,
             CONCAT('Seña de $', v_monto, ' del turno ', p_id_turno, ' (', p_medio_pago, ')'), 'pagos.PagoSena', v_pago, NULL,
             CONCAT('monto=', v_monto, ';codigo=', v_codigo_op), 1, NULL);
@@ -1553,7 +1594,7 @@ VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotifi
     ELSE
         CALL auditoria.sp_registrar_log(v_tipo_log, p_id_usuario, v_paciente, p_origen, COALESCE(v_desc_log, v_mensaje),
                                         'pagos.PagoSena', NULL, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -1638,7 +1679,12 @@ BEGIN
             SET v_canal = (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'Telegram');
         END IF;
         INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, id_turno, mensaje, fecha_programada)
-VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'), (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'cancelación'), v_paciente, p_id_turno, CONCAT('Tu turno del ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), ' fue cancelado.'), COALESCE(@ahora_simulado, NOW()));
+        VALUES (v_canal,
+                (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
+                (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'cancelación'),
+                v_paciente, p_id_turno,
+                CONCAT('Tu turno del ', DATE_FORMAT(v_inicio, '%d/%m'), ' a las ', DATE_FORMAT(v_inicio, '%H:%i'), ' fue cancelado.'),
+                COALESCE(@ahora_simulado, NOW()));
         CALL auditoria.sp_registrar_log('cancelacion_turno', p_id_usuario, v_paciente, p_origen,
             CONCAT('Turno ', p_id_turno, ' cancelado; seña: ', v_resultado),
             'agenda.Turno', p_id_turno, v_estado, 'cancelado', 1, NULL);
@@ -1647,7 +1693,7 @@ VALUES (v_canal, (SELECT id_estado_notificacion FROM notificaciones.EstadoNotifi
     ELSE
         CALL auditoria.sp_registrar_log('cancelacion_turno', p_id_usuario, v_paciente, p_origen, v_mensaje,
                                             'agenda.Turno', p_id_turno, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -1709,7 +1755,7 @@ BEGIN
     ELSE
         CALL auditoria.sp_registrar_log('cambio_estado_turno', p_id_usuario, v_paciente, p_origen, v_mensaje,
                                             'agenda.Turno', p_id_turno, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -1790,7 +1836,7 @@ BEGIN
     ELSE
         CALL auditoria.sp_registrar_log('evaluacion_resuelta', p_id_usuario, v_paciente, p_origen, v_mensaje,
                                             'clinica.EvaluacionPrevia', p_id_evaluacion, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -1934,7 +1980,7 @@ BEGIN
     ELSE
         CALL auditoria.sp_registrar_log('evaluacion_reclamo', p_id_usuario, v_paciente, p_origen, v_mensaje,
                                             'clinica.EvaluacionPrevia', p_id_evaluacion, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -1992,8 +2038,9 @@ BEGIN
               FROM agenda.Numero nums
               JOIN beneficios.ReglaBeneficio r ON TRUE
               JOIN beneficios.TipoRegla tr ON tr.id_tipo_regla = r.id_tipo_regla AND tr.nombre = 'gasto acumulado'
-              JOIN (SELECT t.id_paciente, SUM((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = t.id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = t.id_turno), 0) / 100, 2))) AS gasto
+              JOIN (SELECT t.id_paciente, SUM(pt.precio_final) AS gasto
                       FROM agenda.Turno t JOIN agenda.EstadoTurno e ON e.id_estado_turno = t.id_estado_turno AND e.nombre = 'realizado'
+                      JOIN agenda.PrecioTurno AS pt ON pt.id_turno = t.id_turno
                      GROUP BY t.id_paciente) g ON TRUE
               JOIN personas.Paciente p ON p.id_paciente = g.id_paciente AND p.id_usuario IS NOT NULL
              WHERE r.activa = 1
@@ -2218,11 +2265,13 @@ BEGIN
             CONCAT('Cupón ', p_codigo, ' aplicado al turno ', p_id_turno, ' con QR'), 'beneficios.Cupon', v_cupon, NULL, NULL, 1, NULL);
         COMMIT;
         SELECT 'OK' AS estado, 0 AS codigo, 'Cupón aplicado' AS mensaje, v_cupon AS id,
-               ROUND((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = p_id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = p_id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = p_id_turno), 0) / 100, 2)) * COALESCE((SELECT MAX(caz.porcentaje_sena) FROM agenda.TurnoProtocolo tpy JOIN clinica.Protocolo prz ON prz.id_protocolo = tpy.id_protocolo JOIN clinica.CategoriaProtocolo caz ON caz.id_categoria = prz.id_categoria WHERE tpy.id_turno = p_id_turno), 0) / 100, 0) AS valor, CAST((COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = p_id_turno), 0) - ROUND(COALESCE((SELECT SUM(tpz.precio_aplicado) FROM agenda.TurnoProtocolo tpz WHERE tpz.id_turno = p_id_turno), 0) * COALESCE((SELECT cuz.porcentaje_descuento FROM beneficios.Cupon cuz WHERE cuz.id_turno = p_id_turno), 0) / 100, 2)) AS CHAR) AS dato;
+               pt.sena AS valor, CAST(pt.precio_final AS CHAR) AS dato
+          FROM agenda.PrecioTurno AS pt
+         WHERE pt.id_turno = p_id_turno;
     ELSE
         CALL auditoria.sp_registrar_log('cupon_rechazado', p_id_usuario, v_paciente, p_origen, v_mensaje,
                                             'beneficios.Cupon', v_cupon, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -2281,7 +2330,7 @@ BEGIN
         -- El código lo genera la aplicación y llega en p_codigo. Si no llega, se numera.
         SELECT COALESCE(p_codigo, CAST(1000000 + COALESCE(MAX(id_tarjeta), 0) + 1 AS CHAR)) INTO v_codigo_tarjeta FROM pagos.TarjetaRegalo;
         INSERT INTO pagos.TarjetaRegalo (id_medio_pago, codigo, monto_inicial, fecha_compra, fecha_vencimiento, comprador_nombre, comprador_telefono)
-VALUES (v_medio, v_codigo_tarjeta, p_monto, COALESCE(@ahora_simulado, NOW()), COALESCE(@ahora_simulado, NOW()) + INTERVAL 12 MONTH, p_comprador_nombre, p_comprador_telefono);
+        VALUES (v_medio, v_codigo_tarjeta, p_monto, COALESCE(@ahora_simulado, NOW()), COALESCE(@ahora_simulado, NOW()) + INTERVAL 12 MONTH, p_comprador_nombre, p_comprador_telefono);
         SELECT MAX(id_tarjeta) INTO v_id FROM pagos.TarjetaRegalo WHERE codigo = v_codigo_tarjeta;
         CALL auditoria.sp_registrar_log('tarjeta_comprada', p_id_usuario, NULL, p_origen,
             CONCAT('Tarjeta de regalo de $', p_monto, ' comprada por ', p_comprador_nombre), 'pagos.TarjetaRegalo', v_id, NULL, CONCAT('monto=', p_monto), 1, NULL);
@@ -2290,7 +2339,7 @@ VALUES (v_medio, v_codigo_tarjeta, p_monto, COALESCE(@ahora_simulado, NOW()), CO
     ELSE
         CALL auditoria.sp_registrar_log('tarjeta_comprada', p_id_usuario, NULL, p_origen, v_mensaje,
                                             'pagos.TarjetaRegalo', NULL, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -2358,7 +2407,7 @@ BEGIN
     SELECT n.id_notificacion, c.nombre AS canal, tn.nombre AS tipo, n.mensaje, n.fecha_programada, n.intentos, n.id_turno,
            COALESCE(p.apellido, pr.apellido) AS destinatario, COALESCE(p.nombre, pr.nombre) AS destinatario_nombre,
            p.telegram_chat_id,
-           COALESCE((SELECT tp.telefono FROM personas.TelefonoPaciente tp WHERE tp.id_telefono_paciente = (SELECT MIN(tpx.id_telefono_paciente) FROM personas.TelefonoPaciente tpx WHERE tpx.id_paciente = p.id_paciente)),
+           COALESCE(tel.telefono,
                     (SELECT tf.telefono FROM personas.TelefonoProfesional tf WHERE tf.id_telefono_profesional = (SELECT MIN(tfx.id_telefono_profesional) FROM personas.TelefonoProfesional tfx WHERE tfx.id_profesional = pr.id_profesional))) AS telefono,
            COALESCE(p.email, pr.email) AS email
       FROM notificaciones.Notificacion n
@@ -2366,6 +2415,7 @@ BEGIN
       JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal
       JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion
       LEFT JOIN personas.Paciente p ON p.id_paciente = n.id_paciente
+      LEFT JOIN personas.PrimerTelefonoPaciente AS tel ON tel.id_paciente = p.id_paciente
       LEFT JOIN personas.Profesional pr ON pr.id_profesional = n.id_profesional
      WHERE n.fecha_programada <= COALESCE(@ahora_simulado, NOW())
      ORDER BY n.fecha_programada, n.id_notificacion
@@ -2478,7 +2528,7 @@ BEGIN
     IF v_codigo IS NULL THEN
         START TRANSACTION;
         INSERT INTO asistente.ConsultaAsistente (id_paciente, id_origen, pregunta, fecha_hora, derivada, respuesta)
-VALUES (p_id_paciente, v_origen, p_pregunta, COALESCE(@ahora_simulado, NOW()), COALESCE(p_derivada, 0), p_respuesta);
+        VALUES (p_id_paciente, v_origen, p_pregunta, COALESCE(@ahora_simulado, NOW()), COALESCE(p_derivada, 0), p_respuesta);
         SELECT MAX(id_consulta) INTO v_id FROM asistente.ConsultaAsistente;
         SET v_descripcion = 'Consulta respondida por el asistente';
         IF COALESCE(p_derivada, 0) = 1 THEN
@@ -2492,7 +2542,7 @@ VALUES (p_id_paciente, v_origen, p_pregunta, COALESCE(@ahora_simulado, NOW()), C
     ELSE
         CALL auditoria.sp_registrar_log('consulta_asistente', p_id_usuario, p_id_paciente, p_origen, v_mensaje,
                                             'asistente.ConsultaAsistente', NULL, NULL, NULL, 0, NULL);
-    SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
     END IF;
 END//
 
@@ -3279,7 +3329,7 @@ END//
 DELIMITER ;
 
 -- ======================================================================
--- Listados de las pantallas Cupones y Consultas previas
+-- Listados de las pantallas Cupones y Consultas previas, y usuarios del personal
 -- ======================================================================
 
 

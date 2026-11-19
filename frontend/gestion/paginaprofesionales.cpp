@@ -1,5 +1,7 @@
 #include "paginaprofesionales.h"
 
+#include "formato.h"
+
 #include "repositorio.h"
 
 #include "validaciones.h"
@@ -46,17 +48,9 @@ PaginaProfesionales::PaginaProfesionales(QVector<Profesional> *profesionales,
                                          const QVector<Protocolo> *protocolosDisponibles, QWidget *parent)
     : QWidget(parent), datos(profesionales), protocolos(protocolosDisponibles)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Profesionales y disponibilidad");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Qué protocolos hace cada profesional y cuándo atiende. "
-                                 "Las franjas no pueden superponerse.");
-    subtitulo->setProperty("rol", "subtitulo");
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Profesionales y disponibilidad",
+                                      "Qué protocolos hace cada profesional y cuándo atiende. "
+                                      "Las franjas no pueden superponerse.");
 
     auto *cuerpo = new QHBoxLayout;
     cuerpo->setSpacing(16);
@@ -262,12 +256,11 @@ void PaginaProfesionales::agregarProfesional()
             || !pedirDato(this, "Usuario (minúsculas, sin espacios):", QLineEdit::Normal, &usuario, Validaciones::usuarioValido)
             || !pedirDato(this, "Contraseña inicial (6 a 50 caracteres, sin espacios):", QLineEdit::Password, &clave, Validaciones::claveValida))
             return;
-        telefono = Validaciones::normalizar(telefono).remove('+');
-        const QString texto = editNombre->text().simplified();
-        const int ultimo = texto.lastIndexOf(' ');
-        const Respuesta r = repo->altaProfesional(matricula, ultimo > 0 ? texto.left(ultimo) : texto,
-                                                  ultimo > 0 ? texto.mid(ultimo + 1) : texto, email.trimmed(), telefono.trimmed(),
-                                                  usuario.trimmed(), clave, "gestion", idUsuario);
+        QString nombre, apellido;
+        Formato::separarNombre(editNombre->text(), &nombre, &apellido);
+        const Respuesta r = repo->altaProfesional(matricula, nombre, apellido, email.trimmed(),
+                                                  Validaciones::soloDigitos(telefono), usuario.trimmed(), clave,
+                                                  "gestion", idUsuario);
         if (!r.ok) {
             QMessageBox::warning(this, "No se pudo dar de alta", r.mensaje);
             return;
@@ -288,9 +281,9 @@ void PaginaProfesionales::cambiarEstadoProfesional()
     if (!p)
         return;
     if (repo) {
-        const int ultimo = p->nombre.lastIndexOf(' ');
-        const Respuesta r = repo->modificarProfesional(p->id, ultimo > 0 ? p->nombre.left(ultimo) : p->nombre,
-                                                       ultimo > 0 ? p->nombre.mid(ultimo + 1) : p->nombre, p->email, !p->activo, "gestion", idUsuario);
+        QString nombre, apellido;
+        Formato::separarNombre(p->nombre, &nombre, &apellido);
+        const Respuesta r = repo->modificarProfesional(p->id, nombre, apellido, p->email, !p->activo, "gestion", idUsuario);
         if (!r.ok) {
             QMessageBox::warning(this, "No se pudo cambiar el estado", r.mensaje);
             return;

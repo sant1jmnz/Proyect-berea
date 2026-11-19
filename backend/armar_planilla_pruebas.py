@@ -101,7 +101,7 @@ def main():
             ws.cell(fila, c).value = None
     ws["C2"], ws["C3"] = "Dermalia: gestión de turnos de un instituto de estética", "Backend SQL: stored procedures (MySQL 8)"
     ws["C4"] = "Proyecto Informático I - Sección Bases de Datos - Consigna y Alcances (punto 6)"
-    ws["C5"], ws["C6"], ws["C7"] = "Equipo Dermalia", "11-Nov-26", "Sin revisar"
+    ws["C5"], ws["C6"], ws["C7"] = "Santiago Jiménez y Bautista Casero", "11-Nov-26", "19-Nov-26"
     pre = ("Base creada en orden con 03_ModeloSQL, 04_DatosSQL y 05_Backend. "
            "Reloj simulado: SET @ahora_simulado = '2026-11-03 09:00:00'.")
     fila = 10

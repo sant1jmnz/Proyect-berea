@@ -1,5 +1,7 @@
 #include "paginapacientes.h"
 
+#include "formato.h"
+
 #include "repositorio.h"
 
 #include "validaciones.h"
@@ -18,13 +20,6 @@
 #include <QVBoxLayout>
 #include <algorithm>
 
-static QString soloDigitos(const QString &texto)
-{
-    QString limpio = Validaciones::normalizar(texto);
-    limpio.remove('+');
-    return limpio;
-}
-
 QStringList PaginaPacientes::revisar(const Paciente &p, const QVector<Paciente> &existentes,
                                      int indiceEditado, const QDate &hoy)
 {
@@ -36,7 +31,7 @@ QStringList PaginaPacientes::revisar(const Paciente &p, const QVector<Paciente> 
         errores << "• " + error;
     else
         for (int i = 0; i < existentes.size(); ++i)
-            if (i != indiceEditado && existentes[i].dni == soloDigitos(p.dni))
+            if (i != indiceEditado && existentes[i].dni == Validaciones::soloDigitos(p.dni))
                 errores << "• Ya hay una paciente con ese DNI (" + existentes[i].nombre + ").";
     if (!Validaciones::telefonoValido(p.telefono, &error))
         errores << "• " + error;
@@ -50,7 +45,7 @@ QStringList PaginaPacientes::revisar(const Paciente &p, const QVector<Paciente> 
 QVector<int> PaginaPacientes::buscar(const QVector<Paciente> &pacientes, const QString &texto)
 {
     const QString t = texto.simplified();
-    const QString numeros = soloDigitos(t);
+    const QString numeros = Validaciones::soloDigitos(t);
     const bool esNumero = !numeros.isEmpty() && std::all_of(numeros.cbegin(), numeros.cend(),
                                                             [](QChar c) { return c.isDigit(); });
     QVector<int> encontradas;
@@ -67,17 +62,8 @@ QVector<int> PaginaPacientes::buscar(const QVector<Paciente> &pacientes, const Q
 PaginaPacientes::PaginaPacientes(QVector<Paciente> *pacientes, QWidget *parent)
     : QWidget(parent), datos(pacientes)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Pacientes");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Alta y búsqueda por nombre, DNI o teléfono. No hace falta cuenta: la paciente se identifica por DNI.");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Pacientes",
+                                      "Alta y búsqueda por nombre, DNI o teléfono. No hace falta cuenta: la paciente se identifica por DNI.");
 
     editBuscar = new QLineEdit;
     editBuscar->setPlaceholderText("Buscar por nombre, DNI o teléfono");
@@ -111,11 +97,11 @@ PaginaPacientes::PaginaPacientes(QVector<Paciente> *pacientes, QWidget *parent)
     editNombre->setValidator(new QRegularExpressionValidator(Validaciones::filtroNombre(), this));   // sin números ni símbolos
     editDni = new QLineEdit;
     editDni->setObjectName("editDniPaciente");
-    editDni->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{0,8}"), this));
+    editDni->setValidator(new QRegularExpressionValidator(Validaciones::filtroDni(), this));
     editTelefono = new QLineEdit;
     editTelefono->setObjectName("editTelefonoPaciente");
-    editTelefono->setPlaceholderText("11 5555-0102");
-    editTelefono->setValidator(new QRegularExpressionValidator(QRegularExpression("\\+?[\\d \\-()]{0,20}"), this));
+    editTelefono->setPlaceholderText("1155550102");
+    editTelefono->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
     editEmail = new QLineEdit;
     editEmail->setObjectName("editEmailPaciente");
     editEmail->setPlaceholderText("Opcional");
@@ -177,9 +163,7 @@ void PaginaPacientes::filtrar()
     tabla->setRowCount(filaADato.size());
     for (int fila = 0; fila < filaADato.size(); ++fila) {
         const Paciente &p = (*datos)[filaADato[fila]];
-        const QString columnas[] = { p.nombre, p.dni, p.telefono, p.email };
-        for (int col = 0; col < 4; ++col)
-            tabla->setItem(fila, col, new QTableWidgetItem(columnas[col]));
+        Formato::llenarFila(tabla, fila, { p.nombre, p.dni, p.telefono, p.email });
     }
     tabla->blockSignals(false);
     const int fila = filaADato.indexOf(editada);
@@ -218,14 +202,12 @@ void PaginaPacientes::limpiar()
 
 void PaginaPacientes::guardar()
 {
-    Paciente p = { editNombre->text().simplified(), soloDigitos(editDni->text()),
-                   soloDigitos(editTelefono->text()), editEmail->text().trimmed(),
+    Paciente p = { editNombre->text().simplified(), Validaciones::soloDigitos(editDni->text()),
+                   Validaciones::soloDigitos(editTelefono->text()), editEmail->text().trimmed(),
                    editNacimiento->date() };
     const QStringList errores = revisar(p, *datos, editada, QDate::currentDate());
-    if (!errores.isEmpty()) {
-        QMessageBox::warning(this, "Revisá los datos", errores.join("\n"));
+    if (Formato::avisarErrores(this, errores))
         return;
-    }
     const bool esAlta = editada < 0;
     if (repo && !esAlta) {   /* sp_modificar_paciente no cambia el DNI ni el nacimiento: no se aparenta que se guardaron */
         const Paciente &original = (*datos)[editada];
@@ -234,15 +216,12 @@ void PaginaPacientes::guardar()
             noModificables << "• El DNI no se puede modificar. Si está mal, dá de alta a la paciente con el DNI correcto.";
         if (original.nacimiento != p.nacimiento)
             noModificables << "• La fecha de nacimiento no se puede modificar desde acá.";
-        if (!noModificables.isEmpty()) {
-            QMessageBox::warning(this, "Revisá los datos", noModificables.join("\n"));
+        if (Formato::avisarErrores(this, noModificables))
             return;
-        }
     }
     if (repo) {   /* con la base, primero se guarda ahí */
-        const int ultimo = p.nombre.lastIndexOf(' ');   /* "Nombre Apellido": el apellido es la última palabra */
-        const QString nombre = ultimo > 0 ? p.nombre.left(ultimo) : p.nombre;
-        const QString apellido = ultimo > 0 ? p.nombre.mid(ultimo + 1) : p.nombre;
+        QString nombre, apellido;
+        Formato::separarNombre(p.nombre, &nombre, &apellido);   /* el apellido es la última palabra */
         Respuesta r;
         if (esAlta) {
             r = repo->altaPaciente(p.dni, nombre, apellido, p.nacimiento, p.email, p.telefono, "gestion", idUsuario);

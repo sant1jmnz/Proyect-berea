@@ -30,14 +30,36 @@ export function entornoDeEstudio(renderer) {
   return textura;
 }
 
+/* Si la compu no llega a 45 cuadros por segundo, la escena se dibuja con menos
+ * píxeles (de a 0,25, hasta 0,75 por píxel de pantalla). Se ve igual y completa,
+ * apenas menos nítida, y la animación sigue fluida en una compu sin placa de video. */
+const CUADROS_POR_MEDICION = 30;
+const CUADRO_MAS_LENTO = 1 / 45;
+const DENSIDAD_MINIMA = 0.75;
+
 /* Llama a dibujar(t, dt) en cada cuadro solo mientras el contenedor está en pantalla. */
 export function bucleVisible(contenedor, renderer, dibujar) {
   const reloj = new THREE.Timer();
   let visible = false;
+  let medidos = 0;
+  let tiempoMedido = 0;
   const paso = (ms) => {
     reloj.update(ms);
+    const dt = reloj.getDelta();
+    // El primer medio segundo (carga de shaders) y los saltos de pestaña no se miden.
+    if (reloj.getElapsed() > 0.5 && dt < 0.5) {
+      medidos++;
+      tiempoMedido += dt;
+      if (medidos === CUADROS_POR_MEDICION) {
+        const densidad = renderer.getPixelRatio();
+        if (tiempoMedido / medidos > CUADRO_MAS_LENTO && densidad > DENSIDAD_MINIMA)
+          renderer.setPixelRatio(Math.max(DENSIDAD_MINIMA, densidad - 0.25));
+        medidos = 0;
+        tiempoMedido = 0;
+      }
+    }
     // Tope de 0,1 s: al volver de otra pestaña no hay un salto gigante.
-    dibujar(reloj.getElapsed(), Math.min(reloj.getDelta(), 0.1));
+    dibujar(reloj.getElapsed(), Math.min(dt, 0.1));
   };
   new IntersectionObserver(([e]) => {
     visible = e.isIntersecting;

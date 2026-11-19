@@ -3,7 +3,7 @@
 Cinco casos, uno por validación de la carga de un turno (RF-02 y RF-04), con la
 plantilla de [`catedra/semana-3-casos-de-prueba-funcional.md`](catedra/semana-3-casos-de-prueba-funcional.md).
 Responsable: Santiago. Se probó sin base de datos, con los datos de ejemplo de
-`frontend/gestion/datosprueba.cpp`. Nombre, DNI y teléfono también tienen
+`frontend/comun/datosprueba.cpp`. Nombre, DNI y teléfono también tienen
 pruebas automáticas (`frontend/pruebas/prueba_validaciones.cpp`).
 
 | Característica | Descripción del caso de prueba | Precondiciones | Pasos de la prueba | Resultados esperados | Criterios de aprobación/reprobación |

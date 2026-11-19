@@ -181,6 +181,7 @@ export function iniciarPiel({ alElegir }) {
   const botonSeparar = contenedor.querySelector('[data-separar]');
   const reducido = movimientoReducido();
   const estado = { elegida: null, encima: null, separacion: 0, protocolo: null };
+  let medidas = null;   // posiciones de la página para las líneas (ver medir())
 
   // Los rótulos funcionan siempre, haya 3D o no.
   Object.entries(rotulos).forEach(([id, boton]) => {
@@ -195,6 +196,7 @@ export function iniciarPiel({ alElegir }) {
     estado.protocolo = null;
     Object.entries(rotulos).forEach(([k, b]) => b.setAttribute('aria-pressed', String(k === estado.elegida)));
     alElegir(estado.elegida);
+    medidas = null;   // abrir o cerrar la info puede mover los rótulos
     dibujarUnaVez();
   }
 
@@ -249,6 +251,7 @@ export function iniciarPiel({ alElegir }) {
   let tamano = { w: 1, h: 1 };
   ajustarTamano(lienzo, renderer, camara, (w, h) => {
     tamano = { w, h };
+    medidas = null;
     dibujarUnaVez();
   });
 
@@ -278,22 +281,38 @@ export function iniciarPiel({ alElegir }) {
     if (capa) elegir(capa);
   });
 
-  const ancla = new THREE.Vector3();
-  function actualizarLineas() {
+  /* Dónde están el lienzo y los rótulos dentro del contenedor. Se mide solo cuando algo
+   * cambia de tamaño: medir la página en cada cuadro la obliga a recalcular todo y traba
+   * las compus lentas. */
+  new ResizeObserver(() => { medidas = null; dibujarUnaVez(); }).observe(contenedor);
+  document.fonts?.ready.then(() => { medidas = null; dibujarUnaVez(); });
+  function medir() {
     const caja = contenedor.getBoundingClientRect();
     const lien = lienzo.getBoundingClientRect();
+    const fin = {};
+    Object.entries(rotulos).forEach(([id, b]) => {
+      const r = b.getBoundingClientRect();
+      fin[id] = { x: r.left - caja.left - 6, y: r.top - caja.top + r.height / 2 };
+    });
+    return { x: lien.left - caja.left, y: lien.top - caja.top, fin };
+  }
+
+  const ancla = new THREE.Vector3();
+  function actualizarLineas() {
+    medidas ??= medir();
+    const foco = estado.protocolo?.capa ?? estado.elegida;
     Object.entries(grupos).forEach(([id, g]) => {
       const { alto, base } = CAPAS[id];
       // Punto de la arista delantera derecha de cada capa.
       ancla.set(ANCHO / 2, base + alto / 2, FONDO / 2).applyMatrix4(g.matrixWorld).project(camara);
-      const x1 = lien.left - caja.left + ((ancla.x + 1) / 2) * tamano.w;
-      const y1 = lien.top - caja.top + ((1 - ancla.y) / 2) * tamano.h;
-      const r = rotulos[id].getBoundingClientRect();
-      const x2 = r.left - caja.left - 6;
-      const y2 = r.top - caja.top + r.height / 2;
+      const x1 = medidas.x + ((ancla.x + 1) / 2) * tamano.w;
+      const y1 = medidas.y + ((1 - ancla.y) / 2) * tamano.h;
+      const { x: x2, y: y2 } = medidas.fin[id];
       const medio = x1 + (x2 - x1) * 0.55;
-      lineas[id].setAttribute('d', `M${x1.toFixed(1)} ${y1.toFixed(1)} C${medio.toFixed(1)} ${y1.toFixed(1)} ${medio.toFixed(1)} ${y2.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`);
-      lineas[id].classList.toggle('activa', id === (estado.protocolo?.capa ?? estado.elegida) || id === estado.encima);
+      const d = `M${x1.toFixed(1)} ${y1.toFixed(1)} C${medio.toFixed(1)} ${y1.toFixed(1)} ${medio.toFixed(1)} ${y2.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+      // Solo se toca el SVG si la línea se movió.
+      if (lineas[id].getAttribute('d') !== d) lineas[id].setAttribute('d', d);
+      lineas[id].classList.toggle('activa', id === foco || id === estado.encima);
     });
   }
 

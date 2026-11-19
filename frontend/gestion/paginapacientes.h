@@ -1,5 +1,5 @@
 /* Pacientes (alta y búsqueda). La paciente se identifica por DNI y no
- * necesita cuenta (docs/modelo-entidades.md). Datos de prueba por ahora. */
+ * necesita cuenta (docs/modelo-entidades.md). Con la base, se guarda con los stored procedures. */
 #ifndef PAGINAPACIENTES_H
 #define PAGINAPACIENTES_H
 
@@ -24,7 +24,7 @@ public:
 
     /* Con la base conectada, las altas y cambios de esta pantalla pasan por los
      * stored procedures (y quedan en el log con el usuario que ingresó). Sin base
-     * (`repo` nulo) trabaja solo en memoria, con los datos de prueba. */
+     * (`repo` nulo) trabaja solo en memoria, con el archivo local. */
     void usarBase(Repositorio *repositorio, int idUsuarioActual) { repo = repositorio; idUsuario = idUsuarioActual; }
     /* Vuelve a mostrar la lista (cuando los datos se leyeron de la base). */
     void recargar() { filtrar(); }

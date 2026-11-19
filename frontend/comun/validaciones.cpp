@@ -30,6 +30,22 @@ QRegularExpression filtroUsuario() {
     return QRegularExpression("[A-Za-z0-9._\\-]{0,30}");
 }
 
+QRegularExpression filtroDni() {
+    return QRegularExpression("[0-9]{0,8}");
+}
+
+QRegularExpression filtroTelefono() {
+    return QRegularExpression("\\+?[0-9]{0,13}");
+}
+
+QString soloDigitos(const QString &texto) {
+    QString salida;
+    for (const QChar c : texto)
+        if (c.isDigit())
+            salida += c;
+    return salida;
+}
+
 QString normalizar(const QString &texto) {
     QString limpio = texto.trimmed();
     limpio.remove(QRegularExpression("[\\s\\-\\.\\(\\)]"));

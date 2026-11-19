@@ -1,5 +1,7 @@
 #include "paginaprotocolos.h"
 
+#include "formato.h"
+
 #include "repositorio.h"
 
 #include "sena.h"
@@ -15,16 +17,10 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
-#include <QStyle>
 #include <QTableWidget>
 #include <QVBoxLayout>
 
 enum { ColNombre, ColCategoria, ColDuracion, ColPrecio, ColSena, ColEstado };
-
-static QString pesos(double monto)
-{
-    return "$" + QLocale().toString(qRound(monto));
-}
 
 /* "25.000", "25000" o "25000,50" → 25000.5. Falla si no es un número. */
 static bool leerPrecio(const QString &texto, double *valor)
@@ -76,18 +72,9 @@ QStringList PaginaProtocolos::revisar(const QString &nombre, const QString &prec
 PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *parent)
     : QWidget(parent), datos(protocolos)
 {
-    auto *raiz = new QVBoxLayout(this);
-    raiz->setContentsMargins(28, 24, 28, 24);
-    raiz->setSpacing(14);
-
-    auto *titulo = new QLabel("Protocolos");
-    titulo->setProperty("rol", "titulo");
-    auto *subtitulo = new QLabel("Alta, modificación y baja de los tratamientos que se ofrecen. "
-                                 "La seña sale de la categoría: 30%, o 40% en cirugías (RF-10).");
-    subtitulo->setProperty("rol", "subtitulo");
-    subtitulo->setWordWrap(true);
-    raiz->addWidget(titulo);
-    raiz->addWidget(subtitulo);
+    auto *raiz = Formato::armarPagina(this, "Protocolos",
+                                      "Alta, modificación y baja de los tratamientos que se ofrecen. "
+                                      "La seña sale de la categoría: 30%, o 40% en cirugías (RF-10).");
 
     tabla = new QTableWidget(0, 6);
     tabla->setObjectName("tablaProtocolos");
@@ -163,7 +150,7 @@ PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *pare
         if (editado < 0)
             return;
         int precioConsulta = 0;
-        for (const Protocolo &p : std::as_const(*datos))
+        for (const Protocolo &p : *datos)
             if (p.nombre.startsWith("Consulta prequir"))
                 precioConsulta = p.precio;
         ResumenTratamiento::mostrar(this, DatosPrueba::comoTratamiento((*datos)[editado]), precioConsulta);
@@ -176,7 +163,7 @@ PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *pare
         if (leerPrecio(editPrecio->text(), &precio) && precio >= 0)
             lblSena->setText(QString("%1% del precio = %2%3")
                                  .arg(c.porcentajeSena)
-                                 .arg(pesos(Sena::calcular(qRound(precio), c.porcentajeSena)), cirugia));
+                                 .arg(Formato::pesos(Sena::calcular(qRound(precio), c.porcentajeSena)), cirugia));
         else
             lblSena->setText(QString("%1% del precio%2").arg(c.porcentajeSena).arg(cirugia));
     };
@@ -197,7 +184,7 @@ void PaginaProtocolos::recargarTabla()
     for (int i = 0; i < datos->size(); ++i) {
         const Protocolo &p = (*datos)[i];
         const QString columnas[] = { p.nombre, p.categoria.nombre, QString("%1 min").arg(p.duracionMin),
-                                     pesos(p.precio), QString("%1%").arg(p.categoria.porcentajeSena),
+                                     Formato::pesos(p.precio), QString("%1%").arg(p.categoria.porcentajeSena),
                                      p.activo ? "Activo" : "De baja" };
         for (int col = ColNombre; col <= ColEstado; ++col) {
             auto *item = new QTableWidgetItem(columnas[col]);
@@ -250,10 +237,8 @@ void PaginaProtocolos::guardar()
 {
     const QStringList errores = revisar(editNombre->text(), editPrecio->text(), editDuracion->text(),
                                         *datos, editado);
-    if (!errores.isEmpty()) {
-        QMessageBox::warning(this, "Revisá los datos", errores.join("\n"));
+    if (Formato::avisarErrores(this, errores))
         return;
-    }
     double precio = 0;
     leerPrecio(editPrecio->text(), &precio);
     Protocolo p = editado >= 0 ? (*datos)[editado] : Protocolo{};

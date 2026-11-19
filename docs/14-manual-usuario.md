@@ -41,11 +41,21 @@ cuenta, la terminal ya sabe tus datos (no los escribís) y *Buscar mi turno* te 
 
 ![Crear una cuenta](capturas/cliente-07-crear-cuenta.png)
 
+### Cuenta en el sitio web
+
+En el sitio también es opcional: sin ella todo funciona con el DNI o el teléfono. Si la creás
+(*Ingresar* → *Crear mi cuenta*, con usuario, email y contraseña), el sitio te muestra tus turnos
+sin pedirte el DNI y la reserva te trae tus datos ya cargados. Si ya sacaste un turno antes, usá
+el mismo DNI y el mismo teléfono: así tu cuenta se une a tu historial. Tras 5 contraseñas
+equivocadas la cuenta se bloquea 15 minutos. La misma cuenta sirve en la terminal y en el sitio.
+
 ### Sacar un turno (3 pasos)
 
-**1. Elegí tu protocolo.** Tocá el tratamiento: se ve la duración y el precio. *Ver resumen* muestra
-qué es, cuántas sesiones lleva, la zona, en qué capa de la piel actúa, qué hacer antes y después y
-para quién no es: el mismo resumen que la ficha del sitio web. *Continuar*.
+**1. Elegí tu protocolo.** Tocá el tratamiento: se ve la duración y el precio. Podés sumar hasta
+**3 protocolos** en el mismo turno (los tocás de a uno). Si tocás una **cirugía**, la terminal te
+avisa que primero hay que reservar la **consulta prequirúrgica** y te ofrece sumarla. *Ver resumen*
+muestra qué es, cuántas sesiones lleva, la zona, en qué capa de la piel actúa, qué hacer antes y
+después y para quién no es: el mismo resumen que la ficha del sitio web. *Continuar*.
 
 ![Paso 1: elegir el protocolo](capturas/cliente-01-protocolo.png)
 
@@ -61,10 +71,14 @@ los horarios libres de los profesionales que hacen ese protocolo.
 
 **3. Confirmá tu turno.** Escribí tu nombre y apellido, tu DNI y tu teléfono. A la derecha se
 ve la **seña** (30% del precio; 40% en cirugías). *Pagar seña (simulado)* la marca como paga: no
-se pide tarjeta ni se cobra dinero. Tocá *Confirmar turno*.
+se pide tarjeta ni se cobra dinero. Si tenés un **cupón** (un descuento personal, que se revisa con
+tu DNI) o una **tarjeta de regalo** (la seña sale de su saldo), escribí el código y tocá *Aplicar*.
+Tocá *Confirmar turno*.
 
 ![Paso 3: datos y seña](capturas/cliente-03-confirmar.png)
 
+- El sitio web hace lo mismo y con las mismas reglas: mismos protocolos, validaciones, cupones, tarjetas
+  de regalo y reglas de seña y cancelación.
 - Si es tu primera vez, el programa te pregunta la **fecha de nacimiento** para darte de alta.
 - Mientras escribís, el nombre no acepta números y el DNI y el teléfono no aceptan letras.
 - Si otra persona tomó ese horario un segundo antes, te avisa y te deja elegir otro.

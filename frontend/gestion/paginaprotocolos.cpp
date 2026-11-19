@@ -150,7 +150,7 @@ PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *pare
         if (editado < 0)
             return;
         int precioConsulta = 0;
-        for (const Protocolo &p : std::as_const(*datos))
+        for (const Protocolo &p : *datos)
             if (p.nombre.startsWith("Consulta prequir"))
                 precioConsulta = p.precio;
         ResumenTratamiento::mostrar(this, DatosPrueba::comoTratamiento((*datos)[editado]), precioConsulta);

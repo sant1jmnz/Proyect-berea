@@ -247,16 +247,13 @@ void VentanaGestion::armarPantallasNuevas()
     paginaReportes = new PaginaReportes;
     paginaUsuarios = new PaginaUsuarios;
     /* Quedan en el QStackedWidget en el orden de Pagina; el nombre lo usan las pruebas. */
-    const QVector<QPair<QWidget *, const char *>> nuevas = {
-        { paginaProtocolos, "pagProtocolos" }, { paginaProfesionales, "pagProfesionales" },
-        { paginaPacientes, "pagPacientes" },   { paginaAvisos, "pagAvisos" },
-        { paginaCupones, "pagCupones" },       { paginaTarjetas, "pagTarjetas" },
-        { paginaEvaluaciones, "pagEvaluaciones" }, { paginaReportes, "pagReportes" },
-        { paginaUsuarios, "pagUsuarios" },
-    };
-    for (const auto &[pagina, nombre] : nuevas) {
-        pagina->setObjectName(nombre);
-        ui->paginas->addWidget(pagina);
+    QWidget *nuevas[] = { paginaProtocolos, paginaProfesionales, paginaPacientes, paginaAvisos, paginaCupones,
+                          paginaTarjetas, paginaEvaluaciones, paginaReportes, paginaUsuarios };
+    const char *nombres[] = { "pagProtocolos", "pagProfesionales", "pagPacientes", "pagAvisos", "pagCupones",
+                              "pagTarjetas", "pagEvaluaciones", "pagReportes", "pagUsuarios" };
+    for (int i = 0; i < 9; ++i) {
+        nuevas[i]->setObjectName(nombres[i]);
+        ui->paginas->addWidget(nuevas[i]);
     }
 
     connect(paginaProtocolos, &PaginaProtocolos::cambiaron, this, &VentanaGestion::protocolosCambiaron);

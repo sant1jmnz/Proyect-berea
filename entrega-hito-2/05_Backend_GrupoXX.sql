@@ -3279,7 +3279,7 @@ END//
 DELIMITER ;
 
 -- ======================================================================
--- Listados de las pantallas Cupones y Consultas previas
+-- Listados de las pantallas Cupones y Consultas previas, y usuarios del personal
 -- ======================================================================
 
 

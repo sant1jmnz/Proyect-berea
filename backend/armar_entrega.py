@@ -51,7 +51,7 @@ def main():
              f"-- {cab}-- Punto 3: implementación del modelo (schemas, tablas, claves y restricciones).\n-- Se puede ejecutar varias veces: borra y recrea los 9 schemas.\n\n"
              + leer("codigobasededatossolotablas.sql"))
     escribir(f"04_DatosSQL_Grupo{g}.sql",
-             f"-- {cab}-- Punto 4: datos de ejemplo. Se corre después del 03 (sobre las tablas vacías).\n-- El modelo de LOGS no se carga acá: lo llenan los stored procedures cuando se usan (4c).\n\n"
+             f"-- {cab}-- Punto 4: datos de ejemplo. Se corre después del 03. Se puede repetir: primero vacía las tablas.\n-- El modelo de LOGS no se carga acá: lo llenan los stored procedures cuando se usan (4c).\n\n"
              + leer("02_datos.sql"))
     escribir(f"05_Backend_Grupo{g}.sql",
              f"-- {cab}-- Punto 5: funcionalidades en stored procedures, 8 reportes, auditoría con parámetros y los\n-- dos reportes con versión _tuneado. Se corre después del 04; se puede repetir (DROP ... IF EXISTS).\n\n"
@@ -60,7 +60,7 @@ def main():
              + unir("Seña, cancelación, evaluaciones, tarjetas, cupones, notificaciones y asistente", [("04_sp_semana4.sql", leer("04_sp_semana4.sql"))])
              + unir("Reportes (8) y reporte de auditoría", [("05_reportes_semana5.sql", leer("05_reportes_semana5.sql"))])
              + unir("Reportes con tuning (_tuneado)", [("06_tuning_semana6.sql", leer("06_tuning_semana6.sql"))])
-             + unir("Listados de las pantallas Cupones y Consultas previas", [("09_sp_pantallas.sql", leer("09_sp_pantallas.sql"))]))
+             + unir("Listados de las pantallas Cupones y Consultas previas, y usuarios del personal", [("09_sp_pantallas.sql", leer("09_sp_pantallas.sql"))]))
     d = os.path.join(RAIZ, "docs", "diagramas")
     png_fondo_blanco(os.path.join(d, "Proyecto-Berea-01-BBDD.png"), os.path.join(SALIDA, f"Diagrama_Chen_Grupo{g}.png"))
     png_fondo_blanco(os.path.join(d, "Proyecto-Berea-01-BBDD-Edgar_Codd.png"), os.path.join(SALIDA, f"Diagrama_Codd_Grupo{g}.png"))

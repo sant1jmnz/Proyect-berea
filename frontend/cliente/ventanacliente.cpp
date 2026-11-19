@@ -15,6 +15,8 @@
 
 #include <QApplication>
 #include <QCalendarWidget>
+#include <QDesktopServices>
+#include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
@@ -26,6 +28,8 @@
 #include <QStyle>
 #include <QTextCharFormat>
 #include <QTimer>
+#include <QUrl>
+#include <QUrlQuery>
 #include <QVBoxLayout>
 #include <algorithm>
 
@@ -69,6 +73,7 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
     conectarNavegacion();
     armarBotonCuenta();
     armarPasos();
+    armarCodigo();
     armarCalendario();
     armarMiTurno();
 
@@ -144,20 +149,38 @@ void VentanaCliente::armarPasos()
 {
     connect(ui->btnVolver1, &QPushButton::clicked, this, [this] { irA(PagInicio); });
     connect(ui->btnContinuar1, &QPushButton::clicked, this, &VentanaCliente::continuarProtocolo);
-    /* Paso 1: "Ver resumen" del tratamiento elegido (el mismo resumen que la web). */
+    /* Paso 1: hasta MAX_PROTOCOLOS protocolos por turno, como en el sitio web: se tocan para marcarlos. */
+    ui->listaProtocolos->setSelectionMode(QAbstractItemView::MultiSelection);
+    connect(ui->listaProtocolos, &QListWidget::itemSelectionChanged, this, &VentanaCliente::protocolosCambiaron);
+
+    /* Aviso de las cirugías (RF-25): una cirugía empieza con una consulta prequirúrgica paga. */
+    lblAvisoCirugia = new QLabel(this);
+    lblAvisoCirugia->setObjectName("lblAvisoCirugia");
+    lblAvisoCirugia->setProperty("rol", "nota");
+    lblAvisoCirugia->setWordWrap(true);
+    lblAvisoCirugia->hide();
+    btnSumarConsulta = new QPushButton("Reservar la consulta prequirúrgica", this);
+    btnSumarConsulta->setObjectName("btnSumarConsulta");
+    btnSumarConsulta->setCursor(Qt::PointingHandCursor);
+    btnSumarConsulta->hide();
+    ui->layoutProtocolos->addWidget(lblAvisoCirugia);
+    ui->layoutProtocolos->addWidget(btnSumarConsulta);
+    connect(btnSumarConsulta, &QPushButton::clicked, this, &VentanaCliente::sumarConsultaPrequirurgica);
+
+    /* "Ver resumen" del último tratamiento tocado (el mismo resumen que la web). */
     auto *btnResumen = new QPushButton("Ver resumen");
     btnResumen->setObjectName("btnResumen1");
     btnResumen->setCursor(Qt::PointingHandCursor);
     btnResumen->setEnabled(false);
     ui->botonesProtocolo->insertWidget(ui->botonesProtocolo->indexOf(ui->btnVolver1), btnResumen);
     connect(ui->listaProtocolos, &QListWidget::itemSelectionChanged, this, [this, btnResumen] {
-        btnResumen->setEnabled(protocoloElegido() != nullptr);
+        btnResumen->setEnabled(!protocolosElegidos().isEmpty());
     });
     connect(btnResumen, &QPushButton::clicked, this, [this] {
-        const Protocolo *p = protocoloElegido();
-        if (!p)
+        const QVector<const Protocolo *> elegidos = protocolosElegidos();
+        if (elegidos.isEmpty())
             return;
-        ResumenTratamiento::mostrar(this, DatosPrueba::comoTratamiento(*p),
+        ResumenTratamiento::mostrar(this, DatosPrueba::comoTratamiento(*elegidos.last()),
                                     ResumenTratamiento::precioConsulta(DatosPrueba::comoTratamientos(protocolos)));
     });
     connect(ui->btnVolver2, &QPushButton::clicked, this, [this] { irA(PagProtocolo); });
@@ -169,6 +192,30 @@ void VentanaCliente::armarPasos()
     connect(ui->btnSena, &QPushButton::toggled, this, [this](bool pagada) {
         ui->btnSena->setText(pagada ? "✓  Seña pagada" : "Pagar seña (simulado)");
     });
+}
+
+/* Cupón o tarjeta de regalo (RF-17, RF-23), en la tarjeta de la seña del paso 3. */
+void VentanaCliente::armarCodigo()
+{
+    editCodigo = new QLineEdit(this);
+    editCodigo->setObjectName("editCodigo");
+    editCodigo->setMaxLength(40);
+    editCodigo->setPlaceholderText("¿Tenés un cupón o una tarjeta de regalo? Escribí el código");
+    auto *btnAplicar = new QPushButton("Aplicar", this);
+    btnAplicar->setObjectName("btnAplicarCodigo");
+    btnAplicar->setCursor(Qt::PointingHandCursor);
+    auto *filaCodigo = new QHBoxLayout;
+    filaCodigo->addWidget(editCodigo, 1);
+    filaCodigo->addWidget(btnAplicar);
+    lblEstadoCodigo = new QLabel(this);
+    lblEstadoCodigo->setObjectName("lblEstadoCodigo");
+    lblEstadoCodigo->setProperty("rol", "nota");
+    lblEstadoCodigo->setWordWrap(true);
+    ui->layoutSena->insertLayout(3, filaCodigo);   /* en el hueco, antes del espacio y del botón */
+    ui->layoutSena->insertWidget(4, lblEstadoCodigo);
+    connect(btnAplicar, &QPushButton::clicked, this, &VentanaCliente::aplicarCodigo);
+    connect(editCodigo, &QLineEdit::returnPressed, this, &VentanaCliente::aplicarCodigo);
+    connect(editCodigo, &QLineEdit::textChanged, this, &VentanaCliente::olvidarCodigo);   /* si cambia, hay que volver a aplicarlo */
 }
 
 /* Calendario: solo desde el mes actual (y desde 2026); si se elige un día ya pasado de este mes,
@@ -185,6 +232,14 @@ void VentanaCliente::armarCalendario()
 /* Buscar mi turno: con el botón o con Enter; se puede cancelar desde ahí. */
 void VentanaCliente::armarMiTurno()
 {
+    /* "Agregar a Google Calendar" (RF-19), igual que en el sitio: abre el evento con el turno cargado. */
+    btnCalendar = new QPushButton("Agregar a Google Calendar", this);
+    btnCalendar->setObjectName("btnCalendar");
+    btnCalendar->setCursor(Qt::PointingHandCursor);
+    btnCalendar->setEnabled(false);
+    ui->layoutCancelar->insertWidget(1, btnCalendar);
+    connect(btnCalendar, &QPushButton::clicked, this, &VentanaCliente::agregarACalendar);
+
     ui->editBuscarTurno->clear();   /* no hay turnos hasta que se cargan */
     ocultarTurno();
     connect(ui->btnBuscarTurno, &QPushButton::clicked, this, &VentanaCliente::buscarMiTurno);
@@ -278,13 +333,209 @@ void VentanaCliente::cargarProtocolos()
     ui->buscador->setCatalogo(DatosPrueba::comoTratamientos(protocolos));   /* "Consultar precios" usa el mismo catálogo */
 }
 
-const Protocolo *VentanaCliente::protocoloElegido() const
+QVector<const Protocolo *> VentanaCliente::protocolosElegidos() const
 {
-    const QListWidgetItem *item = ui->listaProtocolos->currentItem();
-    const int fila = ui->listaProtocolos->currentRow();
-    if (!item || !item->isSelected() || fila < 0 || fila >= protocolosVisibles.size())
-        return nullptr;
-    return &protocolos[protocolosVisibles[fila]];
+    QVector<const Protocolo *> elegidos;
+    for (int fila : ordenElegidos)
+        if (fila < protocolosVisibles.size() && ui->listaProtocolos->item(fila)->isSelected())
+            elegidos << &protocolos[protocolosVisibles[fila]];
+    return elegidos;
+}
+
+/* Fila de la consulta prequirúrgica (la que se reserva antes de cualquier cirugía), o -1. */
+static int filaDeConsultaPrequirurgica(const QVector<Protocolo> &protocolos, const QVector<int> &visibles)
+{
+    for (int fila = 0; fila < visibles.size(); ++fila)
+        if (Formato::sinTildes(protocolos[visibles[fila]].nombre).startsWith("consulta prequirurgica"))
+            return fila;
+    return -1;
+}
+
+/* Toda cirugía necesita una consulta prequirúrgica antes (RF-25): no se reserva directo. Si se toca una,
+ * se desmarca y se ofrece la consulta. Además, un turno lleva hasta MAX_PROTOCOLOS protocolos. */
+void VentanaCliente::protocolosCambiaron()
+{
+    if (cambiandoSeleccion)
+        return;
+    cambiandoSeleccion = true;
+    /* Se actualiza el orden en que se tocaron: salen los que se desmarcaron y entran los nuevos. */
+    QVector<int> vigentes;
+    for (int fila : ordenElegidos)
+        if (fila < ui->listaProtocolos->count() && ui->listaProtocolos->item(fila)->isSelected())
+            vigentes << fila;
+    for (int fila = 0; fila < ui->listaProtocolos->count() && fila < protocolosVisibles.size(); ++fila)
+        if (ui->listaProtocolos->item(fila)->isSelected() && !vigentes.contains(fila))
+            vigentes << fila;
+    ordenElegidos = vigentes;
+
+    const Protocolo *cirugia = nullptr;
+    bool tope = false;
+    int i = 0;
+    while (i < ordenElegidos.size()) {
+        const int fila = ordenElegidos[i];
+        const Protocolo &p = protocolos[protocolosVisibles[fila]];
+        if (!p.categoria.requiereEvaluacion && i < MAX_PROTOCOLOS) {
+            ++i;
+            continue;
+        }
+        if (p.categoria.requiereEvaluacion)
+            cirugia = &p;
+        else
+            tope = true;
+        ui->listaProtocolos->item(fila)->setSelected(false);   /* la cirugía o el que pasó el tope no se marca */
+        ordenElegidos.removeAt(i);
+    }
+    cambiandoSeleccion = false;
+    if (cirugia) {
+        avisarCirugia(*cirugia);
+    } else if (tope) {
+        lblAvisoCirugia->setText(QString("Podés sumar hasta %1 protocolos en un mismo turno.").arg(MAX_PROTOCOLOS));
+        lblAvisoCirugia->show();
+        btnSumarConsulta->hide();
+    } else {
+        lblAvisoCirugia->hide();
+        btnSumarConsulta->hide();
+    }
+}
+
+void VentanaCliente::avisarCirugia(const Protocolo &cirugia)
+{
+    const int fila = filaDeConsultaPrequirurgica(protocolos, protocolosVisibles);
+    if (fila < 0) {
+        lblAvisoCirugia->setText(QString("%1 necesita una consulta prequirúrgica antes. Pedila en la recepción.").arg(cirugia.nombre));
+        lblAvisoCirugia->show();
+        btnSumarConsulta->hide();
+        return;
+    }
+    const Protocolo &consulta = protocolos[protocolosVisibles[fila]];
+    lblAvisoCirugia->setText(QString("%1 empieza con una consulta prequirúrgica de %2, con su propia seña. Solo se agenda la cirugía "
+                                     "si la evaluación da \"apto\". Si seguís con la cirugía, el valor de la consulta se devuelve.")
+                                 .arg(cirugia.nombre, Formato::pesos(consulta.precio)));
+    lblAvisoCirugia->show();
+    btnSumarConsulta->show();
+}
+
+void VentanaCliente::sumarConsultaPrequirurgica()
+{
+    const int fila = filaDeConsultaPrequirurgica(protocolos, protocolosVisibles);
+    if (fila < 0)
+        return;
+    lblAvisoCirugia->hide();
+    btnSumarConsulta->hide();
+    ui->listaProtocolos->item(fila)->setSelected(true);
+    ui->listaProtocolos->scrollToItem(ui->listaProtocolos->item(fila));
+}
+
+/* Las cuentas del turno: seña por protocolo con el porcentaje de su categoría y el descuento
+ * del cupón (las mismas que hace el sitio web). */
+VentanaCliente::Cuentas VentanaCliente::cuentas() const
+{
+    Cuentas c;
+    c.descuento = cuponDescuento;
+    for (const Protocolo *p : protocolosElegidos()) {
+        const int conDescuento = qRound(p->precio * (100 - c.descuento) / 100.0);
+        c.nombres << p->nombre;
+        c.total += p->precio;
+        c.totalFinal += conDescuento;
+        c.sena += Sena::calcular(conDescuento, p->categoria.porcentajeSena);
+        c.duracionMin += p->duracionMin;
+        c.hayCirugia = c.hayCirugia || p->categoria.requiereEvaluacion;
+    }
+    return c;
+}
+
+/* Muestra en el paso 3 lo que se va a reservar y cobrar. */
+void VentanaCliente::pintarResumen()
+{
+    const Cuentas c = cuentas();
+    const QDateTime inicio = horarioElegido();
+    ui->lblResProtocolo->setText(c.nombres.join(" + "));
+    if (inicio.isValid()) {
+        ui->lblResFecha->setText(Formato::fechaLarga(inicio.date(), true));
+        ui->lblResHora->setText(QString("%1 (%2 min)").arg(inicio.toString("HH:mm")).arg(c.duracionMin));
+    }
+    ui->lblResPrecio->setText(c.descuento ? QString("%1 (cupón −%2 %)").arg(Formato::pesos(c.totalFinal)).arg(c.descuento)
+                                          : Formato::pesos(c.totalFinal));
+    ui->lblSena->setText(Formato::pesos(c.sena));
+    ui->lblReglaSena->setText(QString("%1. Te la devolvemos si cancelás con más de 24 h.")
+                                  .arg(c.hayCirugia ? "40 % en cirugías, 30 % en el resto" : "30 % del total"));
+    ui->lblNotaSena->setText(tarjetaCodigo.isEmpty() ? "Pago simulado: no se pide tarjeta ni se cobra dinero."
+                                                     : "La seña se descuenta del saldo de tu tarjeta de regalo (pago simulado).");
+}
+
+void VentanaCliente::olvidarCodigo()
+{
+    const bool habiaCodigo = !cuponCodigo.isEmpty() || !tarjetaCodigo.isEmpty() || cuponDescuento != 0;
+    cuponCodigo.clear();
+    cuponDescuento = 0;
+    tarjetaCodigo.clear();
+    lblEstadoCodigo->clear();
+    if (habiaCodigo)
+        pintarResumen();
+}
+
+/* Cupón (descuento) o tarjeta de regalo (paga la seña), revisados contra la base (RF-17, RF-23).
+ * Sin base solo existe el cupón de ejemplo BIENVENIDA. Mismos mensajes que el sitio web. */
+void VentanaCliente::aplicarCodigo()
+{
+    const QString codigo = editCodigo->text().trimmed().toUpper();
+    cuponCodigo.clear();
+    cuponDescuento = 0;
+    tarjetaCodigo.clear();
+    QString mensaje;
+    if (codigo.isEmpty()) {
+        lblEstadoCodigo->clear();
+        pintarResumen();
+        return;
+    }
+    if (!enModoBase) {
+        if (codigo == "BIENVENIDA") {
+            cuponCodigo = codigo;
+            cuponDescuento = 10;
+            mensaje = "Cupón aplicado: 10 % de descuento en tu primer turno.";
+        } else {
+            mensaje = "Ese código no existe o ya se usó. Revisá que esté bien escrito.";
+        }
+        lblEstadoCodigo->setText(mensaje);
+        pintarResumen();
+        return;
+    }
+    const Resultado tarjeta = repositorio->saldoTarjeta(codigo, "terminal");
+    if (!tarjeta.ok) {
+        mensaje = tarjeta.error;
+    } else if (!tarjeta.filas.isEmpty()) {
+        const QVariantMap f = tarjeta.filas.first();
+        const int saldo = qRound(f.value("saldo").toDouble());
+        if (f.value("vigente").toInt() == 1 && saldo > 0) {
+            tarjetaCodigo = codigo;
+            mensaje = QString("Tarjeta de regalo aplicada: tiene %1 de saldo y la seña se descuenta de ahí.").arg(Formato::pesos(saldo));
+        } else {
+            mensaje = "Esa tarjeta de regalo está vencida o sin saldo.";
+        }
+    } else if (!Validaciones::dniValido(ui->editDni->text())) {
+        mensaje = "Escribí tu DNI primero: los cupones son personales.";
+    } else {
+        const Resultado cupones = repositorio->listarCupones(Validaciones::soloDigitos(ui->editDni->text()));
+        QVariantMap cupon;
+        for (const QVariantMap &f : cupones.filas)
+            if (f.value("codigo").toString().toUpper() == codigo)
+                cupon = f;
+        if (!cupones.ok) {
+            mensaje = cupones.error;
+        } else if (cupon.isEmpty()) {
+            mensaje = "Ese código no existe o es de otra paciente. Revisá que esté bien escrito.";
+        } else if (cupon.value("usado").toInt() == 1) {
+            mensaje = "Ese cupón ya se usó.";
+        } else if (cupon.value("vigente").toInt() != 1) {
+            mensaje = "Ese cupón está vencido.";
+        } else {
+            cuponCodigo = codigo;
+            cuponDescuento = qRound(cupon.value("porcentaje_descuento").toDouble());
+            mensaje = QString("Cupón aplicado: %1 % de descuento.").arg(cuponDescuento);
+        }
+    }
+    lblEstadoCodigo->setText(mensaje);
+    pintarResumen();
 }
 
 QDateTime VentanaCliente::horarioElegido() const
@@ -299,12 +550,12 @@ QDateTime VentanaCliente::horarioElegido() const
 
 void VentanaCliente::continuarProtocolo()
 {
-    const Protocolo *p = protocoloElegido();
-    if (!p) {
+    const Cuentas c = cuentas();
+    if (c.nombres.isEmpty()) {
         QMessageBox::warning(this, "Falta el protocolo", "Tocá el tratamiento que querés hacerte para continuar.");
         return;
     }
-    ui->lblPasoHorario->setText(QString("%1 (%2 min)").arg(p->nombre).arg(p->duracionMin));
+    ui->lblPasoHorario->setText(QString("%1 (%2 min)").arg(c.nombres.join(" + ")).arg(c.duracionMin));
     actualizarHorarios();
     irA(PagHorario);
 }
@@ -371,9 +622,8 @@ void VentanaCliente::actualizarHorarios()
 
 void VentanaCliente::continuarHorario()
 {
-    const Protocolo *p = protocoloElegido();
     const QDateTime inicio = horarioElegido();
-    if (!p) {
+    if (protocolosElegidos().isEmpty()) {
         irA(PagProtocolo);
         return;
     }
@@ -381,14 +631,7 @@ void VentanaCliente::continuarHorario()
         QMessageBox::warning(this, "Falta el horario", "Elegí un día y tocá un horario libre.");
         return;
     }
-    ui->lblResProtocolo->setText(p->nombre);
-    ui->lblResFecha->setText(Formato::fechaLarga(inicio.date(), true));
-    ui->lblResHora->setText(QString("%1 (%2 min)").arg(inicio.toString("HH:mm")).arg(p->duracionMin));
-    ui->lblResPrecio->setText(Formato::pesos(p->precio));
-    ui->lblSena->setText(Formato::pesos(Sena::calcular(p->precio, p->categoria.porcentajeSena)));
-    ui->lblReglaSena->setText(QString("%1% del precio (categoría %2); se descuenta del total al pagar. "
-                                      "Se reembolsa si se cancela con más de 24 h de anticipación.")
-                                  .arg(p->categoria.porcentajeSena).arg(p->categoria.nombre));
+    pintarResumen();
     irA(PagConfirmar);
 }
 
@@ -420,9 +663,9 @@ bool VentanaCliente::datosValidos()
 /* Paso 3: se valida, se carga el turno al momento y se muestra en "Buscar mi turno". */
 void VentanaCliente::confirmar()
 {
-    const Protocolo *p = protocoloElegido();
+    const QVector<const Protocolo *> elegidos = protocolosElegidos();
     const QDateTime inicio = horarioElegido();
-    if (!p || !inicio.isValid()) {   /* no debería pasar: los pasos anteriores ya lo revisan */
+    if (elegidos.isEmpty() || !inicio.isValid()) {   /* no debería pasar: los pasos anteriores ya lo revisan */
         irA(PagProtocolo);
         return;
     }
@@ -435,7 +678,7 @@ void VentanaCliente::confirmar()
         return;
     }
     if (enModoBase) {
-        if (confirmarEnBase(p, inicio))
+        if (confirmarEnBase(cuentas(), elegidos, inicio))
             mostrarRecienCargado(Validaciones::soloDigitos(ui->editDni->text()));
         return;
     }
@@ -447,10 +690,10 @@ void VentanaCliente::confirmar()
         return;
     }
 
+    const Cuentas c = cuentas();
     Turno nuevo = { ui->editNombre->text().simplified(), Validaciones::soloDigitos(ui->editDni->text()),
-                    Validaciones::soloDigitos(ui->editTelefono->text()), p->nombre, p->precio,
-                    Sena::calcular(p->precio, p->categoria.porcentajeSena), inicio,
-                    inicio.addSecs(p->duracionMin * 60), EstadoTurno::Confirmado, "Terminal",
+                    Validaciones::soloDigitos(ui->editTelefono->text()), c.nombres.join(" + "), c.totalFinal,
+                    c.sena, inicio, inicio.addSecs(c.duracionMin * 60), EstadoTurno::Confirmado, "Terminal",
                     ui->btnSena->isChecked(), QString(), 0 };
     if (nuevo.senaPagada)   /* seña simulada: imita un pago real pero no mueve dinero */
         nuevo.codigoOperacion = ReglasTurno::nuevoCodigoOperacion(turnos);
@@ -485,6 +728,9 @@ void VentanaCliente::reiniciarCarga()
     ui->editTelefono->clear();
     ui->listaProtocolos->clearSelection();
     ui->listaProtocolos->setCurrentRow(-1);
+    lblAvisoCirugia->hide();
+    btnSumarConsulta->hide();
+    editCodigo->clear();   /* también olvida el cupón o la tarjeta */
     ui->btnSena->setChecked(false);
     completarConLaCuenta();
     ajustandoFecha = true;
@@ -501,6 +747,26 @@ void VentanaCliente::ocultarTurno()
 {
     turnoMostrado = -1;
     ui->tarjetaMiTurno->setVisible(false);
+    btnCalendar->setEnabled(false);
+}
+
+/* El mismo enlace que arma el sitio web: abre Google Calendar con el turno cargado (RF-19). */
+void VentanaCliente::agregarACalendar()
+{
+    if (turnoMostrado < 0 || turnoMostrado >= turnos.size())
+        return;
+    const Turno &t = turnos[turnoMostrado];
+    const QString formato = "yyyyMMdd'T'HHmm'00'";
+    QUrlQuery datos;
+    datos.addQueryItem("action", "TEMPLATE");
+    datos.addQueryItem("text", "Turno en Dermalia: " + t.protocolo);
+    datos.addQueryItem("dates", t.inicio.toString(formato) + "/" + t.fin.toString(formato));
+    datos.addQueryItem("ctz", "America/Argentina/Buenos_Aires");
+    datos.addQueryItem("details", "Recordá llegar 10 minutos antes. Si necesitás cancelar, hacelo con más de 24 h para que te devolvamos la seña.");
+    datos.addQueryItem("location", "Dermalia, Instituto de Estética Médica, Flores, CABA");
+    QUrl url("https://calendar.google.com/calendar/render");
+    url.setQuery(datos);
+    QDesktopServices::openUrl(url);
 }
 
 /* Por DNI o teléfono, sin contraseña (RF-12). Se muestra el próximo turno vigente
@@ -599,6 +865,7 @@ void VentanaCliente::mostrarTurno(int indice, int vigentes)
         ui->lblRecordatorio->setText(QString("Te lo vamos a recordar el %1 a las %2.").arg(Formato::fechaLarga(aviso.date()), aviso.toString("HH:mm")));
     }
     ui->btnCancelarMiTurno->setEnabled(activo);
+    btnCalendar->setEnabled(activo);
     ui->tarjetaMiTurno->setVisible(true);
 }
 
@@ -716,12 +983,14 @@ void VentanaCliente::sincronizarBase()
     QVector<Protocolo> catalogo;
     if (DatosBase::cargarProtocolos(*repositorio, catalogo, &error)
         && DatosBase::resumen(catalogo) != DatosBase::resumen(protocolos)) {
-        const Protocolo *p = protocoloElegido();
-        const int idElegido = p ? p->id : 0;
+        QVector<int> idsElegidos;   /* se vuelven a marcar en el mismo orden */
+        for (const Protocolo *p : protocolosElegidos())
+            idsElegidos << p->id;
         cargarProtocolos();
-        for (int fila = 0; fila < protocolosVisibles.size(); ++fila)
-            if (idElegido != 0 && protocolos[protocolosVisibles[fila]].id == idElegido)
-                ui->listaProtocolos->setCurrentRow(fila);
+        for (int id : idsElegidos)
+            for (int fila = 0; fila < protocolosVisibles.size(); ++fila)
+                if (protocolos[protocolosVisibles[fila]].id == id)
+                    ui->listaProtocolos->item(fila)->setSelected(true);
     }
 
     /* Turnos: si cambiaron, se recalculan los horarios libres y "mi turno". */
@@ -748,15 +1017,18 @@ void VentanaCliente::sincronizarBase()
 /* Horarios libres del día para el protocolo elegido, con el profesional que atiende. */
 void VentanaCliente::horariosDeBase(const QDate &dia)
 {
-    const Protocolo *p = protocoloElegido();
-    if (!p) {
+    QVector<int> ids;
+    for (const Protocolo *p : protocolosElegidos())
+        ids << p->id;
+    if (ids.isEmpty()) {
         ui->lblNotaHorario->setText("Elegí primero el protocolo.");
         return;
     }
     /* La base devuelve un horario por cada profesional libre: a la paciente se le
-     * muestra cada hora una sola vez, con el primer profesional que la tiene libre. */
+     * muestra cada hora una sola vez, con el primer profesional que la tiene libre.
+     * Con varios protocolos, solo salen los profesionales que hacen todos (RF-18). */
     QStringList yaMostradas;
-    for (const HorarioLibre &h : repositorio->horariosLibres(dia, { p->id })) {
+    for (const HorarioLibre &h : repositorio->horariosLibres(dia, ids)) {
         const QString hora = h.inicio.toString("HH:mm");
         if (h.inicio <= QDateTime::currentDateTime() || yaMostradas.contains(hora))
             continue;
@@ -817,14 +1089,17 @@ bool VentanaCliente::buscarOCrearPaciente(int *idPaciente)
 }
 
 /* Paso 3 con la base: sp_alta_turno y, si tocó "Pagar seña", sp_registrar_seña (pago simulado). */
-bool VentanaCliente::confirmarEnBase(const Protocolo *p, const QDateTime &inicio)
+bool VentanaCliente::confirmarEnBase(const Cuentas &c, const QVector<const Protocolo *> &elegidos, const QDateTime &inicio)
 {
     int idPaciente = 0;
     if (!buscarOCrearPaciente(&idPaciente))
         return false;
 
+    QVector<int> ids;
+    for (const Protocolo *p : elegidos)
+        ids << p->id;
     const int idProfesional = ui->listaHorarios->currentItem()->data(Qt::UserRole + 1).toInt();
-    const Respuesta turno = repositorio->altaTurno(idPaciente, idProfesional, inicio, { p->id }, "terminal");
+    const Respuesta turno = repositorio->altaTurno(idPaciente, idProfesional, inicio, ids, "terminal", 0, cuponCodigo);
     if (!turno.ok) {   /* la base aplicó una regla (por ejemplo, otra persona se llevó ese horario) */
         QMessageBox::warning(this, "No pudimos reservar el turno", turno.mensaje);
         actualizarHorarios();
@@ -832,10 +1107,13 @@ bool VentanaCliente::confirmarEnBase(const Protocolo *p, const QDateTime &inicio
         return false;
     }
 
-    QString mensaje = mensajeReservado(p->nombre, inicio);
+    QString mensaje = mensajeReservado(c.nombres.join(" + "), inicio);
     if (ui->btnSena->isChecked()) {
-        const Respuesta sena = repositorio->registrarSena(turno.id, "tarjeta simulada", QString(), "terminal");
-        mensaje += sena.ok ? QString("\nSeña pagada (simulada): código %1.").arg(sena.dato)
+        /* Con una tarjeta de regalo la seña sale de su saldo; si no, es el pago simulado de siempre. */
+        const bool conTarjeta = !tarjetaCodigo.isEmpty();
+        const Respuesta sena = repositorio->registrarSena(turno.id, conTarjeta ? "tarjeta de regalo" : "tarjeta simulada",
+                                                          tarjetaCodigo, "terminal");
+        mensaje += sena.ok ? QString("\nSeña pagada%1: código %2.").arg(conTarjeta ? " con tu tarjeta de regalo" : " (simulada)", sena.dato)
                            : QString("\nLa seña no se pudo registrar (%1): acercate a recepción.").arg(sena.mensaje);
     } else {
         mensaje += "\nLa seña quedó sin pagar: acercate a recepción para abonarla.";

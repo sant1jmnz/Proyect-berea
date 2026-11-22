@@ -30,13 +30,23 @@ const lineaTurno = (t) => `• ${fechaCorta(t.fecha_hora_inicio)}: ${t.protocolo
 const AYUDA = [
   'Esto es lo que puedo hacer:',
   '• Mandarte el recordatorio de tus turnos (para eso vinculá tu cuenta con /start).',
+  '• Con los botones de abajo: ver, reservar, cancelar o reprogramar turnos, pagar la seña y hablar con la recepción.',
   '• /turnos: tus próximos turnos.',
   '• /limpiar: que el bot olvide lo que hablaron.',
   '• /salir: dejar de recibir avisos por acá.',
   '• Escribime cualquier pregunta sobre precios, seña, cancelaciones o cirugías y te respondo.',
 ].join('\n');
 
-export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, fetchImpl = fetch,
+// Menú fijo: cada botón manda su texto, que se traduce a un comando
+const MENU = { keyboard: [[{ text: 'Mis turnos' }, { text: 'Reservar' }], [{ text: 'Cancelar turno' }, { text: 'Reprogramar' }],
+  [{ text: 'Precios' }, { text: 'Recepción' }]], resize_keyboard: true, is_persistent: true };
+const BOTONES = { 'mis turnos': '/turnos', reservar: '/reservar', 'cancelar turno': '/cancelarturno', reprogramar: '/reprogramar',
+  precios: '/precios', 'recepción': '/recepcion', recepcion: '/recepcion' };
+const enFilas = (botones, n) => botones.reduce((filas, b, i) => (i % n ? filas[filas.length - 1].push(b) : filas.push([b]), filas), []);
+const teclado = (botones, n = 1) => ({ reply_markup: { inline_keyboard: enFilas(botones, n) } });
+const boton = (text, callback_data) => ({ text, callback_data });
+
+export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, recepcion = null, fetchImpl = fetch,
   apiBase = 'https://api.telegram.org', ahora = () => new Date(), registro = console } = {}) {
   const url = (metodo) => `${apiBase}/bot${token}/${metodo}`;
   // El paso del /start (dni | telefono) vive en la base: en Vercel cada mensaje puede caer en otra instancia.
@@ -62,7 +72,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     }
   }
 
-  const enviar = (chat, texto) => telegram('sendMessage', { chat_id: chat, text: texto });
+  const enviar = (chat, texto, extra = {}) => telegram('sendMessage', { chat_id: chat, text: texto, ...extra });
 
   async function proximosDe(dni) {
     const ahoraTexto = ahora().toISOString().slice(0, 19).replace('T', ' ');
@@ -75,7 +85,8 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
 
   async function procesarMensaje(mensaje) {
     const chat = String(mensaje.chat.id);
-    const texto = String(mensaje.text ?? '').trim();
+    let texto = String(mensaje.text ?? '').trim();
+    texto = BOTONES[texto.toLowerCase()] ?? texto;
     if (!texto) return enviar(chat, 'Por ahora solo entiendo mensajes de texto. Escribime tu consulta o probá con /ayuda.');
     const comando = texto.split(/[\s@]/)[0].toLowerCase();
     const vinculada = (await llamar('personas.sp_paciente_por_telegram', [chat]))[0] ?? null;
@@ -83,12 +94,12 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     if (comando === '/start') {
       if (vinculada) {
         await guardarEstado(chat, null);
-        return enviar(chat, `¡Hola, ${vinculada.nombre}! Tu Telegram ya está vinculado: acá te llegan los recordatorios.\n\n${AYUDA}`);
+        return enviar(chat, `¡Hola, ${vinculada.nombre}! Tu Telegram ya está vinculado: acá te llegan los recordatorios.\n\n${AYUDA}`, { reply_markup: MENU });
       }
       await guardarEstado(chat, 'dni');
       return enviar(chat, '¡Hola! Soy el asistente de Dermalia. Para mandarte los recordatorios de tus turnos, escribí tu DNI (solo números).');
     }
-    if (comando === '/ayuda' || comando === '/help') return enviar(chat, AYUDA);
+    if (comando === '/ayuda' || comando === '/help') return enviar(chat, AYUDA, { reply_markup: MENU });
     if (comando === '/cancelar') {
       await guardarEstado(chat, null);
       return enviar(chat, 'Listo, lo dejamos. Cuando quieras, escribí /start.');
@@ -112,13 +123,29 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
         : `Tus próximos turnos:\n${proximos.map(lineaTurno).join('\n')}${proximos.length > 1 ? `\nTotal: ${pesos(total)}.` : ''}`;
       // queda en el hilo: así "solo los precios" después se entiende como los de sus turnos
       await escribir('asistente.sp_guardar_mensajes_telegram', [String(chat), texto, r]).catch(() => {});
-      return enviar(chat, r);
+      const sinSena = proximos.filter((t) => t.estado_sena === 'sin seña');
+      return enviar(chat, r, sinSena.length ? teclado(sinSena.map((t) => boton(`Pagar seña del ${fechaCorta(t.fecha_hora_inicio).slice(0, 5)}`, `s:${t.id_turno}`))) : {});
     };
     // /turnos lista directo; "¿qué turnos tengo?" en texto libre lo contesta Gemini, que ve la agenda y el hilo
     if (comando === '/turnos' || (pideTurnos && !vinculada)) {
       if (!vinculada) return enviar(chat, 'Primero vinculá tu cuenta con /start.');
       return listarTurnos();
     }
+
+    // Reservar, cancelar y reprogramar con botones (los pasos siguientes llegan como callback_query)
+    const quiereReservar = comando === '/reservar' || /(quiero|quisiera|necesito|me gustar[ií]a|puedo)\b.*\b(reservar|sacar|agendar|pedir)\b.*turno/i.test(texto);
+    const quiereCancelar = comando === '/cancelarturno' || /(quiero|quisiera|necesito)\b.*\b(cancelar|anular)\b.*turno/i.test(texto);
+    const quiereCambiar = comando === '/reprogramar' || /(quiero|quisiera|necesito)\b.*\b(cambiar|reprogramar|mover|pasar)\b.*turno/i.test(texto);
+    if (quiereReservar || quiereCancelar || quiereCambiar) {
+      if (!vinculada) return enviar(chat, 'Para reservar o cambiar turnos por acá primero vinculá tu cuenta con /start (o reservá en el sitio).');
+      if (quiereReservar) return elegirProtocolo(chat);
+      return elegirTurno(chat, vinculada, quiereCancelar ? 'c' : 'm', quiereCancelar ? '¿Qué turno querés cancelar?' : '¿Qué turno querés cambiar?');
+    }
+    if (comando === '/recepcion') {
+      const avisada = await derivar(chat, vinculada, 'Pidió que la contacte la recepción.');
+      return enviar(chat, avisada ? 'Listo, le avisé a la recepción: te van a contactar.' : 'Podés escribirle a la recepción por WhatsApp o llamar al instituto.');
+    }
+    if (comando === '/precios') texto = '¿Cuáles son los precios de los tratamientos?';
 
     // Vinculación en dos pasos: DNI y teléfono
     const conversacion = await estadoDe(chat);
@@ -138,7 +165,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
       }
       await guardarEstado(chat, null);
       return enviar(chat, `¡Listo, ${r.dato}! Tu Telegram quedó vinculado: acá te van a llegar los recordatorios de tus turnos.` +
-        `${Number(r.valor) > 0 ? ` Ya pasamos ${r.valor} aviso${Number(r.valor) === 1 ? '' : 's'} pendiente${Number(r.valor) === 1 ? '' : 's'} a Telegram.` : ''}\n\n${AYUDA}`);
+        `${Number(r.valor) > 0 ? ` Ya pasamos ${r.valor} aviso${Number(r.valor) === 1 ? '' : 's'} pendiente${Number(r.valor) === 1 ? '' : 's'} a Telegram.` : ''}\n\n${AYUDA}`, { reply_markup: MENU });
     }
 
     // Cualquier otra cosa: el asistente
@@ -149,17 +176,112 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null, chat, vinculada?.nombre ?? null, turnos);
     // sin Gemini la respuesta local no ve su agenda: para "¿qué turnos tengo?" mejor la lista
     if (pideTurnos && respuesta?.fuente !== 'gemini') return listarTurnos();
-    return enviar(chat, respuesta.derivada ? `${respuesta.respuesta}\n\nTambién podés escribirle a la recepción por WhatsApp.` : respuesta.respuesta);
+    if (!respuesta.derivada) return enviar(chat, respuesta.respuesta);
+    const avisada = await derivar(chat, vinculada, texto);
+    return enviar(chat, `${respuesta.respuesta}\n\n${avisada ? 'Le pasé tu consulta a la recepción: te van a contactar.' : 'También podés escribirle a la recepción por WhatsApp.'}`);
+  }
+
+  // Le pasa la consulta al chat de la recepción (TELEGRAM_RECEPCION_CHAT). Sin ese chat, no hace nada.
+  async function derivar(chat, vinculada, texto) {
+    if (!recepcion) return false;
+    const quien = vinculada ? `${vinculada.nombre} (DNI ${vinculada.dni})` : `paciente sin vincular (chat ${chat})`;
+    return enviar(recepcion, `Consulta derivada desde Telegram de ${quien}:\n${texto}`).then(() => true, () => false);
+  }
+
+  /* ---------- Turnos con botones ---------- */
+
+  const catalogo = () => llamar('clinica.sp_listar_protocolos', [null, null, 0]);
+  const diaTexto = (fecha) => fecha.slice(8, 10) + '/' + fecha.slice(5, 7);
+  // 202612021500 -> '2026-12-02 15:00:00'
+  const inicioDe = (c) => `${c.slice(0, 4)}-${c.slice(4, 6)}-${c.slice(6, 8)} ${c.slice(8, 10)}:${c.slice(10, 12)}:00`;
+
+  async function elegirProtocolo(chat) {
+    const protocolos = await catalogo();
+    return enviar(chat, '¿Qué tratamiento querés reservar?', teclado(protocolos.map((p) => boton(p.nombre, `rp:${p.id_protocolo}`)), 2));
+  }
+
+  async function elegirTurno(chat, vinculada, prefijo, pregunta) {
+    const proximos = await proximosDe(vinculada.dni);
+    if (!proximos.length) return enviar(chat, 'No tenés turnos próximos.');
+    return enviar(chat, pregunta, teclado(proximos.map((t) => boton(`${fechaCorta(t.fecha_hora_inicio)}: ${t.protocolos}`.slice(0, 60), `${prefijo}:${t.id_turno}`))));
+  }
+
+  // los días con lugar en las próximas 2 semanas
+  async function elegirDia(chat, prot, viejo) {
+    const botones = [];
+    for (let d = 1; d <= 14; d++) {
+      const fecha = new Date(ahora().getTime() + d * 86400000).toISOString().slice(0, 10);
+      const libres = await llamar('agenda.sp_horarios_libres', [fecha, prot, null, null, null]);
+      if (libres.length) botones.push(boton(diaTexto(fecha), `rd:${prot}:${fecha}${viejo ? `:${viejo}` : ''}`));
+    }
+    if (!botones.length) return enviar(chat, 'No hay lugar en las próximas 2 semanas. Probá en el sitio o con la recepción.');
+    return enviar(chat, '¿Qué día?', teclado(botones, 4));
+  }
+
+  async function procesarBoton(cb) {
+    const chat = String(cb.message.chat.id);
+    const [accion, a, b, c, d] = String(cb.data ?? '').split(':');
+    if (accion === 'x') return enviar(chat, 'Listo, no cambié nada.');
+    if (accion === 'v') return enviar(chat, '¡Gracias por confirmar! Te esperamos.');
+    const vinculada = (await llamar('personas.sp_paciente_por_telegram', [chat]))[0] ?? null;
+    if (!vinculada) return enviar(chat, 'Primero vinculá tu cuenta con /start.');
+    const proximos = await proximosDe(vinculada.dni);
+    // un turno ajeno (callback armado a mano) no se toca
+    const suyo = (id) => proximos.find((t) => String(t.id_turno) === String(id));
+
+    if (accion === 'rp') return elegirDia(chat, a, null);
+    if (accion === 'rd') {
+      const libres = (await llamar('agenda.sp_horarios_libres', [b, a, null, null, null])).slice(0, 8);
+      if (!libres.length) return enviar(chat, 'Ese día ya no tiene lugar. Elegí otro con "Reservar".');
+      return enviar(chat, `Horarios del ${diaTexto(b)}:`, teclado(libres.map((l) => boton(`${String(l.inicio).slice(11, 16)} con ${l.profesional}`,
+        `rh:${a}:${l.id_profesional}:${String(l.inicio).slice(0, 16).replace(/\D/g, '')}${c ? `:${c}` : ''}`)), 2));
+    }
+    if (accion === 'rh') {
+      const p = (await catalogo()).find((x) => String(x.id_protocolo) === a);
+      const inicio = inicioDe(c);
+      return enviar(chat, `${d ? 'Cambiar tu turno a' : 'Reservar'} ${p?.nombre ?? 'el tratamiento'} el ${fechaCorta(inicio)}. Precio ${pesos(p?.precio)}. ¿Confirmás?`,
+        teclado([boton('Confirmar', `rok:${a}:${b}:${c}${d ? `:${d}` : ''}`), boton('No', 'x')], 2));
+    }
+    if (accion === 'rok') {
+      if (d && !suyo(d)) return enviar(chat, 'Ese turno ya no está en tus próximos turnos.');
+      const alta = await escribir('agenda.sp_alta_turno', [vinculada.id_paciente, b, inicioDe(c), a, null, null, 'web', null, null, null]);
+      if (!alta.ok) return enviar(chat, `No pude reservar: ${alta.mensaje}`);
+      // seña simulada, igual que en el sitio
+      await escribir('pagos.sp_registrar_sena', [alta.id, 'tarjeta simulada', null, null, 'web', `SIM-${String(Date.now()).slice(-6)}`]);
+      if (d) await escribir('agenda.sp_cancelar_turno', [d, null, 'web']);
+      return enviar(chat, `¡Listo! ${d ? 'Cambié tu turno' : 'Reservé tu turno'} para el ${fechaCorta(inicioDe(c))}. Precio ${pesos(alta.dato)}, seña ${pesos(alta.valor)} pagada.`);
+    }
+    const t = suyo(a);
+    if (!t) return enviar(chat, 'Ese turno ya no está en tus próximos turnos.');
+    if (accion === 'c') return enviar(chat, `¿Cancelar el turno del ${fechaCorta(t.fecha_hora_inicio)} (${t.protocolos})? Con menos de 24 h la seña no se devuelve.`,
+      teclado([boton('Sí, cancelar', `cok:${a}`), boton('No', 'x')], 2));
+    if (accion === 'cok') {
+      const r = await escribir('agenda.sp_cancelar_turno', [a, null, 'web']);
+      return enviar(chat, r.ok ? 'Listo, cancelé tu turno.' : r.mensaje);
+    }
+    if (accion === 'm') {
+      const p = (await catalogo()).find((x) => x.nombre === t.protocolos);
+      if (!p) return enviar(chat, 'Ese turno tiene varios tratamientos: cambialo en el sitio o con la recepción.');
+      return elegirDia(chat, p.id_protocolo, a);
+    }
+    if (accion === 's') {
+      if (t.estado_sena !== 'sin seña') return enviar(chat, 'Ese turno ya tiene la seña.');
+      const r = await escribir('pagos.sp_registrar_sena', [a, 'tarjeta simulada', null, null, 'web', `SIM-${String(Date.now()).slice(-6)}`]);
+      return enviar(chat, r.ok ? `Listo, seña de ${pesos(t.sena)} pagada. Tu turno queda confirmado.` : r.mensaje);
+    }
+    return enviar(chat, 'No entendí ese botón. Probá de nuevo desde el menú.');
   }
 
   async function procesarActualizacion(actualizacion) {
     offset = Math.max(offset, actualizacion.update_id + 1);
-    if (!actualizacion.message) return;
+    const cb = actualizacion.callback_query;
+    if (cb) telegram('answerCallbackQuery', { callback_query_id: cb.id }).catch(() => {});
+    if (!actualizacion.message && !cb?.message) return;
     try {
-      await procesarMensaje(actualizacion.message);
+      await (cb ? procesarBoton(cb) : procesarMensaje(actualizacion.message));
     } catch (e) {
       registro.error('Telegram: error al responder', e.message);
-      try { await enviar(actualizacion.message.chat.id, 'Uy, no pude responder en este momento. Probá de nuevo en un rato.'); } catch { /* sin conexión */ }
+      try { await enviar((actualizacion.message ?? cb.message).chat.id, 'Uy, no pude responder en este momento. Probá de nuevo en un rato.'); } catch { /* sin conexión */ }
     }
   }
 
@@ -176,7 +298,10 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
         continue;
       }
       try {
-        await enviar(n.telegram_chat_id, `Dermalia: ${n.mensaje}`);
+        // el recordatorio trae botones para confirmar o cancelar
+        const botones = n.tipo === 'recordatorio de turno' && n.id_turno
+          ? teclado([boton('Confirmo', `v:${n.id_turno}`), boton('No puedo ir', `c:${n.id_turno}`)], 2) : {};
+        await enviar(n.telegram_chat_id, `Dermalia: ${n.mensaje}`, botones);
         await escribir('notificaciones.sp_marcar_notificacion', [n.id_notificacion, 'enviada', null]);
         enviados += 1;
       } catch (e) {
@@ -204,7 +329,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
   async function bucleMensajes() {
     while (activo) {
       try {
-        const actualizaciones = await telegram('getUpdates', { offset, timeout: 25, allowed_updates: ['message'] }, 35000);
+        const actualizaciones = await telegram('getUpdates', { offset, timeout: 25, allowed_updates: ['message', 'callback_query'] }, 35000);
         for (const a of actualizaciones) await procesarActualizacion(a);
       } catch (e) {
         if (activo) {
@@ -228,7 +353,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     },
     /* Le dice a Telegram que mande los mensajes a esta URL (en vez de pedirlos con getUpdates). */
     registrarWebhook(url, secreto) {
-      return telegram('setWebhook', { url, secret_token: secreto, allowed_updates: ['message'] });
+      return telegram('setWebhook', { url, secret_token: secreto, allowed_updates: ['message', 'callback_query'] });
     },
     async iniciar({ mensajes = true, avisos = true, tareas = true } = {}) {
       activo = true;

@@ -144,7 +144,7 @@ export function responderLocal(pregunta, catalogo) {
 
 /* ---------- Gemini ---------- */
 
-export function instruccionSistema(catalogo, nombre = null, hoy = new Date()) {
+export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), turnos = null) {
   const fecha = hoy.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' });
   return [
     ...(nombre ? [`Hablás con ${String(nombre).slice(0, 40)}, paciente con la cuenta vinculada. Si pregunta quién es, decile ese nombre; no sabés nada más de su identidad.`] : []),
@@ -155,7 +155,12 @@ export function instruccionSistema(catalogo, nombre = null, hoy = new Date()) {
     'Nunca pidas datos personales (DNI, teléfono, email).',
     `Hoy es ${fecha}.`,
     'ESTILO: texto plano, sin markdown (nada de asteriscos, almohadillas ni viñetas con guiones largos); contestá primero lo que preguntó, sin repetir estas reglas ni decir "según la información que tengo". Si saluda, saludá y ofrecé ayuda en una frase. Si la pregunta es ambigua (por ejemplo un protocolo que no aclara), pedí que la precise en vez de adivinar.',
-    'Si pregunta por SUS turnos o su seña, decile que escriba /turnos (Telegram) o que mire "Mis turnos" en el sitio: vos no ves su agenda.',
+    ...(turnos ? [
+      turnos.length
+        ? 'PRÓXIMOS TURNOS DE ESTA PACIENTE (usalos para responder sobre sus turnos, fechas, precios o señas; si pide un total, sumá los precios). Nunca digas que no tenés acceso a su agenda:'
+        : 'Esta paciente no tiene turnos próximos (pendientes o confirmados). Si pregunta por ellos, decíselo y ofrecé reservar en el sitio.',
+      ...turnos,
+    ] : ['Si pregunta por SUS turnos o su seña, decile que vincule su Telegram con /start o que mire "Mis turnos" en el sitio.']),
     '',
     `UBICACIÓN: ${INSTITUTO.zona}.`,
     `HORARIOS: ${INSTITUTO.horarios}`,
@@ -173,13 +178,13 @@ export function instruccionSistema(catalogo, nombre = null, hoy = new Date()) {
 const URL_GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /* Pregunta a Gemini. Devuelve { respuesta, derivada } o lanza un error (y se usa el asistente local). */
-export async function preguntarGemini({ pregunta, historial = [], catalogo, nombre, clave, modelo, fetchImpl = fetch, esperaMs = 12000 }) {
+export async function preguntarGemini({ pregunta, historial = [], catalogo, nombre, turnos = null, clave, modelo, fetchImpl = fetch, esperaMs = 12000 }) {
   const contenidos = [
     ...historial.slice(-6).map((m) => ({ role: m.rol === 'asistente' ? 'model' : 'user', parts: [{ text: filtrarDatosPersonales(m.texto).slice(0, 600) }] })),
     { role: 'user', parts: [{ text: pregunta }] },
   ];
   const cuerpo = {
-    systemInstruction: { parts: [{ text: instruccionSistema(catalogo, nombre) }] },
+    systemInstruction: { parts: [{ text: instruccionSistema(catalogo, nombre, new Date(), turnos) }] },
     contents: contenidos,
     generationConfig: {
       temperature: 0.2,
@@ -244,7 +249,7 @@ export const reiniciarLimites = () => usos.clear();
 
 /* Responde una pregunta. `catalogo` son las filas de sp_listar_protocolos.
  * Devuelve { respuesta, derivada, fuente: 'gemini' | 'local', preguntaGuardada }. */
-export async function responderAsistente({ pregunta, historial, catalogo, nombre, quien = 'anonimo', entorno = process.env, fetchImpl = fetch }) {
+export async function responderAsistente({ pregunta, historial, catalogo, nombre, turnos = null, quien = 'anonimo', entorno = process.env, fetchImpl = fetch }) {
   const limpia = filtrarDatosPersonales(pregunta).trim().slice(0, 500);
   const clave = entorno.GEMINI_API_KEY;
   if (clave && !gastaGemini(quien)) console.warn(`Asistente: límite de Gemini alcanzado para ${quien}, responde el asistente local`);
@@ -252,7 +257,7 @@ export async function responderAsistente({ pregunta, historial, catalogo, nombre
     const modelos = [entorno.GEMINI_MODELO || MODELO_POR_DEFECTO, MODELO_DE_RESPALDO];
     for (const modelo of [...new Set(modelos)]) {
       try {
-        const r = await preguntarGemini({ pregunta: limpia, historial, catalogo, nombre, clave, modelo, fetchImpl });
+        const r = await preguntarGemini({ pregunta: limpia, historial, catalogo, nombre, turnos, clave, modelo, fetchImpl });
         return { ...r, fuente: 'gemini', preguntaGuardada: limpia };
       } catch (e) {
         console.warn(`Asistente: Gemini (${modelo}) no respondió, ${e.message}`);

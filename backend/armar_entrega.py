@@ -4,10 +4,10 @@
 Uso:  python3 backend/armar_entrega.py --grupo 9
 
 Genera, a partir de los scripts de backend/ (que son la fuente única):
-  03_ModeloSQL_Grupo<N>.sql   estructura: 9 schemas y 31 tablas (se puede correr varias veces: la recrea)
-  04_DatosSQL_Grupo<N>.sql    datos de ejemplo (correr después del 03)
-  05_Backend_Grupo<N>.sql     stored procedures, funciones, 8 reportes, auditoría y los dos _tuneado
-  Diagrama_Chen_Grupo<N>.png  y  Diagrama_Codd_Grupo<N>.png  (fondo blanco)
+  03_ModeloSQL[_Grupo<N>].sql   estructura: 9 schemas y 31 tablas (se puede correr varias veces: la recrea)
+  04_DatosSQL[_Grupo<N>].sql    datos de ejemplo (correr después del 03)
+  05_Backend[_Grupo<N>].sql     stored procedures, funciones, 8 reportes, auditoría y los dos _tuneado
+  Diagrama_Chen[_Grupo<N>].png  y  Diagrama_Codd[_Grupo<N>].png  (fondo blanco)
 El orden correcto es 03, 04 y 05; la secuencia completa se puede repetir cuantas veces haga falta.
 """
 import argparse, os, shutil
@@ -42,18 +42,18 @@ def png_fondo_blanco(origen, destino):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--grupo", default="XX", help="número de grupo para los nombres de archivo")
-    g = ap.parse_args().grupo
+    ap.add_argument("--grupo", default="", help="número de grupo (opcional): si no se pasa, los archivos no llevan sufijo")
+    g = ("_Grupo" + ap.parse_args().grupo) if ap.parse_args().grupo else ""
     os.makedirs(SALIDA, exist_ok=True)
     cab = "Dermalia - Proyecto Informático I - Bases de Datos - Hito 2 (entrega final)\n-- MySQL 8. Orden correcto: 03_ModeloSQL, 04_DatosSQL, 05_Backend (la secuencia se puede repetir).\n--\n"
     escribir = lambda n, t: open(os.path.join(SALIDA, n), "w", encoding="utf8").write(t)
-    escribir(f"03_ModeloSQL_Grupo{g}.sql",
+    escribir(f"03_ModeloSQL{g}.sql",
              f"-- {cab}-- Punto 3: implementación del modelo (schemas, tablas, claves y restricciones).\n-- Se puede ejecutar varias veces: borra y recrea los 9 schemas.\n\n"
              + leer("codigobasededatossolotablas.sql"))
-    escribir(f"04_DatosSQL_Grupo{g}.sql",
+    escribir(f"04_DatosSQL{g}.sql",
              f"-- {cab}-- Punto 4: datos de ejemplo. Se corre después del 03. Se puede repetir: primero vacía las tablas.\n-- El modelo de LOGS no se carga acá: lo llenan los stored procedures cuando se usan (4c).\n\n"
              + leer("02_datos.sql"))
-    escribir(f"05_Backend_Grupo{g}.sql",
+    escribir(f"05_Backend{g}.sql",
              f"-- {cab}-- Punto 5: funcionalidades en stored procedures, 8 reportes, auditoría con parámetros y los\n-- dos reportes con versión _tuneado. Se corre después del 04; se puede repetir (DROP ... IF EXISTS).\n\n"
              + unir("Tabla auxiliar de números", [("02b_numero.sql", leer("02b_numero.sql"))])
              + unir("Vistas y stored procedures: seguridad, personas, clínica, agenda, protocolos", [("03_sp_semana3.sql", leer("03_sp_semana3.sql"))])
@@ -63,8 +63,8 @@ def main():
              + unir("Listados de las pantallas Cupones y Consultas previas, y usuarios del personal", [("09_sp_pantallas.sql", leer("09_sp_pantallas.sql"))])
              + unir("Bot de Telegram: vincular la paciente y sus avisos", [("10_sp_telegram.sql", leer("10_sp_telegram.sql"))]))
     d = os.path.join(RAIZ, "docs", "diagramas")
-    png_fondo_blanco(os.path.join(d, "Proyecto-Berea-01-BBDD.png"), os.path.join(SALIDA, f"Diagrama_Chen_Grupo{g}.png"))
-    png_fondo_blanco(os.path.join(d, "Proyecto-Berea-01-BBDD-Edgar_Codd.png"), os.path.join(SALIDA, f"Diagrama_Codd_Grupo{g}.png"))
+    png_fondo_blanco(os.path.join(d, "Proyecto-Berea-01-BBDD.png"), os.path.join(SALIDA, f"Diagrama_Chen{g}.png"))
+    png_fondo_blanco(os.path.join(d, "Proyecto-Berea-01-BBDD-Edgar_Codd.png"), os.path.join(SALIDA, f"Diagrama_Codd{g}.png"))
     print("Entrega armada en", SALIDA)
     for n in sorted(os.listdir(SALIDA)):
         print(" ", n, os.path.getsize(os.path.join(SALIDA, n)) // 1024, "KB")

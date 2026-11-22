@@ -610,6 +610,12 @@ dialog::backdrop {
   cursor: pointer;
 }
 
+.asistente__enviar svg {
+  width: 24px;
+  height: 24px;
+  margin-left: 2px; /* la flecha pesa a la izquierda: compensa a ojo */
+}
+
 .asistente__enviar:disabled {
   opacity: 0.5;
 }

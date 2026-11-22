@@ -204,8 +204,18 @@ export function crearManejador(pool) {
       if (req.method === 'GET' && ruta === '/api/estado') {
         let base = true;
         try { await pool.query('SELECT 1'); } catch { base = false; }
+        let usuarioBot = null;
+        try { usuarioBot = await botDe(pool).obtenerUsuario(); } catch { /* sin internet o token malo */ }
         return responder(res, 200, { base, asistente: process.env.GEMINI_API_KEY ? 'gemini' : 'local',
-          telegram: botTelegram?.usuario ? `https://t.me/${botTelegram.usuario}` : null });
+          telegram: usuarioBot ? `https://t.me/${usuarioBot}` : null });
+      }
+      /* Telegram avisa de cada mensaje acá (webhook, para Vercel donde no hay proceso que pregunte). Solo
+       * acepta a Telegram: manda en la cabecera el secreto que se le dio al registrar el webhook. */
+      if (req.method === 'POST' && ruta === '/api/telegram') {
+        const secreto = process.env.TELEGRAM_WEBHOOK_SECRET;
+        if (!secreto || req.headers['x-telegram-bot-api-secret-token'] !== secreto) return responder(res, 403, { error: 'No autorizado.' });
+        await botDe(pool).procesarActualizacion(await leerJson(req));
+        return responder(res, 200, { ok: true });
       }
       if (req.method === 'POST' && ruta === '/api/asistente') {
         const d = await leerJson(req);
@@ -214,7 +224,7 @@ export function crearManejador(pool) {
         const origen = d.origen === 'terminal' ? 'terminal' : 'web';
         let catalogo = [];
         try { catalogo = await catalogoParaAsistente(pool); } catch (e) { console.warn('Asistente sin catálogo de la base:', e.message); }
-        const r = await responderAsistente({ pregunta, historial: Array.isArray(d.historial) ? d.historial : [], catalogo });
+        const r = await responderAsistente({ pregunta, historial: Array.isArray(d.historial) ? d.historial : [], catalogo, quien: ipDe(req) });
         // se registra la pregunta ya sin datos personales; si la base no está, se responde igual
         const sesion = sesionDe(req);
         let registrada = false;
@@ -355,18 +365,34 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 export function iniciarAutomatismos(pool, entorno = process.env) {
   const token = entorno.TELEGRAM_BOT_TOKEN || '';
   const conN8n = entorno.TELEGRAM_ENVIOS === 'n8n';
-  botTelegram = crearBotTelegram({
+  botTelegram = construirBot(pool, token);
+  if (!token) console.log('Telegram: sin TELEGRAM_BOT_TOKEN, el bot está apagado (los avisos quedan en la pantalla Avisos de Gestión).');
+  // TELEGRAM_MENSAJES=webhook: los mensajes los recibe la función de Vercel (POST /api/telegram); esta PC solo manda avisos.
+  const conWebhook = entorno.TELEGRAM_MENSAJES === 'webhook';
+  return botTelegram.iniciar({ mensajes: !conWebhook, avisos: !conN8n, tareas: entorno.TAREAS_DIARIAS !== 'n8n' });
+}
+
+function construirBot(pool, token) {
+  return crearBotTelegram({
     token,
     llamar: (sp, parametros) => llamar(pool, sp, parametros),
     escribir: (sp, parametros) => escribir(pool, sp, parametros),
-    preguntarAsistente: async (pregunta, idPaciente) => {
+    preguntarAsistente: async (pregunta, idPaciente, chat) => {
       let catalogo = [];
       try { catalogo = await catalogoParaAsistente(pool); } catch { /* sin base: responde igual */ }
-      const r = await responderAsistente({ pregunta, catalogo });
+      const r = await responderAsistente({ pregunta, catalogo, quien: `tg:${chat ?? idPaciente ?? 'anonimo'}` });
       try { await escribir(pool, 'asistente.sp_registrar_consulta', [idPaciente, 'sistema', r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null]); } catch { /* sin base */ }
       return r;
     },
   });
-  if (!token) console.log('Telegram: sin TELEGRAM_BOT_TOKEN, el bot está apagado (los avisos quedan en la pantalla Avisos de Gestión).');
-  return botTelegram.iniciar({ mensajes: true, avisos: !conN8n, tareas: entorno.TAREAS_DIARIAS !== 'n8n' });
+}
+
+/* El bot ya creado, o uno nuevo sin arrancar (en Vercel no hay arranque: solo atiende webhooks). */
+function botDe(pool) {
+  return (botTelegram ??= construirBot(pool, process.env.TELEGRAM_BOT_TOKEN || ''));
+}
+
+/* Quién pregunta, para el tope de Gemini: detrás de Vercel la IP viene en x-forwarded-for. */
+function ipDe(req) {
+  return String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || req.socket?.remoteAddress || 'anonimo';
 }

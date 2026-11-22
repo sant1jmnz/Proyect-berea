@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QFontDatabase>
+#include <QIcon>
 #include <QLocale>
 #include <QStyleHints>
 
@@ -20,6 +21,8 @@ int main(int argc, char *argv[])
      * igual en cualquier PC, aunque no las tenga instaladas. */
     for (const char *f : { "Lato-Regular.ttf", "Lato-Bold.ttf", "PlayfairDisplay.ttf" })
         QFontDatabase::addApplicationFont(QString(":/fuentes/") + f);
+
+    app.setWindowIcon(QIcon(":/icono_cliente.png"));
 
     VentanaCliente ventana;
     ventana.show();

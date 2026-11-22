@@ -39,6 +39,10 @@ struct ConfigBD {
     /* Lee DERMALIA_DB_HOST, _PORT, _USER, _PASS, _NAME y _SSL;
      * lo que falte lo busca en dermalia.ini (sección [base]). */
     static ConfigBD desdeEntorno(const QString &archivoIni = QStringLiteral("dermalia.ini"));
+
+    /* Ruta real del .ini: la carpeta desde donde se abrió la app y, si ahí no está,
+     * la carpeta del ejecutable (así carga aunque se abra con doble clic). */
+    static QString rutaIni(const QString &archivoIni);
 };
 
 /* Lo que devuelve un CALL: las filas (por nombre de columna) o el error. */

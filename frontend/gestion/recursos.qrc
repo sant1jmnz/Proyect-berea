@@ -1,5 +1,7 @@
 <RCC>
  <qresource prefix="/">
+  <file alias="icono_cliente.png">../cliente/icono_cliente.png</file>
+  <file alias="icono_gestion.png">icono_gestion.png</file>
   <file>iconos/inicio.svg</file>
   <file>iconos/turno.svg</file>
   <file>iconos/precios.svg</file>

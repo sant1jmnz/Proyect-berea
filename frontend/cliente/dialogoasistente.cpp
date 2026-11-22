@@ -1,5 +1,7 @@
 #include "dialogoasistente.h"
 
+#include "basedatos.h"
+
 #include <QFile>
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -28,8 +30,9 @@ const QString SALUDO = "¡Hola! Soy el asistente de Dermalia. Preguntame por pre
                        "la seña, cómo cancelar o cómo funcionan las cirugías.";
 }
 
-QString DialogoAsistente::urlPorDefecto(const QString &archivoIni)
+QString DialogoAsistente::urlPorDefecto(const QString &nombreIni)
 {
+    const QString archivoIni = ConfigBD::rutaIni(nombreIni);
     QString valor = qEnvironmentVariable("DERMALIA_API_URL");
     if (valor.isEmpty() && QFile::exists(archivoIni))
         valor = QSettings(archivoIni, QSettings::IniFormat).value("asistente/url").toString();

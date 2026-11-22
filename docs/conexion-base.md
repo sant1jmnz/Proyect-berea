@@ -33,7 +33,9 @@ el modo contingencia. Catálogo de procedimientos: [`12-contrato-sp.md`](12-cont
 Los datos de conexión no van en el código ni en el repositorio. Se leen de
 **variables de entorno** o de un archivo `dermalia.ini` junto al ejecutable
 (se copia de [`frontend/dermalia.ini.ejemplo`](../frontend/dermalia.ini.ejemplo);
-`dermalia.ini` está en `.gitignore`). Las variables tienen prioridad.
+`dermalia.ini` está en `.gitignore`). Las variables tienen prioridad. La app busca el `.ini` primero en la
+carpeta desde donde se abre y, si no está ahí, junto al `.exe`; con doble clic alcanza con dejarlo al lado.
+Para Aiven con SSL se agrega `ca=` con la ruta al certificado (`DERMALIA_DB_CA` en la web).
 
 | Variable | Ini (`[base]`) | Valor |
 |---|---|---|

@@ -4,15 +4,25 @@
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
+#include <QCoreApplication>
 #include <QSettings>
 
 #ifdef DERMALIA_CON_MYSQL
 #include <mysql.h>
 #endif
 
-ConfigBD ConfigBD::desdeEntorno(const QString &archivoIni)
+QString ConfigBD::rutaIni(const QString &archivoIni)
+{
+    if (archivoIni.isEmpty() || QFile::exists(archivoIni) || !QCoreApplication::instance())
+        return archivoIni;
+    const QString junto = QCoreApplication::applicationDirPath() + "/" + archivoIni;
+    return QFile::exists(junto) ? junto : archivoIni;
+}
+
+ConfigBD ConfigBD::desdeEntorno(const QString &nombreIni)
 {
     ConfigBD c;
+    const QString archivoIni = rutaIni(nombreIni);
     QSettings ini(archivoIni, QSettings::IniFormat);
     const bool hayIni = QFile::exists(archivoIni);
 
@@ -32,7 +42,7 @@ ConfigBD ConfigBD::desdeEntorno(const QString &archivoIni)
     c.clave = leer("DERMALIA_DB_PASS", "clave");
     c.base = leer("DERMALIA_DB_NAME", "base");
     const QString ssl = leer("DERMALIA_DB_SSL", "ssl").toLower();
-    c.ca = leer("DERMALIA_DB_CA", "ca");
+    c.ca = rutaIni(leer("DERMALIA_DB_CA", "ca"));  /* el certificado también puede estar junto al .exe */
     c.ssl = (ssl == "1" || ssl == "true" || ssl == "si" || ssl == "sí");
     return c;
 }

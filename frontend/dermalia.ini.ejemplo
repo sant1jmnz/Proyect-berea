@@ -15,3 +15,8 @@ usuario=
 clave=
 base=
 ssl=false
+
+; Asistente de IA de la terminal: dirección de la API del sitio (web/, npm start).
+; La clave de Gemini va en web/.env, no acá. Variable de entorno: DERMALIA_API_URL.
+[asistente]
+url=http://127.0.0.1:3000

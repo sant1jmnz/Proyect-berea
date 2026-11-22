@@ -2,7 +2,7 @@ import { iniciarComun } from '../movimiento/comun.js';
 import { gsap, movimientoReducido } from '../movimiento/gsap.js';
 import { protocolos, categorias, categoriaDe, buscarProtocolos, protocoloPorId, CONSULTA_PREQUIRURGICA } from '../../datos/protocolos.js';
 import { proximosDias, horariosDe, guardarReserva } from '../../datos/reservas.js';
-import { horariosDeBase, reservarEnBase, revisarCodigo } from '../../datos/api.js';
+import { horariosDeBase, reservarEnBase, revisarCodigo, pedir } from '../../datos/api.js';
 import { leerSesion } from '../../datos/cuenta.js';
 import { errorDni, errorTelefono, errorNombreApellido, errorNacimiento, soloDigitos } from '../validaciones.js';
 import { calcularSena, pesos } from '../sena.js';
@@ -415,6 +415,11 @@ async function confirmar() {
   });
   $('[data-listo-detalle]').textContent = `${nombres}, el ${fechaLarga.format(inicio)} a las ${estado.hora} h. Pagaste ${pesos(enBase ? enBase.cuerpo.sena : c.sena)} de seña ${estado.tarjeta ? 'con tu tarjeta de regalo' : '(simulada)'}. Te vamos a mandar un recordatorio antes del turno.`;
   $('[data-calendar]').href = enlaceCalendar(inicio, c.duracion, nombres);
+  if (enBase) pedir('/estado').then((r) => {
+    if (!r?.cuerpo?.telegram) return;
+    $('[data-listo-telegram-enlace]').href = r.cuerpo.telegram;
+    $('[data-listo-telegram]').hidden = false;
+  });
   document.querySelector('[data-resumen]').hidden = true;
   irA('listo');
   if (!reducido) celebrar();

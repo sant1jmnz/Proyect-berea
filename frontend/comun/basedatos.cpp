@@ -3,6 +3,7 @@
 #include <QDate>
 #include <QDateTime>
 #include <QFile>
+#include <QFileInfo>
 #include <QSettings>
 
 #ifdef DERMALIA_CON_MYSQL
@@ -31,6 +32,7 @@ ConfigBD ConfigBD::desdeEntorno(const QString &archivoIni)
     c.clave = leer("DERMALIA_DB_PASS", "clave");
     c.base = leer("DERMALIA_DB_NAME", "base");
     const QString ssl = leer("DERMALIA_DB_SSL", "ssl").toLower();
+    c.ca = leer("DERMALIA_DB_CA", "ca");
     c.ssl = (ssl == "1" || ssl == "true" || ssl == "si" || ssl == "sí");
     return c;
 }
@@ -141,6 +143,9 @@ bool BaseDatos::conectar()
     mysql_options(c, MYSQL_OPT_READ_TIMEOUT, &config.timeoutSeg);
     mysql_options(c, MYSQL_SET_CHARSET_NAME, "utf8mb4");
     if (config.ssl) {
+        const QByteArray ca = config.ca.isEmpty() ? QByteArray() : QFileInfo(config.ca).absoluteFilePath().toUtf8();  /* el conector de Windows exige ruta absoluta */
+        if (!ca.isEmpty())
+            mysql_options(c, MYSQL_OPT_SSL_CA, ca.constData());
 #ifdef MARIADB_VERSION_ID   /* librería de MariaDB (libmariadb-dev) */
         const my_bool exigir = 1;
         mysql_options(c, MYSQL_OPT_SSL_ENFORCE, &exigir);

@@ -3,6 +3,7 @@
  * Se corre con: QT_QPA_PLATFORM=offscreen ./prueba_ventanacliente */
 #include "almacenlocal.h"
 #include "ventanacliente.h"
+#include "dialogoasistente.h"
 
 #include <QApplication>
 #include <QCalendarWidget>
@@ -17,6 +18,8 @@
 #include <QStandardPaths>
 #include <QToolButton>
 #include <QTemporaryDir>
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QtTest>
 
 namespace {
@@ -105,6 +108,54 @@ private slots:
             qunsetenv(v);   /* estas pruebas son sin base (las de la base están en prueba_cliente_base) */
     }
     void init() { QFile::remove(carpeta.filePath("local.json")); }   /* cada prueba arranca sin datos */
+
+    /* El asistente le pregunta a la API (acá, un servidor de mentira que contesta como /api/asistente). */
+    void elAsistenteMuestraLaRespuestaDeLaApi()
+    {
+        QTcpServer servidor;
+        QVERIFY(servidor.listen(QHostAddress::LocalHost));
+        QByteArray pedido;
+        connect(&servidor, &QTcpServer::newConnection, [&] {
+            QTcpSocket *s = servidor.nextPendingConnection();
+            connect(s, &QTcpSocket::readyRead, [&, s] {
+                pedido += s->readAll();
+                if (!pedido.contains("\r\n\r\n") || !pedido.contains("}"))
+                    return;
+                const QByteArray cuerpo = R"({"respuesta":"El peeling sale $120.000.","derivada":false,"fuente":"local"})";
+                s->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " + QByteArray::number(cuerpo.size())
+                         + "\r\nConnection: close\r\n\r\n" + cuerpo);
+                s->disconnectFromHost();
+            });
+        });
+        DialogoAsistente dialogo(nullptr, QString("http://127.0.0.1:%1").arg(servidor.serverPort()));
+        QSignalSpy listo(&dialogo, &DialogoAsistente::respondio);
+        dialogo.preguntar("¿Cuánto sale el peeling?");
+        QVERIFY(listo.wait(5000));
+        QVERIFY(pedido.startsWith("POST /api/asistente"));
+        QVERIFY(pedido.contains("\"origen\":\"terminal\""));
+        QVERIFY(dialogo.conversacionEnTexto().contains("$120.000"));
+    }
+
+    /* Sin API, avisa y ofrece el buscador o la recepción (no se queda colgado). */
+    void elAsistenteSinApiAvisa()
+    {
+        QTcpServer libre;
+        QVERIFY(libre.listen(QHostAddress::LocalHost));
+        const quint16 puerto = libre.serverPort();
+        libre.close();   /* un puerto donde no escucha nadie */
+        DialogoAsistente dialogo(nullptr, QString("http://127.0.0.1:%1").arg(puerto));
+        QSignalSpy listo(&dialogo, &DialogoAsistente::respondio);
+        dialogo.preguntar("hola");
+        QVERIFY(listo.wait(5000));
+        QVERIFY(dialogo.conversacionEnTexto().contains("no está disponible"));
+        QVERIFY(!dialogo.esperando());
+    }
+
+    void laTerminalTieneElBotonDelAsistente()
+    {
+        VentanaCliente v;
+        QVERIFY(v.findChild<QPushButton *>("btnAsistente"));
+    }
 
     void losTurnosSeGuardanYSeVenAlReabrir()
     {

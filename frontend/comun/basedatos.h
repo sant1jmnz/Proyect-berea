@@ -31,6 +31,7 @@ struct ConfigBD {
     QString clave;
     QString base;              /* vacío: los SP se llaman con su schema (agenda.sp_...) */
     bool ssl = false;          /* Aiven pide conexión cifrada */
+    QString ca;                /* certificado de la autoridad del proveedor (opcional) */
     unsigned timeoutSeg = 5;   /* si no hay internet, no deja la ventana colgada */
 
     bool completa() const { return !host.isEmpty() && !usuario.isEmpty(); }

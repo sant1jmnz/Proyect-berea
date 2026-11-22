@@ -15,6 +15,25 @@ El trabajo se divide en dos bimestres:
   MySQL, sitio web), el análisis de competencia y el pitch de venta. Arrancó
   el **6 de octubre de 2026**.
 
+## Probarlo en 2 comandos
+
+En Ubuntu o Debian, desde esta carpeta:
+
+```bash
+./dermalia.sh instalar --apt
+```
+
+```bash
+./dermalia.sh iniciar
+```
+
+El primero instala lo que falte (MySQL, Qt, CMake, Node), crea la base con datos de ejemplo, configura todo y
+compila. El segundo abre el sitio en `http://localhost:3000`, Gestión (usuario `recepcion1`, contraseña
+`dermalia2026`) y la terminal táctil. Para el asistente con IA, pegá una clave de Gemini cuando la pida
+(gratis en https://aistudio.google.com/apikey); sin clave responde igual, con el catálogo y las reglas del
+instituto. `./dermalia.sh probar` corre todas las pruebas. Detalle en
+[`docs/13-manual-tecnico.md`](docs/13-manual-tecnico.md).
+
 ## Desafío integrador
 
 > ¿De qué manera podemos identificar y analizar una problemática real de
@@ -40,8 +59,9 @@ ataca esas cuatro causas con:
 | Buscador de precios y protocolos | Búsqueda por palabra clave; deriva a WhatsApp si no encuentra coincidencia |
 | Registro de seña | Simulado (mock que imita un pago real), sin procesar dinero real |
 | Recordatorio de turno | Por Telegram (gratis, en desarrollo) y WhatsApp en producción; botón para agregar el turno a Google Calendar |
+| Cirugías | Consulta previa paga obligatoria; solo se agenda con evaluación "apta" vigente (6 meses) |
 | Buscar turnos | Por DNI o teléfono, sin cuenta; con cuenta opcional se guarda el historial |
-| Asistente de IA | Responde consultas con la información del instituto |
+| Asistente de IA | Responde consultas con el catálogo, los cuidados y las reglas del instituto (Gemini, o respuestas locales sin internet); deriva a WhatsApp si no sabe y no recibe datos personales |
 | Cupones y tarjetas de regalo | Cupones por código o QR, tarjetas con saldo y cupones por fidelidad |
 
 Tres apartados: una **terminal táctil** en el instituto, que usa la
@@ -52,7 +72,7 @@ cualquier lugar. Detalle completo en
 
 **Stack técnico**: base de datos **MySQL**, aplicación de escritorio en
 **Qt** y **sitio web**; se permiten APIs externas (Google Calendar,
-WhatsApp, asistente de IA). La base ya tiene su script de tablas en `backend/`.
+WhatsApp, asistente de IA con Gemini).
 
 El equipo relevó diez propuestas en `docs/propuestas.md`. Esta quedó como
 principal frente a otras cuatro (POS de kiosco, adopción de mascotas,
@@ -80,13 +100,17 @@ y 2 del maquetado ("Elegir protocolo", "Elegir horario")*.
 | 1 | Diagnóstico, Árbol de Problemas | [`docs/01-arbol-de-problemas.md`](docs/01-arbol-de-problemas.md) | Hecho |
 | 2 | Propuesta estratégica, Árbol de Objetivos | [`docs/02-arbol-de-objetivos.md`](docs/02-arbol-de-objetivos.md) | Hecho |
 | 3 | Matriz de Marco Lógico (MML) | [`docs/03-matriz-marco-logico.md`](docs/03-matriz-marco-logico.md) | Hecho |
-| 4 | Requerimientos funcionales y no funcionales | [`docs/04-requerimientos.md`](docs/04-requerimientos.md) | Actualizado al nuevo alcance (RF-01 a RF-25, RNF-01 a RNF-14, tres apartados) |
-| 5 | Maquetado (wireframes) | [`docs/05-maquetado.md`](docs/05-maquetado.md) | Escritorio (Cliente y Gestión) hecho; Web con primer maquetado en `web/` (inicio, reserva, mi turno) |
-| 6 | Pitch | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion del bimestre anterior (7 a 10 min); hay que recortarlo al formato de 5 a 7 min |
-| 7 | Consigna de Bases de Datos | [`docs/consigna-bbdd.md`](docs/consigna-bbdd.md) | Transcripta |
-| 8 | Modelo de entidades (27 entidades) | [`docs/modelo-entidades.md`](docs/modelo-entidades.md) | Escrito (grupos 1 a 4) |
-| 9 | Arquitectura y contingencia | [`docs/arquitectura.md`](docs/arquitectura.md) | Borrador (Aiven, n8n, Telegram, modo contingencia) |
-| 10 | Diagramas (Peter Chen, luego Edgar Codd) | [`docs/diagramas/`](docs/diagramas/) | Descripción escrita del Chen: entidades, atributos, relaciones y cardinalidades |
+| 4 | Requerimientos funcionales y no funcionales | [`docs/04-requerimientos.md`](docs/04-requerimientos.md) | Hecho (RF-01 a RF-25, RNF-01 a RNF-14) |
+| 5 | Maquetado y pantallas | [`docs/05-maquetado.md`](docs/05-maquetado.md) | Hecho: todas las pantallas construidas (capturas en `docs/capturas/`) |
+| 6 | Software: Gestión, terminal y sitio web | `frontend/`, `web/` | Hecho, conectado a la base, con asistente de IA; se instala con `./dermalia.sh` |
+| 7 | Base de datos (consigna de Bases de Datos) | `backend/`, [`docs/consigna-bbdd.md`](docs/consigna-bbdd.md) | Hecho: 9 schemas, stored procedures, 8 reportes, auditoría y tuning; entrega en `entrega-hito-2/` |
+| 8 | Diagramas Chen y Codd | [`docs/diagramas/`](docs/diagramas/) | Hecho (`.drawio` y `.png`) |
+| 9 | Pruebas | [`docs/09`](docs/09-casos-de-prueba.md), [`docs/10`](docs/10-casos-de-prueba-cliente.md), [`docs/11`](docs/11-pruebas-bbdd.md) | 255 casos de stored procedures, 44 de estructura, 6 programas de prueba Qt y 18 de la API: todo OK |
+| 10 | Análisis de competencia y PUV | [`docs/07-competencia.md`](docs/07-competencia.md) | Hecho |
+| 11 | Presupuesto, monetización y retorno | [`docs/08-presupuesto.md`](docs/08-presupuesto.md) | Hecho |
+| 12 | Pitch de venta (5 a 7 min) con demo | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion, demo y objeciones listos; falta ensayar |
+| 13 | Manual técnico y de usuario | [`docs/13`](docs/13-manual-tecnico.md), [`docs/14`](docs/14-manual-usuario.md) | Hecho |
+| 14 | Arquitectura y contingencia | [`docs/arquitectura.md`](docs/arquitectura.md), [`docs/conexion-base.md`](docs/conexion-base.md) | Hecho |
 
 Documentos de apoyo: [`docs/propuestas.md`](docs/propuestas.md) (las diez
 propuestas relevadas y por qué se eligió esta), [`docs/foda.md`](docs/foda.md)
@@ -140,15 +164,17 @@ docs/
   12-contrato-sp.md      # catálogo de stored procedures y códigos de error
   13-manual-tecnico.md   14-manual-usuario.md
   15-guia-por-semana.md  # qué traer de esta rama cada semana
+  bitacora-*.md          # bitácoras del equipo (la del cierre: bitacora-cierre.md)
   catedra/               # material de cátedra transcripto (con ejemplos de conexión C y MySQL)
   diagramas/             # diseño conceptual escrito (Peter Chen)
+dermalia.sh              # instalar, iniciar, parar y probar todo con un comando
 backend/                 # base MySQL: tablas en 9 schemas, datos, stored procedures, reportes, tuning y pruebas
   01 codigobasededatossolotablas.sql  02_datos.sql  02b_numero.sql  03_sp_semana3.sql  04_sp_semana4.sql
   05_reportes_semana5.sql  06_tuning_semana6.sql  09_sp_pantallas.sql  07_actividad_con_sps.sql
   08_usuarios.sql  05_pruebas_sp.sql
   medir_tuning.sql  pruebas/correr_pruebas.py
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
-web/                     # sitio web para la paciente (Vite, GSAP, Three.js)
+web/                     # sitio web para la paciente (Vite, GSAP, Three.js) y su API (Node), con el asistente de IA
 diseno-dermalia/         # guía de estética de las pantallas
 README.md                # este archivo, portada de la Carpeta de Proyecto V1
 ```
@@ -263,50 +289,30 @@ git --version
 
 ## Desarrollo técnico (4° bimestre)
 
-Arrancó con el frontend de escritorio y el diseño de la base de datos:
+Todo está construido, conectado a la misma base y probado:
 
-- `backend/`: la base MySQL. `codigobasededatossolotablas.sql` crea las 31
-  tablas repartidas en 9 schemas (`seguridad`, `personas`, `clinica`,
-  `agenda`, `pagos`, `beneficios`, `notificaciones`, `auditoria`,
-  `asistente`), como pide la consigna (punto 3c); `pruebas_estructura.sql`
-  comprueba que cada restricción rechace lo que debe, y `REVISION.md` explica
-  los cambios de la revisión y qué reglas quedan para los stored procedures.
-  Faltan los datos, los stored procedures y los reportes.
-- `frontend/`: interfaz en Qt 6 (Widgets). Gestión (`dermalia_gestion`, PC de
-  recepción) carga y cancela turnos (seña simulada y reembolso de 24 h),
-  administra protocolos, profesionales con su disponibilidad y pacientes, y
-  registra los avisos de turno; Cliente (`dermalia_cliente`,
-  terminal táctil) tiene la carga de turno en 3 pasos, el buscador y buscar y
-  cancelar el turno. Todo trabaja con **datos de prueba** hasta que exista la
-  base. La conexión a MySQL (con `mysql.h`, como pide la cátedra) y el
-  **modo contingencia** (aviso "sin conexión" y turnos guardados en el
-  equipo) ya están: ver `docs/conexion-base.md`. El buscador de precios es un
-  widget compartido (`frontend/comun/`). Se abre `frontend/CMakeLists.txt` con
-  Qt Creator, o por consola:
-  `cmake -S frontend -B <carpeta> -DCMAKE_PREFIX_PATH=<carpeta de Qt>/gcc_64 && cmake --build <carpeta> && <carpeta>/dermalia_gestion`.
-  Las pruebas automáticas corren con `QT_QPA_PLATFORM=offscreen ctest` dentro
-  de la carpeta de compilación. La estética de las pantallas está explicada
-  en `diseno-dermalia/SKILL.md`.
-- **Base de datos**: modelo de 27 entidades escrito, con el diagrama de Peter
-  Chen en curso. Después vienen el diseño lógico (Codd, 3FN), la
-  implementación en MySQL dividida en schemas, los datos, los stored
-  procedures (funcionalidades, 8 reportes, auditoría, 2 `_tuneado`) y las
-  pruebas. El plan semanal está en `docs/reparto-4to-bimestre.md`.
-- `web/`: el sitio para la paciente (apartado Web). Inicio con un modelo 3D
-  de las capas de la piel (tocás una capa, ves qué protocolos actúan ahí y, al
-  señalar uno, su herramienta actuando), carta de protocolos, calculadora de
-  seña, equipo, preguntas frecuentes y horarios. `protocolos.html` tiene los 44
-  protocolos de la base con buscador, filtros, comparador de hasta 3, ficha
-  completa y una vitrina 3D (cada objeto es un protocolo). La reserva en 3 pasos
-  pide una consulta prequirúrgica antes de cualquier cirugía, y "Mi turno"
-  busca y cancela por DNI. El catálogo sale de `backend/02_datos.sql`
-  (`npm run generar`); sin API, la reserva usa horarios de ejemplo. Para verlo: 
-  `cd web && npm install && npm run dev`, y abrir `http://localhost:5173`.
-- **Arquitectura**: la base va en Aiven (MySQL gratuito), los recordatorios
-  salen con n8n desde una VM gratuita de Google Cloud, con Telegram en
-  desarrollo y WhatsApp en producción (ver `docs/arquitectura.md`).
-- Siguiente: terminar el diagrama de Chen, el diseño lógico, implementar la
-  base, conectar las pantallas y conectar el sitio web a la base.
+- `backend/`: la base MySQL. 31 tablas en 9 schemas (`seguridad`, `personas`, `clinica`, `agenda`, `pagos`,
+  `beneficios`, `notificaciones`, `auditoria`, `asistente`), datos de ejemplo, stored procedures con todas las
+  reglas del negocio (seña, 24 horas, cirugías con consulta previa, cupones con token de 5 minutos, tarjetas de
+  regalo, avisos), 8 reportes, auditoría por fechas y dos reportes `_tuneado` con la medición antes y después.
+  Las aplicaciones solo llaman a stored procedures, con un usuario que solo tiene `EXECUTE`.
+- `frontend/`: Qt 6 (Widgets) y `mysql.h`, como pide la cátedra. **Gestión** (`dermalia_gestion`, PC de
+  recepción): cargar, buscar y cancelar turnos con seña simulada y reembolso, protocolos, profesionales con su
+  disponibilidad, pacientes, avisos, cupones con QR, tarjetas de regalo, consultas previas de cirugía, reportes,
+  auditoría y usuarios. **Terminal** (`dermalia_cliente`, táctil): turno en 3 pasos (hasta 3 protocolos),
+  cupón o tarjeta de regalo, Google Calendar, buscar y cancelar, cuenta opcional y **asistente de IA**. Si la
+  base no responde, **modo contingencia**: guarda los turnos en el equipo y los sincroniza solo al volver.
+- `web/`: el sitio para la paciente (Vite, GSAP, three.js) con un modelo 3D de las capas de la piel, el catálogo
+  completo con fichas y comparador, reserva en 3 pasos, mi turno, cuenta con historial y cupones, y el
+  **asistente de IA**. `web/api/servidor.js` es la API (Node) que llama a los stored procedures y sirve el sitio.
+- **Asistente de IA** (`web/api/asistente.js`): responde con Gemini usando solo el catálogo de la base, los
+  cuidados de cada protocolo y las reglas del instituto; sin clave o sin internet contesta un asistente local.
+  Borra los datos personales antes de enviar o guardar la pregunta y deriva a WhatsApp si no sabe.
+- `n8n/`: plantillas de los recordatorios por Telegram y las tareas diarias (vencer evaluaciones, emitir
+  cupones).
+- **Arquitectura**: la base va en Aiven (MySQL administrado, USD 5/mes), los recordatorios salen con n8n desde
+  una VM gratuita de Google Cloud, con Telegram en desarrollo y WhatsApp en producción (ver
+  `docs/arquitectura.md`).
 
 ## Entrega del Hito 2 de Bases de Datos
 
@@ -315,11 +321,11 @@ scripts de `backend/`, que son la fuente única):
 
 | Archivo | Qué es |
 |---|---|
-| `03_ModeloSQL_Grupo<N>.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
-| `04_DatosSQL_Grupo<N>.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
-| `05_Backend_Grupo<N>.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
-| `06_PruebasSQL.xlsx` | Punto 6: 239 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
-| `Diagrama_Chen_Grupo<N>.png`, `Diagrama_Codd_Grupo<N>.png` | Diagramas conceptual y lógico, con fondo blanco |
+| `03_ModeloSQL.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
+| `04_DatosSQL.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
+| `05_Backend.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
+| `06_PruebasSQL.xlsx` | Punto 6: 255 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
+| `Diagrama_Chen.png`, `Diagrama_Codd.png` | Diagramas conceptual y lógico, con fondo blanco |
 
 El orden correcto es 03, 04 y 05, y la secuencia completa se puede repetir. El backend usa solo lo que
 enseña el material de la cátedra y pide la consigna: la lista de lo que se reemplazó y cómo está en
@@ -327,15 +333,10 @@ enseña el material de la cátedra y pide la consigna: la lista de lo que se ree
 
 ## Qué falta
 
-El trabajo del 4° bimestre está armado en la rama `claude/awesome-hopper-20z4z2`; cada semana se
-trae lo que toca a la rama de cada uno (ver [`docs/15-guia-por-semana.md`](docs/15-guia-por-semana.md)).
-Ya hecho y probado en esa rama: base con datos, stored procedures, 8 reportes, auditoría, tuning medido y
-239 casos de prueba; **Gestión, la terminal y el sitio web conectados a la base** (con pruebas de integración
-contra MySQL real); modo contingencia que se sincroniza; usuarios de la base con permisos mínimos; informe de
-competencia, presupuesto, pitch de 5 a 7 minutos y manuales.
-
-- Plantillas de **n8n** (`n8n/`): escritas pero sin probar en una instancia real.
-- Pasarela de pagos real, WhatsApp oficial y Google Calendar (hoy: seña simulada, enlace `wa.me`, enlace de Calendar).
-- El sitio y la base tienen los mismos 44 protocolos: al agregar uno, hay que cargarlo en los dos.
-- Verificar las celdas "a verificar" del análisis de competencia (`docs/07-competencia.md`) y armar las diapositivas del pitch.
-- Revisión cruzada (peer review) del maquetado y de los árboles con otro equipo: sigue pendiente.
+- **Ensayar el pitch** con cronómetro (5 a 7 minutos) y la demo con `./dermalia.sh recargar-base` antes.
+- **Número de grupo** (opcional): los archivos de la entrega no llevan sufijo; si algún día lo dan, `python3 backend/armar_entrega.py --grupo <número>`.
+- Para producción, fuera del alcance del bimestre: pasarela de pagos real (hoy la seña es simulada), WhatsApp con
+  la API oficial de Meta (hoy enlace `wa.me` y Telegram) y probar las plantillas de n8n en una instancia real.
+- Al agregar un protocolo a la base, correr `npm run generar` en `web/` para que el sitio y las apps lo tengan
+  sin conexión.
+- Las celdas "a verificar" que quedan en `docs/07-competencia.md` se confirman con la demo de cada producto.

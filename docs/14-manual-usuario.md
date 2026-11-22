@@ -20,7 +20,8 @@ consulta reportes y auditoría desde Gestión. Para instalar o mantener el siste
 
 ![Pantalla de inicio de la terminal](capturas/cliente-00-inicio.png)
 
-Tres opciones: **Sacar un turno**, **Consultar precios** y **Buscar o cancelar mi turno**.
+Cuatro opciones: **Sacar un turno**, **Consultar precios**, **Buscar o cancelar mi turno** y
+**Preguntale al asistente**.
 Desde cualquier pantalla, el botón **Inicio** de arriba vuelve acá.
 
 ### Tu cuenta (opcional)
@@ -95,6 +96,18 @@ todos. Si no aparece lo que buscás, *Consultar por WhatsApp* abre WhatsApp con 
 
 ![Resumen de un tratamiento](capturas/cliente-resumen.png)
 
+### Preguntale al asistente
+
+![Asistente de la terminal](capturas/cliente-08-asistente.png)
+
+Escribí una pregunta como se la harías a la recepción ("¿cuánto sale el botox?", "¿cómo cancelo?",
+"me quiero operar la nariz") o tocá una de las sugerencias. El asistente responde **solo con los precios
+y las reglas del instituto**; si no sabe, te dice que te acerques a la recepción o escribas por WhatsApp.
+No hace falta escribir tu DNI, teléfono ni email: si los escribís, se borran antes de guardar la pregunta.
+El mismo asistente está en el sitio web (botón *¿Dudas? Preguntame*, abajo a la derecha).
+
+![Asistente del sitio web](capturas/web-asistente.png)
+
 ### Buscar o cancelar mi turno
 
 ![Buscar mi turno](capturas/cliente-05-mi-turno.png)
@@ -109,6 +122,23 @@ cancelar de una lista; después confirmás.
 |---|---|
 | Con **más de 24 horas** de anticipación | Se te devuelve el **100%** |
 | Con **24 horas o menos**, o si no venís | La seña **queda retenida** |
+
+### Recordatorios y consultas por Telegram
+
+Podés vincular tu celular con el bot de Telegram de Dermalia para recibir los recordatorios de tus turnos de forma automática y consultar información en cualquier momento:
+
+- **Cómo vincularte:**
+  1. Abrí el bot de Telegram del instituto (tocando el enlace que aparece al confirmar tu turno en el sitio web o buscando el bot de Dermalia).
+  2. Escribí **/start**.
+  3. El bot te va a pedir tu **DNI** (solo números).
+  4. Luego te va a pedir el **teléfono** que diste al reservar (con código de área, sin 0 ni 15; por ejemplo `1155550102`). Esto se pide para comprobar que sos vos.
+  5. Una vez confirmado, tu cuenta queda vinculada y tus próximos recordatorios van a llegar directo a Telegram.
+
+- **Qué podés hacer y recibir:**
+  - **Recordatorios automáticos:** 24 horas antes de cada turno te llega un mensaje con la fecha, la hora, el tratamiento y el profesional que te atiende.
+  - **/turnos:** escribí este comando para ver tus próximos turnos programados.
+  - **/salir:** si en algún momento querés dejar de recibir avisos por Telegram, escribí `/salir`. Los avisos vuelven a enviarse a través de la recepción por WhatsApp.
+  - **Preguntas al asistente:** podés escribirle cualquier duda sobre tratamientos, precios, seña o cancelaciones y el asistente te responde al instante.
 
 ## 2. Cirugías (rinoplastia, lipoescultura, mamoplastia, blefaroplastia, abdominoplastia, otoplastia, ginecomastia)
 

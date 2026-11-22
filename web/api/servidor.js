@@ -17,18 +17,46 @@
  *   POST /api/sesion/cerrar                             cierra la sesión
  *   GET  /api/mi-cuenta                                 datos y turnos de la paciente con sesión iniciada
  *   POST /api/consultas                                 registra una pregunta al asistente
+ *   POST /api/asistente                                 pregunta al asistente de IA (Gemini o respuestas locales) y la registra
+ *   GET  /api/estado                                    si hay base y si el asistente usa Gemini (para el arranque y la demo)
  *
  * Cuentas de pacientes: la contraseña se manda tal cual a sp_crear_cuenta_paciente y sp_login, como hacen la
  * terminal y Gestión; así la misma cuenta sirve en la terminal y en el sitio. La sesión es un token firmado
  * (HMAC) que dura 12 horas.
  *
  * Variables: DERMALIA_DB_HOST, _PORT, _USER, _PASS, _SSL (como las apps de escritorio), PUERTO_API,
+ * GEMINI_API_KEY y GEMINI_MODELO (asistente de IA; sin clave responde el asistente local, ver api/asistente.js),
  * y DERMALIA_SECRETO_SESIONES (firma de las
  * sesiones; si falta se genera al arrancar y las sesiones se cierran al reiniciar).
  * Conviene un usuario de la base que solo pueda ejecutar stored procedures (backend/08_usuarios.sql). */
 import http from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { extname, join, normalize as normalizarRuta } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import { responderAsistente } from './asistente.js';
+import { crearBotTelegram } from './telegram.js';
+
+/* El bot de Telegram (si hay token) se crea al arrancar; /api/estado muestra su usuario para el enlace t.me. */
+let botTelegram = null;
+
+/* El catálogo que usa el asistente se pide a la base cada 5 minutos como mucho. */
+let catalogoAsistente = { filas: null, hasta: 0 };
+async function catalogoParaAsistente(pool) {
+  if (catalogoAsistente.filas && Date.now() < catalogoAsistente.hasta) return catalogoAsistente.filas;
+  const filas = await llamar(pool, 'clinica.sp_listar_protocolos', [null, null, 0]);
+  catalogoAsistente = { filas, hasta: Date.now() + 5 * 60 * 1000 };
+  return filas;
+}
+
+/* El navegador del sitio y la terminal (otro programa) pueden llamar a la API desde otro origen. */
+const ENCABEZADOS_CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+};
 
 /* Llama a un stored procedure y devuelve las filas de su primer conjunto de resultados. */
 /* Los SP devuelven el apellido en `paciente` o `profesional` y el nombre en `paciente_nombre` o
@@ -116,7 +144,7 @@ async function iniciarSesion(pool, req, usuario, password) {
 const aFechaHora = (texto) => String(texto).replace('T', ' ').padEnd(19, ':00').slice(0, 19);
 
 function responder(res, estado, cuerpo) {
-  res.writeHead(estado, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.writeHead(estado, { 'Content-Type': 'application/json; charset=utf-8', ...ENCABEZADOS_CORS });
   res.end(JSON.stringify(cuerpo));
 }
 
@@ -144,11 +172,58 @@ async function pacienteDe(pool, d) {
   return alta.ok ? { ok: true, id: alta.id } : alta;
 }
 
-export function crearServidor(pool) {
-  return http.createServer(async (req, res) => {
+/* Si existe web/dist (npm run build), la API también sirve el sitio: con un solo programa
+ * (npm start) anda todo en http://localhost:3000. En desarrollo el sitio lo sirve Vite. */
+const CARPETA_SITIO = join(import.meta.dirname, '..', 'dist');
+const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.json': 'application/json', '.ico': 'image/x-icon' };
+async function servirSitio(res, ruta) {
+  const pedido = normalizarRuta(decodeURIComponent(ruta || '/')).replace(/^([/\\]|\.\.)+/, '');
+  const archivo = join(CARPETA_SITIO, pedido === '' ? 'index.html' : pedido);
+  if (!archivo.startsWith(CARPETA_SITIO)) return responder(res, 404, { error: 'No existe esa dirección.' });
+  for (const candidato of [archivo, `${archivo}.html`, join(archivo, 'index.html')]) {
+    try {
+      const contenido = await readFile(candidato);
+      res.writeHead(200, { 'Content-Type': TIPOS[extname(candidato)] ?? 'application/octet-stream' });
+      return res.end(contenido);
+    } catch { /* probar el siguiente */ }
+  }
+  return responder(res, 404, { error: 'No existe esa dirección. Si buscás el sitio, primero: npm run build' });
+}
+
+/* El manejador de peticiones se separa del servidor para poder usarlo también como función de Vercel (api/index.js). */
+export function crearManejador(pool) {
+  return async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const ruta = url.pathname.replace(/\/+$/, '');
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, ENCABEZADOS_CORS);
+      return res.end();
+    }
     try {
+      if (req.method === 'GET' && ruta === '/api/estado') {
+        let base = true;
+        try { await pool.query('SELECT 1'); } catch { base = false; }
+        return responder(res, 200, { base, asistente: process.env.GEMINI_API_KEY ? 'gemini' : 'local',
+          telegram: botTelegram?.usuario ? `https://t.me/${botTelegram.usuario}` : null });
+      }
+      if (req.method === 'POST' && ruta === '/api/asistente') {
+        const d = await leerJson(req);
+        const pregunta = String(d.pregunta ?? '').trim();
+        if (!pregunta) return responder(res, 400, { error: 'Escribí una pregunta.' });
+        const origen = d.origen === 'terminal' ? 'terminal' : 'web';
+        let catalogo = [];
+        try { catalogo = await catalogoParaAsistente(pool); } catch (e) { console.warn('Asistente sin catálogo de la base:', e.message); }
+        const r = await responderAsistente({ pregunta, historial: Array.isArray(d.historial) ? d.historial : [], catalogo });
+        // se registra la pregunta ya sin datos personales; si la base no está, se responde igual
+        const sesion = sesionDe(req);
+        let registrada = false;
+        try {
+          registrada = (await escribir(pool, 'asistente.sp_registrar_consulta',
+            [sesion?.paciente ?? null, origen, r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null])).ok;
+        } catch (e) { console.warn('Asistente: no se pudo registrar la consulta:', e.message); }
+        return responder(res, 200, { respuesta: r.respuesta, derivada: r.derivada, fuente: r.fuente, registrada });
+      }
       if (req.method === 'GET' && ruta === '/api/protocolos') {
         return responder(res, 200, await llamar(pool, 'clinica.sp_listar_protocolos', [url.searchParams.get('texto') || null, null, 0]));
       }
@@ -230,12 +305,24 @@ export function crearServidor(pool) {
         const r = await escribir(pool, 'asistente.sp_registrar_consulta', [null, 'web', d.pregunta, d.respuesta || null, d.derivada ? 1 : 0, null]);
         return responder(res, r.ok ? 201 : 400, r.ok ? { id: r.id } : { error: r.mensaje });
       }
+      if (req.method === 'GET' && !ruta.startsWith('/api/')) return servirSitio(res, ruta);
       return responder(res, 404, { error: 'No existe esa dirección.' });
     } catch (e) {
       console.error(e);
       return responder(res, 500, { error: 'No pudimos conectar con la base de datos.' });
     }
-  });
+  };
+}
+
+export function crearServidor(pool) {
+  return http.createServer(crearManejador(pool));
+}
+
+/* DERMALIA_DB_CA es una ruta de archivo (local) o el certificado pegado entero (Vercel, donde no hay archivo). */
+function caDeLaBase() {
+  const ca = process.env.DERMALIA_DB_CA;
+  if (!ca) return undefined;
+  return ca.includes('BEGIN CERTIFICATE') ? ca : readFileSync(ca);
 }
 
 export function crearPool() {
@@ -244,7 +331,10 @@ export function crearPool() {
     port: Number(process.env.DERMALIA_DB_PORT || 3306),
     user: process.env.DERMALIA_DB_USER,
     password: process.env.DERMALIA_DB_PASS || '',
-    ssl: process.env.DERMALIA_DB_SSL === '1' ? { rejectUnauthorized: true } : undefined,
+    // DERMALIA_DB_CA: certificado de la autoridad del proveedor (Aiven firma con la suya)
+    ssl: process.env.DERMALIA_DB_SSL === '1'
+      ? { rejectUnauthorized: true, ca: caDeLaBase() }
+      : undefined,
     connectionLimit: 5,
     dateStrings: true,       // fechas como texto, sin zona horaria
     decimalNumbers: true,    // montos como números
@@ -253,7 +343,30 @@ export function crearPool() {
 }
 
 /* Se arranca solo si se ejecuta con `node api/servidor.js` (no al importarlo desde las pruebas). */
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const puerto = Number(process.env.PUERTO_API || 3000);
-  crearServidor(crearPool()).listen(puerto, () => console.log(`API de Dermalia en http://localhost:${puerto}`));
+  const pool = crearPool();
+  crearServidor(pool).listen(puerto, () => console.log(`API de Dermalia en http://localhost:${puerto}`));
+  iniciarAutomatismos(pool);
+}
+
+/* Bot de Telegram, envío de avisos y tareas diarias (web/api/telegram.js). Con TELEGRAM_ENVIOS=n8n
+ * los avisos los manda n8n (la conversación del bot sigue en la API); con TAREAS_DIARIAS=n8n las tareas diarias también. */
+export function iniciarAutomatismos(pool, entorno = process.env) {
+  const token = entorno.TELEGRAM_BOT_TOKEN || '';
+  const conN8n = entorno.TELEGRAM_ENVIOS === 'n8n';
+  botTelegram = crearBotTelegram({
+    token,
+    llamar: (sp, parametros) => llamar(pool, sp, parametros),
+    escribir: (sp, parametros) => escribir(pool, sp, parametros),
+    preguntarAsistente: async (pregunta, idPaciente) => {
+      let catalogo = [];
+      try { catalogo = await catalogoParaAsistente(pool); } catch { /* sin base: responde igual */ }
+      const r = await responderAsistente({ pregunta, catalogo });
+      try { await escribir(pool, 'asistente.sp_registrar_consulta', [idPaciente, 'sistema', r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null]); } catch { /* sin base */ }
+      return r;
+    },
+  });
+  if (!token) console.log('Telegram: sin TELEGRAM_BOT_TOKEN, el bot está apagado (los avisos quedan en la pantalla Avisos de Gestión).');
+  return botTelegram.iniciar({ mensajes: true, avisos: !conN8n, tareas: entorno.TAREAS_DIARIAS !== 'n8n' });
 }

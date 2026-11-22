@@ -280,6 +280,30 @@ la animación sigue completa y fluida, apenas menos nítida. Además, las línea
 cuando algo cambia de tamaño (antes la medían en cada cuadro, lo que traba a una compu lenta) y solo tocan el
 SVG si la línea se movió. Las escenas se pausan cuando no están en pantalla o la pestaña está oculta.
 
+### Bot de Telegram (RF-11)
+
+Corre dentro de la API (`web/api/telegram.js`, lanzada con `npm run api` o `./dermalia.sh iniciar`) cuando se configura `TELEGRAM_BOT_TOKEN` en `web/.env`. Utiliza **long polling** (`getUpdates` con `timeout: 25`): no necesita una dirección pública, webhook ni HTTPS, funcionando igual en una notebook de demo que en el servidor.
+
+**Comandos y conversación:**
+- `/start`: inicia la vinculación en dos pasos. Solicita el DNI (solo dígitos, 7 a 9 números) y luego el teléfono registrado al reservar (con código de área, sin 0 ni 15; ej. `1155550102`). Ejecuta `personas.sp_vincular_telegram(dni, telefono, chat_id, 'sistema')`. Si los datos coinciden, guarda el chat en la paciente y pasa los avisos pendientes de sus turnos futuros a Telegram. Si ya estaba vinculada, la saluda por su nombre y muestra la ayuda.
+- `/turnos`: consulta turnos próximos (`pendiente` o `confirmado` en fecha futura) mediante `personas.sp_paciente_por_telegram(chat_id)` y `agenda.sp_buscar_turnos(dni, 0)`.
+- `/salir`: desvincula el chat llamando a `personas.sp_desvincular_telegram(chat_id, 'sistema')`. Los avisos pendientes vuelven al canal WhatsApp asistido para que los gestione la recepción.
+- `/ayuda` o `/help`: muestra los comandos disponibles.
+- `/cancelar`: aborta el proceso de vinculación en curso.
+- Cualquier otra consulta la responde el asistente de IA con el catálogo y las reglas del instituto (igual que en el sitio y la terminal), registrándola en `asistente.sp_registrar_consulta`.
+
+**Envío de avisos automáticos:**
+- Cada minuto consulta los avisos pendientes del canal Telegram llamando a `notificaciones.sp_notificaciones_telegram(500)` (hasta 500 avisos cuya hora ya llegó).
+- Envía cada mensaje por Telegram (`sendMessage`) y reporta a la base el resultado con `notificaciones.sp_marcar_notificacion(id, 'enviada' | 'fallida', detalle)`. Los chats de formato inválido (por ejemplo los de prueba como `tg00001`) se marcan como fallidos directamente sin llamar a la API de Telegram. Ante errores de red o envío, la base reintenta hasta 3 veces antes de dejarlos definitivamente como fallidos.
+
+**Tareas diarias (3:00):**
+- Todos los días a las 3:00 de la madrugada ejecuta automáticamente `clinica.sp_vencer_evaluaciones('sistema')` (vence evaluaciones quirúrgicas aptas de más de 6 meses sin cirugía) y `beneficios.sp_emitir_cupones('sistema')` (emite cupones de fidelidad por visitas o gasto acumulado).
+
+**Variables de entorno (`web/.env`):**
+- `TELEGRAM_BOT_TOKEN`: token provisto por @BotFather. Sin este valor el bot permanece apagado y los avisos se gestionan desde la pantalla Avisos de Gestión.
+- `TELEGRAM_ENVIOS=n8n`: desactiva el bucle de envío de avisos de la API (`avisos: false`). La API solo mantiene la conversación del bot y delega el envío de recordatorios a n8n para no duplicar mensajes.
+- `TAREAS_DIARIAS=n8n`: desactiva la ejecución de tareas diarias a las 3:00 en la API (`tareas: false`), dejándolas a cargo de n8n.
+
 ## 5. Recordatorios con n8n
 
 Las plantillas están en [`n8n/`](../n8n/README.md) (importar en n8n, poner las credenciales de MySQL y de

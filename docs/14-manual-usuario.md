@@ -123,6 +123,23 @@ cancelar de una lista; después confirmás.
 | Con **más de 24 horas** de anticipación | Se te devuelve el **100%** |
 | Con **24 horas o menos**, o si no venís | La seña **queda retenida** |
 
+### Recordatorios y consultas por Telegram
+
+Podés vincular tu celular con el bot de Telegram de Dermalia para recibir los recordatorios de tus turnos de forma automática y consultar información en cualquier momento:
+
+- **Cómo vincularte:**
+  1. Abrí el bot de Telegram del instituto (tocando el enlace que aparece al confirmar tu turno en el sitio web o buscando el bot de Dermalia).
+  2. Escribí **/start**.
+  3. El bot te va a pedir tu **DNI** (solo números).
+  4. Luego te va a pedir el **teléfono** que diste al reservar (con código de área, sin 0 ni 15; por ejemplo `1155550102`). Esto se pide para comprobar que sos vos.
+  5. Una vez confirmado, tu cuenta queda vinculada y tus próximos recordatorios van a llegar directo a Telegram.
+
+- **Qué podés hacer y recibir:**
+  - **Recordatorios automáticos:** 24 horas antes de cada turno te llega un mensaje con la fecha, la hora, el tratamiento y el profesional que te atiende.
+  - **/turnos:** escribí este comando para ver tus próximos turnos programados.
+  - **/salir:** si en algún momento querés dejar de recibir avisos por Telegram, escribí `/salir`. Los avisos vuelven a enviarse a través de la recepción por WhatsApp.
+  - **Preguntas al asistente:** podés escribirle cualquier duda sobre tratamientos, precios, seña o cancelaciones y el asistente te responde al instante.
+
 ## 2. Cirugías (rinoplastia, lipoescultura, mamoplastia, blefaroplastia, abdominoplastia, otoplastia, ginecomastia)
 
 1. Primero se hace una **consulta previa** con su seña.

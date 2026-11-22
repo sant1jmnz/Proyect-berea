@@ -23,7 +23,7 @@
     },
     {
       "id": "a2",
-      "name": "Avisos de Telegram pendientes",
+      "name": "Consultar avisos",
       "type": "n8n-nodes-base.mySql",
       "typeVersion": 2.4,
       "position": [
@@ -111,9 +111,9 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "CALL notificaciones.sp_marcar_notificacion(?, 'enviada', NULL)",
+        "query": "CALL notificaciones.sp_marcar_notificacion($1, 'enviada', NULL)",
         "options": {
-          "queryReplacement": "={{ $('Avisos de Telegram pendientes').item.json.id_notificacion }}"
+          "queryReplacement": "={{ [$('Avisos de Telegram pendientes').item.json.id_notificacion] }}"
         }
       },
       "credentials": {
@@ -134,9 +134,9 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "CALL notificaciones.sp_marcar_notificacion(?, 'fallida', ?)",
+        "query": "CALL notificaciones.sp_marcar_notificacion($1, 'fallida', $2)",
         "options": {
-          "queryReplacement": "={{ $('Avisos de Telegram pendientes').item.json.id_notificacion }}, {{ String($json.error?.message ?? $json.error ?? 'Error de Telegram').slice(0, 400) }}"
+          "queryReplacement": "={{ [$('Avisos de Telegram pendientes').item.json.id_notificacion, String($json.error?.message ?? $json.error ?? 'Error de Telegram').slice(0, 400)] }}"
         }
       },
       "credentials": {
@@ -157,9 +157,9 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "CALL notificaciones.sp_marcar_notificacion(?, 'fallida', 'El chat de Telegram no es válido')",
+        "query": "CALL notificaciones.sp_marcar_notificacion($1, 'fallida', 'El chat de Telegram no es válido')",
         "options": {
-          "queryReplacement": "={{ $json.id_notificacion }}"
+          "queryReplacement": "={{ [$json.id_notificacion] }}"
         }
       },
       "credentials": {
@@ -168,6 +168,19 @@
           "name": "MySQL Dermalia (dermalia_n8n)"
         }
       }
+    },
+    {
+      "id": "a2b",
+      "name": "Avisos de Telegram pendientes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        330,
+        -140
+      ],
+      "parameters": {
+        "jsCode": "// El nodo MySQL devuelve un CALL como [filas, paquete OK]: se aplanan las filas.\nconst filas = $input.all().map((i) => i.json).find((j) => Array.isArray(j)) ?? [];\nreturn filas.map((f) => ({ json: f }));"
+      }
     }
   ],
   "connections": {
@@ -175,7 +188,7 @@
       "main": [
         [
           {
-            "node": "Avisos de Telegram pendientes",
+            "node": "Consultar avisos",
             "type": "main",
             "index": 0
           }
@@ -223,6 +236,17 @@
         [
           {
             "node": "Marcar fallida (Telegram dio error)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar avisos": {
+      "main": [
+        [
+          {
+            "node": "Avisos de Telegram pendientes",
             "type": "main",
             "index": 0
           }

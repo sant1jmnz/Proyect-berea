@@ -23,6 +23,13 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QEventLoop>
+#include <QTimer>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QPushButton>
 #include <QRandomGenerator>
 #include <QRegularExpressionValidator>
@@ -56,6 +63,23 @@ static QString mensajeReservado(const QString &protocolo, const QDateTime &inici
 {
     return QString("¡Listo! Tu turno quedó reservado.\n%1 · %2, %3")
         .arg(protocolo, Formato::fechaLarga(inicio.date(), true), inicio.toString("HH:mm"));
+}
+
+/* Enlace del bot de Telegram (GET /api/estado); vacío si no hay API, bot o respuesta en 2 s. */
+static QString enlaceTelegram()
+{
+    QNetworkAccessManager red;
+    QNetworkReply *r = red.get(QNetworkRequest(QUrl(DialogoAsistente::urlPorDefecto() + "/api/estado")));
+    QEventLoop espera;
+    QTimer::singleShot(2000, &espera, &QEventLoop::quit);
+    QObject::connect(r, &QNetworkReply::finished, &espera, &QEventLoop::quit);
+    espera.exec();
+    QString enlace;
+    if (r->isFinished() && r->error() == QNetworkReply::NoError)
+        enlace = QJsonDocument::fromJson(r->readAll()).object().value("telegram").toString();
+    r->abort();
+    r->deleteLater();
+    return enlace;
 }
 
 VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QString &archivoContingencia)
@@ -1135,6 +1159,10 @@ bool VentanaCliente::confirmarEnBase(const Cuentas &c, const QVector<const Proto
     } else {
         mensaje += "\nLa seña quedó sin pagar: acercate a recepción para abonarla.";
     }
+    const QString telegram = enlaceTelegram();
+    if (!telegram.isEmpty())
+        mensaje += "
+Recibí los avisos de tu turno por Telegram: " + telegram;
     QMessageBox::information(this, "Turno confirmado", mensaje);
     return true;
 }

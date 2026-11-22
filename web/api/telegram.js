@@ -28,6 +28,7 @@ const AYUDA = [
   'Esto es lo que puedo hacer:',
   '• Mandarte el recordatorio de tus turnos (para eso vinculá tu cuenta con /start).',
   '• /turnos: tus próximos turnos.',
+  '• /limpiar: que el bot olvide lo que hablaron.',
   '• /salir: dejar de recibir avisos por acá.',
   '• Escribime cualquier pregunta sobre precios, seña, cancelaciones o cirugías y te respondo.',
 ].join('\n');
@@ -81,6 +82,10 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     if (comando === '/cancelar') {
       await guardarEstado(chat, null);
       return enviar(chat, 'Listo, lo dejamos. Cuando quieras, escribí /start.');
+    }
+    if (comando === '/limpiar') {
+      const r = await escribir('asistente.sp_limpiar_historial_telegram', [chat]);
+      return enviar(chat, r.ok ? 'Listo, olvidé lo que hablamos. Empezamos de cero.' : r.mensaje);
     }
     if (comando === '/salir') {
       const r = await escribir('personas.sp_desvincular_telegram', [chat, 'sistema']);

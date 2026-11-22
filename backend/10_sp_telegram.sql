@@ -213,6 +213,35 @@ BEGIN
     END IF;
 END//
 
+-- Borra la charla guardada de un chat (comando /limpiar). Devuelve en valor cuántos mensajes borró.
+DROP PROCEDURE IF EXISTS asistente.sp_limpiar_historial_telegram//
+CREATE PROCEDURE asistente.sp_limpiar_historial_telegram(IN p_chat VARCHAR(50))
+BEGIN
+    DECLARE v_codigo INT DEFAULT NULL;
+    DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
+    DECLARE v_borrados INT DEFAULT 0;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT 'ERROR' AS estado, 52959 AS codigo, 'No se pudo limpiar la charla' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END;
+
+    IF p_chat IS NULL OR p_chat = '' THEN
+        SET v_codigo = 52950;
+        SET v_mensaje = 'Falta el chat';
+    END IF;
+
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        DELETE FROM asistente.MensajeTelegram WHERE chat = p_chat;
+        SET v_borrados = ROW_COUNT();
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Charla borrada' AS mensaje, NULL AS id, v_borrados AS valor, NULL AS dato;
+    ELSE
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
+END//
+
 -- En qué paso del /start está el chat (dni o telefono) y el DNI ya escrito. Vence a los 30 minutos.
 DROP PROCEDURE IF EXISTS asistente.sp_estado_telegram//
 CREATE PROCEDURE asistente.sp_estado_telegram(IN p_chat VARCHAR(50))

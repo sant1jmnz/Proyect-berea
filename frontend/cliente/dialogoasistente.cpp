@@ -204,6 +204,7 @@ void DialogoAsistente::terminar(const QString &html)
     agregar("asistente", html);
     enCurso = false;
     btnEnviar->setEnabled(true);
+    btnVoz->setEnabled(true);
     emit respondio();
 }
 

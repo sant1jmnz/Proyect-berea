@@ -51,7 +51,7 @@ construya el sistema completo; el trabajo real del bimestre es un subconjunto):
 
 | Concepto | Tipo | Monto | Nota |
 |---|---|---|---|
-| Base MySQL en Aiven | Año | $87.000 | Plan *Developer*, **USD 5/mes**: Aiven ya no permite crear servicios MySQL nuevos en el plan gratuito ([precios de Aiven MySQL](https://aiven.io/pricing/mysql), [aviso de retiro del plan gratis](https://aiven.io/free-mysql-database-retired), consultado el 22/11/2026). 12 × USD 5 × $1.450 |
+| Base MySQL en Aiven | Año | $87.000 | Plan *Developer*, **USD 5/mes**: Aiven ya no permite crear servicios MySQL nuevos en el plan gratuito ([precios de Aiven MySQL](https://aiven.io/pricing/mysql), [aviso de retiro del plan gratis](https://aiven.io/free-mysql-database-retired), consultado el 22/11/2026). 12 × USD 5 × $1.450. La demo corre hoy en el plan *Free* ya creado; este renglón presupuesta producción |
 | VM para n8n en Google Cloud (e2-micro) | Año | $0 | Nivel *Always Free*: una e2-micro por mes en us-west1, us-central1 o us-east1, con 30 GB de disco estándar ([Google Cloud](https://docs.cloud.google.com/free), consultado el 22/11/2026) |
 | Dominio del sitio web | Año | $25.000 🔶 | |
 | Asistente de IA (API de Gemini) | Mes | $30.000 🔶 | Gemini tiene un **nivel gratuito** con límite de uso (alcanza para el desarrollo y la demo). En el nivel pago, Flash-Lite cuesta **USD 0,25 por millón de tokens de entrada y USD 1,50 de salida** ([precios de Gemini](https://ai.google.dev/gemini-api/docs/pricing), 22/11/2026). Con 100 preguntas por día y unos 8.000 tokens de contexto cada una son ≈ USD 7/mes (≈ $10.000); se presupuestan $30.000 por las dudas |

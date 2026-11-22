@@ -35,7 +35,9 @@ const AYUDA = [
 export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, fetchImpl = fetch,
   apiBase = 'https://api.telegram.org', ahora = () => new Date(), registro = console } = {}) {
   const url = (metodo) => `${apiBase}/bot${token}/${metodo}`;
-  const conversaciones = new Map(); // chat → { paso: 'dni' | 'telefono', dni }
+  // El paso del /start (dni | telefono) vive en la base: en Vercel cada mensaje puede caer en otra instancia.
+  const estadoDe = async (chat) => (await llamar('asistente.sp_estado_telegram', [chat]))[0] ?? null;
+  const guardarEstado = (chat, paso, dni = null) => escribir('asistente.sp_guardar_estado_telegram', [chat, paso, dni]);
   let offset = 0;
   let activo = false;
   let usuarioBot = null;
@@ -69,22 +71,23 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
 
     if (comando === '/start') {
       if (vinculada) {
-        conversaciones.delete(chat);
+        await guardarEstado(chat, null);
         return enviar(chat, `¡Hola, ${vinculada.nombre}! Tu Telegram ya está vinculado: acá te llegan los recordatorios.\n\n${AYUDA}`);
       }
-      conversaciones.set(chat, { paso: 'dni' });
+      await guardarEstado(chat, 'dni');
       return enviar(chat, '¡Hola! Soy el asistente de Dermalia. Para mandarte los recordatorios de tus turnos, escribí tu DNI (solo números).');
     }
     if (comando === '/ayuda' || comando === '/help') return enviar(chat, AYUDA);
     if (comando === '/cancelar') {
-      conversaciones.delete(chat);
+      await guardarEstado(chat, null);
       return enviar(chat, 'Listo, lo dejamos. Cuando quieras, escribí /start.');
     }
     if (comando === '/salir') {
       const r = await escribir('personas.sp_desvincular_telegram', [chat, 'sistema']);
       return enviar(chat, r.ok ? 'Listo: ya no vas a recibir avisos por Telegram. Te los manda la recepción por WhatsApp.' : r.mensaje);
     }
-    if (comando === '/turnos') {
+    const pideTurnos = !texto.startsWith('/') && /turnos?/i.test(texto) && /(tengo|proxim\w*|próxim\w*|cuant\w*|cuánt\w*|mis|cuando|cuándo)/i.test(texto) && !/(reservar|sacar|cancelar|cambiar)/i.test(texto);
+    if (comando === '/turnos' || (pideTurnos && vinculada)) {
       if (!vinculada) return enviar(chat, 'Primero vinculá tu cuenta con /start.');
       const ahoraTexto = ahora().toISOString().slice(0, 19).replace('T', ' ');
       const proximos = (await llamar('agenda.sp_buscar_turnos', [vinculada.dni, 0]))
@@ -96,11 +99,11 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     }
 
     // Vinculación en dos pasos: DNI y teléfono
-    const conversacion = conversaciones.get(chat);
+    const conversacion = await estadoDe(chat);
     if (conversacion?.paso === 'dni') {
       const dni = soloDigitos(texto);
       if (dni.length < 7 || dni.length > 9) return enviar(chat, 'El DNI tiene que tener entre 7 y 9 números. Probá de nuevo (o /cancelar).');
-      conversaciones.set(chat, { paso: 'telefono', dni });
+      await guardarEstado(chat, 'telefono', dni);
       return enviar(chat, 'Gracias. Ahora escribí el teléfono que dejaste al reservar (con código de área, sin 0 ni 15; por ejemplo 1155550102).');
     }
     if (conversacion?.paso === 'telefono') {
@@ -108,10 +111,10 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
       const r = await escribir('personas.sp_vincular_telegram', [conversacion.dni, telefono, chat, 'sistema']);
       if (!r.ok) {
         if (r.codigo === 52932) return enviar(chat, `${r.mensaje}. Probá de nuevo (o /cancelar).`);
-        conversaciones.delete(chat);
+        await guardarEstado(chat, null);
         return enviar(chat, `${r.mensaje}. Si todavía no reservaste, hacelo en el sitio o en la terminal y después volvé a escribir /start.`);
       }
-      conversaciones.delete(chat);
+      await guardarEstado(chat, null);
       return enviar(chat, `¡Listo, ${r.dato}! Tu Telegram quedó vinculado: acá te van a llegar los recordatorios de tus turnos.` +
         `${Number(r.valor) > 0 ? ` Ya pasamos ${r.valor} aviso${Number(r.valor) === 1 ? '' : 's'} pendiente${Number(r.valor) === 1 ? '' : 's'} a Telegram.` : ''}\n\n${AYUDA}`);
     }

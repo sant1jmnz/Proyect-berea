@@ -127,6 +127,15 @@ devuelven 0 filas y no dan error.
 | `seguridad.sp_alta_usuario` (SP) | `p_id_admin INT, p_nombre_usuario VARCHAR(50), p_email VARCHAR(100), p_password VARCHAR(255), p_rol VARCHAR(50), p_origen VARCHAR(50)` | Crea un usuario de recepción o de administración. Solo lo puede pedir un usuario activo con rol administrador. Devuelve en `id` el usuario nuevo y en `dato` el rol. Queda en el log como `alta_usuario`. |
 | `seguridad.sp_cambiar_clave` (SP) | `p_id_usuario INT, p_clave_actual VARCHAR(255), p_clave_nueva VARCHAR(255), p_origen VARCHAR(50)` | Cambia la contraseña de quien ingresó; hay que saber la actual. Queda en el log como `cambio_clave`. |
 
+### Bot de Telegram (`backend/10_sp_telegram.sql`): vincular la paciente y avisos por Telegram
+
+| SP / función | Parámetros | Qué hace |
+|---|---|---|
+| `personas.sp_vincular_telegram` (SP) | `p_dni VARCHAR(15), p_telefono VARCHAR(20), p_chat_id VARCHAR(50), p_origen VARCHAR(50)` | Vincula un chat de Telegram con la paciente que tiene ese DNI y ese teléfono (el teléfono valida su identidad). Los avisos pendientes de sus turnos futuros pasan al canal Telegram. Devuelve: id = paciente, valor = avisos que pasan a Telegram, dato = nombre de la paciente. Códigos de error: 52930 (faltan datos obligatorios), 52931 (DNI inexistente), 52932 (teléfono no coincide), 52933 (chat ya vinculado con otra paciente), 52939 (error al vincular). |
+| `personas.sp_desvincular_telegram` (SP) | `p_chat_id VARCHAR(50), p_origen VARCHAR(50)` | Desvincula el chat de Telegram (comando /salir). Los avisos pendientes vuelven a la recepción (canal 'WhatsApp asistido'). Devuelve: id = paciente, valor = avisos que vuelven a la recepción. Códigos de error: 52934 (chat no vinculado), 52939 (error al desvincular). |
+| `personas.sp_paciente_por_telegram` (SP) | `p_chat_id VARCHAR(50)` | Qué paciente tiene vinculado ese chat (para el comando /turnos). Devuelve: `id_paciente, dni, nombre, apellido`. Sin coincidencias: 0 filas. |
+| `notificaciones.sp_notificaciones_telegram` (SP) | `p_limite INT` | Avisos pendientes que salen por Telegram cuya hora ya llegó, los más viejos primero. Límite entre 1 y 500 (por defecto 50). Devuelve: `id_notificacion, tipo, mensaje, fecha_programada, intentos, id_turno, destinatario_nombre, telegram_chat_id`. |
+
 ### Semana 5 (`backend/05_reportes_semana5.sql`): 8 reportes y auditoría
 
 | SP / función | Parámetros | Qué hace |
@@ -252,3 +261,9 @@ Son los números que devuelve la columna `codigo` cuando `estado = 'ERROR'`. Los
 | 52161 | La notificación ya no está pendiente |
 | 52162 | El resultado debe ser enviada o fallida |
 | 52170 | La pregunta está vacía |
+| 52930 | Faltan el DNI, el teléfono o el chat de Telegram |
+| 52931 | No hay ninguna paciente con ese DNI |
+| 52932 | El teléfono no coincide con el que dejaste al reservar |
+| 52933 | Ese Telegram ya está vinculado con otra paciente: primero escribí /salir |
+| 52934 | Este Telegram no está vinculado con ninguna paciente |
+| 52939 | No se pudo vincular el Telegram / No se pudo desvincular el Telegram |

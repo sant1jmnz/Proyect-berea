@@ -119,6 +119,11 @@ instalar() {
     read -rsp "  Clave (Enter para seguir sin IA: responde con el catálogo y las reglas): " clave_gemini; echo
     [ -n "$clave_gemini" ] && poner_env GEMINI_API_KEY "$clave_gemini"
   fi
+  if [ -z "$(de_env TELEGRAM_BOT_TOKEN)" ] && [ -t 0 ]; then
+    echo "Bot de Telegram: pegá el token que te da @BotFather (/newbot)."
+    read -rsp "  Token (Enter para seguir sin Telegram: los avisos quedan en Gestión): " token_tg; echo
+    [ -n "$token_tg" ] && poner_env TELEGRAM_BOT_TOKEN "$token_tg"
+  fi
   if [ -z "$(de_env VITE_WHATSAPP_INSTITUTO)" ] && [ -t 0 ]; then
     read -rp "  WhatsApp del instituto con código de país, sin + (Enter para dejarlo vacío): " wa
     [ -n "$wa" ] && poner_env VITE_WHATSAPP_INSTITUTO "$wa"

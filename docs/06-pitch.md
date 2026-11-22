@@ -83,7 +83,7 @@ quedan en su plataforma. Aclaración honesta: varias celdas de la matriz dicen
 
 **"¿Quién lo mantiene?"** El abono de $400.000/mes incluye soporte, hosting,
 respaldos y la cuota de IA. El código está documentado (manual técnico) y la
-lógica vive en stored procedures probados (239 casos).
+lógica vive en stored procedures probados (255 casos).
 
 **"¿Cómo saben que funciona?"** Cuatro indicadores de la MML, medidos a las 4
 semanas de uso: −60% de tiempo de atención manual, −50% de turnos perdidos, 0
@@ -93,8 +93,8 @@ resultados medidos.
 
 **"¿Es realizable con el equipo que son?"** Para el bimestre sí, y está hecho: la base completa (reglas,
 reportes, auditoría), Gestión con 13 pantallas, la terminal y el sitio conectados a ella, el asistente de IA,
-cupones con QR, tarjetas de regalo y cirugías con consulta previa; 239 casos de prueba de la base, 44 de la
-estructura, 6 programas de prueba de las apps y 12 de la API, y se instala con un solo comando
+cupones con QR, tarjetas de regalo y cirugías con consulta previa; 255 casos de prueba de la base, 44 de la
+estructura, 6 programas de prueba de las apps y 18 de la API, y se instala con un solo comando
 (`./dermalia.sh instalar`). Lo que queda para una etapa posterior —pasarela de pagos real y WhatsApp con la
 API oficial de Meta— está identificado y presupuestado.
 

@@ -333,8 +333,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   iniciarAutomatismos(pool);
 }
 
-/* Bot de Telegram, envío de avisos y tareas diarias (web/api/telegram.js). Con TELEGRAM_ENVIOS=n8n o
- * TAREAS_DIARIAS=n8n, eso lo hace n8n y la API no lo repite. */
+/* Bot de Telegram, envío de avisos y tareas diarias (web/api/telegram.js). Con TELEGRAM_ENVIOS=n8n
+ * los avisos los manda n8n (la conversación del bot sigue en la API); con TAREAS_DIARIAS=n8n las tareas diarias también. */
 export function iniciarAutomatismos(pool, entorno = process.env) {
   const token = entorno.TELEGRAM_BOT_TOKEN || '';
   const conN8n = entorno.TELEGRAM_ENVIOS === 'n8n';
@@ -351,5 +351,5 @@ export function iniciarAutomatismos(pool, entorno = process.env) {
     },
   });
   if (!token) console.log('Telegram: sin TELEGRAM_BOT_TOKEN, el bot está apagado (los avisos quedan en la pantalla Avisos de Gestión).');
-  return botTelegram.iniciar({ mensajes: !conN8n, avisos: !conN8n, tareas: entorno.TAREAS_DIARIAS !== 'n8n' });
+  return botTelegram.iniciar({ mensajes: true, avisos: !conN8n, tareas: entorno.TAREAS_DIARIAS !== 'n8n' });
 }

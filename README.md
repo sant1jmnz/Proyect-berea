@@ -105,7 +105,7 @@ y 2 del maquetado ("Elegir protocolo", "Elegir horario")*.
 | 6 | Software: Gestión, terminal y sitio web | `frontend/`, `web/` | Hecho, conectado a la base, con asistente de IA; se instala con `./dermalia.sh` |
 | 7 | Base de datos (consigna de Bases de Datos) | `backend/`, [`docs/consigna-bbdd.md`](docs/consigna-bbdd.md) | Hecho: 9 schemas, stored procedures, 8 reportes, auditoría y tuning; entrega en `entrega-hito-2/` |
 | 8 | Diagramas Chen y Codd | [`docs/diagramas/`](docs/diagramas/) | Hecho (`.drawio` y `.png`) |
-| 9 | Pruebas | [`docs/09`](docs/09-casos-de-prueba.md), [`docs/10`](docs/10-casos-de-prueba-cliente.md), [`docs/11`](docs/11-pruebas-bbdd.md) | 239 casos de stored procedures, 44 de estructura, 6 programas de prueba Qt y 12 de la API: todo OK |
+| 9 | Pruebas | [`docs/09`](docs/09-casos-de-prueba.md), [`docs/10`](docs/10-casos-de-prueba-cliente.md), [`docs/11`](docs/11-pruebas-bbdd.md) | 255 casos de stored procedures, 44 de estructura, 6 programas de prueba Qt y 18 de la API: todo OK |
 | 10 | Análisis de competencia y PUV | [`docs/07-competencia.md`](docs/07-competencia.md) | Hecho |
 | 11 | Presupuesto, monetización y retorno | [`docs/08-presupuesto.md`](docs/08-presupuesto.md) | Hecho |
 | 12 | Pitch de venta (5 a 7 min) con demo | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion, demo y objeciones listos; falta ensayar |
@@ -324,7 +324,7 @@ scripts de `backend/`, que son la fuente única):
 | `03_ModeloSQL_Grupo<N>.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
 | `04_DatosSQL_Grupo<N>.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
 | `05_Backend_Grupo<N>.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
-| `06_PruebasSQL.xlsx` | Punto 6: 239 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
+| `06_PruebasSQL.xlsx` | Punto 6: 255 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
 | `Diagrama_Chen_Grupo<N>.png`, `Diagrama_Codd_Grupo<N>.png` | Diagramas conceptual y lógico, con fondo blanco |
 
 El orden correcto es 03, 04 y 05, y la secuencia completa se puede repetir. El backend usa solo lo que

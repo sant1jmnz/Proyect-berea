@@ -29,6 +29,7 @@ before(async () => {
     let cuerpo = '';
     for await (const parte of req) cuerpo += parte;
     const datos = cuerpo ? JSON.parse(cuerpo) : {};
+    if (req.url.includes('/file/')) return res.end('audio-de-prueba');
     const metodo = req.url.split('/').pop();
     let result = true;
     if (metodo === 'getMe') result = { username: 'DermaliaPruebaBot' };
@@ -37,6 +38,7 @@ before(async () => {
       enviados.push(datos);
       result = { message_id: enviados.length };
     }
+    if (metodo === 'getFile') result = { file_path: 'voice/1.oga' };
     if (metodo === 'getUpdates') result = actualizaciones.splice(0);
     res.end(JSON.stringify({ ok: true, result }));
   });
@@ -173,6 +175,18 @@ test('botones: un turno ajeno no se toca; el recordatorio "Confirmo" agradece', 
   assert.match(ultimo(), /Tus próximos turnos|No tenés turnos/);
   await b.procesarActualizacion(mensaje('/ayuda'));
   assert.ok(enviados.at(-1).reply_markup.keyboard, 'el menú fijo viaja con /ayuda');
+});
+
+test('una nota de voz se transcribe y se responde como si fuera texto', { skip: !hayBase }, async () => {
+  let audio = null, pregunta = null;
+  const b = crearBotTelegram({ token: 'x', apiBase: base, llamar, escribir,
+    transcribir: async (base64, mime) => { audio = [Buffer.from(base64, 'base64').toString(), mime]; return 'cuanto sale el peeling'; },
+    preguntarAsistente: async (p) => { pregunta = p; return { respuesta: 'El peeling sale $120.000.', derivada: false }; },
+    registro: { log() {}, warn() {}, error() {} } });
+  await b.procesarActualizacion({ update_id: id++, message: { chat: { id: CHAT }, voice: { file_id: 'f1', duration: 3, mime_type: 'audio/ogg' } } });
+  assert.deepEqual(audio, ['audio-de-prueba', 'audio/ogg']);
+  assert.equal(pregunta, 'cuanto sale el peeling');
+  assert.equal(ultimo(), 'El peeling sale $120.000.');
 });
 
 test('/salir desvincula', { skip: !hayBase }, async () => {

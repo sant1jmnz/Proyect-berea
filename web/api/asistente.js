@@ -178,6 +178,25 @@ export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), tu
 
 const URL_GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
 
+/* Pasa un audio (base64) a texto con Gemini. Sin GEMINI_API_KEY devuelve null. */
+export async function transcribirAudio({ base64, mime = 'audio/ogg', entorno = process.env, fetchImpl = fetch, esperaMs = 20000 }) {
+  const clave = entorno.GEMINI_API_KEY;
+  if (!clave) return null;
+  const modelo = entorno.GEMINI_MODELO || 'gemini-flash-lite-latest';
+  const r = await fetchImpl(`${URL_GEMINI}/${encodeURIComponent(modelo)}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': clave },
+    body: JSON.stringify({ contents: [{ role: 'user', parts: [
+      { text: 'Transcribí este audio en español, tal cual lo dice la persona. Devolvé solo el texto, sin comillas ni comentarios.' },
+      { inline_data: { mime_type: mime, data: base64 } },
+    ] }] }),
+    signal: AbortSignal.timeout(esperaMs),
+  });
+  const datos = await r.json();
+  if (!r.ok) throw new Error(`Gemini ${r.status}: ${datos?.error?.message ?? 'sin detalle'}`);
+  return (datos?.candidates?.[0]?.content?.parts ?? []).map((x) => x.text ?? '').join('').trim() || null;
+}
+
 /* Pregunta a Gemini. Devuelve { respuesta, derivada } o lanza un error (y se usa el asistente local). */
 export async function preguntarGemini({ pregunta, historial = [], catalogo, nombre, turnos = null, clave, modelo, fetchImpl = fetch, esperaMs = 12000 }) {
   const contenidos = [

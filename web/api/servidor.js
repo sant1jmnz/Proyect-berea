@@ -36,7 +36,7 @@ import { extname, join, normalize as normalizarRuta } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import mysql from 'mysql2/promise';
-import { responderAsistente } from './asistente.js';
+import { responderAsistente, transcribirAudio } from './asistente.js';
 import { crearBotTelegram } from './telegram.js';
 
 /* El bot de Telegram (si hay token) se crea al arrancar; /api/estado muestra su usuario para el enlace t.me. */
@@ -378,6 +378,7 @@ function construirBot(pool, token) {
     llamar: (sp, parametros) => llamar(pool, sp, parametros),
     escribir: (sp, parametros) => escribir(pool, sp, parametros),
     recepcion: process.env.TELEGRAM_RECEPCION_CHAT || null,
+    transcribir: (base64, mime) => transcribirAudio({ base64, mime }),
     preguntarAsistente: async (pregunta, idPaciente, chat, nombre, turnos = null) => {
       let catalogo = [];
       try { catalogo = await catalogoParaAsistente(pool); } catch { /* sin base: responde igual */ }

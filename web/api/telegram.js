@@ -46,7 +46,7 @@ const enFilas = (botones, n) => botones.reduce((filas, b, i) => (i % n ? filas[f
 const teclado = (botones, n = 1) => ({ reply_markup: { inline_keyboard: enFilas(botones, n) } });
 const boton = (text, callback_data) => ({ text, callback_data });
 
-export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, recepcion = null, fetchImpl = fetch,
+export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, recepcion = null, transcribir = null, fetchImpl = fetch,
   apiBase = 'https://api.telegram.org', ahora = () => new Date(), registro = console } = {}) {
   const url = (metodo) => `${apiBase}/bot${token}/${metodo}`;
   // El paso del /start (dni | telefono) vive en la base: en Vercel cada mensaje puede caer en otra instancia.
@@ -86,6 +86,17 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
   async function procesarMensaje(mensaje) {
     const chat = String(mensaje.chat.id);
     let texto = String(mensaje.text ?? '').trim();
+    // audio o nota de voz: Gemini lo pasa a texto y sigue como si lo hubiera escrito
+    const audio = mensaje.voice ?? mensaje.audio;
+    if (!texto && audio && transcribir) {
+      if (audio.duration > 120) return enviar(chat, 'El audio es muy largo: mandalo de menos de 2 minutos o escribime.');
+      telegram('sendChatAction', { chat_id: chat, action: 'typing' }).catch(() => {});
+      const archivo = await telegram('getFile', { file_id: audio.file_id });
+      const r = await fetchImpl(`${apiBase}/file/bot${token}/${archivo.file_path}`);
+      if (!r.ok) throw new Error(`no pude bajar el audio (${r.status})`);
+      texto = (await transcribir(Buffer.from(await r.arrayBuffer()).toString('base64'), audio.mime_type || 'audio/ogg')) ?? '';
+      if (!texto) return enviar(chat, 'No pude entender el audio. ¿Me lo escribís?');
+    }
     texto = BOTONES[texto.toLowerCase()] ?? texto;
     if (!texto) return enviar(chat, 'Por ahora solo entiendo mensajes de texto. Escribime tu consulta o probá con /ayuda.');
     const comando = texto.split(/[\s@]/)[0].toLowerCase();

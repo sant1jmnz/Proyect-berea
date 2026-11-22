@@ -17,6 +17,8 @@ const formatear = (t) => escapar(t).replace(/\n/g, '<br />');
 export function iniciarAsistente(enlaceWhatsapp) {
   if (document.querySelector('.asistente')) return;
   const historial = [];
+  let reserva = null;      // lo elegido en la reserva dentro del chat (lo guarda el cliente, la API no)
+  let opciones = [];
 
   const raiz = document.createElement('div');
   raiz.className = 'asistente';
@@ -79,7 +81,7 @@ export function iniciarAsistente(enlaceWhatsapp) {
   const botonEnviar = form.querySelector('button[type=submit]');
 
   // audio = { base64, mime }: nota de voz; la API la pasa a texto (igual que el bot de Telegram)
-  async function preguntar(pregunta, audio = null) {
+  async function preguntar(pregunta, audio = null, eleccion = null) {
     const burbuja = agregar('paciente', audio ? '🎤 <i>Nota de voz…</i>' : escapar(pregunta));
     sugerencias.hidden = true;
     const pensando = agregar('asistente', '<span class="asistente__puntos" aria-label="Escribiendo"><i></i><i></i><i></i></span>');
@@ -89,8 +91,8 @@ export function iniciarAsistente(enlaceWhatsapp) {
       method: 'POST',
       headers: sesion?.token ? { Authorization: `Bearer ${sesion.token}` } : {},
       body: JSON.stringify(audio
-        ? { audio: audio.base64, mime: audio.mime, historial: historial.slice(-6), origen: 'web' }
-        : { pregunta, historial: historial.slice(-6), origen: 'web' }),
+        ? { audio: audio.base64, mime: audio.mime, historial: historial.slice(-6), origen: 'web', reserva }
+        : { pregunta, historial: historial.slice(-6), origen: 'web', reserva, eleccion }),
     });
     botonEnviar.disabled = false;
     if (audio) {
@@ -102,10 +104,15 @@ export function iniciarAsistente(enlaceWhatsapp) {
       return;
     }
     const { respuesta, derivada } = r.cuerpo;
+    reserva = r.cuerpo.reserva ?? null;
+    opciones = r.cuerpo.opciones ?? [];
+    sugerencias.innerHTML = opciones.map((o, i) => `<button type="button" data-i="${i}">${escapar(o.texto)}</button>`).join('');
+    sugerencias.hidden = !opciones.length;
     pensando.innerHTML = formatear(respuesta) + (derivada
       ? `<a class="boton boton--primario asistente__whatsapp" href="${enlaceWhatsapp(`Hola, tengo una consulta: ${pregunta}`)}" target="_blank" rel="noopener">Seguir por WhatsApp</a>`
       : '');
     historial.push({ rol: 'paciente', texto: pregunta }, { rol: 'asistente', texto: respuesta });
+    if (r.cuerpo.formulario) formularioReserva();
     mensajes.scrollTop = mensajes.scrollHeight;
   }
 
@@ -150,6 +157,43 @@ export function iniciarAsistente(enlaceWhatsapp) {
   }
 
   sugerencias.addEventListener('click', (e) => {
-    if (e.target.matches('button')) preguntar(e.target.textContent);
+    if (!e.target.matches('button')) return;
+    const o = opciones[e.target.dataset.i];
+    if (o) preguntar(o.texto, null, o.reserva);
+    else preguntar(e.target.textContent);
   });
+
+  // último paso de la reserva: datos de la persona (no pasan por la IA) y POST /api/turnos
+  function formularioReserva() {
+    const eleccion = reserva;
+    const m = agregar('asistente', `
+      <form class="asistente__datos">
+        <input name="nombre" placeholder="Nombre y apellido" required maxlength="80" autocomplete="name" />
+        <input name="dni" placeholder="DNI" required inputmode="numeric" pattern="[0-9]{7,9}" autocomplete="off" />
+        <input name="telefono" placeholder="Teléfono" required inputmode="tel" autocomplete="tel" />
+        <label class="asistente__nac" hidden>Fecha de nacimiento (primera vez)<input name="nacimiento" type="date" /></label>
+        <button class="boton boton--primario" type="submit">Confirmar turno</button>
+        <p class="asistente__error" role="alert"></p>
+      </form>`);
+    const f = m.querySelector('form');
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = Object.fromEntries(new FormData(f));
+      const boton = f.querySelector('button');
+      boton.disabled = true;
+      const r = await pedir('/turnos', { method: 'POST', body: JSON.stringify({ nombre: d.nombre.trim(), dni: d.dni.trim(), telefono: d.telefono.trim(),
+        nacimiento: d.nacimiento || undefined, protocolos: [eleccion.protocolo], profesional: eleccion.profesional, inicio: eleccion.inicio }) });
+      boton.disabled = false;
+      const error = f.querySelector('.asistente__error');
+      if (r?.ok) {
+        f.replaceWith(Object.assign(document.createElement('p'), { innerHTML: formatear(`¡Listo, tu turno quedó reservado! Seña: $${Number(r.cuerpo.sena).toLocaleString('es-AR')}${r.cuerpo.aviso ? `
+${r.cuerpo.aviso}` : ''}
+Podés verlo en "Mi turno".`) }));
+        reserva = null; opciones = []; sugerencias.hidden = true;
+      } else if (r?.cuerpo?.necesitaNacimiento) {
+        f.querySelector('.asistente__nac').hidden = false;
+        error.textContent = r.cuerpo.error;
+      } else error.textContent = r?.cuerpo?.error ?? 'No pude reservar ahora. Probá de nuevo.';
+    });
+  }
 }

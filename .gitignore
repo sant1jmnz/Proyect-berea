@@ -16,3 +16,4 @@ __pycache__/
 .api.pid
 .api.log
 web/ca.pem
+.env.vercel

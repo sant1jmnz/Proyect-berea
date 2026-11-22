@@ -1,7 +1,7 @@
 /* Pruebas del asistente (no necesitan base ni internet: Gemini se simula). npm run test:api */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { filtrarDatosPersonales, responderLocal, responderAsistente, instruccionSistema } from './asistente.js';
+import { filtrarDatosPersonales, responderLocal, responderAsistente, instruccionSistema, gastaGemini, reiniciarLimites, LIMITE_POR_PERSONA, LIMITE_TOTAL } from './asistente.js';
 
 const catalogo = [
   { id_protocolo: 2, nombre: 'Peeling químico', categoria: 'Faciales y corporales', descripcion: 'Renovación de la piel con ácidos.', precio: 120000, duracion_min: 45, porcentaje_sena: 30, sena: 36000, requiere_evaluacion: 0 },
@@ -68,4 +68,26 @@ test('sin clave responde el asistente local', async () => {
 test('local: cuidados de antes y después del tratamiento', () => {
   const r = responderLocal('que cuidados tengo que tener despues del peeling', catalogo);
   assert.match(r.respuesta, /protector solar/);
+});
+
+test('el tope por persona manda a Gemini solo 10 veces por hora y después responde el local', async () => {
+  reiniciarLimites();
+  let llamadas = 0;
+  const fetchImpl = async () => { llamadas++; return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"respuesta":"ok","derivar":false}' }] } }] }) }; };
+  const entorno = { GEMINI_API_KEY: 'x' };
+  for (let i = 0; i < LIMITE_POR_PERSONA.max + 5; i++) {
+    const r = await responderAsistente({ pregunta: 'hola', catalogo, quien: 'ip-1', entorno, fetchImpl });
+    assert.equal(r.fuente, i < LIMITE_POR_PERSONA.max ? 'gemini' : 'local');
+  }
+  assert.equal(llamadas, LIMITE_POR_PERSONA.max);
+  assert.equal((await responderAsistente({ pregunta: 'hola', catalogo, quien: 'ip-2', entorno, fetchImpl })).fuente, 'gemini');   // otra persona no se ve afectada
+  reiniciarLimites();
+});
+
+test('el tope total corta a todos juntos', () => {
+  reiniciarLimites();
+  for (let i = 0; i < LIMITE_TOTAL.max; i++) assert.ok(gastaGemini(`ip-${i}`, 1000));
+  assert.equal(gastaGemini('otra', 1000), false);
+  assert.ok(gastaGemini('otra', 1000 + LIMITE_TOTAL.ventanaMs + 1));   // pasado el día se libera
+  reiniciarLimites();
 });

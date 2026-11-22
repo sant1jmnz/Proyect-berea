@@ -212,12 +212,36 @@ export async function preguntarGemini({ pregunta, historial = [], catalogo, clav
 const MODELO_POR_DEFECTO = 'gemini-flash-lite-latest';
 const MODELO_DE_RESPALDO = 'gemini-flash-latest';
 
+/* Tope de llamadas a Gemini, para que nadie gaste la cuota repitiendo preguntas: por persona (IP del sitio o
+ * chat de Telegram) y en total por día. Pasado el tope se responde con el asistente local, sin error.
+ * shortcut: el contador vive en memoria, en Vercel se reinicia cuando la función se apaga; el tope firme
+ * lo pone la cuota gratuita de Google (sin facturación no se puede cobrar), no este contador. */
+export const LIMITE_POR_PERSONA = { max: 10, ventanaMs: 60 * 60 * 1000 };   // 10 por hora
+export const LIMITE_TOTAL = { max: 300, ventanaMs: 24 * 60 * 60 * 1000 };   // 300 por día
+const usos = new Map();
+export function gastaGemini(quien, ahora = Date.now()) {
+  const gasta = (clave, { max, ventanaMs }) => {
+    const lista = (usos.get(clave) ?? []).filter((t) => ahora - t < ventanaMs);
+    usos.set(clave, lista);
+    return lista.length < max ? lista : null;
+  };
+  const suyas = gasta(`p:${quien}`, LIMITE_POR_PERSONA);
+  const todas = gasta('total', LIMITE_TOTAL);
+  if (!suyas || !todas) return false;
+  suyas.push(ahora);
+  todas.push(ahora);
+  if (usos.size > 5000) for (const k of usos.keys()) if (k !== 'total' && !usos.get(k).length) usos.delete(k);
+  return true;
+}
+export const reiniciarLimites = () => usos.clear();
+
 /* Responde una pregunta. `catalogo` son las filas de sp_listar_protocolos.
  * Devuelve { respuesta, derivada, fuente: 'gemini' | 'local', preguntaGuardada }. */
-export async function responderAsistente({ pregunta, historial, catalogo, entorno = process.env, fetchImpl = fetch }) {
+export async function responderAsistente({ pregunta, historial, catalogo, quien = 'anonimo', entorno = process.env, fetchImpl = fetch }) {
   const limpia = filtrarDatosPersonales(pregunta).trim().slice(0, 500);
   const clave = entorno.GEMINI_API_KEY;
-  if (clave) {
+  if (clave && !gastaGemini(quien)) console.warn(`Asistente: límite de Gemini alcanzado para ${quien}, responde el asistente local`);
+  else if (clave) {
     const modelos = [entorno.GEMINI_MODELO || MODELO_POR_DEFECTO, MODELO_DE_RESPALDO];
     for (const modelo of [...new Set(modelos)]) {
       try {

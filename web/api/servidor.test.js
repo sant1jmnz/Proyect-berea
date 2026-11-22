@@ -148,3 +148,19 @@ test('cuenta opcional: crear, ingresar, ver mis datos y cerrar sesión', { skip:
     await pool.end();
   }
 });
+
+test('webhook de Telegram: sin el secreto correcto responde 403 (no necesita base)', async () => {
+  process.env.TELEGRAM_WEBHOOK_SECRET = 'secreto-de-prueba';
+  const servidor = crearServidor({ query: async () => [[{}]] });
+  await new Promise((ok) => servidor.listen(0, ok));
+  const url = `http://localhost:${servidor.address().port}/api/telegram`;
+  try {
+    assert.equal((await fetch(url, { method: 'POST', body: '{}' })).status, 403);
+    assert.equal((await fetch(url, { method: 'POST', body: '{}', headers: { 'x-telegram-bot-api-secret-token': 'otro' } })).status, 403);
+    const ok = await fetch(url, { method: 'POST', body: JSON.stringify({ update_id: 1 }), headers: { 'x-telegram-bot-api-secret-token': 'secreto-de-prueba' } });
+    assert.equal(ok.status, 200);   // sin mensaje en la actualización, no hace nada
+  } finally {
+    delete process.env.TELEGRAM_WEBHOOK_SECRET;
+    await new Promise((ok) => servidor.close(ok));
+  }
+});

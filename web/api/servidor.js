@@ -38,6 +38,7 @@ import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto
 import mysql from 'mysql2/promise';
 import { responderAsistente, transcribirAudio, consultarAgenda } from './asistente.js';
 import { crearBotTelegram } from './telegram.js';
+import { pasoReserva } from './reservachat.js';
 
 /* El bot de Telegram (si hay token) se crea al arrancar; /api/estado muestra su usuario para el enlace t.me. */
 let botTelegram = null;
@@ -242,6 +243,15 @@ export function crearManejador(pool) {
         let catalogo = [];
         try { catalogo = await catalogoParaAsistente(pool); } catch (e) { console.warn('Asistente sin catálogo de la base:', e.message); }
         const historial = Array.isArray(d.historial) ? d.historial : [];
+        // reserva dentro del chat: opciones para tocar, el servidor no guarda estado (ver reservachat.js)
+        if (catalogo.length) {
+          try {
+            const eligio = d.eleccion && typeof d.eleccion === 'object';
+            const paso = await pasoReserva({ pregunta, reserva: eligio ? d.eleccion : d.reserva, eligio: Boolean(eligio), catalogo,
+              horarios: (fecha, idProtocolo) => llamar(pool, 'agenda.sp_horarios_libres', [fecha, idProtocolo, null, null, null]) });
+            if (paso) return responder(res, 200, { ...paso, derivada: false, fuente: 'reserva', registrada: false, transcripcion });
+          } catch (e) { console.warn('Reserva en el chat:', e.message); }
+        }
         const agenda = await agendaParaAsistente(pool, pregunta, historial, catalogo);
         const r = await responderAsistente({ pregunta, historial, catalogo, agenda, origen, quien: ipDe(req) });
         // se registra la pregunta ya sin datos personales; si la base no está, se responde igual

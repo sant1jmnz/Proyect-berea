@@ -14,6 +14,7 @@
 
 #include <QDialog>
 #include <QJsonArray>
+#include <QJsonObject>
 
 class QLabel;
 class QLineEdit;
@@ -35,7 +36,7 @@ public:
     static QString urlPorDefecto(const QString &archivoIni = QStringLiteral("dermalia.ini"));
 
     /* Para las pruebas: hace una pregunta como si la paciente la escribiera. */
-    void preguntar(const QString &pregunta);
+    void preguntar(const QString &pregunta, const QJsonObject &eleccion = QJsonObject());
     /* Nota de voz: la API la pasa a texto (como el bot de Telegram) y responde. */
     void preguntarConAudio(const QByteArray &audio, const QString &mime);
     QString conversacionEnTexto() const;
@@ -49,6 +50,8 @@ private:
     void pintar();
     void terminar(const QString &html);
     void enviarPedido(const QJsonObject &cuerpo, const QString &pregunta);
+    void mostrarOpciones(const QJsonArray &opciones);
+    void pedirDatosReserva(const QString &nombre = QString(), const QString &dni = QString(), const QString &telefono = QString());
     void alternarGrabacion();
 
     QString url;
@@ -63,6 +66,7 @@ private:
     QString archivoAudio;
     QStringList mensajesHtml;
     QJsonArray historial;
+    QJsonObject reserva;   // lo elegido en la reserva dentro del chat (la API no guarda estado)
     bool enCurso = false;
 };
 

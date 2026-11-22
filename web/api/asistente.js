@@ -210,7 +210,7 @@ const DONDE_RESERVAR = {
   web: 'Tocá "Reservar turno" en el menú del sitio.',
   telegram: 'Usá el botón "Reservar" del menú de este chat.',
 };
-const quiereReservar = (t) => /\b(reserv\w*|agend\w*|(sacar|pedir|generar|hacer|sac\w+|gener\w+) (un |el )?turno|quiero (un )?turno)/.test(t)
+export const quiereReservar = (t) => /\b(reserv\w*|agend\w*|(sacar|pedir|generar|hacer|sac\w+|gener\w+) (un |el )?turno|quiero (un )?turno)/.test(t)
   && !/cancel|reprogram|mis turnos/.test(t);
 
 export function responderLocal(pregunta, catalogo, agenda = null, origen = 'web') {
@@ -396,3 +396,5 @@ export async function responderAsistente({ pregunta, historial, catalogo, nombre
 
 /* Vercel convierte cada archivo de api/ en una función; esta ruta (/api/asistente) la atiende el mismo manejador de index.js. */
 export { default } from './index.js';
+
+export { nombreDia, hoyISO, sumarDias, hora, duracion };

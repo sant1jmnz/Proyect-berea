@@ -679,3 +679,21 @@ dialog::backdrop {
     animation: none;
   }
 }
+
+.asistente__datos {
+  display: grid;
+  gap: 8px;
+}
+
+.asistente__datos input {
+  padding: 8px 10px;
+  border: 1px solid var(--dorado-borde);
+  border-radius: 8px;
+  font: 0.9rem var(--sans);
+}
+
+.asistente__error {
+  margin: 0;
+  color: #a33;
+  font-size: 0.82rem;
+}

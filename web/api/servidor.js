@@ -31,6 +31,7 @@
  * Conviene un usuario de la base que solo pueda ejecutar stored procedures (backend/08_usuarios.sql). */
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { extname, join, normalize as normalizarRuta } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
@@ -318,7 +319,10 @@ export function crearPool() {
     port: Number(process.env.DERMALIA_DB_PORT || 3306),
     user: process.env.DERMALIA_DB_USER,
     password: process.env.DERMALIA_DB_PASS || '',
-    ssl: process.env.DERMALIA_DB_SSL === '1' ? { rejectUnauthorized: true } : undefined,
+    // DERMALIA_DB_CA: certificado de la autoridad del proveedor (Aiven firma con la suya)
+    ssl: process.env.DERMALIA_DB_SSL === '1'
+      ? { rejectUnauthorized: true, ca: process.env.DERMALIA_DB_CA ? readFileSync(process.env.DERMALIA_DB_CA) : undefined }
+      : undefined,
     connectionLimit: 5,
     dateStrings: true,       // fechas como texto, sin zona horaria
     decimalNumbers: true,    // montos como números

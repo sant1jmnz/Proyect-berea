@@ -35,6 +35,10 @@ import { extname, join, normalize as normalizarRuta } from 'node:path';
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import mysql from 'mysql2/promise';
 import { responderAsistente } from './asistente.js';
+import { crearBotTelegram } from './telegram.js';
+
+/* El bot de Telegram (si hay token) se crea al arrancar; /api/estado muestra su usuario para el enlace t.me. */
+let botTelegram = null;
 
 /* El catálogo que usa el asistente se pide a la base cada 5 minutos como mucho. */
 let catalogoAsistente = { filas: null, hasta: 0 };
@@ -197,7 +201,8 @@ export function crearServidor(pool) {
       if (req.method === 'GET' && ruta === '/api/estado') {
         let base = true;
         try { await pool.query('SELECT 1'); } catch { base = false; }
-        return responder(res, 200, { base, asistente: process.env.GEMINI_API_KEY ? 'gemini' : 'local' });
+        return responder(res, 200, { base, asistente: process.env.GEMINI_API_KEY ? 'gemini' : 'local',
+          telegram: botTelegram?.usuario ? `https://t.me/${botTelegram.usuario}` : null });
       }
       if (req.method === 'POST' && ruta === '/api/asistente') {
         const d = await leerJson(req);
@@ -323,5 +328,28 @@ export function crearPool() {
 /* Se arranca solo si se ejecuta con `node api/servidor.js` (no al importarlo desde las pruebas). */
 if (import.meta.url === `file://${process.argv[1]}`) {
   const puerto = Number(process.env.PUERTO_API || 3000);
-  crearServidor(crearPool()).listen(puerto, () => console.log(`API de Dermalia en http://localhost:${puerto}`));
+  const pool = crearPool();
+  crearServidor(pool).listen(puerto, () => console.log(`API de Dermalia en http://localhost:${puerto}`));
+  iniciarAutomatismos(pool);
+}
+
+/* Bot de Telegram, envío de avisos y tareas diarias (web/api/telegram.js). Con TELEGRAM_ENVIOS=n8n o
+ * TAREAS_DIARIAS=n8n, eso lo hace n8n y la API no lo repite. */
+export function iniciarAutomatismos(pool, entorno = process.env) {
+  const token = entorno.TELEGRAM_BOT_TOKEN || '';
+  const conN8n = entorno.TELEGRAM_ENVIOS === 'n8n';
+  botTelegram = crearBotTelegram({
+    token,
+    llamar: (sp, parametros) => llamar(pool, sp, parametros),
+    escribir: (sp, parametros) => escribir(pool, sp, parametros),
+    preguntarAsistente: async (pregunta, idPaciente) => {
+      let catalogo = [];
+      try { catalogo = await catalogoParaAsistente(pool); } catch { /* sin base: responde igual */ }
+      const r = await responderAsistente({ pregunta, catalogo });
+      try { await escribir(pool, 'asistente.sp_registrar_consulta', [idPaciente, 'sistema', r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null]); } catch { /* sin base */ }
+      return r;
+    },
+  });
+  if (!token) console.log('Telegram: sin TELEGRAM_BOT_TOKEN, el bot está apagado (los avisos quedan en la pantalla Avisos de Gestión).');
+  return botTelegram.iniciar({ mensajes: !conN8n, avisos: !conN8n, tareas: entorno.TAREAS_DIARIAS !== 'n8n' });
 }

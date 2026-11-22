@@ -2118,3 +2118,100 @@ CALL auditoria.sp_reporte_auditoria('2026-10-01', '2026-11-03', 'intento_fallido
 CALL auditoria.sp_reporte_auditoria('2026-11-03', '2026-11-03', 'intento_fallido', NULL, NULL, 0, 'web');
 SELECT l.id_log, l.fecha_hora, te.nombre AS evento, COALESCE(u.nombre_usuario, '(sin usuario)') AS usuario, r.nombre AS rol, p.apellido AS paciente, p.nombre AS paciente_nombre, o.nombre AS origen, l.exitoso, l.descripcion, l.tabla_afectada, l.id_registro_afectado, l.valor_anterior, l.valor_nuevo, l.ip_origen FROM auditoria.Log l JOIN auditoria.TipoEvento te ON te.id_tipo_evento = l.id_tipo_evento JOIN agenda.Origen o ON o.id_origen = l.id_origen LEFT JOIN seguridad.Usuario u ON u.id_usuario = l.id_usuario LEFT JOIN seguridad.Rol r ON r.id_rol = u.id_rol LEFT JOIN personas.Paciente p ON p.id_paciente = l.id_paciente WHERE DATE(l.fecha_hora) = '2026-11-03' AND te.nombre = 'intento_fallido' AND l.exitoso = 0 AND o.nombre = 'web' ORDER BY l.fecha_hora, l.id_log;
 
+
+-- ======================================================================
+-- R. BOT DE TELEGRAM (10_sp_telegram.sql)
+-- ======================================================================
+-- María Sosa (DNI 30111222, teléfono 1155550102) ya tiene un chat de ejemplo; Juan (28444555) también.
+SET @ahora_simulado = '2026-11-03 09:00:00';
+
+-- @caso sp_vincular_telegram.1 | Éxito | Con DNI y teléfono correctos el chat queda vinculado
+-- @espera ok
+CALL personas.sp_vincular_telegram('30111222', '1155550102', '777000111', 'sistema');
+-- @espera verdadero
+SELECT ((SELECT telegram_chat_id FROM personas.Paciente WHERE dni = '30111222') = '777000111') AS verificacion;
+
+-- @caso sp_vincular_telegram.2 | Sin coincidencias | DNI que no existe (52931) y teléfono que no es de ella (52932)
+-- @espera error 52931
+CALL personas.sp_vincular_telegram('99999998', '1155550102', '777000112', 'sistema');
+-- @espera error 52932
+CALL personas.sp_vincular_telegram('30111222', '1100000000', '777000112', 'sistema');
+
+-- @caso sp_vincular_telegram.3 | Nulos y límites | DNI, teléfono o chat NULL o vacíos (52930)
+-- @espera error 52930
+CALL personas.sp_vincular_telegram(NULL, '1155550102', '777000112', 'sistema');
+-- @espera error 52930
+CALL personas.sp_vincular_telegram('30111222', '', '777000112', 'sistema');
+-- @espera error 52930
+CALL personas.sp_vincular_telegram('30111222', '1155550102', NULL, 'sistema');
+
+-- @caso sp_vincular_telegram.4 | Consistencia | Un chat no se puede vincular con dos pacientes (52933) y el de la primera no cambia
+SELECT t.telefono INTO @tel_juan FROM personas.TelefonoPaciente t JOIN personas.Paciente p ON p.id_paciente = t.id_paciente WHERE p.dni = '28444555' LIMIT 1;
+-- @espera error 52933
+CALL personas.sp_vincular_telegram('28444555', @tel_juan, '777000111', 'sistema');
+-- @espera verdadero
+SELECT ((SELECT telegram_chat_id FROM personas.Paciente WHERE dni = '30111222') = '777000111' AND (SELECT telegram_chat_id FROM personas.Paciente WHERE dni = '28444555') <> '777000111') AS verificacion;
+
+-- @caso sp_paciente_por_telegram.1 | Éxito | Devuelve la paciente del chat
+-- @espera filas 1
+CALL personas.sp_paciente_por_telegram('777000111');
+
+-- @caso sp_paciente_por_telegram.2 | Sin coincidencias | Chat que no está vinculado
+-- @espera vacio
+CALL personas.sp_paciente_por_telegram('000000000');
+
+-- @caso sp_paciente_por_telegram.3 | Nulos y límites | Chat NULL o vacío: 0 filas
+-- @espera vacio
+CALL personas.sp_paciente_por_telegram(NULL);
+-- @espera vacio
+CALL personas.sp_paciente_por_telegram('');
+
+-- @caso sp_paciente_por_telegram.4 | Consistencia | Coincide con un SELECT directo
+-- @espera igual
+CALL personas.sp_paciente_por_telegram('777000111');
+SELECT id_paciente, dni, nombre, apellido FROM personas.Paciente WHERE telegram_chat_id = '777000111';
+
+-- @caso sp_desvincular_telegram.1 | Éxito | /salir deja a la paciente sin chat
+-- @espera ok
+CALL personas.sp_desvincular_telegram('777000111', 'sistema');
+-- @espera verdadero
+SELECT ((SELECT telegram_chat_id FROM personas.Paciente WHERE dni = '30111222') IS NULL) AS verificacion;
+
+-- @caso sp_desvincular_telegram.2 | Sin coincidencias | Chat que no está vinculado (52934)
+-- @espera error 52934
+CALL personas.sp_desvincular_telegram('777000111', 'sistema');
+
+-- @caso sp_desvincular_telegram.3 | Nulos y límites | Chat NULL (52934)
+-- @espera error 52934
+CALL personas.sp_desvincular_telegram(NULL, 'sistema');
+
+-- @caso sp_desvincular_telegram.4 | Consistencia | Al desvincular no queda ningún aviso pendiente de ella por Telegram
+-- @espera ok
+CALL personas.sp_vincular_telegram('30111222', '1155550102', '777000111', 'sistema');
+-- @espera ok
+CALL personas.sp_desvincular_telegram('777000111', 'sistema');
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM notificaciones.Notificacion n JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal JOIN notificaciones.EstadoNotificacion e ON e.id_estado_notificacion = n.id_estado_notificacion JOIN personas.Paciente p ON p.id_paciente = n.id_paciente WHERE p.dni = '30111222' AND c.nombre = 'Telegram' AND e.nombre = 'pendiente') = 0) AS verificacion;
+
+-- @caso sp_notificaciones_telegram.1 | Éxito | Trae los avisos pendientes de Telegram ya vencidos (con límite 1, uno)
+SET @ahora_simulado = '2030-01-01 00:00:00';
+-- @espera filas 1
+CALL notificaciones.sp_notificaciones_telegram(1);
+
+-- @caso sp_notificaciones_telegram.2 | Sin coincidencias | Antes de cualquier aviso programado no trae nada
+SET @ahora_simulado = '2000-01-01 00:00:00';
+-- @espera vacio
+CALL notificaciones.sp_notificaciones_telegram(50);
+
+-- @caso sp_notificaciones_telegram.3 | Nulos y límites | Límite NULL o fuera de 1 a 500: trae de a 50
+SET @ahora_simulado = '2030-01-01 00:00:00';
+-- @espera filas 50
+CALL notificaciones.sp_notificaciones_telegram(NULL);
+-- @espera filas 50
+CALL notificaciones.sp_notificaciones_telegram(9999);
+
+-- @caso sp_notificaciones_telegram.4 | Consistencia | Solo avisos pendientes de Telegram: igual a un SELECT directo, y ninguno de otro canal
+-- @espera igual
+CALL notificaciones.sp_notificaciones_telegram(500);
+SELECT n.id_notificacion, tn.nombre AS tipo, n.mensaje, n.fecha_programada, n.intentos, n.id_turno, p.nombre AS destinatario_nombre, p.telegram_chat_id FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion en ON en.id_estado_notificacion = n.id_estado_notificacion AND en.nombre = 'pendiente' JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal AND c.nombre = 'Telegram' JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion JOIN personas.Paciente p ON p.id_paciente = n.id_paciente WHERE n.fecha_programada <= @ahora_simulado ORDER BY n.fecha_programada, n.id_notificacion LIMIT 500;
+SET @ahora_simulado = NULL;

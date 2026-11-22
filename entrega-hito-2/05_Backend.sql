@@ -3714,5 +3714,146 @@ BEGIN
      LIMIT v_limite;
 END//
 
+-- =====================================================================
+--  MEMORIA DEL BOT (en Vercel cada mensaje puede caer en otra instancia, así que la
+--  charla y el paso del /start se guardan acá y no en la memoria del programa)
+-- =====================================================================
+-- Tablas aparte de las del modelo: son estado de la conversación, no datos del negocio.
+-- Por eso los SP de abajo no escriben en el log de auditoría (un renglón por mensaje sería ruido).
+
+DELIMITER ;
+
+CREATE TABLE IF NOT EXISTS asistente.MensajeTelegram (
+    id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
+    chat VARCHAR(50) NOT NULL,
+    rol VARCHAR(10) NOT NULL CHECK (rol IN ('usuario', 'asistente')),
+    texto TEXT NOT NULL,
+    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX IX_MensajeTelegram_Chat (chat, id_mensaje)
+);
+
+CREATE TABLE IF NOT EXISTS asistente.EstadoTelegram (
+    chat VARCHAR(50) PRIMARY KEY,
+    paso VARCHAR(10) NOT NULL CHECK (paso IN ('dni', 'telefono')),
+    dni VARCHAR(15) NULL,
+    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+DELIMITER //
+
+-- Los últimos mensajes del chat, del más viejo al más nuevo, para pasárselos a Gemini.
+-- Solo mira los de las últimas 6 horas: una charla vieja no es contexto de la pregunta de hoy.
+DROP PROCEDURE IF EXISTS asistente.sp_historial_telegram//
+CREATE PROCEDURE asistente.sp_historial_telegram(IN p_chat VARCHAR(50), IN p_cantidad INT)
+BEGIN
+    DECLARE v_cantidad INT DEFAULT COALESCE(p_cantidad, 6);
+    SELECT rol, texto
+      FROM (SELECT id_mensaje, rol, texto FROM asistente.MensajeTelegram
+             WHERE chat = p_chat AND fecha_hora >= NOW() - INTERVAL 6 HOUR
+             ORDER BY id_mensaje DESC
+             LIMIT v_cantidad) ultimos
+     ORDER BY id_mensaje;
+END//
+
+-- Guarda una pregunta y su respuesta y deja solo los últimos 20 mensajes del chat.
+DROP PROCEDURE IF EXISTS asistente.sp_guardar_mensajes_telegram//
+CREATE PROCEDURE asistente.sp_guardar_mensajes_telegram(IN p_chat VARCHAR(50), IN p_pregunta TEXT, IN p_respuesta TEXT)
+BEGIN
+    DECLARE v_codigo INT DEFAULT NULL;
+    DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
+    DECLARE v_corte INT DEFAULT NULL;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT 'ERROR' AS estado, 52949 AS codigo, 'No se pudo guardar la charla' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END;
+
+    IF p_chat IS NULL OR p_chat = '' OR p_pregunta IS NULL OR p_pregunta = '' OR p_respuesta IS NULL OR p_respuesta = '' THEN
+        SET v_codigo = 52940;
+        SET v_mensaje = 'Faltan el chat, la pregunta o la respuesta';
+    END IF;
+
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        INSERT INTO asistente.MensajeTelegram (chat, rol, texto) VALUES (p_chat, 'usuario', LEFT(p_pregunta, 600));
+        INSERT INTO asistente.MensajeTelegram (chat, rol, texto) VALUES (p_chat, 'asistente', LEFT(p_respuesta, 600));
+        SELECT MIN(id_mensaje) INTO v_corte
+          FROM (SELECT id_mensaje FROM asistente.MensajeTelegram WHERE chat = p_chat ORDER BY id_mensaje DESC LIMIT 20) ultimos;
+        DELETE FROM asistente.MensajeTelegram WHERE chat = p_chat AND id_mensaje < v_corte;
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Charla guardada' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
+END//
+
+-- Borra la charla guardada de un chat (comando /limpiar). Devuelve en valor cuántos mensajes borró.
+DROP PROCEDURE IF EXISTS asistente.sp_limpiar_historial_telegram//
+CREATE PROCEDURE asistente.sp_limpiar_historial_telegram(IN p_chat VARCHAR(50))
+BEGIN
+    DECLARE v_codigo INT DEFAULT NULL;
+    DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
+    DECLARE v_borrados INT DEFAULT 0;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT 'ERROR' AS estado, 52959 AS codigo, 'No se pudo limpiar la charla' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END;
+
+    IF p_chat IS NULL OR p_chat = '' THEN
+        SET v_codigo = 52950;
+        SET v_mensaje = 'Falta el chat';
+    END IF;
+
+    IF v_codigo IS NULL THEN
+        START TRANSACTION;
+        DELETE FROM asistente.MensajeTelegram WHERE chat = p_chat;
+        SET v_borrados = ROW_COUNT();
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Charla borrada' AS mensaje, NULL AS id, v_borrados AS valor, NULL AS dato;
+    ELSE
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
+END//
+
+-- En qué paso del /start está el chat (dni o telefono) y el DNI ya escrito. Vence a los 30 minutos.
+DROP PROCEDURE IF EXISTS asistente.sp_estado_telegram//
+CREATE PROCEDURE asistente.sp_estado_telegram(IN p_chat VARCHAR(50))
+BEGIN
+    SELECT paso, dni FROM asistente.EstadoTelegram
+     WHERE chat = p_chat AND fecha_hora >= NOW() - INTERVAL 30 MINUTE;
+END//
+
+-- Guarda el paso del /start; con p_paso NULL borra el estado (la vinculación terminó o se canceló).
+DROP PROCEDURE IF EXISTS asistente.sp_guardar_estado_telegram//
+CREATE PROCEDURE asistente.sp_guardar_estado_telegram(IN p_chat VARCHAR(50), IN p_paso VARCHAR(10), IN p_dni VARCHAR(15))
+BEGIN
+    DECLARE v_codigo INT DEFAULT NULL;
+    DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SELECT 'ERROR' AS estado, 52949 AS codigo, 'No se pudo guardar el paso' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END;
+
+    IF p_chat IS NULL OR p_chat = '' THEN
+        SET v_codigo = 52941;
+        SET v_mensaje = 'Falta el chat';
+    ELSEIF p_paso IS NOT NULL AND p_paso NOT IN ('dni', 'telefono') THEN
+        SET v_codigo = 52942;
+        SET v_mensaje = 'Paso inválido (dni o telefono)';
+    END IF;
+
+    IF v_codigo IS NULL THEN
+        IF p_paso IS NULL THEN
+            DELETE FROM asistente.EstadoTelegram WHERE chat = p_chat;
+        ELSE
+            REPLACE INTO asistente.EstadoTelegram (chat, paso, dni, fecha_hora) VALUES (p_chat, p_paso, p_dni, NOW());
+        END IF;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Paso guardado' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    ELSE
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
+END//
+
 DELIMITER ;
 

@@ -206,7 +206,7 @@ probar() {
   "${MYSQL_ADMIN[@]}" < "$RAIZ/backend/codigobasededatossolotablas.sql"
   "${MYSQL_ADMIN[@]}" < "$RAIZ/backend/pruebas_estructura.sql" | tail -1
 
-  paso "Stored procedures (239 casos)"
+  paso "Stored procedures (255 casos)"
   hay python3 && python3 -c 'import pymysql' 2>/dev/null || pip install --user -q pymysql 2>/dev/null || true
   # el script de pruebas usa root; se le pasan los datos del administrador si los hay
   MYSQL_USER="${DERMALIA_MYSQL_ADMIN_USER:-root}" MYSQL_PASSWORD="${DERMALIA_MYSQL_ADMIN_PASS:-}" \

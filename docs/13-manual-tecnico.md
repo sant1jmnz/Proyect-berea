@@ -23,7 +23,7 @@ opcionales), arma el sitio (`npm ci` y `npm run build`) y compila Gestión y la 
 | `./dermalia.sh iniciar` | Arranca la API, que también sirve el sitio armado, y abre las dos apps (`--sin-apps` para solo la API) |
 | `./dermalia.sh parar` | Apaga la API |
 | `./dermalia.sh estado` | Muestra si andan MySQL y la API, y si el asistente usa Gemini |
-| `./dermalia.sh probar` | Corre todas las pruebas: estructura (44), stored procedures (239), apps Qt (6 programas) y API (11) |
+| `./dermalia.sh probar` | Corre todas las pruebas: estructura (44), stored procedures (255), apps Qt (6 programas) y API (18) |
 | `./dermalia.sh recargar-base` | Vuelve la base a los datos de ejemplo (por ejemplo, antes de la demo) |
 
 Para entrar a MySQL como administrador prueba, en orden: las variables `DERMALIA_MYSQL_ADMIN_USER` y
@@ -101,7 +101,7 @@ mysql -u root -p < backend/08_usuarios.sql                   # usuarios de las a
 
 Para verificar: `mysql -u root -p < backend/pruebas_estructura.sql` (44 pruebas de las
 restricciones de las tablas) y
-`python3 backend/pruebas/correr_pruebas.py --recargar` (239 casos de los SP; ver
+`python3 backend/pruebas/correr_pruebas.py --recargar` (255 casos de los SP; ver
 [`11-pruebas-bbdd.md`](11-pruebas-bbdd.md)).
 
 ### Usuarios y varias PCs

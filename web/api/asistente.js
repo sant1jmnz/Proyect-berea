@@ -204,9 +204,19 @@ export async function consultarAgenda({ pregunta, historial = [], catalogo, hora
   return { texto: `Horarios libres para ${cuanto}: ${lineas.join('. ')}.` };
 }
 
-export function responderLocal(pregunta, catalogo, agenda = null) {
+/* Cómo se reserva según desde dónde escribe: la persona ya está en el lugar donde se reserva. */
+const DONDE_RESERVAR = {
+  terminal: 'Tocá "Volver" y elegí "Reservar turno" en la pantalla principal de esta terminal.',
+  web: 'Tocá "Reservar turno" en el menú del sitio.',
+  telegram: 'Usá el botón "Reservar" del menú de este chat.',
+};
+const quiereReservar = (t) => /\b(reserv\w*|agend\w*|(sacar|pedir|generar|hacer|sac\w+|gener\w+) (un |el )?turno|quiero (un )?turno)/.test(t)
+  && !/cancel|reprogram|mis turnos/.test(t);
+
+export function responderLocal(pregunta, catalogo, agenda = null, origen = 'web') {
   if (agenda) return { respuesta: `${agenda.texto}\nPara reservar: en el sitio (Reservar turno), en la terminal o con el botón Reservar del bot de Telegram.`, derivada: false };
   const t = normalizar(pregunta);
+  if (quiereReservar(t)) return { respuesta: `${DONDE_RESERVAR[origen] ?? DONDE_RESERVAR.web} Elegís el protocolo (hasta 3 en un mismo turno), un horario libre y confirmás con la seña. Si querés saber qué horarios hay, preguntame por un tratamiento y un día.`, derivada: false };
   const partes = [];
   const reglas = REGLAS.filter((r) => r.claves.some((c) => t.includes(normalizar(c))));
   // Si la pregunta es de una regla (cancelar, seña...), solo se suman protocolos que coinciden por su nombre.
@@ -232,7 +242,7 @@ export function responderLocal(pregunta, catalogo, agenda = null) {
 
 /* ---------- Gemini ---------- */
 
-export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), turnos = null, agenda = null) {
+export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), turnos = null, agenda = null, origen = 'web') {
   const fecha = hoy.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' });
   return [
     ...(nombre ? [`Hablás con ${String(nombre).slice(0, 40)}, paciente con la cuenta vinculada. Si pregunta quién es, decile ese nombre; no sabés nada más de su identidad.`] : []),
@@ -241,6 +251,7 @@ export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), tu
     'No des diagnósticos ni indicaciones médicas personales: para eso, sugerí una consulta con el profesional.',
     'Si la pregunta no se puede responder con esta información, o la persona pide hablar con alguien, poné "derivar": true y decí que el equipo le responde por WhatsApp.',
     'Nunca pidas datos personales (DNI, teléfono, email).',
+    `RESERVAR: la persona ya está en el lugar donde se reserva. Si quiere sacar, generar o agendar un turno, decile exactamente esto y no la mandes a la recepción ni a WhatsApp (derivar: false): ${DONDE_RESERVAR[origen] ?? DONDE_RESERVAR.web}`,
     `Hoy es ${fecha}.`,
     'ESTILO: texto plano, sin markdown (nada de asteriscos, almohadillas ni viñetas con guiones largos); contestá primero lo que preguntó, sin repetir estas reglas ni decir "según la información que tengo". Si saluda, saludá y ofrecé ayuda en una frase. Si la pregunta es ambigua (por ejemplo un protocolo que no aclara), pedí que la precise en vez de adivinar.',
     ...(turnos ? [
@@ -294,13 +305,13 @@ export async function transcribirAudio({ base64, mime = 'audio/ogg', entorno = p
 }
 
 /* Pregunta a Gemini. Devuelve { respuesta, derivada } o lanza un error (y se usa el asistente local). */
-export async function preguntarGemini({ pregunta, historial = [], catalogo, nombre, turnos = null, agenda = null, clave, modelo, fetchImpl = fetch, esperaMs = 12000 }) {
+export async function preguntarGemini({ pregunta, historial = [], catalogo, nombre, turnos = null, agenda = null, origen = 'web', clave, modelo, fetchImpl = fetch, esperaMs = 12000 }) {
   const contenidos = [
     ...historial.slice(-6).map((m) => ({ role: m.rol === 'asistente' ? 'model' : 'user', parts: [{ text: filtrarDatosPersonales(m.texto).slice(0, 600) }] })),
     { role: 'user', parts: [{ text: pregunta }] },
   ];
   const cuerpo = {
-    systemInstruction: { parts: [{ text: instruccionSistema(catalogo, nombre, new Date(), turnos, agenda) }] },
+    systemInstruction: { parts: [{ text: instruccionSistema(catalogo, nombre, new Date(), turnos, agenda, origen) }] },
     contents: contenidos,
     generationConfig: {
       temperature: 0.2,
@@ -365,7 +376,7 @@ export const reiniciarLimites = () => usos.clear();
 
 /* Responde una pregunta. `catalogo` son las filas de sp_listar_protocolos.
  * Devuelve { respuesta, derivada, fuente: 'gemini' | 'local', preguntaGuardada }. */
-export async function responderAsistente({ pregunta, historial, catalogo, nombre, turnos = null, agenda = null, quien = 'anonimo', entorno = process.env, fetchImpl = fetch }) {
+export async function responderAsistente({ pregunta, historial, catalogo, nombre, turnos = null, agenda = null, origen = 'web', quien = 'anonimo', entorno = process.env, fetchImpl = fetch }) {
   const limpia = filtrarDatosPersonales(pregunta).trim().slice(0, 500);
   const clave = entorno.GEMINI_API_KEY;
   if (clave && !gastaGemini(quien)) console.warn(`Asistente: límite de Gemini alcanzado para ${quien}, responde el asistente local`);
@@ -373,14 +384,14 @@ export async function responderAsistente({ pregunta, historial, catalogo, nombre
     const modelos = [entorno.GEMINI_MODELO || MODELO_POR_DEFECTO, MODELO_DE_RESPALDO];
     for (const modelo of [...new Set(modelos)]) {
       try {
-        const r = await preguntarGemini({ pregunta: limpia, historial, catalogo, nombre, turnos, agenda, clave, modelo, fetchImpl });
+        const r = await preguntarGemini({ pregunta: limpia, historial, catalogo, nombre, turnos, agenda, origen, clave, modelo, fetchImpl });
         return { ...r, fuente: 'gemini', preguntaGuardada: limpia };
       } catch (e) {
         console.warn(`Asistente: Gemini (${modelo}) no respondió, ${e.message}`);
       }
     }
   }
-  return { ...responderLocal(limpia, catalogo, agenda), fuente: 'local', preguntaGuardada: limpia };
+  return { ...responderLocal(limpia, catalogo, agenda, origen), fuente: 'local', preguntaGuardada: limpia };
 }
 
 /* Vercel convierte cada archivo de api/ en una función; esta ruta (/api/asistente) la atiende el mismo manejador de index.js. */

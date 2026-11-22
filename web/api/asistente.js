@@ -117,7 +117,95 @@ export function buscarProtocolos(pregunta, catalogo, soloPorNombre = false) {
     .map((x) => x.p);
 }
 
-export function responderLocal(pregunta, catalogo) {
+/* ---------- Turnos libres (agenda real) ---------- */
+
+const ZONA = 'America/Argentina/Buenos_Aires';
+const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+const sumarDias = (iso, n) => new Date(Date.parse(`${iso}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
+const diaDe = (iso) => new Date(`${iso}T12:00:00Z`).getUTCDay();
+const hoyISO = (ahora) => ahora.toLocaleDateString('en-CA', { timeZone: ZONA });
+const nombreDia = (iso) => `${DIAS[diaDe(iso)]} ${Number(iso.slice(8))}/${Number(iso.slice(5, 7))}`;
+
+/* Día (AAAA-MM-DD) que nombra la pregunta: hoy, mañana, pasado mañana, un día de la semana, 25/11 o "el 25". */
+export function fechaPedida(pregunta, ahora = new Date()) {
+  const t = normalizar(pregunta);
+  const hoy = hoyISO(ahora);
+  if (/\bpasado manana\b/.test(t)) return sumarDias(hoy, 2);
+  if (/\bmanana\b/.test(t) && !/\b(la|esta|de la|por la|a la)\s+manana\b/.test(t)) return sumarDias(hoy, 1);
+  if (/\bhoy\b/.test(t)) return hoy;
+  const dia = DIAS.findIndex((d) => new RegExp(`\\b${d}\\b`).test(t));
+  if (dia >= 0) return sumarDias(hoy, ((dia - diaDe(hoy) + 6) % 7) + 1);
+  const dm = t.match(/\b(\d{1,2})\s*[\/-]\s*(\d{1,2})\b/);
+  if (dm && Number(dm[1]) >= 1 && Number(dm[1]) <= 31 && Number(dm[2]) >= 1 && Number(dm[2]) <= 12) {
+    const f = (anio) => `${anio}-${dm[2].padStart(2, '0')}-${dm[1].padStart(2, '0')}`;
+    const anio = Number(hoy.slice(0, 4));
+    return f(anio) >= hoy ? f(anio) : f(anio + 1);
+  }
+  const d = t.match(/\bel (\d{1,2})\b/);
+  if (d && Number(d[1]) >= 1 && Number(d[1]) <= 28) {
+    const dd = d[1].padStart(2, '0');
+    const este = `${hoy.slice(0, 8)}${dd}`;
+    return este >= hoy ? este : `${sumarDias(`${hoy.slice(0, 8)}28`, 8).slice(0, 8)}${dd}`;
+  }
+  return null;
+}
+
+/* ¿Pregunta por turnos libres (y no por sus turnos, cancelar o pagar)? */
+export function preguntaPorDisponibilidad(pregunta, ahora = new Date()) {
+  const t = normalizar(pregunta);
+  if (/cancel|reprogram|cambiar|mover|pagar|sena|mis turnos|mi turno|mis proximos/.test(t)) return false;
+  const sobreTurnos = /\b(turnos?|lugar|lugares|libres?|disponib\w*|cupo)\b/.test(t) || (/\bhorarios?\b/.test(t) && fechaPedida(pregunta, ahora));
+  return Boolean(sobreTurnos) && /\b(hay|tienen|tenes|queda|quedan|libres?|disponib\w*|lugar|lugares|cupo|horarios?|cuando|podria|puedo|se puede|conseguir|sacar)\b/.test(t);
+}
+
+/* Protocolo del que se habla: el de la pregunta o, si no, el último que nombró la persona. */
+export function protocoloPedido(pregunta, historial, catalogo) {
+  const previos = (historial ?? []).filter((m) => m.rol !== 'asistente').map((m) => String(m.texto ?? '')).reverse();
+  for (const texto of [pregunta, ...previos]) {
+    const c = buscarProtocolos(texto, catalogo, true);
+    if (c.length === 1) return { protocolo: c[0], candidatos: [] };
+    if (c.length > 1) return { protocolo: null, candidatos: c.slice(0, 4) };
+  }
+  return { protocolo: null, candidatos: [] };
+}
+
+const hora = (inicio) => String(inicio).slice(11, 16);
+
+/* Mira la agenda de verdad (sp_horarios_libres, vía `horarios(fecha, idProtocolo)`) y devuelve el texto con lo que hay,
+ * o null si la pregunta no es por turnos libres. Sin día, mira los próximos 7. */
+export async function consultarAgenda({ pregunta, historial = [], catalogo, horarios, ahora = new Date() }) {
+  if (!preguntaPorDisponibilidad(pregunta, ahora)) return null;
+  const { protocolo, candidatos } = protocoloPedido(pregunta, historial, catalogo);
+  if (!protocolo) {
+    return { texto: candidatos.length
+      ? `Para mirar los horarios necesito saber cuál: ${candidatos.map((p) => p.nombre).join(', ')}. ¿Cuál te interesa?`
+      : 'Para mirarte los horarios libres necesito saber para qué tratamiento es. ¿Cuál te interesa?' };
+  }
+  const hoy = hoyISO(ahora);
+  const pedida = fechaPedida(pregunta, ahora);
+  if (pedida && pedida < hoy) return { texto: 'Ese día ya pasó. Decime otra fecha y te miro los horarios.' };
+  const dias = pedida ? [pedida] : Array.from({ length: 7 }, (_, i) => sumarDias(hoy, i));
+  const lineas = [];
+  for (const dia of dias) {
+    const filas = await horarios(dia, protocolo.id_protocolo);
+    if (!filas.length) continue;
+    const porProf = new Map();
+    for (const f of filas) porProf.set(f.id_profesional, [...(porProf.get(f.id_profesional) ?? []), f]);
+    const partes = [...porProf.values()].map((l) => `${l[0].profesional} (empieza entre ${hora(l[0].inicio)} y ${hora(l.at(-1).inicio)})`);
+    lineas.push(`${nombreDia(dia)}: ${partes.join('; ')}`);
+    if (!pedida && lineas.length === 3) break;
+  }
+  const cuanto = `${protocolo.nombre} (dura ${duracion(protocolo.duracion_min)})`;
+  if (!lineas.length) {
+    return { texto: pedida
+      ? `Para ${cuanto} no hay horarios libres el ${nombreDia(pedida)}. Probá con otro día.`
+      : `Para ${cuanto} no hay horarios libres en los próximos 7 días. Probá más adelante o escribinos por WhatsApp.` };
+  }
+  return { texto: `Horarios libres para ${cuanto}: ${lineas.join('. ')}.` };
+}
+
+export function responderLocal(pregunta, catalogo, agenda = null) {
+  if (agenda) return { respuesta: `${agenda.texto}\nPara reservar: en el sitio (Reservar turno), en la terminal o con el botón Reservar del bot de Telegram.`, derivada: false };
   const t = normalizar(pregunta);
   const partes = [];
   const reglas = REGLAS.filter((r) => r.claves.some((c) => t.includes(normalizar(c))));
@@ -144,7 +232,7 @@ export function responderLocal(pregunta, catalogo) {
 
 /* ---------- Gemini ---------- */
 
-export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), turnos = null) {
+export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), turnos = null, agenda = null) {
   const fecha = hoy.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' });
   return [
     ...(nombre ? [`Hablás con ${String(nombre).slice(0, 40)}, paciente con la cuenta vinculada. Si pregunta quién es, decile ese nombre; no sabés nada más de su identidad.`] : []),
@@ -162,6 +250,7 @@ export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), tu
       ...turnos,
       'EN TELEGRAM: si quiere reservar, cancelar, cambiar un turno o pagar la seña, decile que use los botones del menú (Reservar, Cancelar turno, Reprogramar, Mis turnos): ahí se hace en el momento.',
     ] : ['Si pregunta por SUS turnos o su seña, decile que vincule su Telegram con /start o que mire "Mis turnos" en el sitio.']),
+    ...(agenda ? ['', `HORARIOS LIBRES DE LA AGENDA REAL (consultados recién; es lo único que sabés de disponibilidad: contestá con esto y no inventes otros horarios ni días): ${agenda.texto}`] : []),
     '',
     `UBICACIÓN: ${INSTITUTO.zona}.`,
     `HORARIOS: ${INSTITUTO.horarios}`,
@@ -182,29 +271,36 @@ const URL_GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
 export async function transcribirAudio({ base64, mime = 'audio/ogg', entorno = process.env, fetchImpl = fetch, esperaMs = 20000 }) {
   const clave = entorno.GEMINI_API_KEY;
   if (!clave) return null;
-  const modelo = entorno.GEMINI_MODELO || 'gemini-flash-lite-latest';
-  const r = await fetchImpl(`${URL_GEMINI}/${encodeURIComponent(modelo)}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': clave },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [
-      { text: 'Transcribí este audio en español, tal cual lo dice la persona. Devolvé solo el texto, sin comillas ni comentarios.' },
-      { inline_data: { mime_type: mime, data: base64 } },
-    ] }] }),
-    signal: AbortSignal.timeout(esperaMs),
-  });
-  const datos = await r.json();
-  if (!r.ok) throw new Error(`Gemini ${r.status}: ${datos?.error?.message ?? 'sin detalle'}`);
-  return (datos?.candidates?.[0]?.content?.parts ?? []).map((x) => x.text ?? '').join('').trim() || null;
+  // sin el contexto, el modelo chico oye "pelin" en vez de "peeling"; con él y temperatura 0 acierta
+  const indicacion = 'Transcribí este audio en español rioplatense, tal cual lo dice la persona. Es una consulta a un instituto de estética y dermatología: ' +
+    'pueden aparecer palabras como peeling, botox, toxina botulínica, láser, depilación, rinoplastia, seña, turno, protocolo, mañana, viernes. ' +
+    'Devolvé solo el texto, sin comillas ni comentarios. Si no se entiende nada, devolvé una línea vacía.';
+  let ultimoError = null;
+  for (const modelo of [...new Set([entorno.GEMINI_MODELO || MODELO_POR_DEFECTO, MODELO_DE_RESPALDO])]) {
+    try {
+      const r = await fetchImpl(`${URL_GEMINI}/${encodeURIComponent(modelo)}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': clave },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: indicacion }, { inline_data: { mime_type: mime, data: base64 } }] }],
+          generationConfig: { temperature: 0 } }),
+        signal: AbortSignal.timeout(esperaMs),
+      });
+      const datos = await r.json();
+      if (!r.ok) throw new Error(`Gemini ${r.status}: ${datos?.error?.message ?? 'sin detalle'}`);
+      return (datos?.candidates?.[0]?.content?.parts ?? []).map((x) => x.text ?? '').join('').trim() || null;
+    } catch (e) { ultimoError = e; }
+  }
+  throw ultimoError;
 }
 
 /* Pregunta a Gemini. Devuelve { respuesta, derivada } o lanza un error (y se usa el asistente local). */
-export async function preguntarGemini({ pregunta, historial = [], catalogo, nombre, turnos = null, clave, modelo, fetchImpl = fetch, esperaMs = 12000 }) {
+export async function preguntarGemini({ pregunta, historial = [], catalogo, nombre, turnos = null, agenda = null, clave, modelo, fetchImpl = fetch, esperaMs = 12000 }) {
   const contenidos = [
     ...historial.slice(-6).map((m) => ({ role: m.rol === 'asistente' ? 'model' : 'user', parts: [{ text: filtrarDatosPersonales(m.texto).slice(0, 600) }] })),
     { role: 'user', parts: [{ text: pregunta }] },
   ];
   const cuerpo = {
-    systemInstruction: { parts: [{ text: instruccionSistema(catalogo, nombre, new Date(), turnos) }] },
+    systemInstruction: { parts: [{ text: instruccionSistema(catalogo, nombre, new Date(), turnos, agenda) }] },
     contents: contenidos,
     generationConfig: {
       temperature: 0.2,
@@ -269,7 +365,7 @@ export const reiniciarLimites = () => usos.clear();
 
 /* Responde una pregunta. `catalogo` son las filas de sp_listar_protocolos.
  * Devuelve { respuesta, derivada, fuente: 'gemini' | 'local', preguntaGuardada }. */
-export async function responderAsistente({ pregunta, historial, catalogo, nombre, turnos = null, quien = 'anonimo', entorno = process.env, fetchImpl = fetch }) {
+export async function responderAsistente({ pregunta, historial, catalogo, nombre, turnos = null, agenda = null, quien = 'anonimo', entorno = process.env, fetchImpl = fetch }) {
   const limpia = filtrarDatosPersonales(pregunta).trim().slice(0, 500);
   const clave = entorno.GEMINI_API_KEY;
   if (clave && !gastaGemini(quien)) console.warn(`Asistente: límite de Gemini alcanzado para ${quien}, responde el asistente local`);
@@ -277,14 +373,14 @@ export async function responderAsistente({ pregunta, historial, catalogo, nombre
     const modelos = [entorno.GEMINI_MODELO || MODELO_POR_DEFECTO, MODELO_DE_RESPALDO];
     for (const modelo of [...new Set(modelos)]) {
       try {
-        const r = await preguntarGemini({ pregunta: limpia, historial, catalogo, nombre, turnos, clave, modelo, fetchImpl });
+        const r = await preguntarGemini({ pregunta: limpia, historial, catalogo, nombre, turnos, agenda, clave, modelo, fetchImpl });
         return { ...r, fuente: 'gemini', preguntaGuardada: limpia };
       } catch (e) {
         console.warn(`Asistente: Gemini (${modelo}) no respondió, ${e.message}`);
       }
     }
   }
-  return { ...responderLocal(limpia, catalogo), fuente: 'local', preguntaGuardada: limpia };
+  return { ...responderLocal(limpia, catalogo, agenda), fuente: 'local', preguntaGuardada: limpia };
 }
 
 /* Vercel convierte cada archivo de api/ en una función; esta ruta (/api/asistente) la atiende el mismo manejador de index.js. */

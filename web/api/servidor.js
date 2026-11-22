@@ -36,7 +36,7 @@ import { extname, join, normalize as normalizarRuta } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import mysql from 'mysql2/promise';
-import { responderAsistente, transcribirAudio } from './asistente.js';
+import { responderAsistente, transcribirAudio, consultarAgenda } from './asistente.js';
 import { crearBotTelegram } from './telegram.js';
 
 /* El bot de Telegram (si hay token) se crea al arrancar; /api/estado muestra su usuario para el enlace t.me. */
@@ -44,6 +44,14 @@ let botTelegram = null;
 
 /* El catálogo que usa el asistente se pide a la base cada 5 minutos como mucho. */
 let catalogoAsistente = { filas: null, hasta: 0 };
+/* Si la pregunta es por turnos libres, mira la agenda real; si la base falla, el asistente responde sin eso. */
+async function agendaParaAsistente(pool, pregunta, historial, catalogo) {
+  try {
+    return await consultarAgenda({ pregunta, historial, catalogo,
+      horarios: (fecha, idProtocolo) => llamar(pool, 'agenda.sp_horarios_libres', [fecha, idProtocolo, null, null, null]) });
+  } catch (e) { console.warn('Asistente sin agenda:', e.message); return null; }
+}
+
 async function catalogoParaAsistente(pool) {
   if (catalogoAsistente.filas && Date.now() < catalogoAsistente.hasta) return catalogoAsistente.filas;
   const filas = await llamar(pool, 'clinica.sp_listar_protocolos', [null, null, 0]);
@@ -233,7 +241,9 @@ export function crearManejador(pool) {
         const origen = d.origen === 'terminal' ? 'terminal' : 'web';
         let catalogo = [];
         try { catalogo = await catalogoParaAsistente(pool); } catch (e) { console.warn('Asistente sin catálogo de la base:', e.message); }
-        const r = await responderAsistente({ pregunta, historial: Array.isArray(d.historial) ? d.historial : [], catalogo, quien: ipDe(req) });
+        const historial = Array.isArray(d.historial) ? d.historial : [];
+        const agenda = await agendaParaAsistente(pool, pregunta, historial, catalogo);
+        const r = await responderAsistente({ pregunta, historial, catalogo, agenda, quien: ipDe(req) });
         // se registra la pregunta ya sin datos personales; si la base no está, se responde igual
         const sesion = sesionDe(req);
         let registrada = false;
@@ -396,7 +406,8 @@ function construirBot(pool, token) {
       try { catalogo = await catalogoParaAsistente(pool); } catch { /* sin base: responde igual */ }
       let historial = [];
       try { historial = await llamar(pool, 'asistente.sp_historial_telegram', [String(chat), 6]); } catch { /* sin base: responde sin hilo */ }
-      const r = await responderAsistente({ pregunta, historial, catalogo, nombre, turnos, quien: `tg:${chat ?? idPaciente ?? 'anonimo'}` });
+      const agenda = await agendaParaAsistente(pool, pregunta, historial, catalogo);
+      const r = await responderAsistente({ pregunta, historial, catalogo, nombre, turnos, agenda, quien: `tg:${chat ?? idPaciente ?? 'anonimo'}` });
       try { await escribir(pool, 'asistente.sp_guardar_mensajes_telegram', [String(chat), r.preguntaGuardada, r.respuesta]); } catch { /* sin base */ }
       try { await escribir(pool, 'asistente.sp_registrar_consulta', [idPaciente, 'sistema', r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null]); } catch { /* sin base */ }
       return r;

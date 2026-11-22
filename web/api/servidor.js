@@ -191,8 +191,9 @@ async function servirSitio(res, ruta) {
   return responder(res, 404, { error: 'No existe esa dirección. Si buscás el sitio, primero: npm run build' });
 }
 
-export function crearServidor(pool) {
-  return http.createServer(async (req, res) => {
+/* El manejador de peticiones se separa del servidor para poder usarlo también como función de Vercel (api/index.js). */
+export function crearManejador(pool) {
+  return async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const ruta = url.pathname.replace(/\/+$/, '');
     if (req.method === 'OPTIONS') {
@@ -310,7 +311,18 @@ export function crearServidor(pool) {
       console.error(e);
       return responder(res, 500, { error: 'No pudimos conectar con la base de datos.' });
     }
-  });
+  };
+}
+
+export function crearServidor(pool) {
+  return http.createServer(crearManejador(pool));
+}
+
+/* DERMALIA_DB_CA es una ruta de archivo (local) o el certificado pegado entero (Vercel, donde no hay archivo). */
+function caDeLaBase() {
+  const ca = process.env.DERMALIA_DB_CA;
+  if (!ca) return undefined;
+  return ca.includes('BEGIN CERTIFICATE') ? ca : readFileSync(ca);
 }
 
 export function crearPool() {
@@ -321,7 +333,7 @@ export function crearPool() {
     password: process.env.DERMALIA_DB_PASS || '',
     // DERMALIA_DB_CA: certificado de la autoridad del proveedor (Aiven firma con la suya)
     ssl: process.env.DERMALIA_DB_SSL === '1'
-      ? { rejectUnauthorized: true, ca: process.env.DERMALIA_DB_CA ? readFileSync(process.env.DERMALIA_DB_CA) : undefined }
+      ? { rejectUnauthorized: true, ca: caDeLaBase() }
       : undefined,
     connectionLimit: 5,
     dateStrings: true,       // fechas como texto, sin zona horaria
@@ -331,7 +343,7 @@ export function crearPool() {
 }
 
 /* Se arranca solo si se ejecuta con `node api/servidor.js` (no al importarlo desde las pruebas). */
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const puerto = Number(process.env.PUERTO_API || 3000);
   const pool = crearPool();
   crearServidor(pool).listen(puerto, () => console.log(`API de Dermalia en http://localhost:${puerto}`));

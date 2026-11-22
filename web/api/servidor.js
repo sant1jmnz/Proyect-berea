@@ -17,18 +17,40 @@
  *   POST /api/sesion/cerrar                             cierra la sesión
  *   GET  /api/mi-cuenta                                 datos y turnos de la paciente con sesión iniciada
  *   POST /api/consultas                                 registra una pregunta al asistente
+ *   POST /api/asistente                                 pregunta al asistente de IA (Gemini o respuestas locales) y la registra
+ *   GET  /api/estado                                    si hay base y si el asistente usa Gemini (para el arranque y la demo)
  *
  * Cuentas de pacientes: la contraseña se manda tal cual a sp_crear_cuenta_paciente y sp_login, como hacen la
  * terminal y Gestión; así la misma cuenta sirve en la terminal y en el sitio. La sesión es un token firmado
  * (HMAC) que dura 12 horas.
  *
  * Variables: DERMALIA_DB_HOST, _PORT, _USER, _PASS, _SSL (como las apps de escritorio), PUERTO_API,
+ * GEMINI_API_KEY y GEMINI_MODELO (asistente de IA; sin clave responde el asistente local, ver api/asistente.js),
  * y DERMALIA_SECRETO_SESIONES (firma de las
  * sesiones; si falta se genera al arrancar y las sesiones se cierran al reiniciar).
  * Conviene un usuario de la base que solo pueda ejecutar stored procedures (backend/08_usuarios.sql). */
 import http from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { extname, join, normalize as normalizarRuta } from 'node:path';
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import { responderAsistente } from './asistente.js';
+
+/* El catálogo que usa el asistente se pide a la base cada 5 minutos como mucho. */
+let catalogoAsistente = { filas: null, hasta: 0 };
+async function catalogoParaAsistente(pool) {
+  if (catalogoAsistente.filas && Date.now() < catalogoAsistente.hasta) return catalogoAsistente.filas;
+  const filas = await llamar(pool, 'clinica.sp_listar_protocolos', [null, null, 0]);
+  catalogoAsistente = { filas, hasta: Date.now() + 5 * 60 * 1000 };
+  return filas;
+}
+
+/* El navegador del sitio y la terminal (otro programa) pueden llamar a la API desde otro origen. */
+const ENCABEZADOS_CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+};
 
 /* Llama a un stored procedure y devuelve las filas de su primer conjunto de resultados. */
 /* Los SP devuelven el apellido en `paciente` o `profesional` y el nombre en `paciente_nombre` o
@@ -116,7 +138,7 @@ async function iniciarSesion(pool, req, usuario, password) {
 const aFechaHora = (texto) => String(texto).replace('T', ' ').padEnd(19, ':00').slice(0, 19);
 
 function responder(res, estado, cuerpo) {
-  res.writeHead(estado, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.writeHead(estado, { 'Content-Type': 'application/json; charset=utf-8', ...ENCABEZADOS_CORS });
   res.end(JSON.stringify(cuerpo));
 }
 
@@ -144,11 +166,56 @@ async function pacienteDe(pool, d) {
   return alta.ok ? { ok: true, id: alta.id } : alta;
 }
 
+/* Si existe web/dist (npm run build), la API también sirve el sitio: con un solo programa
+ * (npm start) anda todo en http://localhost:3000. En desarrollo el sitio lo sirve Vite. */
+const CARPETA_SITIO = join(import.meta.dirname, '..', 'dist');
+const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.json': 'application/json', '.ico': 'image/x-icon' };
+async function servirSitio(res, ruta) {
+  const pedido = normalizarRuta(decodeURIComponent(ruta || '/')).replace(/^([/\\]|\.\.)+/, '');
+  const archivo = join(CARPETA_SITIO, pedido === '' ? 'index.html' : pedido);
+  if (!archivo.startsWith(CARPETA_SITIO)) return responder(res, 404, { error: 'No existe esa dirección.' });
+  for (const candidato of [archivo, `${archivo}.html`, join(archivo, 'index.html')]) {
+    try {
+      const contenido = await readFile(candidato);
+      res.writeHead(200, { 'Content-Type': TIPOS[extname(candidato)] ?? 'application/octet-stream' });
+      return res.end(contenido);
+    } catch { /* probar el siguiente */ }
+  }
+  return responder(res, 404, { error: 'No existe esa dirección. Si buscás el sitio, primero: npm run build' });
+}
+
 export function crearServidor(pool) {
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const ruta = url.pathname.replace(/\/+$/, '');
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, ENCABEZADOS_CORS);
+      return res.end();
+    }
     try {
+      if (req.method === 'GET' && ruta === '/api/estado') {
+        let base = true;
+        try { await pool.query('SELECT 1'); } catch { base = false; }
+        return responder(res, 200, { base, asistente: process.env.GEMINI_API_KEY ? 'gemini' : 'local' });
+      }
+      if (req.method === 'POST' && ruta === '/api/asistente') {
+        const d = await leerJson(req);
+        const pregunta = String(d.pregunta ?? '').trim();
+        if (!pregunta) return responder(res, 400, { error: 'Escribí una pregunta.' });
+        const origen = d.origen === 'terminal' ? 'terminal' : 'web';
+        let catalogo = [];
+        try { catalogo = await catalogoParaAsistente(pool); } catch (e) { console.warn('Asistente sin catálogo de la base:', e.message); }
+        const r = await responderAsistente({ pregunta, historial: Array.isArray(d.historial) ? d.historial : [], catalogo });
+        // se registra la pregunta ya sin datos personales; si la base no está, se responde igual
+        const sesion = sesionDe(req);
+        let registrada = false;
+        try {
+          registrada = (await escribir(pool, 'asistente.sp_registrar_consulta',
+            [sesion?.paciente ?? null, origen, r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null])).ok;
+        } catch (e) { console.warn('Asistente: no se pudo registrar la consulta:', e.message); }
+        return responder(res, 200, { respuesta: r.respuesta, derivada: r.derivada, fuente: r.fuente, registrada });
+      }
       if (req.method === 'GET' && ruta === '/api/protocolos') {
         return responder(res, 200, await llamar(pool, 'clinica.sp_listar_protocolos', [url.searchParams.get('texto') || null, null, 0]));
       }
@@ -230,6 +297,7 @@ export function crearServidor(pool) {
         const r = await escribir(pool, 'asistente.sp_registrar_consulta', [null, 'web', d.pregunta, d.respuesta || null, d.derivada ? 1 : 0, null]);
         return responder(res, r.ok ? 201 : 400, r.ok ? { id: r.id } : { error: r.mensaje });
       }
+      if (req.method === 'GET' && !ruta.startsWith('/api/')) return servirSitio(res, ruta);
       return responder(res, 404, { error: 'No existe esa dirección.' });
     } catch (e) {
       console.error(e);

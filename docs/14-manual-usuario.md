@@ -20,7 +20,8 @@ consulta reportes y auditoría desde Gestión. Para instalar o mantener el siste
 
 ![Pantalla de inicio de la terminal](capturas/cliente-00-inicio.png)
 
-Tres opciones: **Sacar un turno**, **Consultar precios** y **Buscar o cancelar mi turno**.
+Cuatro opciones: **Sacar un turno**, **Consultar precios**, **Buscar o cancelar mi turno** y
+**Preguntale al asistente**.
 Desde cualquier pantalla, el botón **Inicio** de arriba vuelve acá.
 
 ### Tu cuenta (opcional)
@@ -94,6 +95,18 @@ los tratamientos que coinciden, con el precio, la duración y *Ver resumen*. Sin
 todos. Si no aparece lo que buscás, *Consultar por WhatsApp* abre WhatsApp con tu consulta.
 
 ![Resumen de un tratamiento](capturas/cliente-resumen.png)
+
+### Preguntale al asistente
+
+![Asistente de la terminal](capturas/cliente-08-asistente.png)
+
+Escribí una pregunta como se la harías a la recepción ("¿cuánto sale el botox?", "¿cómo cancelo?",
+"me quiero operar la nariz") o tocá una de las sugerencias. El asistente responde **solo con los precios
+y las reglas del instituto**; si no sabe, te dice que te acerques a la recepción o escribas por WhatsApp.
+No hace falta escribir tu DNI, teléfono ni email: si los escribís, se borran antes de guardar la pregunta.
+El mismo asistente está en el sitio web (botón *¿Dudas? Preguntame*, abajo a la derecha).
+
+![Asistente del sitio web](capturas/web-asistente.png)
 
 ### Buscar o cancelar mi turno
 

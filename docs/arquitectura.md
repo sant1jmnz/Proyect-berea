@@ -7,7 +7,7 @@ varias decisiones están marcadas como pendientes.
 
 | Pieza | Dónde corre | Para qué |
 |---|---|---|
-| **MySQL** | **Aiven for MySQL**, plan gratuito (administrado, en la nube) | Fuente de verdad: turnos, pacientes, cupones, log |
+| **MySQL** | **Aiven for MySQL**, plan *Developer* de USD 5/mes (el plan gratuito ya no acepta servicios MySQL nuevos; ver `08-presupuesto.md`) | Fuente de verdad: turnos, pacientes, cupones, log |
 | **n8n** | VM gratuita `e2-micro` de **Google Cloud** (región de EE. UU.) | Envía los recordatorios y orquesta los servicios externos |
 | **Bot de Telegram** | Telegram | Canal de recordatorios en desarrollo y demo |
 | **WhatsApp API oficial** | Meta | Canal de recordatorios en producción |

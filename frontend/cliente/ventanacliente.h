@@ -49,6 +49,7 @@ protected:
 
 private:
     /* Partes del constructor */
+    QPushButton *btnAsistente = nullptr;   /* abre el asistente de IA */
     void armarMascaras();
     void conectarNavegacion();
     void armarBotonCuenta();

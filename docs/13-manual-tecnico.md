@@ -4,6 +4,31 @@ Para quien tenga que instalar, mantener o ampliar Dermalia. Entregable de la
 Semana 6 (manual técnico y de usuario). El manual de la persona que usa el
 sistema está en [`14-manual-usuario.md`](14-manual-usuario.md).
 
+## 0. Instalar y arrancar todo con un comando
+
+En Ubuntu o Debian, desde la carpeta del proyecto:
+
+```bash
+./dermalia.sh instalar --apt   # instala MySQL, Qt, CMake y Node (pide sudo), crea la base, configura y compila
+./dermalia.sh iniciar          # API + sitio en http://localhost:3000, y abre Gestión y la terminal
+```
+
+`instalar` (sin `--apt` si las dependencias ya están) hace, en orden: carga los 10 scripts de `backend/`, le pone una
+contraseña nueva al usuario `dermalia_app` (solo puede ejecutar stored procedures), genera `web/.env` y
+`frontend/dermalia.ini` (no se suben a git), pregunta la clave de Gemini y el WhatsApp del instituto (las dos son
+opcionales), arma el sitio (`npm ci` y `npm run build`) y compila Gestión y la terminal en `frontend/build/`.
+
+| Comando | Qué hace |
+|---|---|
+| `./dermalia.sh iniciar` | Arranca la API, que también sirve el sitio armado, y abre las dos apps (`--sin-apps` para solo la API) |
+| `./dermalia.sh parar` | Apaga la API |
+| `./dermalia.sh estado` | Muestra si andan MySQL y la API, y si el asistente usa Gemini |
+| `./dermalia.sh probar` | Corre todas las pruebas: estructura (44), stored procedures (239), apps Qt (6 programas) y API (11) |
+| `./dermalia.sh recargar-base` | Vuelve la base a los datos de ejemplo (por ejemplo, antes de la demo) |
+
+Para entrar a MySQL como administrador prueba, en orden: las variables `DERMALIA_MYSQL_ADMIN_USER` y
+`DERMALIA_MYSQL_ADMIN_PASS`, `sudo mysql` (lo normal en Ubuntu) y `root` pidiendo la contraseña.
+
 ## 1. Qué hay y cómo se conecta
 
 ```
@@ -15,6 +40,8 @@ sistema está en [`14-manual-usuario.md`](14-manual-usuario.md).
                     MySQL 8 — 9 schemas (Aiven en producción)
                                |
                   n8n (VM de Google Cloud) → Telegram / WhatsApp / Google Calendar
+
+   Asistente de IA: terminal y sitio → API del sitio (POST /api/asistente) → Gemini (o respuestas locales)
 ```
 
 | Pieza | Carpeta | Tecnología |
@@ -121,7 +148,11 @@ usuarios y turnos.
 
 - Las contraseñas se guardan y se comparan tal cual, sin encriptar (decisión del equipo para este trabajo).
 - La seña es un mock: no se guardan datos de tarjetas (RNF-05).
-- La pregunta al asistente de IA se guarda tal cual: `asistente.fn_filtrar_datos_personales` ya no tacha datos personales (el material no enseña expresiones regulares).
+- Al asistente de IA no le llegan datos personales: la API (`web/api/asistente.js`, `filtrarDatosPersonales`)
+  borra los emails y los números de 7 o más dígitos (DNI, teléfonos, tarjetas) **antes** de mandar la pregunta a
+  Gemini y antes de guardarla con `asistente.sp_registrar_consulta`. Se hace en la API y no en la base porque el
+  material de la cátedra no enseña expresiones regulares en SQL (`asistente.fn_filtrar_datos_personales` quedó
+  sin tachar nada). La clave de Gemini está solo en `web/.env`, en el servidor: ni el navegador ni la terminal la ven.
 - Los códigos de cupón rotan cada 5 minutos (una cuenta simple de suma y resto con el secreto y el tramo
   de tiempo). Los códigos de seña y de tarjeta de regalo los genera la aplicación y la base solo los guarda.
 
@@ -198,21 +229,48 @@ convención de la cátedra (`btnConfirmar`, `editDni`, `lblSaldo`...).
 
 ```bash
 cd web && npm install
-DERMALIA_DB_USER=dermalia_app DERMALIA_DB_PASS=... npm run api    # API en http://localhost:3000
-npm run dev                                                         # sitio en http://localhost:5173 (/api va a la API)
-npm run test:api                                                    # prueba de la API contra la base (con DERMALIA_DB_USER)
+cp .env.ejemplo .env      # completar la base, el secreto de sesiones y (opcional) GEMINI_API_KEY
+npm run build             # arma el sitio en web/dist
+npm run api               # API en http://localhost:3000; si existe web/dist, también sirve el sitio
+npm run dev               # (desarrollo) sitio en http://localhost:5173 con recarga en vivo; /api va a la API
+npm run test:api          # pruebas de la API (con la base si están las DERMALIA_DB_*) y del asistente
 ```
 
 El navegador no puede hablar con MySQL: `web/api/servidor.js` recibe pedidos HTTP y llama a los stored
-procedures (`/api/protocolos`, `/api/horarios`, `/api/turnos`, `/api/turnos/:id/cancelar`, `/api/consultas`).
+procedures (`/api/protocolos`, `/api/horarios`, `/api/turnos`, `/api/turnos/:id/cancelar`, `/api/cupones`,
+`/api/tarjetas`, `/api/cuenta`, `/api/sesion`, `/api/mi-cuenta`, `/api/asistente`, `/api/estado`). Cuando existe
+`web/dist`, la misma API sirve el sitio: con un solo programa anda todo en `http://localhost:3000`.
+
+### Asistente de IA (RF-14, RF-07, RNF-06, RNF-10)
+
+Lo usan el sitio (botón flotante *¿Dudas? Preguntame*, `web/src/js/asistente.js`) y la terminal (*Preguntale al
+asistente*, `frontend/cliente/dialogoasistente.cpp`). Los dos llaman a `POST /api/asistente` con
+`{ pregunta, historial, origen }`; la lógica está una sola vez, en `web/api/asistente.js`:
+
+1. Borra los datos personales de la pregunta (ver *Seguridad*).
+2. Arma el contexto con el catálogo de la base (`clinica.sp_listar_protocolos`, guardado 5 minutos), los cuidados
+   de cada protocolo (`web/src/datos/fichas.js`, los mismos de la ficha del sitio) y las reglas del instituto
+   (seña, 24 horas, cirugías, cupones, tarjetas, horarios).
+3. Si hay `GEMINI_API_KEY`, le pregunta a Gemini (modelo `GEMINI_MODELO`, por defecto `gemini-flash-lite-latest`,
+   y si falla `gemini-flash-latest`) con la instrucción de responder **solo** con ese contexto y devolver
+   `{ respuesta, derivar }` en JSON. Temperatura 0,2 y 12 segundos de espera como mucho.
+4. Si no hay clave, no hay internet o Gemini falla (cuota, error), responde el **asistente local**: busca palabras
+   del catálogo (con sinónimos: "botox" → toxina botulínica, "lipo" → lipoescultura) y de las reglas. Así la demo
+   nunca queda sin respuesta.
+5. Si no sabe, `derivada = true`: el sitio ofrece *Seguir por WhatsApp* con la pregunta escrita y la terminal
+   manda a la recepción.
+6. Registra la consulta con `asistente.sp_registrar_consulta` (con la paciente si tiene sesión iniciada).
+
+La clave de Gemini se saca gratis en https://aistudio.google.com/apikey y va en `web/.env`. La terminal busca la
+API en `DERMALIA_API_URL` o en `[asistente] url=` de `dermalia.ini` (por defecto `http://127.0.0.1:3000`).
 El sitio (`web/src/datos/api.js`) usa la API cuando responde y, si no, los datos fijos del maquetado y el
 `localStorage`. La reserva pide la fecha de nacimiento solo la primera vez (la base la necesita para dar de alta
 a la paciente). `npm run build` genera el sitio estático; en producción la API y el sitio se publican bajo el
 mismo dominio (`/api`).
 
-**Limitación:** el sitio ofrece los 4 protocolos del maquetado (se relacionan con la base por nombre). El
-cupón del formulario se envía a la base, que valida los cupones reales; los códigos de ejemplo del maquetado
-(`BIENVENIDA`...) solo bajan el precio en pantalla.
+**Catálogo:** el sitio ofrece todos los protocolos de la base (`web/src/datos/catalogo.generado.js`, generado desde
+`backend/02_datos.sql`) y se relacionan con la base por nombre. El cupón del formulario se envía a la base, que
+valida los cupones reales; el código de ejemplo `BIENVENIDA` solo baja el precio en pantalla cuando no hay API.
 
 **Compus lentas.** El sitio se ve y anda igual en todas las PCs: todo se descarga y todas las animaciones
 corren. Lo que cambia por dentro: las escenas 3D (`web/src/js/tres/escena.js`) miden cada 30 cuadros cuántos

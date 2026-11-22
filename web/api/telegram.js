@@ -118,7 +118,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
 
     // Cualquier otra cosa: el asistente
     if (texto.startsWith('/')) return enviar(chat, AYUDA);
-    const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null);
+    const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null, chat);
     return enviar(chat, respuesta.derivada ? `${respuesta.respuesta}\n\nTambién podés escribirle a la recepción por WhatsApp.` : respuesta.respuesta);
   }
 
@@ -190,13 +190,23 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     enviarPendientes,
     tareasDiarias,
     get usuario() { return usuarioBot; },
+    /* Para el modo webhook (Vercel), donde no hay arranque: pide el usuario del bot una vez. */
+    async obtenerUsuario() {
+      if (!token) return null;
+      usuarioBot ??= (await telegram('getMe')).username;
+      return usuarioBot;
+    },
+    /* Le dice a Telegram que mande los mensajes a esta URL (en vez de pedirlos con getUpdates). */
+    registrarWebhook(url, secreto) {
+      return telegram('setWebhook', { url, secret_token: secreto, allowed_updates: ['message'] });
+    },
     async iniciar({ mensajes = true, avisos = true, tareas = true } = {}) {
       activo = true;
       const relojes = [];
       if (token && (mensajes || avisos)) {
         try {
           usuarioBot = (await telegram('getMe')).username;
-          await telegram('deleteWebhook', { drop_pending_updates: false });
+          if (mensajes) await telegram('deleteWebhook', { drop_pending_updates: false });   // con webhook no se borra
           registro.log(`Bot de Telegram activo: https://t.me/${usuarioBot}`);
         } catch (e) {
           registro.error('Telegram: el token no funciona o no hay internet:', e.message);

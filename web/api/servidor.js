@@ -396,3 +396,6 @@ function botDe(pool) {
 function ipDe(req) {
   return String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || req.socket?.remoteAddress || 'anonimo';
 }
+
+/* Vercel convierte cada archivo de api/ en una función; esta ruta (/api/servidor) la atiende el mismo manejador de index.js. */
+export { default } from './index.js';

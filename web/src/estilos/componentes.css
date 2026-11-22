@@ -571,6 +571,7 @@ dialog::backdrop {
 
 .asistente__form {
   display: flex;
+  align-items: center;
   gap: 8px;
   padding: 12px;
   border-top: 1px solid var(--borde-tarjeta);
@@ -589,6 +590,7 @@ dialog::backdrop {
 }
 
 .asistente__enviar {
+  flex: none;
   width: 44px;
   height: 44px;
   border: 0;

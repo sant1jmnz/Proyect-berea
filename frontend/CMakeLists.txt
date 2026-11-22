@@ -12,6 +12,11 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 
+# Ícono del .exe en Windows (el de la ventana va en el qrc).
+if(WIN32)
+    enable_language(RC)
+endif()
+
 # Cliente de MySQL de la cátedra (mysql.h, PPT 006): sudo apt install libmysqlclient-dev
 # (en Ubuntu también sirve libmariadb-dev). Si no está, la app compila igual y
 # trabaja con datos de prueba, avisando que no hay conexión.
@@ -112,11 +117,11 @@ target_include_directories(dermalia_cliente_pantallas PUBLIC cliente)
 target_link_libraries(dermalia_cliente_pantallas PUBLIC dermalia_comun Qt6::Network)
 
 # Apartado Gestión: con la base usa los stored procedures; sin base, el archivo local.
-add_executable(dermalia_gestion gestion/main.cpp ${RECURSOS})
+add_executable(dermalia_gestion gestion/main.cpp ${RECURSOS} $<$<BOOL:${WIN32}>:gestion/gestion.rc>)
 target_link_libraries(dermalia_gestion PRIVATE dermalia_gestion_pantallas)
 
 # Apartado Cliente (terminal táctil vertical).
-add_executable(dermalia_cliente cliente/main.cpp ${RECURSOS})
+add_executable(dermalia_cliente cliente/main.cpp ${RECURSOS} $<$<BOOL:${WIN32}>:cliente/cliente.rc>)
 target_link_libraries(dermalia_cliente PRIVATE dermalia_cliente_pantallas)
 
 # Pruebas automáticas. Solo se arman si Qt Test está instalado.

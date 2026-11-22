@@ -282,7 +282,9 @@ SVG si la línea se movió. Las escenas se pausan cuando no están en pantalla o
 
 ### Bot de Telegram (RF-11)
 
-Corre dentro de la API (`web/api/telegram.js`, lanzada con `npm run api` o `./dermalia.sh iniciar`) cuando se configura `TELEGRAM_BOT_TOKEN` en `web/.env`. Utiliza **long polling** (`getUpdates` con `timeout: 25`): no necesita una dirección pública, webhook ni HTTPS, funcionando igual en una notebook de demo que en el servidor.
+Corre dentro de la API (`web/api/telegram.js`, lanzada con `npm run api` o `./dermalia.sh iniciar`) cuando se configura `TELEGRAM_BOT_TOKEN` en `web/.env`. Tiene dos modos. Por defecto usa **long polling** (`getUpdates` con `timeout: 25`): no necesita dirección pública ni HTTPS, y sirve igual en una notebook de demo. En producción (Vercel) usa **webhook**: Telegram avisa de cada mensaje con `POST /api/telegram`, que solo acepta a Telegram si trae el secreto de `TELEGRAM_WEBHOOK_SECRET` en la cabecera (sin él responde 403). Con `TELEGRAM_MENSAJES=webhook` la API de una PC deja de preguntar mensajes y solo manda avisos.
+
+La memoria de la charla (últimos 6 mensajes para Gemini, se guardan 20 por chat, ventana de lectura de 6 h) y el paso de `/start` (vence a los 30 min) viven en las tablas `asistente.MensajeTelegram` y `asistente.EstadoTelegram`, porque en Vercel no hay proceso que recuerde. El bot saluda por el nombre de la paciente vinculada y `/limpiar` borra la charla (`asistente.sp_limpiar_historial_telegram`). En producción la base es Aiven con SSL: el certificado va en `DERMALIA_DB_CA`.
 
 **Comandos y conversación:**
 - `/start`: inicia la vinculación en dos pasos. Solicita el DNI (solo dígitos, 7 a 9 números) y luego el teléfono registrado al reservar (con código de área, sin 0 ni 15; ej. `1155550102`). Ejecuta `personas.sp_vincular_telegram(dni, telefono, chat_id, 'sistema')`. Si los datos coinciden, guarda el chat en la paciente y pasa los avisos pendientes de sus turnos futuros a Telegram. Si ya estaba vinculada, la saluda por su nombre y muestra la ayuda.

@@ -83,6 +83,19 @@ test('/turnos lista los próximos turnos de la paciente vinculada', { skip: !hay
   assert.match(ultimo(), /Plasma rico en plaquetas/);
 });
 
+test('"precios de los turnos que tengo agendados" lista turnos con precio; el asistente recibe la agenda', { skip: !hayBase }, async () => {
+  let recibidos = null;
+  const b = crearBotTelegram({ token: 'x', apiBase: base, llamar, escribir,
+    preguntarAsistente: async (_p, _id, _chat, _nombre, turnos) => { recibidos = turnos; return { respuesta: 'ok', derivada: false }; },
+    ahora: () => new Date('2026-11-01T00:00:00Z'), registro: { log() {}, warn() {}, error() {} } });
+  await b.procesarActualizacion(mensaje('cuales son los precios de los turnos que tengo agendados'));
+  assert.match(ultimo(), /Tus próximos turnos/);
+  assert.match(ultimo(), /Precio \$/);
+  await b.procesarActualizacion(mensaje('cuanto cuesta un turno de peeling'));
+  assert.equal(ultimo(), 'ok');
+  assert.ok(recibidos.some((l) => /Plasma rico en plaquetas.*Precio \$/.test(l)));
+});
+
 test('una pregunta suelta la responde el asistente', { skip: !hayBase }, async () => {
   await bot().procesarActualizacion(mensaje('cuanto sale el peeling'));
   assert.equal(ultimo(), 'El peeling sale $120.000.');

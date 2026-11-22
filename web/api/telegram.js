@@ -225,3 +225,6 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     detener() { activo = false; },
   };
 }
+
+/* Vercel convierte cada archivo de api/ en una función; esta ruta (/api/telegram) la atiende el mismo manejador de index.js. */
+export { default } from './index.js';

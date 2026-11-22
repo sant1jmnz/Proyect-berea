@@ -8,7 +8,7 @@
 #   ./dermalia.sh estado     muestra qué está andando
 #
 # Requisitos (Ubuntu/Debian):
-#   sudo apt install mysql-server qt6-base-dev libmysqlclient-dev cmake g++ nodejs npm
+#   sudo apt install mysql-server qt6-base-dev qt6-multimedia-dev libmysqlclient-dev cmake g++ nodejs npm
 # Con "./dermalia.sh instalar --apt" se instalan solos (pide la contraseña de sudo).
 #
 # Lo que se genera y NO se sube a git: web/.env (claves), frontend/dermalia.ini (conexión),
@@ -80,7 +80,7 @@ instalar() {
   if [ "${1:-}" = "--apt" ]; then
     paso "Instalando dependencias con apt"
     sudo apt-get update
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server qt6-base-dev libmysqlclient-dev cmake g++ nodejs npm
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server qt6-base-dev qt6-multimedia-dev libmysqlclient-dev cmake g++ nodejs npm
   fi
 
   paso "Revisando lo que hace falta"

@@ -38,6 +38,7 @@ export function iniciarAsistente(enlaceWhatsapp) {
       <form class="asistente__form">
         <label class="visualmente-oculto" for="asistente-pregunta">Tu pregunta</label>
         <input id="asistente-pregunta" type="text" maxlength="500" autocomplete="off" placeholder="Escribí tu pregunta…" />
+        <button class="asistente__enviar asistente__microfono" type="button" aria-label="Grabar nota de voz" aria-pressed="false" hidden><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg></button>
         <button class="asistente__enviar" type="submit" aria-label="Enviar">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg>
         </button>
@@ -75,18 +76,27 @@ export function iniciarAsistente(enlaceWhatsapp) {
   raiz.querySelector('.asistente__cerrar').addEventListener('click', () => mostrar(false));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) mostrar(false); });
 
-  async function preguntar(pregunta) {
-    agregar('paciente', escapar(pregunta));
+  const botonEnviar = form.querySelector('button[type=submit]');
+
+  // audio = { base64, mime }: nota de voz; la API la pasa a texto (igual que el bot de Telegram)
+  async function preguntar(pregunta, audio = null) {
+    const burbuja = agregar('paciente', audio ? '🎤 <i>Nota de voz…</i>' : escapar(pregunta));
     sugerencias.hidden = true;
     const pensando = agregar('asistente', '<span class="asistente__puntos" aria-label="Escribiendo"><i></i><i></i><i></i></span>');
-    form.querySelector('button').disabled = true;
+    botonEnviar.disabled = true;
     const sesion = leerSesion();
     const r = await pedir('/asistente', {
       method: 'POST',
       headers: sesion?.token ? { Authorization: `Bearer ${sesion.token}` } : {},
-      body: JSON.stringify({ pregunta, historial: historial.slice(-6), origen: 'web' }),
+      body: JSON.stringify(audio
+        ? { audio: audio.base64, mime: audio.mime, historial: historial.slice(-6), origen: 'web' }
+        : { pregunta, historial: historial.slice(-6), origen: 'web' }),
     });
-    form.querySelector('button').disabled = false;
+    botonEnviar.disabled = false;
+    if (audio) {
+      if (r?.cuerpo?.transcripcion) { pregunta = r.cuerpo.transcripcion; burbuja.innerHTML = '🎤 ' + escapar(pregunta); }
+      else if (r?.estado === 422) { pensando.textContent = r.cuerpo.error; return; }
+    }
     if (!r?.ok) {
       pensando.innerHTML = `El asistente no está disponible en este momento. <a class="enlace" href="${enlaceWhatsapp(pregunta)}" target="_blank" rel="noopener">Escribinos por WhatsApp</a> y te respondemos.`;
       return;
@@ -106,6 +116,39 @@ export function iniciarAsistente(enlaceWhatsapp) {
     campo.value = '';
     preguntar(pregunta);
   });
+  // nota de voz: tocar para grabar, tocar de nuevo para mandar (máximo 2 minutos, como en Telegram)
+  const microfono = raiz.querySelector('.asistente__microfono');
+  if (navigator.mediaDevices?.getUserMedia && window.MediaRecorder) {
+    microfono.hidden = false;
+    let grabador = null, corte = null;
+    microfono.addEventListener('click', async () => {
+      if (grabador) return grabador.stop();
+      let flujo;
+      try { flujo = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+      catch { return agregar('asistente', 'No pude usar el micrófono. Revisá el permiso del navegador o escribime.'); }
+      const partes = [];
+      grabador = new MediaRecorder(flujo);
+      grabador.ondataavailable = (e) => partes.push(e.data);
+      grabador.onstop = () => {
+        clearTimeout(corte);
+        flujo.getTracks().forEach((t) => t.stop());
+        const mime = grabador.mimeType || 'audio/webm';
+        grabador = null;
+        microfono.setAttribute('aria-pressed', 'false');
+        microfono.setAttribute('aria-label', 'Grabar nota de voz');
+        const blob = new Blob(partes, { type: mime });
+        if (!blob.size) return;
+        const lector = new FileReader();
+        lector.onload = () => preguntar('', { base64: String(lector.result).split(',')[1], mime });
+        lector.readAsDataURL(blob);
+      };
+      grabador.start();
+      corte = setTimeout(() => grabador?.stop(), 120000);
+      microfono.setAttribute('aria-pressed', 'true');
+      microfono.setAttribute('aria-label', 'Terminar y mandar la nota de voz');
+    });
+  }
+
   sugerencias.addEventListener('click', (e) => {
     if (e.target.matches('button')) preguntar(e.target.textContent);
   });

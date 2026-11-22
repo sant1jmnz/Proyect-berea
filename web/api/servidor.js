@@ -148,11 +148,11 @@ function responder(res, estado, cuerpo) {
   res.end(JSON.stringify(cuerpo));
 }
 
-async function leerJson(req) {
+async function leerJson(req, maximo = 100_000) {
   let texto = '';
   for await (const parte of req) {
     texto += parte;
-    if (texto.length > 100_000) throw new Error('Pedido demasiado grande');
+    if (texto.length > maximo) throw new Error('Pedido demasiado grande');
   }
   return texto ? JSON.parse(texto) : {};
 }
@@ -218,8 +218,17 @@ export function crearManejador(pool) {
         return responder(res, 200, { ok: true });
       }
       if (req.method === 'POST' && ruta === '/api/asistente') {
-        const d = await leerJson(req);
-        const pregunta = String(d.pregunta ?? '').trim();
+        // con audio (nota de voz, hasta 2 minutos) el pedido es más grande
+        const d = await leerJson(req, 6_000_000);
+        let pregunta = String(d.pregunta ?? '').trim();
+        let transcripcion = null;
+        if (!pregunta && typeof d.audio === 'string' && d.audio) {
+          try {
+            transcripcion = await transcribirAudio({ base64: d.audio, mime: String(d.mime || 'audio/webm').split(';')[0] });
+          } catch (e) { console.warn('Asistente: no se pudo transcribir el audio:', e.message); }
+          if (!transcripcion) return responder(res, 422, { error: 'No pude entender el audio. ¿Me lo escribís?' });
+          pregunta = transcripcion.slice(0, 500);
+        }
         if (!pregunta) return responder(res, 400, { error: 'Escribí una pregunta.' });
         const origen = d.origen === 'terminal' ? 'terminal' : 'web';
         let catalogo = [];
@@ -232,7 +241,7 @@ export function crearManejador(pool) {
           registrada = (await escribir(pool, 'asistente.sp_registrar_consulta',
             [sesion?.paciente ?? null, origen, r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null])).ok;
         } catch (e) { console.warn('Asistente: no se pudo registrar la consulta:', e.message); }
-        return responder(res, 200, { respuesta: r.respuesta, derivada: r.derivada, fuente: r.fuente, registrada });
+        return responder(res, 200, { respuesta: r.respuesta, derivada: r.derivada, fuente: r.fuente, registrada, transcripcion });
       }
       if (req.method === 'GET' && ruta === '/api/protocolos') {
         return responder(res, 200, await llamar(pool, 'clinica.sp_listar_protocolos', [url.searchParams.get('texto') || null, null, 0]));
@@ -259,7 +268,10 @@ export function crearManejador(pool) {
         return responder(res, 201, { turno: turno.id, sena: turno.valor, precioFinal: Number(turno.dato), senaRegistrada: sena.ok, codigoOperacion: sena.dato, aviso: sena.ok ? null : sena.mensaje });
       }
       if (req.method === 'GET' && ruta === '/api/turnos') {
-        return responder(res, 200, await llamar(pool, 'agenda.sp_buscar_turnos', [url.searchParams.get('clave') || '', 0]));
+        // pública: solo DNI o teléfono exactos, para no listar turnos ajenos por un nombre parecido
+        const clave = url.searchParams.get('clave') || '';
+        if (/[a-záéíóúñ]/i.test(clave)) return responder(res, 200, []);
+        return responder(res, 200, await llamar(pool, 'agenda.sp_buscar_turnos', [clave, 0]));
       }
       const cancelar = ruta.match(/^\/api\/turnos\/(\d+)\/cancelar$/);
       if (req.method === 'POST' && cancelar) {

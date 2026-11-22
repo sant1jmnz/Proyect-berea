@@ -616,6 +616,34 @@ dialog::backdrop {
   margin-left: 2px; /* la flecha pesa a la izquierda: compensa a ojo */
 }
 
+/* grabando: el micrófono late en rojo */
+.asistente__microfono {
+  background: var(--borde-campo);
+  color: var(--texto);
+}
+
+.asistente__microfono[hidden] {
+  display: none;
+}
+
+.asistente__microfono svg {
+  margin-left: 0;
+}
+
+.asistente__microfono[aria-pressed='true'] {
+  background: #c62f3a;
+  color: #fff;
+  animation: asistente-grabando 1s ease-in-out infinite alternate;
+}
+
+@keyframes asistente-grabando {
+  to { box-shadow: 0 0 0 6px rgb(198 47 58 / 0.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asistente__microfono[aria-pressed='true'] { animation: none; }
+}
+
 .asistente__enviar:disabled {
   opacity: 0.5;
 }

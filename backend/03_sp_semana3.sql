@@ -494,8 +494,10 @@ BEGIN
       LEFT JOIN personas.PrimerTelefonoPaciente AS tel ON tel.id_paciente = p.id_paciente
      WHERE CHAR_LENGTH(v_texto) >= 3
        AND (p.dni = v_texto
-            OR p.nombre = v_texto
-            OR p.apellido = v_texto
+            -- nombre parecido: parte del nombre o apellido, en cualquier orden (la colación ignora tildes y mayúsculas)
+            OR (v_texto REGEXP '[[:alpha:]]'
+                AND (CONCAT(p.nombre, ' ', p.apellido) LIKE CONCAT('%', REPLACE(TRIM(v_texto), ' ', '%'), '%')
+                     OR CONCAT(p.apellido, ' ', p.nombre) LIKE CONCAT('%', REPLACE(TRIM(v_texto), ' ', '%'), '%')))
             OR EXISTS (SELECT 1 FROM personas.TelefonoPaciente tp
                         WHERE tp.id_paciente = p.id_paciente AND tp.telefono = v_texto))
      ORDER BY p.apellido, p.nombre;
@@ -1249,7 +1251,10 @@ BEGIN
       FROM agenda.DetalleTurno AS d
      WHERE CHAR_LENGTH(v_texto) >= 3
        AND (d.dni = v_texto
-            OR d.paciente_nombre = v_texto OR d.paciente = v_texto
+            -- nombre parecido: parte del nombre o apellido, en cualquier orden (la colación ignora tildes y mayúsculas)
+            OR (v_texto REGEXP '[[:alpha:]]'
+                AND (CONCAT(d.paciente_nombre, ' ', d.paciente) LIKE CONCAT('%', REPLACE(TRIM(v_texto), ' ', '%'), '%')
+                     OR CONCAT(d.paciente, ' ', d.paciente_nombre) LIKE CONCAT('%', REPLACE(TRIM(v_texto), ' ', '%'), '%')))
             OR EXISTS (SELECT 1 FROM personas.TelefonoPaciente AS tp WHERE tp.id_paciente = d.id_paciente AND tp.telefono = v_texto))
        AND (COALESCE(p_solo_vigentes, 0) = 0 OR (d.estado IN ('pendiente', 'confirmado') AND d.fecha_hora_inicio > COALESCE(@ahora_simulado, NOW())))
      ORDER BY d.fecha_hora_inicio DESC;

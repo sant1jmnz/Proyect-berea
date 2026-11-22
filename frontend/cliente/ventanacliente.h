@@ -129,6 +129,7 @@ private:
     QLineEdit *editCodigo = nullptr;
     QLabel *lblEstadoCodigo = nullptr;
     QPushButton *btnCalendar = nullptr;
+    QPushButton *btnTelegram = nullptr;
     /* Cupón (descuento) o tarjeta de regalo (paga la seña con su saldo) aplicados en el paso 3 */
     QString cuponCodigo;
     int cuponDescuento = 0;

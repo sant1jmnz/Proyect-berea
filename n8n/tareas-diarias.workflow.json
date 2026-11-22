@@ -2,8 +2,8 @@
   "name": "Dermalia - Tareas diarias (evaluaciones y cupones)",
   "nodes": [
     {
-      "id": "1",
-      "name": "Todos los días 03:00",
+      "id": "t1",
+      "name": "Todos los días a las 3",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "2",
+      "id": "t2",
       "name": "Vencer evaluaciones de 6 meses",
       "type": "n8n-nodes-base.mySql",
       "typeVersion": 2.4,
@@ -37,13 +37,13 @@
       },
       "credentials": {
         "mySql": {
-          "id": "1",
-          "name": "Dermalia MySQL (usuario dermalia_n8n)"
+          "id": "cred-mysql",
+          "name": "MySQL Dermalia (dermalia_n8n)"
         }
       }
     },
     {
-      "id": "3",
+      "id": "t3",
       "name": "Emitir cupones por fidelidad",
       "type": "n8n-nodes-base.mySql",
       "typeVersion": 2.4,
@@ -58,14 +58,14 @@
       },
       "credentials": {
         "mySql": {
-          "id": "1",
-          "name": "Dermalia MySQL (usuario dermalia_n8n)"
+          "id": "cred-mysql",
+          "name": "MySQL Dermalia (dermalia_n8n)"
         }
       }
     }
   ],
   "connections": {
-    "Todos los días 03:00": {
+    "Todos los días a las 3": {
       "main": [
         [
           {
@@ -83,6 +83,9 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
-  }
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires"
+  },
+  "active": false,
+  "pinData": {}
 }

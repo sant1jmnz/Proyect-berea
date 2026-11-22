@@ -4,7 +4,7 @@ Pruebas funcionales de los **stored procedures** de Dermalia, con el formato que
 pide la consigna (`docs/consigna-bbdd.md`, punto 6b) y la plantilla de la cátedra
 (`docs/catedra/semana-3-casos-de-prueba-funcional.md`).
 
-**Resultado: 239 casos, 239 aprobados, 0 con fallas** (MySQL 8.0.46, base
+**Resultado: 255 casos, 255 aprobados, 0 con fallas** (MySQL 8.0.46, base
 recién cargada con `backend/01` a `06` y `09`).
 
 ## Cómo se corren
@@ -91,7 +91,7 @@ regla y de notificación, resultado de evaluación) tienen los valores que defin
 (entre 3 y 5), no 20: no tendría sentido inventar estados. Conviene confirmar este criterio con el
 docente.
 
-## Detalle de los 239 casos
+## Detalle de los 255 casos
 
 | Caso | Tipo | Descripción | Resultado |
 |---|---|---|---|

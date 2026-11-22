@@ -1,6 +1,7 @@
 
 -- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
 SET NAMES utf8mb4;
+DELIMITER //
 /*
  =============================================================================
    DERMALIA - REPORTES Y AUDITORIA (SEMANA 5) - MySQL 8
@@ -20,8 +21,6 @@ SET NAMES utf8mb4;
    Los dos reportes con version _tuneado estan en 06_tuning_semana6.sql.
  =============================================================================
 */
-
-DELIMITER //
 
 -- =============================================================================
 -- REPORTE 1: Turnos por periodo (mes) y profesional

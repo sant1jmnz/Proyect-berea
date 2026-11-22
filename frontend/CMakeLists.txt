@@ -10,7 +10,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 
 # Cliente de MySQL de la cátedra (mysql.h, PPT 006): sudo apt install libmysqlclient-dev
 # (en Ubuntu también sirve libmariadb-dev). Si no está, la app compila igual y
@@ -105,9 +105,11 @@ add_library(dermalia_cliente_pantallas STATIC
     cliente/ventanacliente.h
     cliente/ventanacliente.ui
     cliente/dialogocuenta.cpp
-    cliente/dialogocuenta.h)
+    cliente/dialogocuenta.h
+    cliente/dialogoasistente.cpp   # asistente de IA: le pregunta a la API del sitio (RF-14)
+    cliente/dialogoasistente.h)
 target_include_directories(dermalia_cliente_pantallas PUBLIC cliente)
-target_link_libraries(dermalia_cliente_pantallas PUBLIC dermalia_comun)
+target_link_libraries(dermalia_cliente_pantallas PUBLIC dermalia_comun Qt6::Network)
 
 # Apartado Gestión: con la base usa los stored procedures; sin base, el archivo local.
 add_executable(dermalia_gestion gestion/main.cpp ${RECURSOS})

@@ -33,6 +33,7 @@ ejemplo de la base (`backend/02_datos.sql`): paciente **Carla Gómez, DNI
 |---|---|---|---|---|
 | 1 | 0:35 | Terminal (Cliente) | La paciente elige **Peeling químico + Mesoterapia**, el sistema ofrece solo los horarios libres de profesionales que hacen **los dos**, confirma | "Solo muestra lo realmente disponible (RF-04): cero superposiciones" |
 | 2 | 0:25 | Terminal | Paga la seña **simulada**: mostrar monto (30%) y el código de operación | "No mueve dinero real (RNF-05); calcula el 30%, 40% en cirugías" |
+| 2b | 0:20 | Terminal o sitio | **Asistente**: preguntar "¿cuánto sale el botox?" y "me quiero operar la nariz" | "Responde solo con el catálogo y las reglas del instituto: buena parte de los 95 minutos diarios de WhatsApp los contesta él" |
 | 3 | 0:30 | Gestión (recepción) | Buscar a Carla por DNI, ver el turno **confirmado**, intentar cargar otro turno en el mismo horario → mensaje de error | "La regla vive en la base: ni la recepción puede pisar un horario" |
 | 4 | 0:25 | Gestión | **Cancelar** el turno con más de 24 h → seña **reembolsada**; mostrar que con menos de 24 h queda retenida | "Reglas de seña y reembolso (RF-10), automáticas" |
 | 5 | 0:35 | Gestión → Auditoría | Abrir el reporte de **auditoría** del día: aparecen el alta, el pago y la cancelación con usuario, hora y origen | "Cada acción queda registrada solo por los stored procedures (RF-20)" |
@@ -41,8 +42,9 @@ ejemplo de la base (`backend/02_datos.sql`): paciente **Carla Gómez, DNI
 contingencia** (franja amarilla), guarda el turno en el equipo y avisa. Si
 también falla el programa, mostrar el sitio web (`web/`, `npm run dev`) y los
 reportes ya ejecutados en Workbench (`backend/05_reportes_semana5.sql`).
-**Antes de empezar:** recargar la base (`01` a `08`), ingresar con `recepcion1` / `dermalia2026` y probar la
-conexión. Las pantallas de Gestión y de la terminal ya trabajan con la base (si no hay conexión, usan los datos
+**Antes de empezar:** `./dermalia.sh recargar-base` y `./dermalia.sh iniciar` (deja la base con los datos de
+ejemplo y abre el sitio, Gestión y la terminal); ingresar con `recepcion1` / `dermalia2026`; `./dermalia.sh estado`
+tiene que decir que la API llega a la base. Para recortar los 20 segundos del asistente, se saca del paso 4. Las pantallas de Gestión y de la terminal ya trabajan con la base (si no hay conexión, usan los datos
 de prueba y lo avisan). Para el paso 5 se abre la pantalla **Reportes** (auditoría) del mismo programa.
 
 ## Objeciones y respuestas
@@ -55,15 +57,22 @@ Pasarse a una pasarela real es una etapa posterior y no cambia las reglas.
 
 **"¿Qué pasa con los datos de salud y personales?"** Quedan en una base
 MySQL del instituto (Aiven). A servicios externos solo va lo mínimo; **al
-asistente de IA no se le envían datos personales**: el sistema tacha emails y
-números antes de guardar o enviar la pregunta, y si no sabe responder deriva al
-WhatsApp del instituto (RNF-06, RNF-10). Cada acción queda en un log que solo
-escriben los stored procedures.
+asistente de IA no se le envían datos personales**: antes de mandar la pregunta
+a Gemini y antes de guardarla, la API borra los emails y los números largos (DNI,
+teléfonos, tarjetas). Si el asistente no sabe responder, deriva al WhatsApp del
+instituto en vez de inventar (RNF-06, RNF-10). Cada acción queda en un log que
+solo escriben los stored procedures.
 
 **"¿Y si se corta internet o la luz?"** No-break y conexión 4G de respaldo;
-y el **modo contingencia** guarda los turnos en el equipo y los sincroniza al
-volver (RNF-09). Hoy el sistema guarda y cuenta los pendientes; el envío
-automático al volver está previsto con los SP ya hechos.
+y el **modo contingencia** guarda los turnos en el equipo y, cuando vuelve la
+conexión, los manda solos a la base y avisa cuántos sincronizó (RNF-09). Si
+lo que se corta es solo la IA, el asistente sigue respondiendo con el catálogo
+y las reglas del instituto.
+
+**"¿La IA puede inventar precios?"** No: se le pasa el catálogo de la base y
+las reglas, con la orden de responder solo con eso; si no está ahí, deriva a
+una persona. Y si Gemini no responde, contesta el asistente local, que solo
+busca en el catálogo.
 
 **"¿Por qué pagar esto si Fresha o Booksy cuestan menos por mes?"** Con 20
 profesionales cuestan USD 3.600–4.900 al año, **por profesional**, y no
@@ -74,7 +83,7 @@ quedan en su plataforma. Aclaración honesta: varias celdas de la matriz dicen
 
 **"¿Quién lo mantiene?"** El abono de $400.000/mes incluye soporte, hosting,
 respaldos y la cuota de IA. El código está documentado (manual técnico) y la
-lógica vive en stored procedures probados (222 casos).
+lógica vive en stored procedures probados (255 casos).
 
 **"¿Cómo saben que funciona?"** Cuatro indicadores de la MML, medidos a las 4
 semanas de uso: −60% de tiempo de atención manual, −50% de turnos perdidos, 0
@@ -83,10 +92,11 @@ usuarios reales: lo que mostramos es el diseño y la prueba de las reglas, no
 resultados medidos.
 
 **"¿Es realizable con el equipo que son?"** Para el bimestre sí, y está hecho: la base completa (reglas,
-reportes, auditoría), Gestión y la terminal conectadas a ella, el sitio con su API y 222 casos de prueba más las
-pruebas de integración contra MySQL real. Lo que queda para una etapa posterior —pasarela de pagos real,
-WhatsApp oficial, Google Calendar y las pantallas de cupones por QR, tarjetas y cirugías— está identificado y
-presupuestado.
+reportes, auditoría), Gestión con 13 pantallas, la terminal y el sitio conectados a ella, el asistente de IA,
+cupones con QR, tarjetas de regalo y cirugías con consulta previa; 255 casos de prueba de la base, 44 de la
+estructura, 6 programas de prueba de las apps y 18 de la API, y se instala con un solo comando
+(`./dermalia.sh instalar`). Lo que queda para una etapa posterior —pasarela de pagos real y WhatsApp con la
+API oficial de Meta— está identificado y presupuestado.
 
 ## Para el día
 

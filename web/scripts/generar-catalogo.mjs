@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 import { fichaDe } from '../src/datos/fichas.js';
 
 const raiz = resolve(import.meta.dirname, '..');
-const sql = readFileSync(resolve(raiz, '../backend/02_datos.sql'), 'utf8');
+const sql = readFileSync(resolve(raiz, '../backend/02_datos.sql'), 'utf8').replaceAll('\r\n', '\n'); // en Windows el archivo trae CRLF
 
 /* Filas de un INSERT: el texto entre "INSERT INTO <tabla> (...) VALUES" y el ";" final. */
 function filas(tabla) {

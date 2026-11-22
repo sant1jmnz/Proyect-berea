@@ -30,6 +30,9 @@ CREATE USER IF NOT EXISTS 'dermalia_n8n'@'%' IDENTIFIED BY 'CAMBIAR_ESTA_CLAVE';
 GRANT EXECUTE ON notificaciones.*  TO 'dermalia_n8n'@'%';   -- avisos pendientes y su resultado
 GRANT EXECUTE ON clinica.*         TO 'dermalia_n8n'@'%';   -- vencer evaluaciones de 6 meses
 GRANT EXECUTE ON beneficios.*      TO 'dermalia_n8n'@'%';   -- emitir cupones por fidelidad
+GRANT EXECUTE ON personas.*        TO 'dermalia_n8n'@'%';   -- bot de Telegram: vincular y desvincular la paciente
+GRANT EXECUTE ON agenda.*          TO 'dermalia_n8n'@'%';   -- bot de Telegram: /turnos
+GRANT EXECUTE ON asistente.*       TO 'dermalia_n8n'@'%';   -- bot de Telegram: registrar las preguntas
 
 -- Cuenta de solo lectura para reportes (por ejemplo, desde Workbench).
 CREATE USER IF NOT EXISTS 'dermalia_reportes'@'%' IDENTIFIED BY 'CAMBIAR_ESTA_CLAVE';

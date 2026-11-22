@@ -1161,8 +1161,7 @@ bool VentanaCliente::confirmarEnBase(const Cuentas &c, const QVector<const Proto
     }
     const QString telegram = enlaceTelegram();
     if (!telegram.isEmpty())
-        mensaje += "
-Recibí los avisos de tu turno por Telegram: " + telegram;
+        mensaje += "\nRecibí los avisos de tu turno por Telegram: " + telegram;
     QMessageBox::information(this, "Turno confirmado", mensaje);
     return true;
 }

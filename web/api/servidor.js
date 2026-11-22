@@ -373,6 +373,7 @@ export function iniciarAutomatismos(pool, entorno = process.env) {
 }
 
 function construirBot(pool, token) {
+  const charlas = new Map();   // shortcut: historial en memoria por chat (se pierde si Vercel reinicia la función), alcanza para seguir el hilo
   return crearBotTelegram({
     token,
     llamar: (sp, parametros) => llamar(pool, sp, parametros),
@@ -380,7 +381,9 @@ function construirBot(pool, token) {
     preguntarAsistente: async (pregunta, idPaciente, chat) => {
       let catalogo = [];
       try { catalogo = await catalogoParaAsistente(pool); } catch { /* sin base: responde igual */ }
-      const r = await responderAsistente({ pregunta, catalogo, quien: `tg:${chat ?? idPaciente ?? 'anonimo'}` });
+      const historial = charlas.get(chat) ?? [];
+      const r = await responderAsistente({ pregunta, historial, catalogo, quien: `tg:${chat ?? idPaciente ?? 'anonimo'}` });
+      charlas.set(chat, [...historial, { rol: 'usuario', texto: pregunta }, { rol: 'asistente', texto: r.respuesta }].slice(-6));
       try { await escribir(pool, 'asistente.sp_registrar_consulta', [idPaciente, 'sistema', r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null]); } catch { /* sin base */ }
       return r;
     },

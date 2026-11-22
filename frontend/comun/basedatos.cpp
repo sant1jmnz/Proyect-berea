@@ -4,15 +4,25 @@
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
+#include <QCoreApplication>
 #include <QSettings>
 
 #ifdef DERMALIA_CON_MYSQL
 #include <mysql.h>
 #endif
 
-ConfigBD ConfigBD::desdeEntorno(const QString &archivoIni)
+QString ConfigBD::rutaIni(const QString &archivoIni)
+{
+    if (QFile::exists(archivoIni) || !QCoreApplication::instance())
+        return archivoIni;
+    const QString junto = QCoreApplication::applicationDirPath() + "/" + archivoIni;
+    return QFile::exists(junto) ? junto : archivoIni;
+}
+
+ConfigBD ConfigBD::desdeEntorno(const QString &nombreIni)
 {
     ConfigBD c;
+    const QString archivoIni = rutaIni(nombreIni);
     QSettings ini(archivoIni, QSettings::IniFormat);
     const bool hayIni = QFile::exists(archivoIni);
 

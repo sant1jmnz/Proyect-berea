@@ -11,3 +11,7 @@ __pycache__/
 
 # Secretos locales del sitio (ver web/.env.ejemplo): nunca se suben
 .env
+
+# Archivos de ./dermalia.sh mientras corre la API
+.api.pid
+.api.log

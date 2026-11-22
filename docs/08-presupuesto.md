@@ -22,6 +22,9 @@ un solo lugar: si cambian, hay que rehacer las cuentas de las secciones 2 a 5
 | Margen sobre el costo de desarrollo | 30% | 🔶 Supuesto del equipo |
 | Gestión de proyecto | 10% de las horas de desarrollo | 🔶 Supuesto del equipo |
 | Profesionales del instituto | 20 | Datos de ejemplo del proyecto |
+| Tipo de cambio | $1.450 por dólar | 🔶 Supuesto del equipo (para los servicios que cobran en dólares) |
+| Recordatorios por WhatsApp | 500 por mes | 🔶 Supuesto del equipo (un recordatorio por turno) |
+| Preguntas al asistente de IA | 100 por día | 🔶 Supuesto del equipo |
 
 ## 2. Costo de desarrollo
 
@@ -48,15 +51,15 @@ construya el sistema completo; el trabajo real del bimestre es un subconjunto):
 
 | Concepto | Tipo | Monto | Nota |
 |---|---|---|---|
-| Base MySQL en Aiven | Año | $0 | Plan gratuito (límites de almacenamiento; si crece, hay planes pagos: **a verificar** en aiven.io) |
-| VM para n8n en Google Cloud (e2-micro) | Año | $0 | Nivel gratuito de la nube; **a verificar** las condiciones vigentes |
+| Base MySQL en Aiven | Año | $87.000 | Plan *Developer*, **USD 5/mes**: Aiven ya no permite crear servicios MySQL nuevos en el plan gratuito ([precios de Aiven MySQL](https://aiven.io/pricing/mysql), [aviso de retiro del plan gratis](https://aiven.io/free-mysql-database-retired), consultado el 22/11/2026). 12 × USD 5 × $1.450 |
+| VM para n8n en Google Cloud (e2-micro) | Año | $0 | Nivel *Always Free*: una e2-micro por mes en us-west1, us-central1 o us-east1, con 30 GB de disco estándar ([Google Cloud](https://docs.cloud.google.com/free), consultado el 22/11/2026) |
 | Dominio del sitio web | Año | $25.000 🔶 | |
-| Asistente de IA (consumo de la API) | Mes | $30.000 🔶 | Depende del uso real; se estima poco |
-| WhatsApp (API oficial de Meta) | Mes | **a verificar** | Se cobra por conversación; en desarrollo se usa Telegram, gratis |
+| Asistente de IA (API de Gemini) | Mes | $30.000 🔶 | Gemini tiene un **nivel gratuito** con límite de uso (alcanza para el desarrollo y la demo). En el nivel pago, Flash-Lite cuesta **USD 0,25 por millón de tokens de entrada y USD 1,50 de salida** ([precios de Gemini](https://ai.google.dev/gemini-api/docs/pricing), 22/11/2026). Con 100 preguntas por día y unos 8.000 tokens de contexto cada una son ≈ USD 7/mes (≈ $10.000); se presupuestan $30.000 por las dudas |
+| WhatsApp (API oficial de Meta) | Mes | $21.750 | Meta cobra por mensaje de plantilla. En Argentina, una plantilla de *utilidad* (recordatorio) cuesta **≈ USD 0,03** y una de marketing ≈ USD 0,071 ([ManyChat](https://help.manychat.com/hc/en-us/articles/14281380243740), [SleekFlow](https://help.sleekflow.io/en_US/whatsapp/pricing), tarifas de 2026; la oficial está en la [página de Meta](https://developers.facebook.com/docs/whatsapp/pricing)). 500 × USD 0,03 × $1.450. En desarrollo se usa Telegram, gratis |
 | Terminal táctil de 768×1024 | Una vez | $450.000 🔶 | Tablet o pantalla táctil con soporte |
 | No-break y router 4G de respaldo (RNF-09) | Una vez | $210.000 🔶 | $120.000 + $90.000 |
 | **Hardware inicial** | Una vez | **$660.000** | |
-| **Infraestructura anual** | Año | **$385.000** | Dominio $25.000 + IA 12 × $30.000 |
+| **Infraestructura anual** | Año | **$733.000** | Aiven $87.000 + dominio $25.000 + IA 12 × $30.000 + WhatsApp 12 × $21.750 |
 | Mantenimiento correctivo y evolutivo | Año | $2.541.000 | 15% del costo de desarrollo (regla práctica, 🔶) |
 
 ## 4. Modelo de monetización
@@ -85,7 +88,7 @@ cuota del asistente de IA.
 | **Inversión inicial del instituto** | | **$22.680.000** |
 | **Abono mensual de soporte** | Soporte, hosting, respaldos, IA | **$400.000/mes ($4.800.000/año)** 🔶 |
 
-El abono cubre con holgura los costos de infraestructura ($385.000/año) más unas
+El abono cubre con holgura los costos de infraestructura ($733.000/año) más unas
 5 horas mensuales de soporte (12 × 5 × $20.000 = $1.200.000/año), 🔶.
 
 ## 6. Retorno de la inversión

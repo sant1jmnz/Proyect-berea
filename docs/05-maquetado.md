@@ -100,7 +100,11 @@ y, si corresponde, un cupón o una tarjeta aplicados.
 | 3, Confirmar turno y registrar seña | RF-02, RF-09, RF-10, RF-17 |
 | 4, Buscador de precios y protocolos | RF-06, RF-07 |
 | 5, Buscar turnos (nombre/DNI/teléfono) | RF-13, RF-11 (recordatorio) |
-| 6, Escanear QR de cupón o tarjeta (pendiente) | RF-22, RF-23 |
+| 6, Cupones (token del QR y validación) | RF-22, RF-24 |
+| 7, Tarjetas de regalo | RF-23 |
+| 8, Consultas previas de cirugía | RF-25 |
+| 9, Protocolos, Profesionales y Pacientes | RF-03, RF-05, RF-18 |
+| 10, Avisos, Reportes y Usuarios | RF-11, RF-20 |
 
 **Apartado Web** (maquetado en `web/`)
 
@@ -110,13 +114,12 @@ y, si corresponde, un cupón o una tarjeta aplicados.
 | Cupón y pago de seña simulado (`reservar.html`, paso 3) | RF-08, RF-10, RF-17 |
 | Agregar a Google Calendar (`reservar.html`, al confirmar) | RF-19 |
 | Buscar y cancelar mi turno (`mi-turno.html`) | RF-12, RF-16 |
-| Tarjeta de regalo (pendiente) | RF-23 |
-| Cuenta, historial y cupones (pendiente) | RF-15, RF-24 |
-| Asistente de IA (pendiente) | RF-14, RF-07 |
+| Tarjeta de regalo (`reservar.html`, paso 3) | RF-23 |
+| Cuenta, historial y cupones (`cuenta.html`) | RF-15, RF-24 |
+| Asistente de IA (botón flotante en todas las páginas) | RF-14, RF-07 |
 
-Pantallas sin wireframe todavía: administración de disponibilidad y
-protocolos por profesional (RF-03, RF-18), escaneo de QR (RF-22) y, en el
-apartado Web, la cuenta, las tarjetas de regalo y el asistente de IA.
+Todas las pantallas están construidas: las capturas de cada una están en
+`docs/capturas/` y en el manual de usuario (`14-manual-usuario.md`).
 
 ## Justificación de las decisiones de diseño
 

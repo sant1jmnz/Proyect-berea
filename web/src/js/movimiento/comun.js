@@ -2,9 +2,11 @@
  * al hacer scroll y botón flotante del celular. */
 
 import { leerSesion } from '../../datos/cuenta.js';
+import { iniciarAsistente } from '../asistente.js';
 
-/* Número de WhatsApp del instituto: a completar con el real (RF-07). */
-export const WHATSAPP = '';
+/* Número de WhatsApp del instituto (RF-07), con código de país y sin "+": se configura en web/.env
+ * (VITE_WHATSAPP_INSTITUTO=5491100000000). Sin número, el enlace abre WhatsApp para elegir el contacto. */
+export const WHATSAPP = String(import.meta.env.VITE_WHATSAPP_INSTITUTO ?? '').replace(/\D/g, '');
 
 const enlaceWhatsapp = (texto = '') => `https://wa.me/${WHATSAPP}${texto ? `?text=${encodeURIComponent(texto)}` : ''}`;
 
@@ -16,6 +18,7 @@ export function iniciarComun() {
   revelar();
   flotante();
   anclas();
+  iniciarAsistente(enlaceWhatsapp);
 }
 
 /* La cabecera toma fondo al bajar. */

@@ -1,4 +1,5 @@
 #include "ventanacliente.h"
+#include "dialogoasistente.h"
 #include "ui_ventanacliente.h"
 
 #include "almacenlocal.h"
@@ -114,13 +115,29 @@ void VentanaCliente::conectarNavegacion()
             "Si necesitás una mano, acercate a la recepción.");
     });
 
-    /* Las tres opciones de la pantalla de inicio. */
+    /* Las opciones de la pantalla de inicio. */
     connect(ui->btnSacarTurno, &QPushButton::clicked, this, [this] { irA(PagProtocolo); });
     connect(ui->btnVerPrecios, &QPushButton::clicked, this, [this] { irA(PagBuscador); });
     connect(ui->btnMiTurno, &QPushButton::clicked, this, [this] {
         irA(PagMiTurno);
         if (sesion.activa() && !mostrarTurnosDe(sesion.dni))   /* con cuenta, sus turnos aparecen solos */
             ocultarTurno();
+    });
+
+    /* Tercera opción, al lado de las otras dos: el asistente de IA (RF-14). */
+    btnAsistente = new QPushButton("Preguntale\nal asistente");
+    btnAsistente->setObjectName("btnAsistente");
+    btnAsistente->setProperty("opcion", true);
+    btnAsistente->setIcon(QIcon(":/iconos/asistente.svg"));
+    btnAsistente->setIconSize(QSize(28, 28));
+    btnAsistente->setCursor(Qt::PointingHandCursor);
+    ui->layoutOpciones->addWidget(btnAsistente);
+    for (QPushButton *b : { ui->btnVerPrecios, ui->btnMiTurno, btnAsistente })   /* las tres del mismo ancho */
+        b->setSizePolicy(QSizePolicy::Ignored, b->sizePolicy().verticalPolicy());
+    ui->layoutOpciones->setStretch(2, 1);
+    connect(btnAsistente, &QPushButton::clicked, this, [this] {
+        DialogoAsistente dialogo(this);
+        dialogo.exec();
     });
 }
 

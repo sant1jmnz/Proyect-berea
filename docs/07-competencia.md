@@ -2,7 +2,7 @@
 
 Informe de la Semana 4 del plan de la cátedra (`plan-4to-bimestre.md`):
 benchmarking, matriz comparativa de funcionalidades y costos, y la propuesta
-única de valor (PUV) de Dermalia. Lo consulté el **3 de noviembre de 2026** y lo amplié el **13 de noviembre de 2026** con una segunda búsqueda (ver sección 5).
+única de valor (PUV) de Dermalia. Lo consulté el **3 de noviembre de 2026** y lo amplié el **13** y el **22 de noviembre de 2026** (ver sección 5).
 
 **Regla de este informe:** cada precio o función de un competidor lleva su
 fuente. Lo que no se pudo confirmar dice **"a verificar"** y no se supone. Los
@@ -71,8 +71,8 @@ columnas de competidores resumen lo que pude confirmar de cada uno.
 | **Consulta previa obligatoria para cirugías**, con evaluación apta que vale 6 meses y retención del 10% / 50% (RF-25) | **Sí** | a verificar | a verificar | a verificar | a verificar |
 | Cupones por fidelidad (visitas o gasto) con **código y QR que cambian cada 5 minutos** | **Sí** (RF-22, RF-24) | a verificar | Programa de fidelidad (complemento de USD 59,95/mes) | a verificar | a verificar |
 | Tarjetas de regalo por monto, con saldo, que se gastan en varios turnos | **Sí** (RF-23) | a verificar | Tarjetas de regalo: Sí (según una guía de precios de terceros) | Venta online de tarjetas de regalo, con saldo al pagar: Sí | a verificar |
-| Asistente de IA que no recibe datos personales y deriva a una persona | **Sí** (RF-14, RNF-06, RNF-10) | a verificar | a verificar | a verificar | a verificar |
-| Registro de auditoría (quién, qué, cuándo) consultable por fechas | **Sí** (RF-20) | a verificar | a verificar | a verificar | a verificar |
+| Asistente de IA | **Sí**, incluido en el abono: en la terminal y el sitio, responde solo con el catálogo y las reglas, no recibe datos personales y deriva a una persona (RF-14, RNF-06, RNF-10) | **Sí**: asistentes "Sofía" / "Alma" que agendan por WhatsApp ([AgendaPro](https://agendapro.com/es/ia-para-agendar-citas)); costo a verificar | **Sí**: *AI Concierge* (mayo de 2026), atiende llamadas y mensajes; ≈ USD 99,95 por local por mes y solo en Reino Unido, EE. UU. y Australia ([Fresha](https://www.fresha.com/blog/Up-Next-2026), [reseña](https://www.usecarly.com/blog/fresha-ai/)) | En beta: recepcionista de IA para llamadas, con transcripción en el registro de actividad ([Booksy](https://biz.booksy.com/en-us/features/ai-receptionist-beta)) | a verificar |
+| Registro de auditoría (quién, qué, cuándo) consultable por fechas | **Sí** (RF-20) | a verificar | a verificar | Solo de las llamadas de la recepcionista de IA (registro de actividad) | a verificar |
 | Modo contingencia sin internet | **Sí** (RNF-09) | a verificar | a verificar | a verificar | a verificar |
 | Los datos del instituto están en una base que controla el instituto | **Sí** (MySQL propia) | no: base del proveedor | no: base del proveedor | no: base del proveedor | no: base del proveedor |
 | Comisión por paciente nueva | No | a verificar | **Sí**, 20% (mín. USD 6) | a verificar | a verificar |
@@ -101,20 +101,30 @@ Por qué un inversor o el instituto lo elegiría:
    evaluación apta que vale 6 meses, devolución al pasar a la cirugía, retención
    del 10% si no es apta— es un proceso real del instituto que no encontramos
    descrito en la documentación pública de los competidores.
-2. **Resuelve los cuatro problemas medidos.** Cada función sale de una causa del
+2. **El asistente de IA viene incluido y es del instituto.** Los competidores ya tienen IA, pero aparte (Fresha:
+   ≈ USD 99,95 por local, sin Argentina). El nuestro está en la terminal y en el sitio, responde solo con los
+   precios, cuidados y reglas del instituto, no recibe datos personales y, si no sabe, deriva a una persona.
+3. **Resuelve los cuatro problemas medidos.** Cada función sale de una causa del
    Árbol de Problemas: agenda propia (superposiciones), buscador y asistente
    (95 min/día de consultas), seña simulada (turnos perdidos) y recordatorios.
-3. **Sin abono por profesional ni comisiones por paciente.** Con 20
+4. **Sin abono por profesional ni comisiones por paciente.** Con 20
    profesionales los competidores cuestan entre USD 3.600 y USD 4.900 por año
    solo de abono (sección 2); Dermalia es un pago único más un soporte
    opcional.
-4. **Los datos son del instituto.** Reglas, auditoría y respaldos viven en una
+5. **Los datos son del instituto.** Reglas, auditoría y respaldos viven en una
    base MySQL propia (Aiven), no en la de un tercero.
-5. **Seguridad de las reglas.** Cupón y tarjeta no se mezclan, un cupón se usa
+6. **Seguridad de las reglas.** Cupón y tarjeta no se mezclan, un cupón se usa
    una vez, el código del cupón cambia cada 5 minutos, y todo queda en un log
    que solo escriben los stored procedures.
 
 ## 5. Limitaciones del informe
+
+- **Tercera búsqueda (22 de noviembre de 2026).** Lo nuevo: **los competidores grandes ya tienen asistentes de
+  IA** (AgendaPro por WhatsApp, Fresha con *AI Concierge*, Booksy en beta). Por eso el asistente **no** es por
+  sí solo nuestro diferencial: lo que sí nos diferencia es que viene incluido (Fresha lo cobra ≈ USD 99,95 por
+  local y no está en Argentina), que está en la **terminal del local** además del sitio, que solo responde con el
+  catálogo y las reglas del instituto y que no recibe datos personales. Tampoco encontramos en ninguna fuente
+  modo sin internet en estos productos.
 
 - **Segunda búsqueda (13 de noviembre de 2026).** Se buscaron de nuevo precios y funciones de los cinco
   competidores. Quedó confirmado: AgendaPro publica precios en pesos desde $13.900 por mes; Fresha y Booksy

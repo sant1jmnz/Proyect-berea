@@ -21,7 +21,7 @@ if (destino === '--quitar') {
 } else {
   if (!secreto) { console.error('Falta TELEGRAM_WEBHOOK_SECRET en el .env.'); process.exit(1); }
   const url = `${destino.replace(/\/+$/, '')}/api/telegram`;
-  await telegram('setWebhook', { url, secret_token: secreto, allowed_updates: ['message'] });
+  await telegram('setWebhook', { url, secret_token: secreto, allowed_updates: ['message', 'callback_query'] });
   const info = await telegram('getWebhookInfo');
   console.log(`Webhook registrado en ${info.url} (pendientes: ${info.pending_update_count}${info.last_error_message ? `, último error: ${info.last_error_message}` : ''}).`);
 }

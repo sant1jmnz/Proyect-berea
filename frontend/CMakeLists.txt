@@ -10,7 +10,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network Multimedia)
 
 # Ícono del .exe en Windows (el de la ventana va en el qrc).
 if(WIN32)
@@ -114,7 +114,7 @@ add_library(dermalia_cliente_pantallas STATIC
     cliente/dialogoasistente.cpp   # asistente de IA: le pregunta a la API del sitio (RF-14)
     cliente/dialogoasistente.h)
 target_include_directories(dermalia_cliente_pantallas PUBLIC cliente)
-target_link_libraries(dermalia_cliente_pantallas PUBLIC dermalia_comun Qt6::Network)
+target_link_libraries(dermalia_cliente_pantallas PUBLIC dermalia_comun Qt6::Network Qt6::Multimedia)
 
 # Apartado Gestión: con la base usa los stored procedures; sin base, el archivo local.
 add_executable(dermalia_gestion gestion/main.cpp ${RECURSOS} $<$<BOOL:${WIN32}>:gestion/gestion.rc>)

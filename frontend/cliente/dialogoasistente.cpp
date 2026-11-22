@@ -2,7 +2,13 @@
 
 #include "basedatos.h"
 
+#include <QAudioInput>
+#include <QDir>
 #include <QFile>
+#include <QMediaCaptureSession>
+#include <QMediaFormat>
+#include <QMediaRecorder>
+#include <QTimer>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QJsonDocument>
@@ -63,6 +69,9 @@ DialogoAsistente::DialogoAsistente(QWidget *parent, const QString &urlApi)
         "  padding: 0 24px; font-size: 17px; font-weight: bold; }"
         "QPushButton#btnEnviarAsistente { background: #A8475F; color: white; border: 0; }"
         "QPushButton#btnEnviarAsistente:disabled { background: #D9A9B5; }"
+        "QPushButton#btnVozAsistente { min-height: 52px; border-radius: 26px; padding: 0 20px; font-size: 17px;"
+        "  font-weight: bold; background: #E8DCCF; color: #3A2B2B; border: 0; }"
+        "QPushButton#btnVozAsistente:checked { background: #C62F3A; color: white; }"
         "QPushButton#btnCerrarAsistente { background: transparent; color: #3A2B2B; border: 1px solid #E8DCCF; }"
         "QLabel#avisoAsistente { color: #A89C95; font-size: 13px; }");
 
@@ -96,7 +105,13 @@ DialogoAsistente::DialogoAsistente(QWidget *parent, const QString &urlApi)
     btnEnviar->setObjectName("btnEnviarAsistente");
     btnEnviar->setCursor(Qt::PointingHandCursor);
     auto *fila = new QHBoxLayout;
+    btnVoz = new QPushButton("Voz");
+    btnVoz->setObjectName("btnVozAsistente");
+    btnVoz->setCheckable(true);
+    btnVoz->setCursor(Qt::PointingHandCursor);
+    btnVoz->setToolTip("Tocá para grabar una nota de voz y tocá de nuevo para mandarla (hasta 2 minutos).");
     fila->addWidget(campo, 1);
+    fila->addWidget(btnVoz);
     fila->addWidget(btnEnviar);
 
     auto *aviso = new QLabel("No escribas tu DNI, teléfono ni email: no hacen falta, y si los escribís se borran.");
@@ -130,6 +145,39 @@ DialogoAsistente::DialogoAsistente(QWidget *parent, const QString &urlApi)
     connect(campo, &QLineEdit::returnPressed, this, enviar);
 
     red = new QNetworkAccessManager(this);
+
+    // nota de voz: graba del micrófono a un WAV temporal (16 kHz mono, liviano para mandar)
+    auto *sesion = new QMediaCaptureSession(this);
+    sesion->setAudioInput(new QAudioInput(this));
+    grabador = new QMediaRecorder(this);
+    sesion->setRecorder(grabador);
+    QMediaFormat formato(QMediaFormat::Wave);
+    formato.setAudioCodec(QMediaFormat::AudioCodec::Wave);
+    grabador->setMediaFormat(formato);
+    grabador->setAudioSampleRate(16000);
+    grabador->setAudioChannelCount(1);
+    archivoAudio = QDir::temp().filePath("dermalia-nota-de-voz.wav");
+    grabador->setOutputLocation(QUrl::fromLocalFile(archivoAudio));
+    corte = new QTimer(this);
+    corte->setSingleShot(true);
+    corte->setInterval(120000);   // máximo 2 minutos, como en Telegram y en el sitio
+    connect(corte, &QTimer::timeout, this, [this] { if (btnVoz->isChecked()) btnVoz->click(); });
+    connect(btnVoz, &QPushButton::clicked, this, &DialogoAsistente::alternarGrabacion);
+    connect(grabador, &QMediaRecorder::recorderStateChanged, this, [this](QMediaRecorder::RecorderState estado) {
+        if (estado != QMediaRecorder::StoppedState || btnVoz->isChecked())
+            return;
+        QFile f(grabador->actualLocation().toLocalFile());
+        if (f.open(QIODevice::ReadOnly) && f.size() > 1000)
+            preguntarConAudio(f.readAll(), "audio/wav");
+        f.close();
+        f.remove();
+    });
+    connect(grabador, &QMediaRecorder::errorOccurred, this, [this](QMediaRecorder::Error, const QString &) {
+        btnVoz->setChecked(false);
+        btnVoz->setText("Voz");
+        agregar("asistente", "No pude usar el micrófono. Revisá que esté conectado o escribime.");
+    });
+
     agregar("asistente", SALUDO.toHtmlEscaped());
 }
 
@@ -159,26 +207,72 @@ void DialogoAsistente::terminar(const QString &html)
     emit respondio();
 }
 
+void DialogoAsistente::alternarGrabacion()
+{
+    if (btnVoz->isChecked()) {
+        if (enCurso) {
+            btnVoz->setChecked(false);
+            return;
+        }
+        btnVoz->setText("Mandar");
+        grabador->record();
+        corte->start();
+    } else {
+        btnVoz->setText("Voz");
+        corte->stop();
+        grabador->stop();   // al terminar de escribir el archivo, recorderStateChanged lo manda
+    }
+}
+
 void DialogoAsistente::preguntar(const QString &pregunta)
 {
     if (enCurso)
         return;
+    agregar("paciente", pregunta.toHtmlEscaped());
+    enviarPedido(QJsonObject{{"pregunta", pregunta}, {"origen", "terminal"}, {"historial", historial}}, pregunta);
+}
+
+void DialogoAsistente::preguntarConAudio(const QByteArray &audio, const QString &mime)
+{
+    if (enCurso)
+        return;
+    agregar("paciente", "🎤 <i>Nota de voz…</i>");
+    enviarPedido(QJsonObject{{"audio", QString::fromLatin1(audio.toBase64())}, {"mime", mime},
+                             {"origen", "terminal"}, {"historial", historial}}, QString());
+}
+
+void DialogoAsistente::enviarPedido(const QJsonObject &cuerpo, const QString &preguntaEscrita)
+{
     enCurso = true;
     btnEnviar->setEnabled(false);
+    btnVoz->setEnabled(false);
     sugerencias->hide();
-    agregar("paciente", pregunta.toHtmlEscaped());
     agregar("asistente", "<i>Escribiendo…</i>");
 
-    QJsonObject cuerpo{{"pregunta", pregunta}, {"origen", "terminal"}, {"historial", historial}};
     QNetworkRequest pedido(QUrl(url + "/api/asistente"));
     pedido.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    pedido.setTransferTimeout(20000);
+    pedido.setTransferTimeout(40000);   // con audio tarda más (transcribir + responder)
     QNetworkReply *respuesta = red->post(pedido, QJsonDocument(cuerpo).toJson(QJsonDocument::Compact));
 
-    connect(respuesta, &QNetworkReply::finished, this, [this, respuesta, pregunta] {
+    connect(respuesta, &QNetworkReply::finished, this, [this, respuesta, preguntaEscrita] {
         respuesta->deleteLater();
         const QJsonObject datos = QJsonDocument::fromJson(respuesta->readAll()).object();
         const QString texto = datos.value("respuesta").toString();
+        QString pregunta = preguntaEscrita;
+        if (pregunta.isEmpty()) {
+            // nota de voz: la burbuja "Nota de voz…" pasa a mostrar lo que se entendió
+            pregunta = datos.value("transcripcion").toString();
+            if (!pregunta.isEmpty() && mensajesHtml.size() >= 2) {
+                mensajesHtml.removeLast();   // "Escribiendo…"
+                mensajesHtml.removeLast();   // "Nota de voz…"
+                agregar("paciente", "🎤 " + pregunta.toHtmlEscaped());
+                agregar("asistente", "<i>Escribiendo…</i>");   // terminar() lo reemplaza por la respuesta
+            }
+            if (pregunta.isEmpty() && respuesta->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 422) {
+                terminar(datos.value("error").toString().toHtmlEscaped());
+                return;
+            }
+        }
         if (respuesta->error() != QNetworkReply::NoError || texto.isEmpty()) {
             terminar("El asistente no está disponible en este momento. Podés usar <b>Consultar precios y "
                      "protocolos</b> o preguntar en la recepción.");

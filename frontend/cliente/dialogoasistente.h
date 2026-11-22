@@ -21,6 +21,8 @@ class QPushButton;
 class QTextBrowser;
 class QNetworkAccessManager;
 class QWidget;
+class QMediaRecorder;
+class QTimer;
 
 class DialogoAsistente : public QDialog
 {
@@ -34,6 +36,8 @@ public:
 
     /* Para las pruebas: hace una pregunta como si la paciente la escribiera. */
     void preguntar(const QString &pregunta);
+    /* Nota de voz: la API la pasa a texto (como el bot de Telegram) y responde. */
+    void preguntarConAudio(const QByteArray &audio, const QString &mime);
     QString conversacionEnTexto() const;
     bool esperando() const { return enCurso; }
 
@@ -44,6 +48,8 @@ private:
     void agregar(const QString &rol, const QString &html);
     void pintar();
     void terminar(const QString &html);
+    void enviarPedido(const QJsonObject &cuerpo, const QString &pregunta);
+    void alternarGrabacion();
 
     QString url;
     QNetworkAccessManager *red = nullptr;
@@ -51,6 +57,10 @@ private:
     QWidget *sugerencias = nullptr;
     QLineEdit *campo = nullptr;
     QPushButton *btnEnviar = nullptr;
+    QPushButton *btnVoz = nullptr;
+    QMediaRecorder *grabador = nullptr;
+    QTimer *corte = nullptr;
+    QString archivoAudio;
     QStringList mensajesHtml;
     QJsonArray historial;
     bool enCurso = false;

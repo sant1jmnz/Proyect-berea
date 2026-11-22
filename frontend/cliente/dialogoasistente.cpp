@@ -13,7 +13,11 @@
 #include <QHBoxLayout>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QFormLayout>
 #include <QLabel>
+#include <QLocale>
 #include <QLineEdit>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -225,12 +229,86 @@ void DialogoAsistente::alternarGrabacion()
     }
 }
 
-void DialogoAsistente::preguntar(const QString &pregunta)
+void DialogoAsistente::preguntar(const QString &pregunta, const QJsonObject &eleccion)
 {
     if (enCurso)
         return;
     agregar("paciente", pregunta.toHtmlEscaped());
-    enviarPedido(QJsonObject{{"pregunta", pregunta}, {"origen", "terminal"}, {"historial", historial}}, pregunta);
+    QJsonObject cuerpo{{"pregunta", pregunta}, {"origen", "terminal"}, {"historial", historial}, {"reserva", reserva}};
+    if (!eleccion.isEmpty())
+        cuerpo["eleccion"] = eleccion;
+    enviarPedido(cuerpo, pregunta);
+}
+
+// Botones de la reserva en el chat: cada uno trae el estado siguiente (lo manda de vuelta a la API al tocarlo).
+void DialogoAsistente::mostrarOpciones(const QJsonArray &opciones)
+{
+    auto *grilla = qobject_cast<QGridLayout *>(sugerencias->layout());
+    while (QLayoutItem *item = grilla->takeAt(0)) {
+        delete item->widget();
+        delete item;
+    }
+    for (int i = 0; i < opciones.size(); ++i) {
+        const QJsonObject o = opciones[i].toObject();
+        auto *b = new QPushButton(o.value("texto").toString());
+        b->setProperty("sugerencia", true);
+        b->setCursor(Qt::PointingHandCursor);
+        connect(b, &QPushButton::clicked, this, [this, o] { preguntar(o.value("texto").toString(), o.value("reserva").toObject()); });
+        grilla->addWidget(b, i / 2, i % 2);
+    }
+    sugerencias->setVisible(!opciones.isEmpty());
+}
+
+// Último paso: datos de la persona (no pasan por la IA) y POST /api/turnos.
+void DialogoAsistente::pedirDatosReserva(const QString &nombre, const QString &dni, const QString &telefono)
+{
+    QDialog d(this);
+    d.setWindowTitle("Confirmar turno");
+    auto *form = new QFormLayout(&d);
+    auto *eNombre = new QLineEdit(nombre);
+    auto *eDni = new QLineEdit(dni);
+    auto *eTel = new QLineEdit(telefono);
+    auto *eNac = new QLineEdit;
+    eNac->setPlaceholderText("AAAA-MM-DD (solo si es tu primera vez)");
+    form->addRow("Nombre y apellido", eNombre);
+    form->addRow("DNI", eDni);
+    form->addRow("Teléfono", eTel);
+    form->addRow("Nacimiento", eNac);
+    auto *botones = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    botones->button(QDialogButtonBox::Ok)->setText("Confirmar turno");
+    botones->button(QDialogButtonBox::Cancel)->setText("Ahora no");
+    form->addRow(botones);
+    connect(botones, &QDialogButtonBox::accepted, &d, &QDialog::accept);
+    connect(botones, &QDialogButtonBox::rejected, &d, &QDialog::reject);
+    if (d.exec() != QDialog::Accepted) {
+        reserva = QJsonObject();
+        agregar("asistente", "Dejé el turno sin confirmar. Cuando quieras, pedime uno de nuevo.");
+        return;
+    }
+    QJsonObject cuerpo{{"nombre", eNombre->text().trimmed()}, {"dni", eDni->text().trimmed()}, {"telefono", eTel->text().trimmed()},
+                       {"protocolos", QJsonArray{reserva.value("protocolo")}}, {"profesional", reserva.value("profesional")},
+                       {"inicio", reserva.value("inicio")}};
+    if (!eNac->text().trimmed().isEmpty())
+        cuerpo["nacimiento"] = eNac->text().trimmed();
+    QNetworkRequest pedido(QUrl(url + "/api/turnos"));
+    pedido.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    pedido.setTransferTimeout(30000);
+    QNetworkReply *r = red->post(pedido, QJsonDocument(cuerpo).toJson(QJsonDocument::Compact));
+    connect(r, &QNetworkReply::finished, this, [this, r, cuerpo] {
+        r->deleteLater();
+        const int estado = r->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const QJsonObject datos = QJsonDocument::fromJson(r->readAll()).object();
+        if (estado == 201) {
+            reserva = QJsonObject();
+            sugerencias->hide();
+            agregar("asistente", QString("¡Listo, tu turno quedó reservado! Seña: $%1.<br>Lo ves en <b>Mi turno</b>.")
+                                     .arg(QLocale(QLocale::Spanish, QLocale::Argentina).toString(datos.value("sena").toDouble(), 'f', 0)));
+            return;
+        }
+        const QString error = datos.value("error").toString(r->error() == QNetworkReply::NoError ? "No pude reservar." : "No pude conectar con el servidor.");
+        agregar("asistente", error.toHtmlEscaped());
+        pedirDatosReserva(cuerpo.value("nombre").toString(), cuerpo.value("dni").toString(), cuerpo.value("telefono").toString());
+    });
 }
 
 void DialogoAsistente::preguntarConAudio(const QByteArray &audio, const QString &mime)
@@ -239,7 +317,7 @@ void DialogoAsistente::preguntarConAudio(const QByteArray &audio, const QString 
         return;
     agregar("paciente", "🎤 <i>Nota de voz…</i>");
     enviarPedido(QJsonObject{{"audio", QString::fromLatin1(audio.toBase64())}, {"mime", mime},
-                             {"origen", "terminal"}, {"historial", historial}}, QString());
+                             {"origen", "terminal"}, {"historial", historial}, {"reserva", reserva}}, QString());
 }
 
 void DialogoAsistente::enviarPedido(const QJsonObject &cuerpo, const QString &preguntaEscrita)
@@ -286,7 +364,11 @@ void DialogoAsistente::enviarPedido(const QJsonObject &cuerpo, const QString &pr
         historial.append(QJsonObject{{"rol", "asistente"}, {"texto", texto}});
         while (historial.size() > 6)
             historial.removeFirst();
+        reserva = datos.value("reserva").toObject();
         terminar(html);
+        mostrarOpciones(datos.value("opciones").toArray());
+        if (datos.value("formulario").toBool())
+            pedirDatosReserva();
     });
 }
 

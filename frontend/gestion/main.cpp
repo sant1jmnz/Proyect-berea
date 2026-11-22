@@ -3,10 +3,16 @@
 #include <QApplication>
 #include <QFontDatabase>
 #include <QLocale>
+#include <QStyleHints>
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    /* Siempre tema claro: con el modo oscuro de Windows los cuadros de diálogo salían
+     * oscuros y el texto (color fijo de la hoja de estilos) no se leía. */
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    app.styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
     /* Fechas en español y miles con punto ($25.000) en toda la app. */
     QLocale::setDefault(QLocale(QLocale::Spanish, QLocale::Argentina));
 

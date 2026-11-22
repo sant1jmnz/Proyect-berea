@@ -15,6 +15,7 @@
 #include "validaciones.h"
 
 #include <QApplication>
+#include <QClipboard>
 #include <QCalendarWidget>
 #include <QDesktopServices>
 #include <QHBoxLayout>
@@ -279,6 +280,28 @@ void VentanaCliente::armarMiTurno()
     btnCalendar->setCursor(Qt::PointingHandCursor);
     btnCalendar->setEnabled(false);
     ui->layoutCancelar->insertWidget(1, btnCalendar);
+    /* Aviso por Telegram: abre el bot (el enlace viene de GET /api/estado). */
+    btnTelegram = new QPushButton("Recibir avisos por Telegram", this);
+    btnTelegram->setCursor(Qt::PointingHandCursor);
+    btnTelegram->setEnabled(false);
+    ui->layoutCancelar->insertWidget(2, btnTelegram);
+    connect(btnTelegram, &QPushButton::clicked, this, [this] {
+        const QString enlace = enlaceTelegram();
+        if (enlace.isEmpty())
+            QMessageBox::information(this, "Telegram", "El bot de Telegram no está disponible en este momento.");
+        else {
+            /* Si la PC no tiene Telegram con sesión iniciada el enlace no abre nada: queda copiado y a la vista. */
+            QApplication::clipboard()->setText(enlace);
+            QDesktopServices::openUrl(QUrl(enlace));
+            QMessageBox aviso(QMessageBox::Information, "Telegram",
+                              QString("Si no se abrió Telegram, abrí este enlace desde tu celular o navegador "
+                                      "(ya quedó copiado):<br><a href=\"%1\">%1</a>").arg(enlace.toHtmlEscaped()),
+                              QMessageBox::Ok, this);
+            aviso.setTextFormat(Qt::RichText);
+            aviso.setTextInteractionFlags(Qt::TextBrowserInteraction);
+            aviso.exec();
+        }
+    });
     connect(btnCalendar, &QPushButton::clicked, this, &VentanaCliente::agregarACalendar);
 
     ui->editBuscarTurno->clear();   /* no hay turnos hasta que se cargan */
@@ -789,6 +812,7 @@ void VentanaCliente::ocultarTurno()
     turnoMostrado = -1;
     ui->tarjetaMiTurno->setVisible(false);
     btnCalendar->setEnabled(false);
+    btnTelegram->setEnabled(false);
 }
 
 /* El mismo enlace que arma el sitio web: abre Google Calendar con el turno cargado (RF-19). */
@@ -907,6 +931,7 @@ void VentanaCliente::mostrarTurno(int indice, int vigentes)
     }
     ui->btnCancelarMiTurno->setEnabled(activo);
     btnCalendar->setEnabled(activo);
+    btnTelegram->setEnabled(activo);
     ui->tarjetaMiTurno->setVisible(true);
 }
 
@@ -1160,9 +1185,13 @@ bool VentanaCliente::confirmarEnBase(const Cuentas &c, const QVector<const Proto
         mensaje += "\nLa seña quedó sin pagar: acercate a recepción para abonarla.";
     }
     const QString telegram = enlaceTelegram();
+    /* Texto enriquecido para que el enlace al bot se pueda tocar (abre el navegador). */
+    QString html = mensaje.toHtmlEscaped().replace("\n", "<br>");
     if (!telegram.isEmpty())
-        mensaje += "\nRecibí los avisos de tu turno por Telegram: " + telegram;
-    QMessageBox::information(this, "Turno confirmado", mensaje);
+        html += "<br>Recibí los avisos de tu turno por Telegram: <a href=\"" + telegram.toHtmlEscaped() + "\">" + telegram.toHtmlEscaped() + "</a>";
+    QMessageBox aviso(QMessageBox::Information, "Turno confirmado", html, QMessageBox::Ok, this);
+    aviso.setTextFormat(Qt::RichText);
+    aviso.exec();
     return true;
 }
 

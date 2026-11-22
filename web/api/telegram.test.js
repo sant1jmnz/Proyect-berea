@@ -94,6 +94,17 @@ test('"precios de los turnos que tengo agendados" lista turnos con precio; el as
   await b.procesarActualizacion(mensaje('cuanto cuesta un turno de peeling'));
   assert.equal(ultimo(), 'ok');
   assert.ok(recibidos.some((l) => /Plasma rico en plaquetas.*Precio \$/.test(l)));
+  // la lista queda en el hilo, para que un "solo los precios" después tenga contexto
+  const hilo = await llamar('asistente.sp_historial_telegram', [String(CHAT), 6]);
+  assert.ok(hilo.some((m) => /Tus pr.ximos turnos/.test(m.texto)));
+});
+
+test('con Gemini, "qué turnos tengo" lo responde el asistente con la agenda', { skip: !hayBase }, async () => {
+  const b = crearBotTelegram({ token: 'x', apiBase: base, llamar, escribir,
+    preguntarAsistente: async (_p, _id, _chat, _nombre, turnos) => ({ respuesta: `tenés ${turnos.length}`, derivada: false, fuente: 'gemini' }),
+    ahora: () => new Date('2026-11-01T00:00:00Z'), registro: { log() {}, warn() {}, error() {} } });
+  await b.procesarActualizacion(mensaje('que turnos tengo'));
+  assert.match(ultimo(), /^ten.s \d+$/);
 });
 
 test('una pregunta suelta la responde el asistente', { skip: !hayBase }, async () => {

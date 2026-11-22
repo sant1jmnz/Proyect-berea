@@ -589,8 +589,18 @@ dialog::backdrop {
   font: 1rem var(--sans);
 }
 
+/* el anillo de foco global va separado 3px y se veía corrido: acá va pegado al borde */
+.asistente__form input:focus-visible {
+  outline: none;
+  border-color: var(--rosa);
+  box-shadow: 0 0 0 2px var(--rosa);
+}
+
 .asistente__enviar {
   flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
   width: 44px;
   height: 44px;
   border: 0;

@@ -321,11 +321,11 @@ scripts de `backend/`, que son la fuente única):
 
 | Archivo | Qué es |
 |---|---|
-| `03_ModeloSQL_Grupo<N>.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
-| `04_DatosSQL_Grupo<N>.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
-| `05_Backend_Grupo<N>.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
+| `03_ModeloSQL.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
+| `04_DatosSQL.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
+| `05_Backend.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
 | `06_PruebasSQL.xlsx` | Punto 6: 255 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
-| `Diagrama_Chen_Grupo<N>.png`, `Diagrama_Codd_Grupo<N>.png` | Diagramas conceptual y lógico, con fondo blanco |
+| `Diagrama_Chen.png`, `Diagrama_Codd.png` | Diagramas conceptual y lógico, con fondo blanco |
 
 El orden correcto es 03, 04 y 05, y la secuencia completa se puede repetir. El backend usa solo lo que
 enseña el material de la cátedra y pide la consigna: la lista de lo que se reemplazó y cómo está en
@@ -334,8 +334,7 @@ enseña el material de la cátedra y pide la consigna: la lista de lo que se ree
 ## Qué falta
 
 - **Ensayar el pitch** con cronómetro (5 a 7 minutos) y la demo con `./dermalia.sh recargar-base` antes.
-- **Número de grupo** para la entrega del Hito 2: `python3 backend/armar_entrega.py --grupo <número>`
-  (hoy los archivos dicen `GrupoXX`).
+- **Número de grupo** (opcional): los archivos de la entrega no llevan sufijo; si algún día lo dan, `python3 backend/armar_entrega.py --grupo <número>`.
 - Para producción, fuera del alcance del bimestre: pasarela de pagos real (hoy la seña es simulada), WhatsApp con
   la API oficial de Meta (hoy enlace `wa.me` y Telegram) y probar las plantillas de n8n en una instancia real.
 - Al agregar un protocolo a la base, correr `npm run generar` en `web/` para que el sitio y las apps lo tengan

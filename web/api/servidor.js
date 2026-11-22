@@ -32,6 +32,7 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize as normalizarRuta } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import mysql from 'mysql2/promise';
 import { responderAsistente } from './asistente.js';
@@ -326,7 +327,7 @@ export function crearPool() {
 }
 
 /* Se arranca solo si se ejecuta con `node api/servidor.js` (no al importarlo desde las pruebas). */
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const puerto = Number(process.env.PUERTO_API || 3000);
   const pool = crearPool();
   crearServidor(pool).listen(puerto, () => console.log(`API de Dermalia en http://localhost:${puerto}`));

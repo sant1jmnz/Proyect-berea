@@ -377,12 +377,12 @@ function construirBot(pool, token) {
     token,
     llamar: (sp, parametros) => llamar(pool, sp, parametros),
     escribir: (sp, parametros) => escribir(pool, sp, parametros),
-    preguntarAsistente: async (pregunta, idPaciente, chat, nombre) => {
+    preguntarAsistente: async (pregunta, idPaciente, chat, nombre, turnos = null) => {
       let catalogo = [];
       try { catalogo = await catalogoParaAsistente(pool); } catch { /* sin base: responde igual */ }
       let historial = [];
       try { historial = await llamar(pool, 'asistente.sp_historial_telegram', [String(chat), 6]); } catch { /* sin base: responde sin hilo */ }
-      const r = await responderAsistente({ pregunta, historial, catalogo, nombre, quien: `tg:${chat ?? idPaciente ?? 'anonimo'}` });
+      const r = await responderAsistente({ pregunta, historial, catalogo, nombre, turnos, quien: `tg:${chat ?? idPaciente ?? 'anonimo'}` });
       try { await escribir(pool, 'asistente.sp_guardar_mensajes_telegram', [String(chat), r.preguntaGuardada, r.respuesta]); } catch { /* sin base */ }
       try { await escribir(pool, 'asistente.sp_registrar_consulta', [idPaciente, 'sistema', r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null]); } catch { /* sin base */ }
       return r;

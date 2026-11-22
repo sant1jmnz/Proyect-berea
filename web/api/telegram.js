@@ -24,6 +24,9 @@ const fechaCorta = (texto) => {
   return `${d}/${m}/${a} a las ${h.slice(0, 5)}`;
 };
 
+const pesos = (n) => `$${Math.round(Number(n) || 0).toLocaleString('es-AR')}`;
+const lineaTurno = (t) => `• ${fechaCorta(t.fecha_hora_inicio)}: ${t.protocolos}, con ${t.profesional} (${t.estado}). Precio ${pesos(t.precio_final)}, seña ${pesos(t.sena)} (${t.estado_sena}).`;
+
 const AYUDA = [
   'Esto es lo que puedo hacer:',
   '• Mandarte el recordatorio de tus turnos (para eso vinculá tu cuenta con /start).',
@@ -61,6 +64,13 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
 
   const enviar = (chat, texto) => telegram('sendMessage', { chat_id: chat, text: texto });
 
+  async function proximosDe(dni) {
+    const ahoraTexto = ahora().toISOString().slice(0, 19).replace('T', ' ');
+    return (await llamar('agenda.sp_buscar_turnos', [dni, 0]))
+      .filter((t) => ['pendiente', 'confirmado'].includes(t.estado) && String(t.fecha_hora_inicio) >= ahoraTexto)
+      .sort((a, b) => String(a.fecha_hora_inicio).localeCompare(String(b.fecha_hora_inicio)));
+  }
+
   /* ---------- Conversación ---------- */
 
   async function procesarMensaje(mensaje) {
@@ -91,16 +101,16 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
       const r = await escribir('personas.sp_desvincular_telegram', [chat, 'sistema']);
       return enviar(chat, r.ok ? 'Listo: ya no vas a recibir avisos por Telegram. Te los manda la recepción por WhatsApp.' : r.mensaje);
     }
-    const pideTurnos = !texto.startsWith('/') && /turnos?|agenda/i.test(texto) && !/(reserv|sacar|saque|cancel|cambi|reprogram|precio|cuest|seña|sena|horario|disponib|libre|cuanto dura|cuánto dura)/i.test(texto);
+    // "¿qué turnos tengo?" o "precio de mis turnos agendados": su agenda. "¿cuánto cuesta un turno de peeling?": el asistente.
+    const deMiAgenda = /(\bmis?\b|tengo|agendad|reservad|pr[oó]xim|saqu[eé])/i.test(texto);
+    const pideTurnos = !texto.startsWith('/') && /turnos?|agenda/i.test(texto) && !/(reservar|sacar|cancel|cambi|reprogram|disponib|libre)/i.test(texto)
+      && (deMiAgenda || !/(precio|cuest|seña|sena|horario|dura)/i.test(texto));
     if (comando === '/turnos' || pideTurnos) {
       if (!vinculada) return enviar(chat, 'Primero vinculá tu cuenta con /start.');
-      const ahoraTexto = ahora().toISOString().slice(0, 19).replace('T', ' ');
-      const proximos = (await llamar('agenda.sp_buscar_turnos', [vinculada.dni, 0]))
-        .filter((t) => ['pendiente', 'confirmado'].includes(t.estado) && String(t.fecha_hora_inicio) >= ahoraTexto)
-        .sort((a, b) => String(a.fecha_hora_inicio).localeCompare(String(b.fecha_hora_inicio)));
+      const proximos = await proximosDe(vinculada.dni);
       if (proximos.length === 0) return enviar(chat, 'No tenés turnos próximos. Podés reservar en el sitio o en la terminal del instituto.');
-      return enviar(chat, `Tus próximos turnos:\n${proximos.map((t) =>
-        `• ${fechaCorta(t.fecha_hora_inicio)}: ${t.protocolos}, con ${t.profesional} (${t.estado})`).join('\n')}`);
+      const total = proximos.reduce((s, t) => s + Number(t.precio_final || 0), 0);
+      return enviar(chat, `Tus próximos turnos:\n${proximos.map(lineaTurno).join('\n')}${proximos.length > 1 ? `\nTotal: ${pesos(total)}.` : ''}`);
     }
 
     // Vinculación en dos pasos: DNI y teléfono
@@ -127,7 +137,9 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     // Cualquier otra cosa: el asistente
     if (texto.startsWith('/')) return enviar(chat, AYUDA);
     telegram('sendChatAction', { chat_id: chat, action: 'typing' }).catch(() => {});
-    const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null, chat, vinculada?.nombre ?? null);
+    // con la cuenta vinculada el asistente ve sus próximos turnos: puede responder precios, señas y fechas
+    const turnos = vinculada ? (await proximosDe(vinculada.dni).catch(() => [])).map(lineaTurno) : null;
+    const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null, chat, vinculada?.nombre ?? null, turnos);
     return enviar(chat, respuesta.derivada ? `${respuesta.respuesta}\n\nTambién podés escribirle a la recepción por WhatsApp.` : respuesta.respuesta);
   }
 

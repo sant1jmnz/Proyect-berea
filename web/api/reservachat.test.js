@@ -34,3 +34,10 @@ test('un horario ocupado no se confirma', async () => {
 test('limpiarReserva descarta campos raros', () => {
   assert.deepEqual(limpiarReserva({ protocolo: '2; DROP', fecha: 'x', otro: 1, cancelar: true }), { cancelar: true });
 });
+
+test('tras "quiero un turno", un texto que no se entiende vuelve a mostrar las opciones', async () => {
+  const cat = [{ id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 45 }];
+  const a = await pasoReserva({ pregunta: 'quiero un turno', reserva: null, catalogo: cat, horarios: async () => [] });
+  const b = await pasoReserva({ pregunta: 'no tengo idea, recomiéndame uno', reserva: a.reserva, catalogo: cat, horarios: async () => [] });
+  assert.ok(b?.opciones?.length);
+});

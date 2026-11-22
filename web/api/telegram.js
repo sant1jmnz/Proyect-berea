@@ -121,7 +121,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
 
     // Cualquier otra cosa: el asistente
     if (texto.startsWith('/')) return enviar(chat, AYUDA);
-    const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null, chat);
+    const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null, chat, vinculada?.nombre ?? null);
     return enviar(chat, respuesta.derivada ? `${respuesta.respuesta}\n\nTambién podés escribirle a la recepción por WhatsApp.` : respuesta.respuesta);
   }
 

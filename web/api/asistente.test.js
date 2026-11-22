@@ -1,7 +1,7 @@
 /* Pruebas del asistente (no necesitan base ni internet: Gemini se simula). npm run test:api */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { filtrarDatosPersonales, responderLocal, responderAsistente, instruccionSistema, gastaGemini, reiniciarLimites, LIMITE_POR_PERSONA, LIMITE_TOTAL } from './asistente.js';
+import { filtrarDatosPersonales, responderLocal, responderAsistente, instruccionSistema, fechaPedida, preguntaPorDisponibilidad, consultarAgenda, gastaGemini, reiniciarLimites, LIMITE_POR_PERSONA, LIMITE_TOTAL } from './asistente.js';
 
 const catalogo = [
   { id_protocolo: 2, nombre: 'Peeling químico', categoria: 'Faciales y corporales', descripcion: 'Renovación de la piel con ácidos.', precio: 120000, duracion_min: 45, porcentaje_sena: 30, sena: 36000, requiere_evaluacion: 0 },
@@ -90,4 +90,49 @@ test('el tope total corta a todos juntos', () => {
   assert.equal(gastaGemini('otra', 1000), false);
   assert.ok(gastaGemini('otra', 1000 + LIMITE_TOTAL.ventanaMs + 1));   // pasado el día se libera
   reiniciarLimites();
+});
+
+/* ---------- Turnos libres ---------- */
+const HOY = new Date('2026-11-22T15:00:00Z');   // domingo 22/11 en Buenos Aires
+
+test('entiende el día: hoy, mañana, día de la semana, fecha', () => {
+  assert.equal(fechaPedida('hay turno hoy?', HOY), '2026-11-22');
+  assert.equal(fechaPedida('mañana hay turno?', HOY), '2026-11-23');
+  assert.equal(fechaPedida('pasado mañana', HOY), '2026-11-24');
+  assert.equal(fechaPedida('hay lugar el viernes', HOY), '2026-11-27');
+  assert.equal(fechaPedida('turno el 25/11', HOY), '2026-11-25');
+  assert.equal(fechaPedida('turno el 25', HOY), '2026-11-25');
+  assert.equal(fechaPedida('prefiero a la mañana', HOY), null);
+});
+
+test('distingue preguntar por turnos libres de cancelar o ver los propios', () => {
+  assert.equal(preguntaPorDisponibilidad('mañana hay turno?', HOY), true);
+  assert.equal(preguntaPorDisponibilidad('tienen lugar el viernes para un peeling', HOY), true);
+  assert.equal(preguntaPorDisponibilidad('como cancelo mi turno', HOY), false);
+  assert.equal(preguntaPorDisponibilidad('cuánto sale el peeling', HOY), false);
+  assert.equal(preguntaPorDisponibilidad('qué horarios tienen', HOY), false);
+});
+
+test('consulta la agenda real con el protocolo de la pregunta o del hilo', async () => {
+  const llamadas = [];
+  const horarios = async (dia, id) => {
+    llamadas.push([dia, id]);
+    return [{ id_profesional: 1, profesional: 'Marino, Julieta', inicio: `${dia} 10:00:00` },
+      { id_profesional: 1, profesional: 'Marino, Julieta', inicio: `${dia} 11:30:00` }];
+  };
+  const r = await consultarAgenda({ pregunta: 'mañana hay turno para el peeling?', catalogo, horarios, ahora: HOY });
+  assert.deepEqual(llamadas, [['2026-11-23', 2]]);
+  assert.match(r.texto, /Peeling químico.*lunes 23\/11: Marino, Julieta \(empieza entre 10:00 y 11:30\)/);
+  const hilo = await consultarAgenda({ pregunta: 'y mañana hay turno?', historial: [{ rol: 'paciente', texto: 'cuánto sale el peeling' }], catalogo, horarios, ahora: HOY });
+  assert.match(hilo.texto, /Peeling químico/);
+  assert.equal(await consultarAgenda({ pregunta: 'cuánto sale el peeling', catalogo, horarios, ahora: HOY }), null);
+});
+
+test('sin protocolo pregunta cuál; sin lugar lo dice; no inventa', async () => {
+  const sinLugar = async () => [];
+  assert.match((await consultarAgenda({ pregunta: 'mañana hay turno?', catalogo, horarios: sinLugar, ahora: HOY })).texto, /para qué tratamiento/);
+  assert.match((await consultarAgenda({ pregunta: 'mañana hay turno para peeling', catalogo, horarios: sinLugar, ahora: HOY })).texto, /no hay horarios libres el lunes 23\/11/);
+  const local = responderLocal('mañana hay turno para peeling', catalogo, { texto: 'Horarios libres para X: lunes.' });
+  assert.match(local.respuesta, /Horarios libres para X/);
+  assert.match(instruccionSistema(catalogo, null, HOY, null, { texto: 'DATO-AGENDA' }), /AGENDA REAL.*DATO-AGENDA/);
 });

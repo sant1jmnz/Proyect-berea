@@ -105,12 +105,19 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     const deMiAgenda = /(\bmis?\b|tengo|agendad|reservad|pr[oó]xim|saqu[eé])/i.test(texto);
     const pideTurnos = !texto.startsWith('/') && /turnos?|agenda/i.test(texto) && !/(reservar|sacar|cancel|cambi|reprogram|disponib|libre)/i.test(texto)
       && (deMiAgenda || !/(precio|cuest|seña|sena|horario|dura)/i.test(texto));
-    if (comando === '/turnos' || pideTurnos) {
-      if (!vinculada) return enviar(chat, 'Primero vinculá tu cuenta con /start.');
+    const listarTurnos = async () => {
       const proximos = await proximosDe(vinculada.dni);
-      if (proximos.length === 0) return enviar(chat, 'No tenés turnos próximos. Podés reservar en el sitio o en la terminal del instituto.');
       const total = proximos.reduce((s, t) => s + Number(t.precio_final || 0), 0);
-      return enviar(chat, `Tus próximos turnos:\n${proximos.map(lineaTurno).join('\n')}${proximos.length > 1 ? `\nTotal: ${pesos(total)}.` : ''}`);
+      const r = proximos.length === 0 ? 'No tenés turnos próximos. Podés reservar en el sitio o en la terminal del instituto.'
+        : `Tus próximos turnos:\n${proximos.map(lineaTurno).join('\n')}${proximos.length > 1 ? `\nTotal: ${pesos(total)}.` : ''}`;
+      // queda en el hilo: así "solo los precios" después se entiende como los de sus turnos
+      await escribir('asistente.sp_guardar_mensajes_telegram', [String(chat), texto, r]).catch(() => {});
+      return enviar(chat, r);
+    };
+    // /turnos lista directo; "¿qué turnos tengo?" en texto libre lo contesta Gemini, que ve la agenda y el hilo
+    if (comando === '/turnos' || (pideTurnos && !vinculada)) {
+      if (!vinculada) return enviar(chat, 'Primero vinculá tu cuenta con /start.');
+      return listarTurnos();
     }
 
     // Vinculación en dos pasos: DNI y teléfono
@@ -140,6 +147,8 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     // con la cuenta vinculada el asistente ve sus próximos turnos: puede responder precios, señas y fechas
     const turnos = vinculada ? (await proximosDe(vinculada.dni).catch(() => [])).map(lineaTurno) : null;
     const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null, chat, vinculada?.nombre ?? null, turnos);
+    // sin Gemini la respuesta local no ve su agenda: para "¿qué turnos tengo?" mejor la lista
+    if (pideTurnos && respuesta?.fuente !== 'gemini') return listarTurnos();
     return enviar(chat, respuesta.derivada ? `${respuesta.respuesta}\n\nTambién podés escribirle a la recepción por WhatsApp.` : respuesta.respuesta);
   }
 

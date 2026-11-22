@@ -13,7 +13,7 @@
 
 QString ConfigBD::rutaIni(const QString &archivoIni)
 {
-    if (QFile::exists(archivoIni) || !QCoreApplication::instance())
+    if (archivoIni.isEmpty() || QFile::exists(archivoIni) || !QCoreApplication::instance())
         return archivoIni;
     const QString junto = QCoreApplication::applicationDirPath() + "/" + archivoIni;
     return QFile::exists(junto) ? junto : archivoIni;
@@ -42,7 +42,7 @@ ConfigBD ConfigBD::desdeEntorno(const QString &nombreIni)
     c.clave = leer("DERMALIA_DB_PASS", "clave");
     c.base = leer("DERMALIA_DB_NAME", "base");
     const QString ssl = leer("DERMALIA_DB_SSL", "ssl").toLower();
-    c.ca = leer("DERMALIA_DB_CA", "ca");
+    c.ca = rutaIni(leer("DERMALIA_DB_CA", "ca"));  /* el certificado también puede estar junto al .exe */
     c.ssl = (ssl == "1" || ssl == "true" || ssl == "si" || ssl == "sí");
     return c;
 }

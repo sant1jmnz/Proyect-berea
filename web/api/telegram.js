@@ -91,7 +91,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
       const r = await escribir('personas.sp_desvincular_telegram', [chat, 'sistema']);
       return enviar(chat, r.ok ? 'Listo: ya no vas a recibir avisos por Telegram. Te los manda la recepción por WhatsApp.' : r.mensaje);
     }
-    const pideTurnos = !texto.startsWith('/') && /turnos?/i.test(texto) && /(tengo|proxim\w*|próxim\w*|cuant\w*|cuánt\w*|mis|cuando|cuándo)/i.test(texto) && !/(reservar|sacar|cancelar|cambiar)/i.test(texto);
+    const pideTurnos = !texto.startsWith('/') && /turnos?|agenda/i.test(texto) && !/(reserv|sacar|saque|cancel|cambi|reprogram|precio|cuest|seña|sena|horario|disponib|libre|cuanto dura|cuánto dura)/i.test(texto);
     if (comando === '/turnos' || pideTurnos) {
       if (!vinculada) return enviar(chat, 'Primero vinculá tu cuenta con /start.');
       const ahoraTexto = ahora().toISOString().slice(0, 19).replace('T', ' ');

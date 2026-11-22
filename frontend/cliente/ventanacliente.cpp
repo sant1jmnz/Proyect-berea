@@ -15,7 +15,6 @@
 #include "validaciones.h"
 
 #include <QApplication>
-#include <QClipboard>
 #include <QCalendarWidget>
 #include <QDesktopServices>
 #include <QHBoxLayout>
@@ -289,18 +288,8 @@ void VentanaCliente::armarMiTurno()
         const QString enlace = enlaceTelegram();
         if (enlace.isEmpty())
             QMessageBox::information(this, "Telegram", "El bot de Telegram no está disponible en este momento.");
-        else {
-            /* Si la PC no tiene Telegram con sesión iniciada el enlace no abre nada: queda copiado y a la vista. */
-            QApplication::clipboard()->setText(enlace);
+        else
             QDesktopServices::openUrl(QUrl(enlace));
-            QMessageBox aviso(QMessageBox::Information, "Telegram",
-                              QString("Si no se abrió Telegram, abrí este enlace desde tu celular o navegador "
-                                      "(ya quedó copiado):<br><a href=\"%1\">%1</a>").arg(enlace.toHtmlEscaped()),
-                              QMessageBox::Ok, this);
-            aviso.setTextFormat(Qt::RichText);
-            aviso.setTextInteractionFlags(Qt::TextBrowserInteraction);
-            aviso.exec();
-        }
     });
     connect(btnCalendar, &QPushButton::clicked, this, &VentanaCliente::agregarACalendar);
 

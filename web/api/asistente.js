@@ -144,8 +144,9 @@ export function responderLocal(pregunta, catalogo) {
 
 /* ---------- Gemini ---------- */
 
-export function instruccionSistema(catalogo) {
+export function instruccionSistema(catalogo, nombre = null) {
   return [
+    ...(nombre ? [`Hablás con ${String(nombre).slice(0, 40)}, paciente con la cuenta vinculada. Si pregunta quién es, decile ese nombre; no sabés nada más de su identidad.`] : []),
     `Sos el asistente virtual de ${INSTITUTO.nombre}. Respondés en español rioplatense (vos), con calidez y en no más de 4 oraciones.`,
     'REGLA PRINCIPAL: respondé SOLO con la información de abajo. No inventes precios, protocolos, profesionales, promociones ni datos médicos.',
     'No des diagnósticos ni indicaciones médicas personales: para eso, sugerí una consulta con el profesional.',
@@ -168,13 +169,13 @@ export function instruccionSistema(catalogo) {
 const URL_GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /* Pregunta a Gemini. Devuelve { respuesta, derivada } o lanza un error (y se usa el asistente local). */
-export async function preguntarGemini({ pregunta, historial = [], catalogo, clave, modelo, fetchImpl = fetch, esperaMs = 12000 }) {
+export async function preguntarGemini({ pregunta, historial = [], catalogo, nombre, clave, modelo, fetchImpl = fetch, esperaMs = 12000 }) {
   const contenidos = [
     ...historial.slice(-6).map((m) => ({ role: m.rol === 'asistente' ? 'model' : 'user', parts: [{ text: filtrarDatosPersonales(m.texto).slice(0, 600) }] })),
     { role: 'user', parts: [{ text: pregunta }] },
   ];
   const cuerpo = {
-    systemInstruction: { parts: [{ text: instruccionSistema(catalogo) }] },
+    systemInstruction: { parts: [{ text: instruccionSistema(catalogo, nombre) }] },
     contents: contenidos,
     generationConfig: {
       temperature: 0.2,
@@ -237,7 +238,7 @@ export const reiniciarLimites = () => usos.clear();
 
 /* Responde una pregunta. `catalogo` son las filas de sp_listar_protocolos.
  * Devuelve { respuesta, derivada, fuente: 'gemini' | 'local', preguntaGuardada }. */
-export async function responderAsistente({ pregunta, historial, catalogo, quien = 'anonimo', entorno = process.env, fetchImpl = fetch }) {
+export async function responderAsistente({ pregunta, historial, catalogo, nombre, quien = 'anonimo', entorno = process.env, fetchImpl = fetch }) {
   const limpia = filtrarDatosPersonales(pregunta).trim().slice(0, 500);
   const clave = entorno.GEMINI_API_KEY;
   if (clave && !gastaGemini(quien)) console.warn(`Asistente: límite de Gemini alcanzado para ${quien}, responde el asistente local`);
@@ -245,7 +246,7 @@ export async function responderAsistente({ pregunta, historial, catalogo, quien 
     const modelos = [entorno.GEMINI_MODELO || MODELO_POR_DEFECTO, MODELO_DE_RESPALDO];
     for (const modelo of [...new Set(modelos)]) {
       try {
-        const r = await preguntarGemini({ pregunta: limpia, historial, catalogo, clave, modelo, fetchImpl });
+        const r = await preguntarGemini({ pregunta: limpia, historial, catalogo, nombre, clave, modelo, fetchImpl });
         return { ...r, fuente: 'gemini', preguntaGuardada: limpia };
       } catch (e) {
         console.warn(`Asistente: Gemini (${modelo}) no respondió, ${e.message}`);

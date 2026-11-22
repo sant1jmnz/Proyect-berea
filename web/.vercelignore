@@ -1,3 +1,4 @@
 api/*.test.js
 ca.pem
 .env
+.env.vercel

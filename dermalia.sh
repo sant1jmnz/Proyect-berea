@@ -97,7 +97,7 @@ instalar() {
   conectar_admin
   cd "$RAIZ/backend"
   for f in codigobasededatossolotablas.sql 02_datos.sql 02b_numero.sql 03_sp_semana3.sql 04_sp_semana4.sql \
-           05_reportes_semana5.sql 06_tuning_semana6.sql 09_sp_pantallas.sql 07_actividad_con_sps.sql 08_usuarios.sql; do
+           05_reportes_semana5.sql 06_tuning_semana6.sql 09_sp_pantallas.sql 10_sp_telegram.sql 07_actividad_con_sps.sql 08_usuarios.sql; do
     printf '  %-40s' "$f"
     "${MYSQL_ADMIN[@]}" --default-character-set=utf8mb4 < "$f" >/dev/null && verde "ok"
   done
@@ -222,7 +222,7 @@ probar() {
 instalar_solo_base() {
   cd "$RAIZ/backend"
   for f in codigobasededatossolotablas.sql 02_datos.sql 02b_numero.sql 03_sp_semana3.sql 04_sp_semana4.sql \
-           05_reportes_semana5.sql 06_tuning_semana6.sql 09_sp_pantallas.sql 07_actividad_con_sps.sql 08_usuarios.sql; do
+           05_reportes_semana5.sql 06_tuning_semana6.sql 09_sp_pantallas.sql 10_sp_telegram.sql 07_actividad_con_sps.sql 08_usuarios.sql; do
     "${MYSQL_ADMIN[@]}" --default-character-set=utf8mb4 < "$f" >/dev/null
   done
   "${MYSQL_ADMIN[@]}" -e "ALTER USER 'dermalia_app'@'%' IDENTIFIED BY '$(de_env DERMALIA_DB_PASS)'; FLUSH PRIVILEGES;"

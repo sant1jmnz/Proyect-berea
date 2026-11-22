@@ -92,6 +92,7 @@ mysql -u root -p < backend/04_sp_semana4.sql                 # seña, cancelaci�
 mysql -u root -p < backend/05_reportes_semana5.sql           # 8 reportes + auditoría
 mysql -u root -p < backend/06_tuning_semana6.sql             # versiones _tuneado
 mysql -u root -p < backend/09_sp_pantallas.sql               # listados de las pantallas Cupones y Consultas previas
+mysql -u root -p < backend/10_sp_telegram.sql                # bot de Telegram: vincular la paciente y sus avisos
 mysql -u root -p < backend/07_actividad_con_sps.sql          # (opcional) actividad de ejemplo que llena el log
 mysql -u root -p < backend/08_usuarios.sql                   # usuarios de las aplicaciones (solo pueden EJECUTAR los SP); cambiar las contraseñas
 ```

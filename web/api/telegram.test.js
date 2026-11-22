@@ -137,6 +137,44 @@ test('avisos: manda los de Telegram, marca enviada, y un chat bloqueado o invent
   await escribir('agenda.sp_cancelar_turno', [alta.id, null, 'web']);
 });
 
+const toque = (data) => ({ update_id: id++, callback_query: { id: 'q' + id, data, message: { chat: { id: CHAT } } } });
+const botones = () => (enviados.at(-1)?.reply_markup?.inline_keyboard ?? []).flat().map((b) => b.callback_data);
+
+test('botones: reservar por chat (tratamiento, día, hora, confirmar) y cancelar', { skip: !hayBase }, async () => {
+  const b = bot();
+  await b.procesarActualizacion(mensaje('Reservar'));
+  assert.match(ultimo(), /Qué tratamiento/);
+  assert.ok(botones().includes('rp:1'));
+  await b.procesarActualizacion(toque('rp:1'));
+  assert.match(ultimo(), /Qué día/);
+  await b.procesarActualizacion(toque(botones()[0]));
+  assert.match(ultimo(), /Horarios del/);
+  await b.procesarActualizacion(toque(botones()[0]));
+  assert.match(ultimo(), /Confirmás/);
+  await b.procesarActualizacion(toque(botones().find((d) => d.startsWith('rok:'))));
+  assert.match(ultimo(), /Listo! Reservé tu turno/);
+  // cancelarlo con el menú
+  await b.procesarActualizacion(mensaje('Cancelar turno'));
+  const c = botones().at(-1);
+  assert.match(c, /^c:[0-9]+$/);
+  await b.procesarActualizacion(toque(c));
+  assert.match(ultimo(), /Cancelar el turno/);
+  await b.procesarActualizacion(toque(c.replace('c:', 'cok:')));
+  assert.equal(ultimo(), 'Listo, cancelé tu turno.');
+});
+
+test('botones: un turno ajeno no se toca; el recordatorio "Confirmo" agradece', { skip: !hayBase }, async () => {
+  const b = bot();
+  await b.procesarActualizacion(toque('cok:1'));
+  assert.match(ultimo(), /ya no está en tus próximos/);
+  await b.procesarActualizacion(toque('v:1'));
+  assert.match(ultimo(), /Gracias por confirmar/);
+  await b.procesarActualizacion(mensaje('Mis turnos'));
+  assert.match(ultimo(), /Tus próximos turnos|No tenés turnos/);
+  await b.procesarActualizacion(mensaje('/ayuda'));
+  assert.ok(enviados.at(-1).reply_markup.keyboard, 'el menú fijo viaja con /ayuda');
+});
+
 test('/salir desvincula', { skip: !hayBase }, async () => {
   await bot().procesarActualizacion(mensaje('/salir'));
   assert.match(ultimo(), /ya no vas a recibir/);

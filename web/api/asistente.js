@@ -160,6 +160,7 @@ export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), tu
         ? 'PRÓXIMOS TURNOS DE ESTA PACIENTE (usalos para responder sobre sus turnos, fechas, precios o señas; si pide un total, sumá los precios). Si la charla viene sobre sus turnos, "los precios", "la seña" o "cuánto es" se refieren a ESTOS turnos, no al catálogo: respondé solo eso, una línea por turno. Nunca digas que no tenés acceso a su agenda:'
         : 'Esta paciente no tiene turnos próximos (pendientes o confirmados). Si pregunta por ellos, decíselo y ofrecé reservar en el sitio.',
       ...turnos,
+      'EN TELEGRAM: si quiere reservar, cancelar, cambiar un turno o pagar la seña, decile que use los botones del menú (Reservar, Cancelar turno, Reprogramar, Mis turnos): ahí se hace en el momento.',
     ] : ['Si pregunta por SUS turnos o su seña, decile que vincule su Telegram con /start o que mire "Mis turnos" en el sitio.']),
     '',
     `UBICACIÓN: ${INSTITUTO.zona}.`,

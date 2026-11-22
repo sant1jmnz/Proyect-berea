@@ -377,6 +377,7 @@ function construirBot(pool, token) {
     token,
     llamar: (sp, parametros) => llamar(pool, sp, parametros),
     escribir: (sp, parametros) => escribir(pool, sp, parametros),
+    recepcion: process.env.TELEGRAM_RECEPCION_CHAT || null,
     preguntarAsistente: async (pregunta, idPaciente, chat, nombre, turnos = null) => {
       let catalogo = [];
       try { catalogo = await catalogoParaAsistente(pool); } catch { /* sin base: responde igual */ }

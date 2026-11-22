@@ -17,6 +17,7 @@ export function limpiarReserva(r) {
   if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(r.inicio ?? '')) o.inicio = r.inicio;
   if (Number.isInteger(r.profesional)) o.profesional = r.profesional;
   if (r.cancelar === true) o.cancelar = true;
+  if (r.activa === true) o.activa = true; // la reserva ya empezó aunque todavía no haya elegido nada
   return o;
 }
 
@@ -27,6 +28,7 @@ export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo,
   const t = normalizar(pregunta);
   const hayIntencion = quiereReservar(t) || preguntaPorDisponibilidad(pregunta, ahora) || /\b(quiero|quisiera|necesito|me gustaria|turno)\b/.test(t);
   if (!eligio && !Object.keys(r).length && !hayIntencion) return null;
+  r = { ...r, activa: true };
   if (r.cancelar) return { respuesta: 'Listo, no reservé nada. Cuando quieras, pedime un turno de nuevo.', reserva: null, opciones: [] };
 
   // lo que se entiende del texto libre (también de una nota de voz) se aplica sin preguntar de nuevo

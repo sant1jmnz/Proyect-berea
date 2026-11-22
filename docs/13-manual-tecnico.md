@@ -172,7 +172,7 @@ Tras 5 intentos fallidos en 15 minutos la cuenta se bloquea 15 minutos.
 
 ## 3. Aplicaciones de escritorio (Qt)
 
-Requisitos en Ubuntu: `sudo apt install qt6-base-dev libmysqlclient-dev cmake ninja-build`.
+Requisitos en Ubuntu: `sudo apt install qt6-base-dev qt6-multimedia-dev libmysqlclient-dev cmake ninja-build`.
 
 ```bash
 cmake -S frontend -B build -G Ninja && cmake --build build

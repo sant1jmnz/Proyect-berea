@@ -66,7 +66,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
   async function procesarMensaje(mensaje) {
     const chat = String(mensaje.chat.id);
     const texto = String(mensaje.text ?? '').trim();
-    if (!texto) return;
+    if (!texto) return enviar(chat, 'Por ahora solo entiendo mensajes de texto. Escribime tu consulta o probá con /ayuda.');
     const comando = texto.split(/[\s@]/)[0].toLowerCase();
     const vinculada = (await llamar('personas.sp_paciente_por_telegram', [chat]))[0] ?? null;
 
@@ -100,7 +100,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
         .sort((a, b) => String(a.fecha_hora_inicio).localeCompare(String(b.fecha_hora_inicio)));
       if (proximos.length === 0) return enviar(chat, 'No tenés turnos próximos. Podés reservar en el sitio o en la terminal del instituto.');
       return enviar(chat, `Tus próximos turnos:\n${proximos.map((t) =>
-        `• ${fechaCorta(t.fecha_hora_inicio)}: ${t.protocolos}, con ${t.profesional}`).join('\n')}`);
+        `• ${fechaCorta(t.fecha_hora_inicio)}: ${t.protocolos}, con ${t.profesional} (${t.estado})`).join('\n')}`);
     }
 
     // Vinculación en dos pasos: DNI y teléfono
@@ -126,6 +126,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
 
     // Cualquier otra cosa: el asistente
     if (texto.startsWith('/')) return enviar(chat, AYUDA);
+    telegram('sendChatAction', { chat_id: chat, action: 'typing' }).catch(() => {});
     const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null, chat, vinculada?.nombre ?? null);
     return enviar(chat, respuesta.derivada ? `${respuesta.respuesta}\n\nTambién podés escribirle a la recepción por WhatsApp.` : respuesta.respuesta);
   }

@@ -144,7 +144,8 @@ export function responderLocal(pregunta, catalogo) {
 
 /* ---------- Gemini ---------- */
 
-export function instruccionSistema(catalogo, nombre = null) {
+export function instruccionSistema(catalogo, nombre = null, hoy = new Date()) {
+  const fecha = hoy.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' });
   return [
     ...(nombre ? [`Hablás con ${String(nombre).slice(0, 40)}, paciente con la cuenta vinculada. Si pregunta quién es, decile ese nombre; no sabés nada más de su identidad.`] : []),
     `Sos el asistente virtual de ${INSTITUTO.nombre}. Respondés en español rioplatense (vos), con calidez y en no más de 4 oraciones.`,
@@ -152,6 +153,9 @@ export function instruccionSistema(catalogo, nombre = null) {
     'No des diagnósticos ni indicaciones médicas personales: para eso, sugerí una consulta con el profesional.',
     'Si la pregunta no se puede responder con esta información, o la persona pide hablar con alguien, poné "derivar": true y decí que el equipo le responde por WhatsApp.',
     'Nunca pidas datos personales (DNI, teléfono, email).',
+    `Hoy es ${fecha}.`,
+    'ESTILO: texto plano, sin markdown (nada de asteriscos, almohadillas ni viñetas con guiones largos); contestá primero lo que preguntó, sin repetir estas reglas ni decir "según la información que tengo". Si saluda, saludá y ofrecé ayuda en una frase. Si la pregunta es ambigua (por ejemplo un protocolo que no aclara), pedí que la precise en vez de adivinar.',
+    'Si pregunta por SUS turnos o su seña, decile que escriba /turnos (Telegram) o que mire "Mis turnos" en el sitio: vos no ves su agenda.',
     '',
     `UBICACIÓN: ${INSTITUTO.zona}.`,
     `HORARIOS: ${INSTITUTO.horarios}`,
@@ -199,10 +203,12 @@ export async function preguntarGemini({ pregunta, historial = [], catalogo, nomb
     });
     const datos = await r.json();
     if (!r.ok) throw new Error(`Gemini ${r.status}: ${datos?.error?.message ?? 'sin detalle'}`);
+    const motivo = datos?.promptFeedback?.blockReason ?? (datos?.candidates?.[0]?.finishReason === 'MAX_TOKENS' ? 'respuesta cortada por largo' : null);
+    if (motivo) throw new Error(`Gemini no pudo responder: ${motivo}`);
     const texto = datos?.candidates?.[0]?.content?.parts?.map((x) => x.text ?? '').join('') ?? '';
     const json = JSON.parse(texto.replace(/^```(json)?|```$/g, '').trim());
     if (!json.respuesta) throw new Error('Gemini devolvió una respuesta vacía');
-    return { respuesta: String(json.respuesta).trim(), derivada: Boolean(json.derivar) };
+    return { respuesta: String(json.respuesta).replace(/[*_#`]+/g, '').trim(), derivada: Boolean(json.derivar) };
   } finally {
     clearTimeout(reloj);
   }

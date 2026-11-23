@@ -38,7 +38,7 @@ import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto
 import mysql from 'mysql2/promise';
 import { responderAsistente, transcribirAudio, consultarAgenda } from './asistente.js';
 import { crearBotTelegram } from './telegram.js';
-import { pasoReserva, ofrecerReserva } from './reservachat.js';
+import { pasoReserva, ofrecerReserva, sinComoReservar } from './reservachat.js';
 
 /* El bot de Telegram (si hay token) se crea al arrancar; /api/estado muestra su usuario para el enlace t.me. */
 let botTelegram = null;
@@ -263,16 +263,16 @@ export function crearManejador(pool) {
             [sesion?.paciente ?? null, origen, r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null])).ok;
         } catch (e) { console.warn('Asistente: no se pudo registrar la consulta:', e.message); }
         let opciones = r.derivada ? [] : ofrecerReserva(pregunta, catalogo, r.respuesta);
-        let reserva = opciones.length ? { activa: true } : null;
+        let reserva = opciones.length ? { activa: true } : null, respuesta = r.respuesta;
         const derivada = r.derivada;
         // si estaba reservando (o pidió turno y preguntó algo), después de contestar muestra el paso en el que va
         if (!opciones.length && catalogo.length) {
           try {
             const p = await pasoReserva({ pregunta, reserva: d.reserva, catalogo, horarios, contestada: true });
-            if (p?.opciones?.length > 1) ({ opciones, reserva } = p);
+            if (p?.opciones?.length > 1) ({ opciones, reserva } = p), respuesta = sinComoReservar(respuesta);
           } catch (e) { console.warn('Reserva en el chat:', e.message); }
         }
-        return responder(res, 200, { respuesta: r.respuesta, derivada, fuente: r.fuente, registrada, transcripcion, ...(opciones.length && { opciones, reserva }) });
+        return responder(res, 200, { respuesta, derivada, fuente: r.fuente, registrada, transcripcion, ...(opciones.length && { opciones, reserva }) });
       }
       if (req.method === 'GET' && ruta === '/api/protocolos') {
         return responder(res, 200, await llamar(pool, 'clinica.sp_listar_protocolos', [url.searchParams.get('texto') || null, null, 0]));

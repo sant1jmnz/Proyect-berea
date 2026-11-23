@@ -783,13 +783,29 @@ void VentanaCliente::confirmar()
                     Validaciones::soloDigitos(ui->editTelefono->text()), c.nombres.join(" + "), c.totalFinal,
                     c.sena, inicio, inicio.addSecs(c.duracionMin * 60), EstadoTurno::Confirmado, "Terminal",
                     ui->btnSena->isChecked(), QString(), 0 };
+    /* Sin conexión no se sabe si la paciente ya existe: se pide la fecha de nacimiento para poder darla de alta al sincronizar. */
+    QDate nacimiento;
+    QString textoNacimiento;
+    for (;;) {
+        bool ok = false;
+        textoNacimiento = QInputDialog::getText(this, "Sin conexión",
+                                                "Para guardar tu turno, ¿cuál es tu fecha de nacimiento? (dd/mm/aaaa)",
+                                                QLineEdit::Normal, textoNacimiento, &ok);
+        if (!ok)
+            return;
+        QString error;
+        nacimiento = Validaciones::fechaDesdeTexto(textoNacimiento, &error);
+        if (nacimiento.isValid() && Validaciones::fechaNacimientoValida(nacimiento, QDate::currentDate(), &error))
+            break;
+        QMessageBox::warning(this, "Fecha incorrecta", error);
+    }
     if (nuevo.senaPagada)
         nuevo.codigoOperacion = ReglasTurno::nuevoCodigoOperacion(turnos);
     turnos.append(nuevo);
     guardarLocal();
     /* Sin base, el turno también queda en contingencia: se manda solo cuando vuelve la conexión (RNF-09). */
     conexion->guardarEnContingencia({ nuevo.paciente, nuevo.dni, nuevo.telefono, nuevo.protocolo,
-                                      nuevo.inicio, nuevo.sena, nuevo.senaPagada, nuevo.origen, {} });
+                                      nuevo.inicio, nuevo.sena, nuevo.senaPagada, nuevo.origen, {}, nacimiento });
 
     QString mensaje = mensajeReservado(nuevo.protocolo, inicio);
     mensaje += nuevo.senaPagada ? QString("\nSeña pagada: código %1.").arg(nuevo.codigoOperacion)

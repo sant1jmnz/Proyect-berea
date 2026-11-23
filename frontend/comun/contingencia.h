@@ -5,6 +5,7 @@
 #ifndef CONTINGENCIA_H
 #define CONTINGENCIA_H
 
+#include <QDate>
 #include <QDateTime>
 #include <QString>
 #include <QVector>
@@ -19,6 +20,7 @@ struct TurnoPendiente {
     bool senaPagada = false;
     QString origen;         /* Gestión, Terminal, Web */
     QDateTime guardado;     /* cuándo se guardó en este equipo */
+    QDate nacimiento;       /* para dar de alta a la paciente si todavía no está en la base (puede venir vacía) */
 };
 
 class Contingencia

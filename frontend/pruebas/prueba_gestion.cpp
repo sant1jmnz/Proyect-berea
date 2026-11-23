@@ -201,6 +201,7 @@ private slots:
         t.protocolo = "Peeling químico";
         t.inicio = QDateTime(QDate(2026, 11, 3), QTime(9, 0));
         t.sena = 12000;
+        t.nacimiento = QDate(1990, 5, 5);
         t.senaPagada = true;
         t.origen = "Gestión";
         QVERIFY(c.guardar(t));
@@ -214,6 +215,7 @@ private slots:
         QCOMPARE(leidos[0].paciente, QString("María Sosa"));
         QCOMPARE(leidos[0].inicio, t.inicio);
         QCOMPARE(leidos[0].sena, 12000);
+        QCOMPARE(leidos[0].nacimiento, QDate(1990, 5, 5));   // para dar de alta a la paciente al sincronizar
         QVERIFY(leidos[0].senaPagada);
         QVERIFY(leidos[0].guardado.isValid());
         QVERIFY(otra.vaciar());

@@ -512,6 +512,10 @@ void VentanaGestion::confirmarTurno()
     turnos.append(nuevo);
     const bool conocida = std::any_of(pacientes.cbegin(), pacientes.cend(),
                                       [&](const Paciente &x) { return x.dni == nuevo.dni; });
+    QDate nacimientoConocido;   /* si la paciente ya está cargada con su fecha, se manda con el turno */
+    for (const Paciente &x : pacientes)
+        if (x.dni == nuevo.dni)
+            nacimientoConocido = x.nacimiento;
     if (!conocida) {   /* la paciente nueva queda en la pantalla Pacientes */
         pacientes.append({ nuevo.paciente, nuevo.dni, nuevo.telefono, QString(), QDate() });
         paginaPacientes->recargar();
@@ -529,7 +533,7 @@ void VentanaGestion::confirmarTurno()
     /* Sin base, el turno se guarda en este equipo hasta que vuelva la conexión (RNF-09). */
     if (!conexion->hayConexion()) {
         if (conexion->guardarEnContingencia({ nuevo.paciente, nuevo.dni, nuevo.telefono, nuevo.protocolo,
-                                              nuevo.inicio, nuevo.sena, nuevo.senaPagada, nuevo.origen, {} }))
+                                              nuevo.inicio, nuevo.sena, nuevo.senaPagada, nuevo.origen, {}, nacimientoConocido }))
             mensaje += "\nNo hay conexión con la base: el turno se guardó en este equipo y se enviará cuando vuelva.";
         else
             mensaje += "\nAtención: no hay conexión con la base y tampoco se pudo guardar el turno en este equipo.";

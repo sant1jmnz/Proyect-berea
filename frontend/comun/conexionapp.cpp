@@ -1,4 +1,5 @@
 #include "conexionapp.h"
+#include "formato.h"
 
 #include "repositorio.h"
 
@@ -115,7 +116,14 @@ int ConexionApp::sincronizar(QStringList *problemas)
         QString motivo;
         const QString origen = t.origen == "Gestión" ? "gestion" : t.origen.toLower();   // "Terminal" → "terminal"
 
-        const Resultado paciente = repo.buscarPaciente(t.dni);
+        Resultado paciente = repo.buscarPaciente(t.dni);
+        /* Paciente nueva reservada sin conexión: se la da de alta con la fecha de nacimiento que dejó. */
+        if (paciente.ok && paciente.filas.isEmpty() && t.nacimiento.isValid()) {
+            QString nombre, apellido;
+            Formato::separarNombre(t.paciente, &nombre, &apellido);
+            if (repo.altaPaciente(t.dni, nombre, apellido, t.nacimiento, QString(), t.telefono, origen).ok)
+                paciente = repo.buscarPaciente(t.dni);
+        }
         int idProtocolo = 0;
         for (const ProtocoloBD &p : repo.listarProtocolos(t.protocolo)) {
             if (p.nombre.compare(t.protocolo, Qt::CaseInsensitive) == 0)

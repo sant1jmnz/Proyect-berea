@@ -116,3 +116,12 @@ test('ofrecerReserva: embarazo no lleva botón de turno', () => {
 test('con los botones del paso a la vista se saca el "escribime qué tratamiento querés"', () => {
   assert.equal(sinComoReservar('Sale $90.000. Lo sacás acá mismo: escribime qué tratamiento querés y te muestro días y horarios.'), 'Sale $90.000.');
 });
+test('"jueves a la mañana" muestra solo horarios de la mañana y la franja sigue en los botones', async () => {
+  const hs = async (dia) => ['09:00', '11:00', '15:00'].map((h) => ({ id_profesional: 1, profesional: 'A', inicio: `${dia} ${h}:00` }));
+  const m = await pasoReserva({ pregunta: 'turno el lunes a la mañana para peeling', catalogo: cat3, horarios: hs, ahora });
+  assert.deepEqual(m.opciones.filter((o) => o.reserva.inicio).map((o) => o.texto.slice(0, 5)), ['09:00', '11:00']);
+  const t = await pasoReserva({ pregunta: 'quiero peeling a la tarde', catalogo: cat3, horarios: hs, ahora });
+  assert.equal(t.opciones[0].reserva.franja, 'tarde');
+  const h = await pasoReserva({ pregunta: 'x', eligio: true, reserva: limpiarReserva(t.opciones[0].reserva), catalogo: cat3, horarios: hs, ahora });
+  assert.deepEqual(h.opciones.filter((o) => o.reserva.inicio).map((o) => o.texto.slice(0, 5)), ['15:00']);
+});

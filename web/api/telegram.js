@@ -224,11 +224,11 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
 
   // El estado de la reserva viaja en el botón (límite de 64 bytes): q:p=12;f=20261123;i=202611231500;r=3;c=1;x=1
   const aBoton = (r, cats) => 'q:' + Object.entries({ p: r.protocolo, f: r.fecha?.replace(/-/g, ''), i: r.inicio && compacto(r.inicio), r: r.profesional,
-    c: r.categoria && cats.indexOf(r.categoria), d: r.desde?.replace(':', ''), x: r.cancelar ? 1 : null }).filter(([, v]) => v != null && v !== -1).map(([k, v]) => `${k}=${v}`).join(';');
+    c: r.categoria && cats.indexOf(r.categoria), d: r.desde?.replace(':', ''), m: r.franja?.[0], x: r.cancelar ? 1 : null }).filter(([, v]) => v != null && v !== -1).map(([k, v]) => `${k}=${v}`).join(';');
   const desdeBoton = (datos, cats) => {
     const v = Object.fromEntries(datos.split(';').map((x) => x.split('=')));
     return { ...(v.p && { protocolo: Number(v.p) }), ...(v.f && { fecha: `${v.f.slice(0, 4)}-${v.f.slice(4, 6)}-${v.f.slice(6, 8)}` }),
-      ...(v.i && { inicio: inicioDe(v.i) }), ...(v.r && { profesional: Number(v.r) }), ...(v.c && { categoria: cats[Number(v.c)] }), ...(v.d && { desde: `${v.d.slice(0, 2)}:${v.d.slice(2)}` }), ...(v.x && { cancelar: true }) };
+      ...(v.i && { inicio: inicioDe(v.i) }), ...(v.r && { profesional: Number(v.r) }), ...(v.c && { categoria: cats[Number(v.c)] }), ...(v.d && { desde: `${v.d.slice(0, 2)}:${v.d.slice(2)}` }), ...(v.m && { franja: v.m === 'm' ? 'manana' : 'tarde' }), ...(v.x && { cancelar: true }) };
   };
   const horariosDe = (fecha, id) => llamar('agenda.sp_horarios_libres', [fecha, id, null, null, null]);
   const compacto = (inicio) => String(inicio).slice(0, 16).replace(/\D/g, '');

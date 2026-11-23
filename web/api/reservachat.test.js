@@ -136,3 +136,8 @@ test('sinComoReservar no corta un precio con punto y el "no hay lugar" conserva 
   const r = await pasoReserva({ pregunta: 'x', eligio: true, reserva: { protocolo: 2, fecha: '2026-11-23', franja: 'tarde' }, catalogo: cat3, horarios: hs, ahora });
   assert.equal(r.reserva.franja, 'tarde');
 });
+test('"a las 5 de la tarde" arranca los horarios desde las 17:00', async () => {
+  const hs = async (dia) => ['09:00', '15:00', '17:30', '18:00'].map((h) => ({ id_profesional: 1, profesional: 'A', inicio: `${dia} ${h}:00` }));
+  const r = await pasoReserva({ pregunta: 'turno el lunes a las 5 de la tarde para peeling', catalogo: cat3, horarios: hs, ahora });
+  assert.deepEqual(r.opciones.filter((o) => o.reserva.inicio).map((o) => o.texto.slice(0, 5)), ['17:30', '18:00']);
+});

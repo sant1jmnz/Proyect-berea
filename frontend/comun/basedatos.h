@@ -63,6 +63,8 @@ public:
     BaseDatos(const BaseDatos &) = delete;              /* una conexión no se copia */
     BaseDatos &operator=(const BaseDatos &) = delete;
 
+    /* Comprueba que la sesión siga viva (mysql_ping). Si se cortó, la cierra y deja el motivo en ultimoError(). */
+    bool verificar();
     bool conectar();               /* false: el motivo queda en ultimoError() */
     void cerrar();
     bool conectado() const { return conn != nullptr; }

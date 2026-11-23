@@ -313,6 +313,11 @@ void VentanaCliente::probarConexion(const QString &archivoContingencia)
     qobject_cast<QVBoxLayout *>(ui->central->layout())->insertWidget(0, franja);
     conexion = new ConexionApp(franja, ConfigBD::desdeEntorno(), archivoContingencia, this);
     connect(conexion, &ConexionApp::conectada, this, &VentanaCliente::conectarBase);
+    connect(conexion, &ConexionApp::conexionPerdida, this, [this] {   /* sin base: los turnos nuevos quedan en este equipo */
+        enModoBase = false;
+        if (relojBase)
+            relojBase->stop();
+    });
     connect(conexion, &ConexionApp::relojDesfasado, this, [this](int minutos) {
         QMessageBox::warning(this, "Reloj del equipo",
             QString("El reloj de este equipo difiere %1 minutos de la hora de la base (%2).\n\n"

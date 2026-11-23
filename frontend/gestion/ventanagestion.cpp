@@ -177,6 +177,11 @@ void VentanaGestion::probarConexion(const QString &archivoContingencia)
     conexion = new ConexionApp(franja, ConfigBD::desdeEntorno(), archivoContingencia, this);
     /* Cuando la conexión se logra (ahora o con "Reintentar"), se pide el ingreso y se leen los datos de la base. */
     connect(conexion, &ConexionApp::conectada, this, &VentanaGestion::conectarBase);
+    connect(conexion, &ConexionApp::conexionPerdida, this, [this] {   /* sin base: los turnos nuevos quedan en este equipo */
+        enModoBase = false;
+        if (relojBase)
+            relojBase->stop();
+    });
     connect(conexion, &ConexionApp::relojDesfasado, this, [this](int minutos) {
         QMessageBox::warning(this, "Reloj del equipo",
             QString("El reloj de este equipo difiere %1 minutos de la hora de la base (%2).\n\n"
@@ -796,7 +801,7 @@ void VentanaGestion::conectarBase()
         return;   /* ya estaba conectada */
     if (!repositorio)
         repositorio = new Repositorio(conexion->base());
-    if (!pedirLogin()) {
+    if (idUsuario == 0 && !pedirLogin()) {   /* al reconectar tras un corte no se vuelve a pedir el ingreso */
         franja->mostrarSinIngreso("No ingresaste con tu usuario y contraseña.");
         return;
     }

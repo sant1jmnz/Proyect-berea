@@ -185,6 +185,18 @@ bool BaseDatos::conectar()
     return true;
 }
 
+// Comprueba que la conexión siga viva; si se cortó (wifi, servidor), la cierra para poder reconectar.
+bool BaseDatos::verificar()
+{
+    if (!conn)
+        return false;
+    if (mysql_ping(sesion(conn)) == 0)
+        return true;
+    cerrar();
+    error = "Se perdió la conexión con la base de datos.";
+    return false;
+}
+
 // Pregunta la hora a la base (UTC) para poder avisar si el reloj de este equipo no coincide.
 QDateTime BaseDatos::horaServidorUtc()
 {
@@ -275,6 +287,7 @@ BaseDatos::BaseDatos(const ConfigBD &c) : config(c) {}
 BaseDatos::~BaseDatos() {}
 void BaseDatos::cerrar() {}
 QDateTime BaseDatos::horaServidorUtc() { return QDateTime(); }
+bool BaseDatos::verificar() { return false; }
 
 bool BaseDatos::conectar()
 {

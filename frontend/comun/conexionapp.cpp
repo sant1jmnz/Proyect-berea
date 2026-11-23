@@ -8,6 +8,21 @@ ConexionApp::ConexionApp(AvisoConexion *franja, const ConfigBD &config,
     : QObject(parent), aviso(franja), base_(config), local(archivoContingencia)
 {
     connect(aviso, &AvisoConexion::reintentar, this, &ConexionApp::probar);
+    connect(&vigia, &QTimer::timeout, this, &ConexionApp::vigilar);
+    vigia.start(VIGILAR_CADA_MS);
+}
+
+// Detecta el corte de conexión en pleno uso (muestra la franja) y reconecta sola cuando vuelve.
+void ConexionApp::vigilar()
+{
+    if (base_.conectado()) {
+        if (!base_.verificar()) {
+            aviso->mostrarSinConexion(base_.ultimoError(), local.cantidad());
+            emit conexionPerdida();
+        }
+    } else if (teniaConexion) {
+        probar();   /* si falla, solo refresca la franja */
+    }
 }
 
 // Intenta conectar. Si anda, sube los turnos guardados en el equipo y avisa; si no, muestra el error.
@@ -15,6 +30,7 @@ bool ConexionApp::probar()
 {
     const bool conectada = base_.conectar();
     if (conectada) {
+        teniaConexion = true;
         if (local.cantidad() > 0) {   // volvió la conexión: se envían los turnos guardados en este equipo
             QStringList problemas;
             const int enviados = sincronizar(&problemas);

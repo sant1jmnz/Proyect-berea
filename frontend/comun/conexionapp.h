@@ -10,6 +10,7 @@
 #include "contingencia.h"
 
 #include <QObject>
+#include <QTimer>
 
 class ConexionApp : public QObject
 {
@@ -17,6 +18,7 @@ class ConexionApp : public QObject
 
 public:
     static constexpr int TOLERANCIA_RELOJ_MIN = 5;
+    static constexpr int VIGILAR_CADA_MS = 8000;   /* cada cuánto se revisa que siga la conexión */
 
     /* `archivoContingencia` vacío: carpeta de datos de la aplicación. */
     ConexionApp(AvisoConexion *aviso, const ConfigBD &config,
@@ -41,12 +43,20 @@ public:
 signals:
     /* Se avisa cada vez que se logra conectar (al arrancar o con "Reintentar"). */
     void conectada();
+    /* La conexión andaba y se cortó: desde ahora los turnos nuevos se guardan en este equipo. */
+    void conexionPerdida();
     /* El reloj de este equipo difiere de la hora de la base en `minutos` (positivo: adelantado). Solo aviso. */
     void relojDesfasado(int minutos);
     /* Tras sincronizar los turnos guardados: cuántos se enviaron y por qué no se pudieron enviar los demás. */
     void pendientesSincronizados(int enviados, const QStringList &problemas);
 
+private slots:
+    /* Con base: mira que siga viva. Sin base: reintenta sola, así no hace falta apretar "Reintentar". */
+    void vigilar();
+
 private:
+    QTimer vigia;
+    bool teniaConexion = false;   /* ya hubo conexión en esta sesión */
     AvisoConexion *aviso;
     BaseDatos base_;
     Contingencia local;

@@ -11,6 +11,7 @@
 #include <mysql.h>
 #endif
 
+// Busca el .ini tal cual y, si no está, junto al ejecutable.
 QString ConfigBD::rutaIni(const QString &archivoIni)
 {
     if (archivoIni.isEmpty() || QFile::exists(archivoIni) || !QCoreApplication::instance())
@@ -19,6 +20,7 @@ QString ConfigBD::rutaIni(const QString &archivoIni)
     return QFile::exists(junto) ? junto : archivoIni;
 }
 
+// Arma la configuración de la base con las variables de entorno y, si faltan, con el dermalia.ini.
 ConfigBD ConfigBD::desdeEntorno(const QString &nombreIni)
 {
     ConfigBD c;
@@ -252,6 +254,7 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
 
 bool BaseDatos::compiladoConMysql() { return false; }
 BaseDatos::BaseDatos(const ConfigBD &c) : config(c) {}
+// Sin MySQL no hay nada que cerrar.
 BaseDatos::~BaseDatos() {}
 void BaseDatos::cerrar() {}
 

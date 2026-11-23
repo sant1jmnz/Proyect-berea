@@ -6,6 +6,7 @@ namespace Validaciones {
 namespace {
 const double PRECIO_MAXIMO = 10000000.0;   /* tope de una cirugía grande; la base guarda hasta 12 dígitos */
 const int DURACION_MAXIMA_MIN = 600;       /* el stored procedure acepta de 1 a 600 minutos */
+// Carga el mensaje en *error (si no es nulo) y devuelve false, para validar en una línea.
 bool fallar(QString *error, const QString &mensaje) {
     if (error) {
         *error = mensaje;
@@ -14,30 +15,37 @@ bool fallar(QString *error, const QString &mensaje) {
 }
 } // namespace
 
+// Filtro de tipeo: solo letras, espacio, apóstrofe y guion, hasta `maximo` caracteres.
 QRegularExpression filtroNombre(int maximo) {
     return QRegularExpression(QString("[\\p{L} '\u2019\\-]{0,%1}").arg(maximo));
 }
 
+// Filtro de tipeo del email: letras, números y . _ % + @ -, hasta 100 caracteres.
 QRegularExpression filtroEmail() {
     return QRegularExpression("[A-Za-z0-9._%+@\\-]{0,100}");
 }
 
+// Filtro de tipeo de la matrícula: letras, números y espacio, hasta 12.
 QRegularExpression filtroMatricula() {
     return QRegularExpression("[A-Za-z0-9 ]{0,12}");
 }
 
+// Filtro de tipeo del usuario: letras, números, punto, guion y guion bajo, hasta 30.
 QRegularExpression filtroUsuario() {
     return QRegularExpression("[A-Za-z0-9._\\-]{0,30}");
 }
 
+// Filtro de tipeo del DNI: solo dígitos, hasta 8.
 QRegularExpression filtroDni() {
     return QRegularExpression("[0-9]{0,8}");
 }
 
+// Filtro de tipeo del teléfono: '+' opcional y hasta 13 dígitos.
 QRegularExpression filtroTelefono() {
     return QRegularExpression("\\+?[0-9]{0,13}");
 }
 
+// Deja solo los dígitos del texto.
 QString soloDigitos(const QString &texto) {
     QString salida;
     for (const QChar c : texto)
@@ -46,12 +54,14 @@ QString soloDigitos(const QString &texto) {
     return salida;
 }
 
+// Quita espacios, guiones, puntos y paréntesis para comparar o validar.
 QString normalizar(const QString &texto) {
     QString limpio = texto.trimmed();
     limpio.remove(QRegularExpression("[\\s\\-\\.\\(\\)]"));
     return limpio;
 }
 
+// DNI argentino: obligatorio, solo números, 7 u 8 dígitos.
 bool dniValido(const QString &dni, QString *error) {
     const QString d = normalizar(dni);
     if (d.isEmpty()) {
@@ -67,6 +77,7 @@ bool dniValido(const QString &dni, QString *error) {
     return true;
 }
 
+// Teléfono: obligatorio, solo números (con '+' inicial opcional), de 10 a 13 dígitos.
 bool telefonoValido(const QString &telefono, QString *error) {
     QString t = normalizar(telefono);
     if (t.startsWith('+')) {
@@ -87,6 +98,7 @@ bool telefonoValido(const QString &telefono, QString *error) {
 
 namespace {
 /* Letras, y entre palabras un solo espacio, apóstrofe o guion (nunca dos seguidos ni al principio o al final). */
+// Acepta palabras de letras unidas por un solo espacio, apóstrofe o guion; no admite separadores dobles ni en los bordes.
 bool soloLetrasYSeparadores(const QString &n)
 {
     static const QRegularExpression forma("^\\p{L}+([ '\u2019\\-]\\p{L}+)*$");
@@ -94,6 +106,7 @@ bool soloLetrasYSeparadores(const QString &n)
 }
 } // namespace
 
+// Nombre: de 2 a 60 caracteres, solo letras y separadores.
 bool nombreValido(const QString &nombre, QString *error) {
     const QString n = nombre.simplified();
     if (n.isEmpty()) {
@@ -108,6 +121,7 @@ bool nombreValido(const QString &nombre, QString *error) {
     return true;
 }
 
+// Nombre completo: igual que nombreValido pero con al menos dos palabras.
 bool nombreApellidoValido(const QString &nombre, QString *error) {
     if (!nombreValido(nombre, error)) {
         return false;
@@ -118,6 +132,7 @@ bool nombreApellidoValido(const QString &nombre, QString *error) {
     return true;
 }
 
+// Apellido: de 2 a 50 caracteres, solo letras y separadores.
 bool apellidoValido(const QString &apellido, QString *error) {
     const QString a = apellido.simplified();
     if (a.isEmpty()) {
@@ -132,6 +147,7 @@ bool apellidoValido(const QString &apellido, QString *error) {
     return true;
 }
 
+// Email: puede quedar vacío si no es obligatorio; si no, de 5 a 100 caracteres, con dominio y sin '..'.
 bool emailValido(const QString &email, bool obligatorio, QString *error) {
     const QString e = email.trimmed();
     if (e.isEmpty()) {
@@ -144,6 +160,7 @@ bool emailValido(const QString &email, bool obligatorio, QString *error) {
     return true;
 }
 
+// La fecha tiene que ser válida, anterior a hoy y de no más de 120 años atrás.
 bool fechaNacimientoValida(const QDate &fecha, const QDate &hoy, QString *error) {
     if (!fecha.isValid()) {
         return fallar(error, "La fecha de nacimiento no es válida.");
@@ -157,6 +174,7 @@ bool fechaNacimientoValida(const QDate &fecha, const QDate &hoy, QString *error)
     return true;
 }
 
+// Convierte 'dd/mm/aaaa' en fecha; si no existe (por ejemplo 31/02) devuelve una fecha nula y deja el error.
 QDate fechaDesdeTexto(const QString &texto, QString *error) {
     static const QRegularExpression forma("^(\\d{1,2})/(\\d{1,2})/(\\d{4})$");
     const QRegularExpressionMatch m = forma.match(texto.trimmed());
@@ -169,6 +187,7 @@ QDate fechaDesdeTexto(const QString &texto, QString *error) {
     return fecha;
 }
 
+// Matrícula profesional: 1 a 3 letras y de 4 a 8 números, con espacio opcional (ej. MN 123456).
 bool matriculaValida(const QString &matricula, QString *error) {
     const QString m = matricula.simplified().toUpper();
     if (m.isEmpty()) {
@@ -181,6 +200,7 @@ bool matriculaValida(const QString &matricula, QString *error) {
     return true;
 }
 
+// Usuario: de 4 a 30 caracteres en minúscula, números, punto, guion o guion bajo.
 bool usuarioValido(const QString &usuario, QString *error) {
     const QString u = usuario.trimmed();
     if (u.isEmpty()) {
@@ -193,6 +213,7 @@ bool usuarioValido(const QString &usuario, QString *error) {
     return true;
 }
 
+// Clave: de 6 a 50 caracteres y sin espacios.
 bool claveValida(const QString &clave, QString *error) {
     if (clave.isEmpty()) {
         return fallar(error, "Ingresá la contraseña.");
@@ -206,6 +227,7 @@ bool claveValida(const QString &clave, QString *error) {
     return true;
 }
 
+// Código de tarjeta de regalo: de 4 a 40 caracteres entre letras, números y guion.
 bool codigoTarjetaValido(const QString &codigo, QString *error) {
     const QString c = codigo.trimmed();
     if (c.isEmpty()) {
@@ -218,6 +240,7 @@ bool codigoTarjetaValido(const QString &codigo, QString *error) {
     return true;
 }
 
+// Texto obligatorio de 3 a `maximo` caracteres; `etiqueta` arma el mensaje de error.
 bool textoObligatorioValido(const QString &texto, int maximo, const QString &etiqueta, QString *error) {
     const QString t = texto.simplified();
     if (t.isEmpty()) {
@@ -229,6 +252,7 @@ bool textoObligatorioValido(const QString &texto, int maximo, const QString &eti
     return true;
 }
 
+// Precio: número válido, no negativo y hasta PRECIO_MAXIMO.
 bool precioValido(double precio, QString *error) {
     if (precio != precio) {   /* NaN */
         return fallar(error, "El precio no es un número válido.");
@@ -242,6 +266,7 @@ bool precioValido(double precio, QString *error) {
     return true;
 }
 
+// Duración en minutos: de 1 a DURACION_MAXIMA_MIN.
 bool duracionValida(int minutos, QString *error) {
     if (minutos <= 0) {
         return fallar(error, "La duración debe ser mayor a 0 minutos.");

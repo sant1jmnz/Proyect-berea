@@ -2,6 +2,7 @@
 
 #include "repositorio.h"
 
+// Guarda el aviso de conexión, la base y el archivo de contingencia; el botón Reintentar del aviso vuelve a probar.
 ConexionApp::ConexionApp(AvisoConexion *franja, const ConfigBD &config,
                          const QString &archivoContingencia, QObject *parent)
     : QObject(parent), aviso(franja), base_(config), local(archivoContingencia)
@@ -9,6 +10,7 @@ ConexionApp::ConexionApp(AvisoConexion *franja, const ConfigBD &config,
     connect(aviso, &AvisoConexion::reintentar, this, &ConexionApp::probar);
 }
 
+// Intenta conectar. Si anda, sube los turnos guardados en el equipo y avisa; si no, muestra el error.
 bool ConexionApp::probar()
 {
     const bool conectada = base_.conectar();
@@ -26,6 +28,7 @@ bool ConexionApp::probar()
     return conectada;
 }
 
+// Guarda un turno en el equipo cuando no hay base y actualiza el contador de pendientes.
 bool ConexionApp::guardarEnContingencia(const TurnoPendiente &turno)
 {
     const bool guardado = local.guardar(turno);

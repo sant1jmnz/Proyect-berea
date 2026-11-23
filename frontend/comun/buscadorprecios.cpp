@@ -12,6 +12,7 @@
 #include <QUrl>
 #include <algorithm>
 
+// Arma la pantalla desde el .ui y agrega la lista con scroll; el filtro se actualiza a medida que se escribe.
 BuscadorPrecios::BuscadorPrecios(QWidget *parent)
     : QWidget(parent), ui(new Ui::BuscadorPrecios)
 {
@@ -38,11 +39,13 @@ BuscadorPrecios::BuscadorPrecios(QWidget *parent)
     connect(ui->btnWhatsapp, &QPushButton::clicked, this, &BuscadorPrecios::consultarPorWhatsApp);
 }
 
+// Libera la interfaz creada por setupUi.
 BuscadorPrecios::~BuscadorPrecios()
 {
     delete ui;
 }
 
+// Recibe el catálogo, arma las filas y muestra todo.
 void BuscadorPrecios::setCatalogo(const QVector<Tratamiento> &tratamientos)
 {
     catalogo = tratamientos;
@@ -50,6 +53,7 @@ void BuscadorPrecios::setCatalogo(const QVector<Tratamiento> &tratamientos)
     mostrarResultados();
 }
 
+// Devuelve las posiciones de los tratamientos cuyo nombre o descripción contienen el texto (sin mayúsculas ni tildes), en orden alfabético. Texto vacío: devuelve todos.
 QVector<int> BuscadorPrecios::buscar(const QVector<Tratamiento> &tratamientos, const QString &texto)
 {
     const QString buscado = Formato::sinTildes(texto.simplified());

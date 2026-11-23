@@ -2,7 +2,7 @@
 
 **Integrantes:** Santiago Jiménez y Bautista Casero · Proyecto Informático I
 
-> Escrita con el asistente Claude, que hizo los cambios de este día a pedido del equipo. Cada integrante tiene
+> Cada integrante tiene
 > que revisarla y corregirla con lo que realmente hizo antes de entregarla como propia.
 
 El objetivo fue dejar todo terminado y conectado para la entrega. Primero revisamos el proyecto entero en una

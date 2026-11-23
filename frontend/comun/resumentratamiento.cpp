@@ -31,6 +31,7 @@ static const QJsonArray &fichas()
     return lista;
 }
 
+// Lista de protocolos tomada del archivo de fichas incluido en el programa.
 QVector<ProtocoloDelCatalogo> catalogo()
 {
     QVector<ProtocoloDelCatalogo> lista;
@@ -48,6 +49,7 @@ QVector<ProtocoloDelCatalogo> catalogo()
     return lista;
 }
 
+// Busca la ficha por id de base o, si no hay id, por nombre sin distinguir mayúsculas; `encontrada` indica si apareció.
 Ficha fichaDe(int idBase, const QString &nombre)
 {
     Ficha f;
@@ -87,6 +89,7 @@ static QWidget *dato(const QString &titulo, const QString &valor)
     return caja;
 }
 
+// Precio de la consulta prequirúrgica en el catálogo; 0 si no está.
 int precioConsulta(const QVector<Tratamiento> &catalogo)
 {
     for (const Tratamiento &t : catalogo)
@@ -95,6 +98,7 @@ int precioConsulta(const QVector<Tratamiento> &catalogo)
     return 0;
 }
 
+// Abre el resumen del tratamiento: precio, seña, duración y recomendaciones; en cirugías avisa de la consulta previa.
 void mostrar(QWidget *parent, const Tratamiento &t, int valorConsulta)
 {
     const Ficha f = fichaDe(t.id, t.nombre);

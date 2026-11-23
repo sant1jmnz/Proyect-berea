@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QPushButton>
 
+// Franja amarilla de aviso: mensaje y botón de reintento; arranca oculta.
 AvisoConexion::AvisoConexion(QWidget *parent)
     : QFrame(parent)
 {
@@ -30,6 +31,7 @@ AvisoConexion::AvisoConexion(QWidget *parent)
     hide();
 }
 
+// Muestra la franja de contingencia: no hay base y los turnos nuevos quedan en este equipo.
 void AvisoConexion::mostrarSinConexion(const QString &motivo, int pendientes)
 {
     estaSinConexion = true;
@@ -41,6 +43,7 @@ void AvisoConexion::mostrarSinConexion(const QString &motivo, int pendientes)
     show();
 }
 
+// Avisa que no hay sesión: se ven datos de prueba y nada se guarda; el botón pasa a 'Ingresar'.
 void AvisoConexion::mostrarSinIngreso(const QString &motivo)
 {
     estaSinConexion = true;
@@ -51,6 +54,7 @@ void AvisoConexion::mostrarSinIngreso(const QString &motivo)
     show();
 }
 
+// Con la conexión de vuelta la franja solo queda visible si hay turnos pendientes de enviar.
 void AvisoConexion::mostrarConectado(int pendientes)
 {
     estaSinConexion = false;
@@ -62,17 +66,20 @@ void AvisoConexion::mostrarConectado(int pendientes)
     setVisible(pendientes > 0);   /* conectado y sin nada pendiente: no hace falta avisar */
 }
 
+// Actualiza la cantidad de turnos pendientes en el texto.
 void AvisoConexion::actualizarPendientes(int pendientes)
 {
     pendientesActuales = pendientes;
     refrescar();
 }
 
+// Texto que muestra hoy la franja.
 QString AvisoConexion::texto() const
 {
     return lblMensaje->text();
 }
 
+// Arma el texto según haya o no conexión, con singular/plural de los turnos pendientes.
 void AvisoConexion::refrescar()
 {
     const QString pendientes = pendientesActuales == 1

@@ -17,6 +17,7 @@ namespace AlmacenLocal {
 static const int VERSION = 2;
 static const char *FORMATO_FECHA = "yyyy-MM-dd";
 
+// Ruta del archivo local: la variable DERMALIA_DATOS_LOCAL si existe, si no la carpeta de datos del usuario.
 QString rutaPorDefecto()
 {
     const QString entorno = qEnvironmentVariable("DERMALIA_DATOS_LOCAL");
@@ -27,6 +28,7 @@ QString rutaPorDefecto()
 
 /* ---- a JSON ---- */
 
+// Las funciones aJson pasan cada dato del programa a un objeto JSON para guardarlo.
 static QJsonObject aJson(const Categoria &c)
 {
     return { { "nombre", c.nombre }, { "porcentajeSena", c.porcentajeSena },
@@ -40,6 +42,7 @@ static QJsonObject aJson(const Protocolo &p)
              { "descripcion", p.descripcion } };
 }
 
+// El estado del turno se guarda como número y las fechas en formato ISO.
 static QJsonObject aJson(const Turno &t)
 {
     return { { "paciente", t.paciente }, { "dni", t.dni }, { "telefono", t.telefono },
@@ -66,6 +69,7 @@ static QJsonObject aJson(const Profesional &p)
              { "email", p.email } };
 }
 
+// Si la fecha de nacimiento no es válida se guarda vacía.
 static QJsonObject aJson(const Paciente &p)
 {
     return { { "nombre", p.nombre }, { "dni", p.dni }, { "telefono", p.telefono }, { "email", p.email },
@@ -73,6 +77,7 @@ static QJsonObject aJson(const Paciente &p)
 }
 
 template <typename T>
+// Convierte un vector de cualquier tipo en un arreglo JSON, usando el aJson que corresponda.
 static QJsonArray lista(const QVector<T> &elementos)
 {
     QJsonArray a;
@@ -83,6 +88,7 @@ static QJsonArray lista(const QVector<T> &elementos)
 
 /* ---- desde JSON (con valores por defecto si falta algún campo) ---- */
 
+// Las funciones xxxDe hacen el camino inverso (JSON a dato); si falta un campo usan un valor por defecto.
 static Categoria categoriaDe(const QJsonObject &o)
 {
     return { o["nombre"].toString(), o["porcentajeSena"].toInt(30), o["requiereEvaluacion"].toBool(),
@@ -102,6 +108,7 @@ static Protocolo protocoloDe(const QJsonObject &o)
     return p;
 }
 
+// Si el estado guardado está fuera de rango se toma como Confirmado.
 static Turno turnoDe(const QJsonObject &o)
 {
     Turno t;
@@ -159,6 +166,7 @@ static Paciente pacienteDe(const QJsonObject &o)
     return p;
 }
 
+// Lee el archivo local. Devuelve false si no existe o el JSON está roto; en ese caso no toca los datos recibidos.
 bool leer(const QString &ruta, Datos *datos)
 {
     QFile archivo(ruta);
@@ -187,6 +195,7 @@ bool leer(const QString &ruta, Datos *datos)
     return true;
 }
 
+// Escribe el archivo con QSaveFile, que lo deja intacto si algo falla a mitad de camino.
 bool guardar(const QString &ruta, const Datos &datos)
 {
     QDir().mkpath(QFileInfo(ruta).absolutePath());

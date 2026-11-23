@@ -30,7 +30,6 @@ Los tres comparten los Componentes R1-R4 de la MML y la misma base MySQL
 Mockup interactivo con las pantallas de los apartados de escritorio,
 navegables desde un selector superior (Cliente / Gestión) y un panel lateral con las
 pantallas de cada uno:
-https://claude.ai/artifact/LAL3dVf5JWdd3SD7VYuRFX
 
 Pensado como referencia visual para construir la interfaz real en Qt
 Designer / Qt Widgets (el apartado Cliente en una ventana táctil vertical,

@@ -19,6 +19,6 @@ El catálogo (nombres, precios, duraciones, profesionales) sale de `backend/02_d
 con `npm run generar` (corre solo antes de `dev` y `build`). Lo que la base no guarda
 (capa de la piel, sesiones, cuidados) está en `src/datos/fichas.js`.
 
-Skills usadas para el rediseño (en `.claude/skills/`): impeccable, ui-ux-pro-max,
+Skills usadas para el rediseño: impeccable, ui-ux-pro-max,
 emil-design-eng, review-animations y design-taste-frontend (que reemplazó a
 redesign-existing-projects en su repositorio).

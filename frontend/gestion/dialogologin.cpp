@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+// Ventana de ingreso del personal: usuario y contraseña, o seguir con datos de prueba.
 DialogoLogin::DialogoLogin(Repositorio *repositorio, QWidget *parent)
     : QDialog(parent), repo(repositorio)
 {
@@ -44,6 +45,7 @@ DialogoLogin::DialogoLogin(Repositorio *repositorio, QWidget *parent)
     connect(btnCancelar, &QPushButton::clicked, this, &QDialog::reject);
 }
 
+// Usuario escrito, sin espacios en los bordes.
 QString DialogoLogin::usuario() const
 {
     return editUsuario->text().trimmed();

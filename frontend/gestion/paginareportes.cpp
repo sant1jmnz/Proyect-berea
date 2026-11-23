@@ -30,9 +30,11 @@ static const Reporte REPORTES[] = {
     { "8. Tarjetas de regalo", "pagos.sp_reporte_tarjetas_regalo" },
     { "Auditoría: quién hizo qué", "auditoria.sp_reporte_auditoria" },
 };
+// Cuántos reportes hay y cuál es el de auditoría (último de la lista, se consulta distinto).
 static const int CANTIDAD_REPORTES = sizeof(REPORTES) / sizeof(REPORTES[0]);
 static const int REPORTE_AUDITORIA = 8;
 
+// Arma la pantalla: combo de reporte, rango de fechas (por defecto el último mes) y tabla de resultados.
 PaginaReportes::PaginaReportes(QWidget *parent) : QWidget(parent)
 {
     comboReporte = new QComboBox;
@@ -81,6 +83,7 @@ PaginaReportes::PaginaReportes(QWidget *parent) : QWidget(parent)
     connect(btnConsultar, &QPushButton::clicked, this, &PaginaReportes::on_btnConsultar_clicked);
 }
 
+// Conecta la página con la base; sin ella el botón Consultar queda apagado.
 void PaginaReportes::usarBase(Repositorio *repositorio)
 {
     repo = repositorio;

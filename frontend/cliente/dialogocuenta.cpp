@@ -29,6 +29,7 @@ static QLabel *lineaError(const QString &nombre)
     return lbl;
 }
 
+// Arma el diálogo de cuenta con dos pantallas: ingresar y crear cuenta.
 DialogoCuenta::DialogoCuenta(Repositorio *repositorio, QWidget *parent)
     : QDialog(parent), repo(repositorio)
 {
@@ -194,6 +195,7 @@ bool DialogoCuenta::entrar(const QString &usuario, const QString &clave, QLabel 
     return false;
 }
 
+// Valida que usuario y contraseña no estén vacíos y llama a entrar.
 void DialogoCuenta::ingresar()
 {
     if (editUsuario->text().trimmed().isEmpty() || editClave->text().isEmpty()) {

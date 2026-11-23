@@ -5,6 +5,7 @@
 
 namespace DatosBase {
 
+// La base guarda "Apellido, Nombre"; las pantallas muestran "Nombre Apellido".
 QString nombreYApellido(const QString &apellidoComaNombre)
 {
     const int coma = apellidoComaNombre.indexOf(", ");
@@ -13,7 +14,7 @@ QString nombreYApellido(const QString &apellidoComaNombre)
     return apellidoComaNombre.mid(coma + 2) + " " + apellidoComaNombre.left(coma);
 }
 
-/* Deja solo los dígitos del teléfono (así se compara y se guarda en las pantallas). */
+/* Carga los protocolos (con las bajas incluidas) desde la base; si falla, devuelve false y deja el motivo en error. */
 bool cargarProtocolos(Repositorio &repo, QVector<Protocolo> &protocolos, QString *error)
 {
     /* Con las bajas incluidas: la pantalla Protocolos permite reactivarlos. */
@@ -40,6 +41,7 @@ bool cargarProtocolos(Repositorio &repo, QVector<Protocolo> &protocolos, QString
     return true;
 }
 
+// Carga los pacientes; el teléfono queda solo con dígitos.
 bool cargarPacientes(Repositorio &repo, QVector<Paciente> &pacientes, QString *error)
 {
     const Resultado r = repo.listarPacientes();
@@ -61,6 +63,7 @@ bool cargarPacientes(Repositorio &repo, QVector<Paciente> &pacientes, QString *e
     return true;
 }
 
+// Une tres consultas: profesionales, qué protocolos hace cada uno y sus franjas de disponibilidad desde hoy.
 bool cargarProfesionales(Repositorio &repo, const QVector<Protocolo> &protocolos,
                          QVector<Profesional> &profesionales, QString *error)
 {
@@ -113,6 +116,7 @@ bool cargarProfesionales(Repositorio &repo, const QVector<Protocolo> &protocolos
     return true;
 }
 
+// Pasa un turno de la base al formato de las pantallas: traduce estado y origen, y marca como reembolsada la seña si corresponde.
 Turno aTurno(const TurnoBD &t)
 {
     Turno turno;
@@ -156,6 +160,7 @@ Turno aTurno(const TurnoBD &t)
     return turno;
 }
 
+// Carga los turnos desde hace N días hasta dentro de N días.
 bool cargarTurnos(Repositorio &repo, const QDate &hoy, int dias, QVector<Turno> &turnos, QString *error)
 {
     const QVector<TurnoBD> filas = repo.listarTurnos(hoy.addDays(-dias), hoy.addDays(dias));
@@ -169,6 +174,7 @@ bool cargarTurnos(Repositorio &repo, const QDate &hoy, int dias, QVector<Turno> 
     return true;
 }
 
+// Carga los avisos del mismo rango; los de turnos cancelados se descartan.
 bool cargarAvisos(Repositorio &repo, const QDate &hoy, int dias, RegistroAvisos &avisos, QString *error)
 {
     const Resultado r = repo.listarNotificaciones(hoy.addDays(-dias), hoy.addDays(dias));
@@ -215,6 +221,7 @@ bool cargarAvisos(Repositorio &repo, const QDate &hoy, int dias, RegistroAvisos 
     return true;
 }
 
+// Los tres resumen arman un texto con los datos clave de la lista; sirven para detectar si algo cambió sin comparar uno por uno.
 QString resumen(const QVector<Turno> &turnos)
 {
     QString texto;

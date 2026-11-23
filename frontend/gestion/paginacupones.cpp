@@ -19,6 +19,7 @@
 
 enum { ColCodigo, ColRegla, ColDescuento, ColVence, ColEstado };
 
+// Arma la búsqueda por DNI, la tabla de cupones y los botones Ver token, Validar y Emitir.
 PaginaCupones::PaginaCupones(QWidget *parent) : QWidget(parent)
 {
     auto *raiz = Formato::armarPagina(this, "Cupones",
@@ -80,6 +81,7 @@ PaginaCupones::PaginaCupones(QWidget *parent) : QWidget(parent)
     connect(btnEmitir, &QPushButton::clicked, this, &PaginaCupones::emitir);
 }
 
+// Conecta la base y habilita los controles.
 void PaginaCupones::usarBase(Repositorio *repositorio, int idUsuarioActual)
 {
     repo = repositorio;
@@ -89,6 +91,7 @@ void PaginaCupones::usarBase(Repositorio *repositorio, int idUsuarioActual)
     lblCuenta->setText("Buscá a la paciente por su DNI.");
 }
 
+// Fila seleccionada de la tabla, o -1 si no hay ninguna válida.
 int PaginaCupones::filaElegida() const
 {
     const int fila = tabla->currentRow();

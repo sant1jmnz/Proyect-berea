@@ -19,8 +19,10 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
+// Orden de las columnas de la tabla de avisos.
 enum { ColPaciente, ColCanal, ColEstado, ColTurno, ColProgramado, ColEnviado };
 
+// Arma la tabla de avisos y los botones para enviar por WhatsApp o marcar como fallido.
 PaginaAvisos::PaginaAvisos(RegistroAvisos *registro, QWidget *parent)
     : QWidget(parent), avisos(registro)
 {
@@ -57,6 +59,7 @@ PaginaAvisos::PaginaAvisos(RegistroAvisos *registro, QWidget *parent)
     recargar();
 }
 
+// Vuelve a llenar la tabla desde el registro y cuenta los avisos pendientes.
 void PaginaAvisos::recargar()
 {
     const QVector<Aviso> &lista = avisos->todos();
@@ -80,6 +83,7 @@ void PaginaAvisos::recargar()
     actualizarBotones();
 }
 
+// Los botones solo se activan con un aviso seleccionado que todavía no fue enviado.
 void PaginaAvisos::actualizarBotones()
 {
     const int fila = tabla->currentRow();
@@ -89,6 +93,7 @@ void PaginaAvisos::actualizarBotones()
     btnFallido->setEnabled(pendiente);
 }
 
+// Abre WhatsApp con el mensaje y pregunta si se envió; si se confirma, guarda en la base y marca el aviso como enviado.
 void PaginaAvisos::abrirWhatsApp()
 {
     const int fila = tabla->currentRow();
@@ -114,6 +119,7 @@ void PaginaAvisos::abrirWhatsApp()
     tabla->selectRow(fila);
 }
 
+// Pide el motivo (obligatorio) y marca el aviso como fallido, en la base y en el registro.
 void PaginaAvisos::marcarFallido()
 {
     const int fila = tabla->currentRow();

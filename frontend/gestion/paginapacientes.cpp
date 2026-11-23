@@ -20,6 +20,7 @@
 #include <QVBoxLayout>
 #include <algorithm>
 
+// Valida los datos del formulario y devuelve la lista de errores (vacía si está todo bien). Rechaza un DNI repetido, salvo el de la paciente que se está editando.
 QStringList PaginaPacientes::revisar(const Paciente &p, const QVector<Paciente> &existentes,
                                      int indiceEditado, const QDate &hoy)
 {
@@ -42,6 +43,7 @@ QStringList PaginaPacientes::revisar(const Paciente &p, const QVector<Paciente> 
     return errores;
 }
 
+// Si lo escrito son números busca por DNI o teléfono; si no, por nombre. Devuelve las posiciones que coinciden.
 QVector<int> PaginaPacientes::buscar(const QVector<Paciente> &pacientes, const QString &texto)
 {
     const QString t = texto.simplified();
@@ -59,6 +61,7 @@ QVector<int> PaginaPacientes::buscar(const QVector<Paciente> &pacientes, const Q
     return encontradas;
 }
 
+// Arma el buscador, la tabla de pacientes y el formulario de alta y modificación.
 PaginaPacientes::PaginaPacientes(QVector<Paciente> *pacientes, QWidget *parent)
     : QWidget(parent), datos(pacientes)
 {

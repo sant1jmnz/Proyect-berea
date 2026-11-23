@@ -9,6 +9,9 @@
 
 namespace ReglasTurno {
 
+// Reglas del turno que no necesitan base de datos (se usan en modo contingencia y en las pruebas).
+
+// Un horario está ocupado si ya hay un turno a esa hora que no esté cancelado.
 bool horarioOcupado(const QVector<Turno> &turnos, const QDateTime &inicio)
 {
     return std::any_of(turnos.cbegin(), turnos.cend(), [&](const Turno &t) {
@@ -16,6 +19,7 @@ bool horarioOcupado(const QVector<Turno> &turnos, const QDateTime &inicio)
     });
 }
 
+// Horarios libres de un día: no hay turnos los domingos, y se descartan los que ya pasaron o están ocupados.
 QStringList horariosLibresSinBase(const QDate &dia, const QVector<Turno> &turnos, const QDateTime &ahora)
 {
     QStringList libres;
@@ -29,11 +33,13 @@ QStringList horariosLibresSinBase(const QDate &dia, const QVector<Turno> &turnos
     return libres;
 }
 
+// Un turno es vigente si está confirmado o pendiente y todavía no empezó.
 bool esVigente(const Turno &t, const QDateTime &ahora)
 {
     return (t.estado == EstadoTurno::Confirmado || t.estado == EstadoTurno::Pendiente) && t.inicio > ahora;
 }
 
+// Código de operación "SIM-" + 6 dígitos; se repite el sorteo hasta que no coincida con el de otro turno.
 QString nuevoCodigoOperacion(const QVector<Turno> &turnos)
 {
     for (;;) {
@@ -45,6 +51,7 @@ QString nuevoCodigoOperacion(const QVector<Turno> &turnos)
     }
 }
 
+// Texto para mostrar si se devuelve la seña. El monto lo calcula Reembolso::monto (límite en horas).
 QString explicacionReembolso(const Turno &t, const QDateTime &ahora)
 {
     if (!t.senaPagada)

@@ -40,6 +40,7 @@ const QString SALUDO = "¡Hola! Soy el asistente de Dermalia. Preguntame por pre
                        "la seña, cómo cancelar o cómo funcionan las cirugías.";
 }
 
+// Dirección de la API: variable DERMALIA_API_URL, si no el archivo ini, si no localhost:3000. Sin barra final.
 QString DialogoAsistente::urlPorDefecto(const QString &nombreIni)
 {
     const QString archivoIni = ConfigBD::rutaIni(nombreIni);
@@ -53,6 +54,7 @@ QString DialogoAsistente::urlPorDefecto(const QString &nombreIni)
     return valor;
 }
 
+// Arma el chat del asistente: conversación, sugerencias, caja de texto y botón de voz.
 DialogoAsistente::DialogoAsistente(QWidget *parent, const QString &urlApi)
     : QDialog(parent), url(urlApi.isEmpty() ? urlPorDefecto() : urlApi)
 {
@@ -185,6 +187,7 @@ DialogoAsistente::DialogoAsistente(QWidget *parent, const QString &urlApi)
     agregar("asistente", SALUDO.toHtmlEscaped());
 }
 
+// Suma una burbuja al chat (la paciente a la derecha, el asistente a la izquierda) y la muestra.
 void DialogoAsistente::agregar(const QString &rol, const QString &html)
 {
     const bool paciente = rol == "paciente";
@@ -196,12 +199,14 @@ void DialogoAsistente::agregar(const QString &rol, const QString &html)
     pintar();
 }
 
+// Redibuja la conversación y baja hasta el último mensaje.
 void DialogoAsistente::pintar()
 {
     conversacion->setHtml(mensajesHtml.join(QString()));
     conversacion->verticalScrollBar()->setValue(conversacion->verticalScrollBar()->maximum());
 }
 
+// Reemplaza el aviso 'Escribiendo…' por la respuesta y deja volver a escribir.
 void DialogoAsistente::terminar(const QString &html)
 {
     mensajesHtml.removeLast();   /* el "Escribiendo…" */
@@ -212,6 +217,7 @@ void DialogoAsistente::terminar(const QString &html)
     emit respondio();
 }
 
+// Empieza a grabar la nota de voz o la corta para mandarla; no graba si hay una respuesta en curso.
 void DialogoAsistente::alternarGrabacion()
 {
     if (btnVoz->isChecked()) {
@@ -229,6 +235,7 @@ void DialogoAsistente::alternarGrabacion()
     }
 }
 
+// Manda una pregunta escrita (con la elección de un botón, si la hay) a la API.
 void DialogoAsistente::preguntar(const QString &pregunta, const QJsonObject &eleccion)
 {
     if (enCurso)
@@ -311,6 +318,7 @@ void DialogoAsistente::pedirDatosReserva(const QString &nombre, const QString &d
     });
 }
 
+// Manda una nota de voz (en base64) a la API.
 void DialogoAsistente::preguntarConAudio(const QByteArray &audio, const QString &mime)
 {
     if (enCurso)
@@ -320,6 +328,7 @@ void DialogoAsistente::preguntarConAudio(const QByteArray &audio, const QString 
                              {"origen", "terminal"}, {"historial", historial}, {"reserva", reserva}}, QString());
 }
 
+// Bloquea los botones, muestra 'Escribiendo…' y hace el POST al asistente.
 void DialogoAsistente::enviarPedido(const QJsonObject &cuerpo, const QString &preguntaEscrita)
 {
     enCurso = true;
@@ -372,6 +381,7 @@ void DialogoAsistente::enviarPedido(const QJsonObject &cuerpo, const QString &pr
     });
 }
 
+// Devuelve la conversación como texto plano.
 QString DialogoAsistente::conversacionEnTexto() const
 {
     return conversacion->toPlainText();

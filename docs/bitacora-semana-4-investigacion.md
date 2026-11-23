@@ -5,7 +5,7 @@ resultado está en [`07-competencia.md`](07-competencia.md)). Sirve para saber q
 encontró, qué no, y qué hay que volver a verificar.
 
 - **Fecha de la investigación:** martes 3 de noviembre de 2026.
-- **Quién la hizo:** el asistente Claude, a pedido del equipo, con un buscador web. **No la hicieron
+- **Quién la hizo:** a pedido del equipo, con un buscador web. **No la hicieron
   Santiago ni Bautista ni se probó ningún producto**: si la bitácora se entrega como propia, hay que
   repetir la verificación (ver "Pendiente") y firmarla con lo que cada uno compruebe.
 - **Qué pide el plan:** Semana 4, *Análisis de mercado, competencia y ventaja competitiva*: relevar

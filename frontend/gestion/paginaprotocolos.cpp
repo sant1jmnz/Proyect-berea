@@ -72,6 +72,7 @@ QStringList PaginaProtocolos::revisar(const QString &nombre, const QString &prec
     return errores;
 }
 
+// Arma la tabla de protocolos y el formulario de alta y modificación.
 PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *parent)
     : QWidget(parent), datos(protocolos)
 {

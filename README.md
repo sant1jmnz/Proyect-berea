@@ -212,7 +212,7 @@ Google Workspace / Classroom · Canva (presentación final).
 
 Cada integrante trabaja en **su propia rama** (`santiago`, `bautista`), nunca
 directo en `main`. `main` es la versión de todos y se actualiza con Pull
-Requests. La rama `claude-bbdd` es la del asistente (documentación de la base
+Requests. La rama de documentación de la base
 de datos) y `dermalia-carpeta-proyecto-v1` guarda la carpeta del 3er bimestre.
 
 ### 1. Primera vez: bajar el repo

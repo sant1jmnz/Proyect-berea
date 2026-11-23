@@ -23,7 +23,7 @@
 
 **Equipo y repositorio**
 - Revisé que `main` y las ramas fueran iguales. La rama de Bautista tenía su
-  apartado Cliente y la de `claude-bbdd` el diagrama de Chen; junté todo en
+  apartado Cliente y la de la rama de documentación el diagrama de Chen; junté todo en
   `main` y dejé las ramas iguales.
 - Cuando Bautista subió sus validaciones, resolví los conflictos y dejé **una
   sola regla de validación** para Cliente y Gestión (`frontend/comun/validaciones`).

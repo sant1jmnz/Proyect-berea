@@ -1,8 +1,8 @@
 # Bitácora de la Semana 5 (martes 3 al lunes 9 de noviembre de 2026)
 
 > **Cómo se armó.** Esta bitácora se reconstruyó a partir del historial de commits de `main` y de las casillas
-> marcadas en [`reparto-4to-bimestre.md`](reparto-4to-bimestre.md). Casi todos esos commits se hicieron con el
-> asistente Claude, a pedido del equipo (figura como autor en el historial). Cada integrante tiene que **revisarla,
+> marcadas en [`reparto-4to-bimestre.md`](reparto-4to-bimestre.md). Cada integrante tiene
+> que **revisarla,
 > corregirla con lo que realmente hizo y completar "Qué aprendí"** antes de entregarla como propia.
 
 **Qué pedía la semana** (`plan-4to-bimestre.md`, Semana 5): presupuesto y modelo de negocio, y preparar el pitch

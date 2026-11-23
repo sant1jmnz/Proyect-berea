@@ -9,6 +9,7 @@
 #include <QSaveFile>
 #include <QStandardPaths>
 
+// Pasa un turno pendiente a JSON; las fechas van en formato ISO.
 static QJsonObject aJson(const TurnoPendiente &t)
 {
     return { { "paciente", t.paciente }, { "dni", t.dni }, { "telefono", t.telefono },
@@ -17,6 +18,7 @@ static QJsonObject aJson(const TurnoPendiente &t)
              { "guardado", t.guardado.toString(Qt::ISODate) } };
 }
 
+// Arma el turno pendiente desde su JSON (inversa de aJson).
 static TurnoPendiente deJson(const QJsonObject &o)
 {
     TurnoPendiente t;
@@ -32,6 +34,7 @@ static TurnoPendiente deJson(const QJsonObject &o)
     return t;
 }
 
+// Si no se indica archivo, usa pendientes.json en la carpeta de datos de la app.
 Contingencia::Contingencia(const QString &archivo)
     : ruta(archivo)
 {
@@ -41,6 +44,7 @@ Contingencia::Contingencia(const QString &archivo)
     }
 }
 
+// Lee del archivo los turnos que esperan enviarse a la base.
 QVector<TurnoPendiente> Contingencia::pendientes() const
 {
     QFile f(ruta);
@@ -53,11 +57,13 @@ QVector<TurnoPendiente> Contingencia::pendientes() const
     return lista;
 }
 
+// Cuántos turnos pendientes hay guardados.
 int Contingencia::cantidad() const
 {
     return pendientes().size();
 }
 
+// Suma un turno al archivo (con la hora de guardado si no traía).
 bool Contingencia::guardar(const TurnoPendiente &turno)
 {
     QVector<TurnoPendiente> lista = pendientes();
@@ -68,11 +74,13 @@ bool Contingencia::guardar(const TurnoPendiente &turno)
     return escribir(lista);
 }
 
+// Borra todos los pendientes, cuando la base ya recibió todo.
 bool Contingencia::vaciar()
 {
     return escribir({});
 }
 
+// Escribe la lista completa; devuelve false si no pudo guardar.
 bool Contingencia::escribir(const QVector<TurnoPendiente> &turnos) const
 {
     QDir().mkpath(QFileInfo(ruta).absolutePath());

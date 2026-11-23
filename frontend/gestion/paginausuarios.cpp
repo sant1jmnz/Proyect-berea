@@ -19,6 +19,7 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 
+// Arma el formulario de alta a la izquierda y la tabla de personal a la derecha; todo queda apagado hasta conectar la base.
 PaginaUsuarios::PaginaUsuarios(QWidget *parent) : QWidget(parent)
 {
     auto *raiz = Formato::armarPagina(this, "Usuarios",
@@ -114,6 +115,7 @@ PaginaUsuarios::PaginaUsuarios(QWidget *parent) : QWidget(parent)
     connect(btnCambiarClave, &QPushButton::clicked, this, &PaginaUsuarios::cambiarMiClave);
 }
 
+// Solo el rol administrador puede crear usuarios; cualquiera con base puede cambiar su propia contraseña.
 void PaginaUsuarios::usarBase(Repositorio *repositorio, int idUsuarioActual, const QString &rol)
 {
     repo = repositorio;

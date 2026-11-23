@@ -39,6 +39,7 @@ static QDateTime diaHabil(const QDate &dia, int hora)
     return QDateTime(dia.dayOfWeek() == Qt::Sunday ? dia.addDays(1) : dia, QTime(hora, 0));
 }
 
+// Arma un turno de ejemplo: la seña sale del precio y del porcentaje de la categoría, el fin de la duración.
 static Turno turno(const QString &paciente, const QString &dni, const QString &telefono,
                    const Protocolo &p, const QDateTime &inicio, EstadoTurno estado,
                    const QString &origen, bool senaPagada)
@@ -48,6 +49,7 @@ static Turno turno(const QString &paciente, const QString &dni, const QString &t
              estado, origen, senaPagada };
 }
 
+// Cuatro turnos de ejemplo alrededor de hoy (uno ya realizado y tres a futuro) para el modo sin base.
 QVector<Turno> turnos(const QDate &hoy)
 {
     const QVector<Protocolo> p = protocolos();
@@ -63,6 +65,7 @@ QVector<Turno> turnos(const QDate &hoy)
     };
 }
 
+// Tres profesionales de ejemplo; la última está inactiva y sin franjas.
 QVector<Profesional> profesionales(const QDate &hoy)
 {
     /* Lunes a viernes de 9 a 18 en los próximos días hábiles. */
@@ -86,6 +89,7 @@ QVector<Profesional> profesionales(const QDate &hoy)
     };
 }
 
+// Tres pacientes de ejemplo; los teléfonos y mails son ficticios.
 QVector<Paciente> pacientes()
 {
     return {
@@ -95,11 +99,13 @@ QVector<Paciente> pacientes()
     };
 }
 
+// Los cinco horarios fijos de turno de cada día.
 QStringList horariosDelDia()
 {
     return { "09:00", "10:30", "13:00", "15:30", "17:00" };
 }
 
+// Nombre legible del estado del turno.
 QString texto(EstadoTurno estado)
 {
     switch (estado) {
@@ -112,6 +118,7 @@ QString texto(EstadoTurno estado)
     return {};
 }
 
+// Pasa un protocolo al formato Tratamiento que usa la pantalla del cliente.
 Tratamiento comoTratamiento(const Protocolo &p)
 {
     Tratamiento t;
@@ -126,6 +133,7 @@ Tratamiento comoTratamiento(const Protocolo &p)
     return t;
 }
 
+// Igual que comoTratamiento pero para toda la lista; deja afuera los protocolos inactivos.
 QVector<Tratamiento> comoTratamientos(const QVector<Protocolo> &protocolos)
 {
     QVector<Tratamiento> lista;

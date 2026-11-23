@@ -5,6 +5,7 @@
 
 namespace Recordatorios {
 
+// Nombre legible del canal por el que sale el aviso.
 QString nombre(CanalAviso canal)
 {
     switch (canal) {
@@ -16,6 +17,7 @@ QString nombre(CanalAviso canal)
     return {};
 }
 
+// Nombre legible del estado del aviso.
 QString nombre(EstadoAviso estado)
 {
     switch (estado) {
@@ -26,12 +28,14 @@ QString nombre(EstadoAviso estado)
     return {};
 }
 
+// El aviso se programa 24 horas antes del turno; si ya falta menos, sale ahora.
 QDateTime momentoDeEnvio(const QDateTime &inicioTurno, const QDateTime &ahora)
 {
     const QDateTime ideal = inicioTurno.addDays(-1);
     return ideal > ahora ? ideal : ahora;
 }
 
+// Texto del recordatorio: saluda con el primer nombre de la paciente e incluye protocolo, día y hora.
 QString mensaje(const QString &paciente, const QString &protocolo, const QDateTime &inicioTurno)
 {
     const QLocale es(QLocale::Spanish, QLocale::Argentina);
@@ -42,6 +46,8 @@ QString mensaje(const QString &paciente, const QString &protocolo, const QDateTi
              inicioTurno.toString("HH:mm"));
 }
 
+// Arma el enlace wa.me con el texto ya codificado. Deja solo los dígitos del teléfono
+// y le agrega el prefijo de Argentina (54 y el 9 de celular) si falta.
 QString enlaceWhatsApp(const QString &telefono, const QString &texto)
 {
     QString numero;
@@ -58,6 +64,7 @@ QString enlaceWhatsApp(const QString &telefono, const QString &texto)
 
 }
 
+// Crea un aviso pendiente. Va por Telegram si la paciente lo vinculó; si no, por WhatsApp asistido.
 const Aviso &RegistroAvisos::programar(const QString &paciente, const QString &dni,
                                        const QString &telefono, const QString &protocolo,
                                        const QDateTime &inicioTurno, const QDateTime &ahora,
@@ -75,6 +82,7 @@ const Aviso &RegistroAvisos::programar(const QString &paciente, const QString &d
     return avisos.last();
 }
 
+// Índices de los avisos pendientes cuya hora de envío ya llegó.
 QVector<int> RegistroAvisos::pendientesA(const QDateTime &ahora) const
 {
     QVector<int> lista;
@@ -84,6 +92,7 @@ QVector<int> RegistroAvisos::pendientesA(const QDateTime &ahora) const
     return lista;
 }
 
+// Marca el aviso como enviado, suma un intento y borra el error anterior. Ignora índices inválidos.
 void RegistroAvisos::marcarEnviado(int indice, const QDateTime &ahora)
 {
     if (indice < 0 || indice >= avisos.size())
@@ -95,6 +104,7 @@ void RegistroAvisos::marcarEnviado(int indice, const QDateTime &ahora)
     a.detalleError.clear();
 }
 
+// Marca el aviso como fallido, suma un intento y guarda el motivo del error.
 void RegistroAvisos::marcarFallido(int indice, const QString &detalle)
 {
     if (indice < 0 || indice >= avisos.size())
@@ -105,6 +115,8 @@ void RegistroAvisos::marcarFallido(int indice, const QString &detalle)
     a.detalleError = detalle;
 }
 
+// Quita los avisos pendientes de un turno (por DNI y hora), por ejemplo si se cancela. Devuelve cuántos quitó.
+// Recorre de atrás para adelante para poder borrar sin saltear elementos.
 int RegistroAvisos::anularDeTurno(const QString &dni, const QDateTime &inicioTurno)
 {
     int anulados = 0;

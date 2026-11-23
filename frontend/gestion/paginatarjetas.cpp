@@ -23,6 +23,7 @@
 static const int MONTO_MINIMO = 20000;
 static const int MONTO_MAXIMO = 5000000;
 
+// Arma dos columnas: a la izquierda el formulario de venta, a la derecha la consulta de saldo y movimientos.
 PaginaTarjetas::PaginaTarjetas(QWidget *parent) : QWidget(parent)
 {
     auto *raiz = Formato::armarPagina(this, "Tarjetas de regalo",
@@ -118,6 +119,7 @@ PaginaTarjetas::PaginaTarjetas(QWidget *parent) : QWidget(parent)
     connect(editCodigo, &QLineEdit::returnPressed, this, &PaginaTarjetas::consultar);
 }
 
+// Conecta la base y habilita los botones; sin base quedan apagados.
 void PaginaTarjetas::usarBase(Repositorio *repositorio, int idUsuarioActual)
 {
     repo = repositorio;

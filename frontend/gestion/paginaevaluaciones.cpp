@@ -15,6 +15,7 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 
+// Arma la pantalla de consultas previas de cirugía; los botones quedan apagados hasta conectar la base.
 PaginaEvaluaciones::PaginaEvaluaciones(QWidget *parent) : QWidget(parent)
 {
     auto *raiz = Formato::armarPagina(this, "Consultas previas de cirugía",
@@ -69,6 +70,7 @@ PaginaEvaluaciones::PaginaEvaluaciones(QWidget *parent) : QWidget(parent)
     connect(btnVencer, &QPushButton::clicked, this, &PaginaEvaluaciones::vencer);
 }
 
+// Conecta la base, activa los controles y carga la lista.
 void PaginaEvaluaciones::usarBase(Repositorio *repositorio, int idUsuarioActual)
 {
     repo = repositorio;
@@ -78,6 +80,7 @@ void PaginaEvaluaciones::usarBase(Repositorio *repositorio, int idUsuarioActual)
     recargar();
 }
 
+// Id de la evaluación seleccionada en la tabla; 0 si no hay ninguna.
 int PaginaEvaluaciones::idElegido() const
 {
     const int fila = tabla->currentRow();

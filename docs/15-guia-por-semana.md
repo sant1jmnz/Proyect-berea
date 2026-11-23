@@ -1,6 +1,6 @@
 # Guía por semana: cómo sacar de esta rama lo que toca cada semana
 
-Esta rama (`claude/awesome-hopper-20z4z2`) tiene **todo el trabajo del 4° bimestre ya
+Esta rama (`<rama-de-origen>`) tiene **todo el trabajo del 4° bimestre ya
 hecho y probado**. No se mergea entera: **cada semana se trae solo lo que corresponde**
 a la rama de cada uno (`santiago`, `bautista`) y se abre el PR a `main` como pide
 `reparto-4to-bimestre.md`. Así el repositorio muestra el avance semana a semana y cada uno
@@ -15,16 +15,16 @@ el modelo, no solo del bloque propio).
 Desde tu rama de trabajo:
 
 ```bash
-git fetch origin claude/awesome-hopper-20z4z2
+git fetch origin <rama-de-origen>
 git checkout santiago                    # o bautista
-git checkout origin/claude/awesome-hopper-20z4z2 -- backend/03_sp_semana3.sql docs/12-contrato-sp.md
+git checkout origin/<rama-de-origen> -- backend/03_sp_semana3.sql docs/12-contrato-sp.md
 git status                                # revisar qué entró
 git commit -m "Semana 3: stored procedures de login, ABM, horarios y alta de turno"
 git push -u origin santiago
 ```
 
-Para traer **una carpeta entera** (por ejemplo las pruebas): `git checkout origin/claude/awesome-hopper-20z4z2 -- backend/pruebas`.
-Para **ver** un archivo sin traerlo: `git show origin/claude/awesome-hopper-20z4z2:docs/07-competencia.md`.
+Para traer **una carpeta entera** (por ejemplo las pruebas): `git checkout origin/<rama-de-origen> -- backend/pruebas`.
+Para **ver** un archivo sin traerlo: `git show origin/<rama-de-origen>:docs/07-competencia.md`.
 
 Antes de cada semana, **probar en limpio**: cargar los scripts en orden (ver `13-manual-tecnico.md`)
 y, para la base, `python3 backend/pruebas/correr_pruebas.py --recargar` (necesita `pymysql`).

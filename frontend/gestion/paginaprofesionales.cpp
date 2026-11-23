@@ -301,6 +301,7 @@ void PaginaProfesionales::cambiarEstadoProfesional()
     recargarProfesionales(lista->currentRow());
 }
 
+// Tilda o destilda un protocolo del profesional elegido; con base lo guarda por repositorio.
 void PaginaProfesionales::marcarProtocolo(QListWidgetItem *item)
 {
     Profesional *p = actual();
@@ -329,6 +330,7 @@ void PaginaProfesionales::marcarProtocolo(QListWidgetItem *item)
     emit cambiaron();
 }
 
+// Agrega una franja de disponibilidad (día y horas) al profesional elegido, si está activo.
 void PaginaProfesionales::agregarFranja()
 {
     Profesional *p = actual();
@@ -360,6 +362,7 @@ void PaginaProfesionales::agregarFranja()
     recargarDetalle();
 }
 
+// Quita la franja marcada en la tabla del profesional elegido.
 void PaginaProfesionales::quitarFranja()
 {
     Profesional *p = actual();

@@ -138,7 +138,7 @@ test('sin protocolo pregunta cuál; sin lugar lo dice; no inventa', async () => 
 });
 
 test('"quiero un turno" indica dónde reservar según desde dónde escribe, sin mandar a recepción', () => {
-  for (const [origen, texto] of [['terminal', /Volver.*Reservar turno/], ['web', /menú del sitio/], ['telegram', /botón "Reservar"/]]) {
+  for (const [origen, texto] of [['terminal', /acá mismo/], ['web', /acá mismo/], ['telegram', /tocá "Reservar"/]]) {
     for (const p of ['Hola, quisiera generar un turno.', '¿Puedo agendar por acá?', 'quiero sacar turno']) {
       const r = responderLocal(p, [], null, origen);
       assert.match(r.respuesta, texto);
@@ -146,5 +146,5 @@ test('"quiero un turno" indica dónde reservar según desde dónde escribe, sin 
     }
   }
   assert.doesNotMatch(responderLocal('cómo cancelo mi turno', [], null, 'terminal').respuesta, /Volver/);
-  assert.match(instruccionSistema([], null, new Date(), null, null, 'terminal'), /Volver.*Reservar turno/);
+  assert.match(instruccionSistema([], null, new Date(), null, null, 'terminal'), /acá mismo/);
 });

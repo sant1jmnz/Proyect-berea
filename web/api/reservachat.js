@@ -28,7 +28,9 @@ export function ofrecerReserva(pregunta, catalogo, respuesta = '') {
   if (/(precio|cuesta|cuanto|sale|sena|cancel|donde|direccion|horario|abren|descuento|cupon)/.test(normalizar(pregunta))) return [];
   const r = normalizar(respuesta);
   // solo lo que la persona nombró Y la respuesta también menciona (evita botones de tratamientos al azar)
-  const c = buscarProtocolos(pregunta, catalogo).filter((p) => r.includes(normalizar(p.nombre).replace(/\s*\(.*$/, '')));
+  const nombrado = (p) => r.includes(normalizar(p.nombre).replace(/\s*\(.*$/, ''));
+  let c = buscarProtocolos(pregunta, catalogo).filter(nombrado);
+  if (!c.length) c = catalogo.filter(nombrado); // "recomendame uno": botones de lo que la IA recomendó
   if (!c.length || c.length > 3) return [];
   return [...c.map((p) => opcion(`Sacar turno: ${p.nombre}`, { protocolo: p.id_protocolo, activa: true })), CANCELAR_NO];
 }

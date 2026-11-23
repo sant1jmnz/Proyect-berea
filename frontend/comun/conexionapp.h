@@ -53,10 +53,14 @@ signals:
 private slots:
     /* Con base: mira que siga viva. Sin base: reintenta sola, así no hace falta apretar "Reintentar". */
     void vigilar();
+    /* La conexión se cortó (la detectó el vigía o una consulta): franja + señal, una sola vez por corte. */
+    void avisarCaida();
 
 private:
     QTimer vigia;
     bool teniaConexion = false;   /* ya hubo conexión en esta sesión */
+    bool caidaAvisada = false;    /* este corte ya se avisó: no repetir la señal */
+    bool relojAvisado = false;    /* el aviso de reloj se muestra una sola vez por sesión */
     AvisoConexion *aviso;
     BaseDatos base_;
     Contingencia local;

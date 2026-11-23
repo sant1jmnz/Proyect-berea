@@ -23,6 +23,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 #include <QVector>
+#include <functional>
 
 /* Datos para conectarse (los mismos que recibe mysql_real_connect). */
 struct ConfigBD {
@@ -71,6 +72,8 @@ public:
     /* Hora del servidor en UTC; inválida si no hay conexión o la consulta falla. */
     QDateTime horaServidorUtc();
     QString ultimoError() const { return error; }
+    /* Se llama cuando `llamar` descubre que la conexión se cortó (la cierra antes de avisar). */
+    std::function<void()> alPerderConexion;
 
     /* Ejecuta CALL sp(p1, p2, ...). Los textos van entre comillas simples,
      * los números sin comillas y un QVariant vacío como NULL. */

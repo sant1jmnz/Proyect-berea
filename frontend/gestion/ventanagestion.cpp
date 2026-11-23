@@ -208,7 +208,7 @@ VentanaGestion::~VentanaGestion()
 /* Sin base: guarda protocolos, turnos, profesionales y pacientes en el archivo local. */
 void VentanaGestion::guardarLocal()
 {
-    if (!persistir || enModoBase)
+    if (!persistir || enModoBase || datosDeBase)   /* con datos de la base en memoria no se pisa el archivo local */
         return;
     AlmacenLocal::Datos datos;
     datos.protocolos = protocolos;
@@ -222,7 +222,7 @@ void VentanaGestion::guardarLocal()
 /* Si otra aplicación cambió el archivo, se vuelven a leer los turnos y las pacientes. */
 void VentanaGestion::sincronizarLocal()
 {
-    if (!persistir || enModoBase)
+    if (!persistir || enModoBase || datosDeBase)   /* no reemplazar la agenda de la base por un archivo viejo */
         return;
     const QDateTime version = QFileInfo(archivoLocal).lastModified();
     if (!version.isValid() || version == ultimaVersionLocal)
@@ -845,6 +845,7 @@ void VentanaGestion::cargarDesdeBase()
         return;
     }
     enModoBase = true;
+    datosDeBase = true;
     franja->hide();
     ui->lblUsuario->setText(rolUsuario == "administrador" ? "Administración" : "Recepción");
     ui->avatarUsuario->setText(rolUsuario == "administrador" ? "A" : "R");

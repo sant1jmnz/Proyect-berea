@@ -146,6 +146,7 @@ private:
     SesionPaciente sesion;
     QTimer *relojSesion = nullptr;     /* la terminal es compartida: sin tocar nada, la sesión se cierra */
     QString resumenAgenda;             /* para saber si los turnos de la base cambiaron */
+    QVector<Turno> agendaDeBase;       /* última agenda leída de la base: sin conexión evita ofrecer horarios ocupados */
 };
 
 #endif

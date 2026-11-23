@@ -153,6 +153,7 @@ bool BaseDatos::conectar()
     /* Opciones antes de conectar: tiempo máximo de espera, tildes (utf8mb4) y SSL para Aiven. */
     mysql_options(c, MYSQL_OPT_CONNECT_TIMEOUT, &config.timeoutSeg);
     mysql_options(c, MYSQL_OPT_READ_TIMEOUT, &config.timeoutSeg);
+    mysql_options(c, MYSQL_OPT_WRITE_TIMEOUT, &config.timeoutSeg);   /* sin red, no deja la ventana colgada al escribir */
     mysql_options(c, MYSQL_SET_CHARSET_NAME, "utf8mb4");
     if (config.ssl) {
         const QByteArray ca = config.ca.isEmpty() ? QByteArray() : QFileInfo(config.ca).absoluteFilePath().toUtf8();  /* el conector de Windows exige ruta absoluta */
@@ -232,18 +233,27 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
     if (mysql_query(sesion(conn), sql.constData()) != 0) {
         r.codigoSql = mysql_errno(sesion(conn));
         r.error = mensajeDeError(r.codigoSql, mysql_error(sesion(conn)));
-        if (r.codigoSql == 2006 || r.codigoSql == 2013)
+        if (r.codigoSql == 2006 || r.codigoSql == 2013) {
             cerrar();   /* la conexión se cortó: la próxima vez se vuelve a conectar */
+            error = "Se perdió la conexión con la base de datos.";
+            if (alPerderConexion)
+                alPerderConexion();
+        }
         return r;
     }
 
     /* Un CALL devuelve primero el SELECT del SP y después un resultado vacío del propio CALL.
      * Se guarda el primero y los demás se leen solo para liberarlos (si no, la conexión queda trabada). */
     bool esElPrimero = true;
+    int errorEnResultado = 0;   /* primer error que aparezca mientras se leen los resultados */
+    int siguiente = 0;
     do {
         MYSQL_RES *resultado = mysql_store_result(sesion(conn));
-        if (resultado == NULL)
+        if (resultado == NULL) {
+            if (mysql_errno(sesion(conn)) != 0 && errorEnResultado == 0)
+                errorEnResultado = int(mysql_errno(sesion(conn)));   /* NULL con error: no es "sin filas" */
             continue;
+        }
         if (esElPrimero) {
             const unsigned cantidad = mysql_num_fields(resultado);
             MYSQL_FIELD *campos = mysql_fetch_fields(resultado);
@@ -262,7 +272,23 @@ Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
             esElPrimero = false;
         }
         mysql_free_result(resultado);
-    } while (mysql_next_result(sesion(conn)) == 0);
+    } while ((siguiente = mysql_next_result(sesion(conn))) == 0);
+
+    /* mysql_next_result devuelve > 0 si el resultado siguiente falló (por ejemplo, se cortó la red a mitad). */
+    if (siguiente > 0 && errorEnResultado == 0)
+        errorEnResultado = int(mysql_errno(sesion(conn)));
+    if (errorEnResultado != 0) {
+        r.filas.clear();
+        r.codigoSql = errorEnResultado;
+        r.error = mensajeDeError(errorEnResultado, mysql_error(sesion(conn)));
+        if (errorEnResultado == 2006 || errorEnResultado == 2013) {
+            cerrar();
+            error = "Se perdió la conexión con la base de datos.";
+            if (alPerderConexion)
+                alPerderConexion();
+        }
+        return r;
+    }
 
     /* Si el SP cayó en el EXIT HANDLER devuelve estado = 'ERROR'. Los SP del PPT usan
      * codigo_sql / descripcion_error y los de Dermalia codigo / mensaje: sirven los dos. */

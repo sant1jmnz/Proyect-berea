@@ -10,19 +10,31 @@ ConexionApp::ConexionApp(AvisoConexion *franja, const ConfigBD &config,
     connect(aviso, &AvisoConexion::reintentar, this, &ConexionApp::probar);
     connect(&vigia, &QTimer::timeout, this, &ConexionApp::vigilar);
     vigia.start(VIGILAR_CADA_MS);
+    /* Si una consulta descubre el corte, se avisa ya (en cola: no se cambia de modo en medio de la consulta). */
+    base_.alPerderConexion = [this] { QMetaObject::invokeMethod(this, "avisarCaida", Qt::QueuedConnection); };
+}
+
+// Franja "sin conexión" y señal conexionPerdida, una sola vez por corte (lo llame quien lo llame).
+void ConexionApp::avisarCaida()
+{
+    if (!teniaConexion || caidaAvisada || base_.conectado())
+        return;
+    caidaAvisada = true;
+    aviso->mostrarSinConexion(base_.ultimoError(), local.cantidad());
+    emit conexionPerdida();
 }
 
 // Detecta el corte de conexión en pleno uso (muestra la franja) y reconecta sola cuando vuelve.
 void ConexionApp::vigilar()
 {
-    if (base_.conectado()) {
-        if (!base_.verificar()) {
-            aviso->mostrarSinConexion(base_.ultimoError(), local.cantidad());
-            emit conexionPerdida();
-        }
-    } else if (teniaConexion) {
+    if (base_.conectado())
+        base_.verificar();   /* si falla, cierra la conexión */
+    if (base_.conectado() || !teniaConexion)
+        return;
+    if (!caidaAvisada)
+        avisarCaida();
+    else
         probar();   /* si falla, solo refresca la franja */
-    }
 }
 
 // Intenta conectar. Si anda, sube los turnos guardados en el equipo y avisa; si no, muestra el error.
@@ -31,22 +43,27 @@ bool ConexionApp::probar()
     const bool conectada = base_.conectar();
     if (conectada) {
         teniaConexion = true;
+        caidaAvisada = false;
         if (local.cantidad() > 0) {   // volvió la conexión: se envían los turnos guardados en este equipo
             QStringList problemas;
             const int enviados = sincronizar(&problemas);
             emit pendientesSincronizados(enviados, problemas);
         }
         aviso->mostrarConectado(local.cantidad());
-        const QDateTime servidor = base_.horaServidorUtc();
+        const QDateTime servidor = relojAvisado ? QDateTime() : base_.horaServidorUtc();
+        emit this->conectada();   /* primero se abre la sesión; el aviso de reloj no la frena */
         if (servidor.isValid()) {
             const int minutos = int(servidor.secsTo(QDateTime::currentDateTimeUtc()) / 60);
-            if (qAbs(minutos) >= TOLERANCIA_RELOJ_MIN)
-                emit relojDesfasado(minutos);
+            if (qAbs(minutos) >= TOLERANCIA_RELOJ_MIN) {
+                relojAvisado = true;   /* una sola vez por sesión, no en cada reconexión */
+                QTimer::singleShot(0, this, [this, minutos] { emit relojDesfasado(minutos); });
+            }
         }
-        emit this->conectada();
     }
-    else
+    else {
         aviso->mostrarSinConexion(base_.ultimoError(), local.cantidad());
+        avisarCaida();   /* si la conexión andaba y este intento también falló, que las ventanas pasen a modo local */
+    }
     return conectada;
 }
 
@@ -100,8 +117,14 @@ int ConexionApp::sincronizar(QStringList *problemas)
                                                    t.inicio, { idProtocolo }, origen);
             if (!turno.ok)
                 motivo = turno.mensaje;
-            else if (t.senaPagada)
-                repo.registrarSena(turno.id, "efectivo", QString(), origen);
+            else if (t.senaPagada) {
+                /* El turno ya está en la base: aunque la seña falle NO se reenvía (saldría duplicado). */
+                const Respuesta sena = repo.registrarSena(turno.id, "efectivo", QString(), origen);
+                if (!sena.ok && problemas)
+                    problemas->append(QString("%1, %2: el turno se cargó pero la seña no se pudo registrar (%3). "
+                                              "Registrala desde Gestión.")
+                                          .arg(t.paciente, t.inicio.toString("dd/MM HH:mm"), sena.mensaje));
+            }
         }
 
         if (motivo.isEmpty()) {

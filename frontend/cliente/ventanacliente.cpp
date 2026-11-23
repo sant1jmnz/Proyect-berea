@@ -303,6 +303,15 @@ void VentanaCliente::armarMiTurno()
     connect(ui->btnCancelarMiTurno, &QPushButton::clicked, this, &VentanaCliente::cancelarMiTurno);
 }
 
+/* Sin conexión: a los turnos de este equipo se suman los de la última lectura de la base,
+ * así no se ofrece un horario que la base ya tenía ocupado. */
+static QVector<Turno> conAgendaDeBase(const QVector<Turno> &locales, const QVector<Turno> &deBase)
+{
+    QVector<Turno> todos = deBase;
+    todos += locales;
+    return todos;
+}
+
 /* Franja de aviso arriba de todo y conexión con la base (RNF-09). La terminal no pide
  * usuario: la paciente se identifica con su DNI. La conexión se prueba apenas se
  * muestra la ventana, para no demorar el arranque. */
@@ -692,7 +701,8 @@ void VentanaCliente::actualizarHorarios()
         horariosDeBase(dia);
         return;
     }
-    ui->listaHorarios->addItems(ReglasTurno::horariosLibresSinBase(dia, turnos, QDateTime::currentDateTime()));
+    ui->listaHorarios->addItems(ReglasTurno::horariosLibresSinBase(dia, conAgendaDeBase(turnos, agendaDeBase),
+                                                                   QDateTime::currentDateTime()));
     if (ui->listaHorarios->count() == 0)
         ui->lblNotaHorario->setText("No quedan horarios libres ese día. Probá con otro.");
 }
@@ -761,7 +771,7 @@ void VentanaCliente::confirmar()
         return;
     }
     recargarLocal();
-    if (ReglasTurno::horarioOcupado(turnos, inicio)) {
+    if (ReglasTurno::horarioOcupado(conAgendaDeBase(turnos, agendaDeBase), inicio)) {
         QMessageBox::warning(this, "Horario ocupado", "Ese horario ya no está libre. Elegí otro.");
         actualizarHorarios();
         irA(PagHorario);
@@ -1038,6 +1048,8 @@ void VentanaCliente::conectarBase()
     if (!repositorio)
         repositorio = new Repositorio(conexion->base());
     enModoBase = true;
+    QString errorAgenda;
+    DatosBase::cargarTurnos(*repositorio, QDate::currentDate(), ReglasTurno::DIAS_AGENDA, agendaDeBase, &errorAgenda);
     cargarProtocolos();
     actualizarHorarios();
     ocultarTurno();
@@ -1079,6 +1091,7 @@ void VentanaCliente::sincronizarBase()
     QVector<Turno> agenda;
     if (!DatosBase::cargarTurnos(*repositorio, QDate::currentDate(), ReglasTurno::DIAS_AGENDA, agenda, &error))
         return;
+    agendaDeBase = agenda;   /* queda como respaldo por si se corta la conexión */
     const QString resumen = DatosBase::resumen(agenda);
     if (resumen == resumenAgenda)
         return;

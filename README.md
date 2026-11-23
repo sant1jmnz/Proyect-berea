@@ -166,13 +166,13 @@ docs/
   15-guia-por-semana.md  # qué traer de esta rama cada semana
   bitacora-*.md          # bitácoras del equipo (la del cierre: bitacora-cierre.md)
   catedra/               # material de cátedra transcripto (con ejemplos de conexión C y MySQL)
-  diagramas/             # diseño conceptual escrito (Peter Chen)
+  diagramas/             # diagramas de la base (.drawio y .png)
 dermalia.sh              # instalar, iniciar, parar y probar todo con un comando
 backend/                 # base MySQL: tablas en 9 schemas, datos, stored procedures, reportes, tuning y pruebas
   01 codigobasededatossolotablas.sql  02_datos.sql  02b_numero.sql  03_sp_semana3.sql  04_sp_semana4.sql
   05_reportes_semana5.sql  06_tuning_semana6.sql  09_sp_pantallas.sql  07_actividad_con_sps.sql
-  08_usuarios.sql  05_pruebas_sp.sql
-  medir_tuning.sql
+  08_usuarios.sql  10_sp_telegram.sql  05_pruebas_sp.sql
+  medir_tuning.sql  pruebas/ (plantilla de casos de prueba)
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
 web/                     # sitio web para la paciente (Vite, GSAP, Three.js) y su API (Node), con el asistente de IA
 diseno-dermalia/         # guía de estética de las pantallas
@@ -212,8 +212,7 @@ Google Workspace / Classroom · Canva (presentación final).
 
 Cada integrante trabaja en **su propia rama** (`santiago`, `bautista`), nunca
 directo en `main`. `main` es la versión de todos y se actualiza con Pull
-Requests. La rama de documentación de la base
-de datos) y `dermalia-carpeta-proyecto-v1` guarda la carpeta del 3er bimestre.
+Requests. La rama `dermalia-carpeta-proyecto-v1` guarda la carpeta del 3er bimestre.
 
 ### 1. Primera vez: bajar el repo
 

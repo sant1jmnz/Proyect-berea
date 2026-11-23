@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "api": "node --env-file-if-exists=.env api/servidor.js",
-    "test:api": "node --test --test-concurrency=1 api/servidor.test.js api/asistente.test.js api/telegram.test.js",
+    "test:api": "node --test --test-concurrency=1 api/servidor.test.js api/asistente.test.js api/telegram.test.js api/reservachat.test.js",
     "generar": "node scripts/generar-catalogo.mjs",
     "predev": "node scripts/generar-catalogo.mjs",
     "prebuild": "node scripts/generar-catalogo.mjs"

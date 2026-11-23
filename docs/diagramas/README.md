@@ -163,7 +163,7 @@ sistema; en ese caso la paciente involucrada va en la relación 36.
 | Categoría de protocolo | faciales, aparatología, medicina estética, cirugías (con `porcentaje_sena` 30 % o 40 % y `requiere_evaluacion`) |
 | Estado del turno | pendiente de seña, confirmado, realizado, cancelado, ausente |
 | Estado del pago | pendiente, pagada, reembolsada, reembolsada parcial, retenida |
-| Medio de pago | tarjeta simulada, transferencia, efectivo, tarjeta de regalo |
+| Medio de pago | tarjeta, transferencia, efectivo, tarjeta de regalo |
 | Resultado de evaluación | pendiente, apto, no apto |
 | Origen | terminal, web, gestión, sistema |
 | Tipo de regla | frecuencia de visitas, gasto acumulado, promoción general |

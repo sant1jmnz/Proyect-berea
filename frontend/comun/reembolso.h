@@ -1,8 +1,8 @@
 /* Reembolso de la seña al cancelar (RF-10): se devuelve el 100% si se
  * cancela con más de 24 horas de anticipación; por debajo de ese plazo, o por
  * inasistencia, no se devuelve nada. Es el mismo criterio que ya usa el
- * apartado Cliente (ventanacliente.cpp). Como el pago es un mock, "devolver"
- * es solo cambiar el estado y el monto en el sistema. */
+ * apartado Cliente (ventanacliente.cpp). Devolver es cambiar el estado y el
+ * monto de la seña en el sistema. */
 #ifndef REEMBOLSO_H
 #define REEMBOLSO_H
 

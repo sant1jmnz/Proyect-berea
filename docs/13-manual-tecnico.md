@@ -148,7 +148,7 @@ usuarios y turnos.
 ### Seguridad
 
 - Las contraseñas se guardan y se comparan tal cual, sin encriptar (decisión del equipo para este trabajo).
-- La seña es un mock: no se guardan datos de tarjetas (RNF-05).
+- No se guardan datos de tarjetas (RNF-05).
 - Al asistente de IA no le llegan datos personales: la API (`web/api/asistente.js`, `filtrarDatosPersonales`)
   borra los emails y los números de 7 o más dígitos (DNI, teléfonos, tarjetas) **antes** de mandar la pregunta a
   Gemini y antes de guardarla con `asistente.sp_registrar_consulta`. Se hace en la API y no en la base porque el
@@ -212,7 +212,7 @@ prueba las usa, sin repetir la lista de archivos.
   stored procedures, con el usuario que ingresó en el log.
 - **Cliente (terminal):** no pide ingreso (la paciente se identifica con el DNI): el catálogo y los
   horarios libres salen de la base; la reserva da de alta a la paciente nueva (pide la fecha de
-  nacimiento), crea el turno y paga la seña simulada; buscar y cancelar también usan los SP.
+  nacimiento), crea el turno y paga la seña; buscar y cancelar también usan los SP.
 - **Cupones, Tarjetas de regalo y Consultas previas** (Gestión) solo funcionan con la base: sin conexión
   quedan deshabilitadas y lo avisan.
 - **Sin conexión:** las dos siguen con el archivo local (`frontend/comun/almacenlocal.*`: un

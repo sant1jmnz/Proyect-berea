@@ -1,5 +1,5 @@
 /* Reglas de un turno que usan igual Gestión y la terminal: qué horario está libre sin
- * la base, si un turno sigue vigente, el código de la seña simulada y qué pasa con la
+ * la base, si un turno sigue vigente, el código de la seña y qué pasa con la
  * seña al cancelar. Antes cada ventana tenía su propia copia. */
 #ifndef REGLASTURNO_H
 #define REGLASTURNO_H
@@ -23,7 +23,7 @@ QStringList horariosLibresSinBase(const QDate &dia, const QVector<Turno> &turnos
 /* Pendiente o confirmado, y todavía no pasó. */
 bool esVigente(const Turno &t, const QDateTime &ahora);
 
-/* Código de la seña simulada (mock): SIM-123456, sin repetirse entre los turnos cargados. */
+/* Código de la seña: SIM-123456, sin repetirse entre los turnos cargados. */
 QString nuevoCodigoOperacion(const QVector<Turno> &turnos);
 
 /* Qué pasa con la seña si se cancela ahora (RF-10), para mostrarlo antes de confirmar. */

@@ -41,9 +41,9 @@ quién hizo cada acción.
 | RF-05 | Cliente + Web | ...a la paciente consultar precios, duración y protocolos en un buscador por palabra clave. | R2 | Must |
 | RF-06 | Gestión | ...a la recepción buscar lo mismo, para responder consultas por teléfono sin buscar a mano o de memoria. | R2 | Must |
 | RF-07 | Todos | ...derivar la consulta al WhatsApp del instituto cuando el buscador o el asistente de IA no puedan responder, y dejarla registrada. | R2 | Must |
-| RF-08 | Cliente + Web | ...a la paciente pagar la seña al confirmar su turno con un flujo **simulado que imita un pago real** (estilo Mercado Pago): el sistema registra el estado, sin procesar dinero real. | R3 | Must |
-| RF-09 | Gestión | ...a la recepción registrar el pago de la seña cuando confirma un turno cargado por teléfono (mismo mock que RF-08). | R3 | Must |
-| RF-10 | Todos | ...calcular (de forma simulada) una seña del 30% del precio final del protocolo (sin mínimo, como la calcula la base), y del **40% en cirugías**; reembolsable 100% si se cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
+| RF-08 | Cliente + Web | ...a la paciente pagar la seña al confirmar su turno con un flujo de pago (estilo Mercado Pago): el sistema registra el estado. | R3 | Must |
+| RF-09 | Gestión | ...a la recepción registrar el pago de la seña cuando confirma un turno cargado por teléfono (mismo flujo que RF-08). | R3 | Must |
+| RF-10 | Todos | ...calcular una seña del 30% del precio final del protocolo (sin mínimo, como la calcula la base), y del **40% en cirugías**; reembolsable 100% si se cancela con más de 24 h de anticipación y no reembolsable por debajo de ese plazo o por inasistencia. | R3 | Should |
 | RF-11 | Todos | ...enviar un recordatorio de turno a la paciente antes de la fecha reservada y registrar cada aviso (canal, estado, fecha programada). Canales: **Telegram** (bot, gratis y automático, se usa en el desarrollo y la demo), **Google Calendar** (invitación con recordatorio) y **WhatsApp** (API oficial en producción; mientras tanto, enlace `wa.me` asistido desde la recepción). | R4 | Must |
 | RF-12 | Cliente + Web | ...a la paciente buscar y cancelar su propio turno con su DNI o teléfono, sin cuenta. | R1 | Should |
 | RF-13 | Gestión | ...a la recepción buscar y cancelar el turno de cualquier paciente por nombre, DNI o teléfono. | R1 | Should |
@@ -77,7 +77,7 @@ iteración futura (`docs/propuestas.md`).
 | RNF-02 | Rendimiento | La grilla de disponibilidad carga en menos de 2 segundos. |
 | RNF-03 | Usabilidad | Una paciente sin instrucción previa completa la carga de su turno (terminal o web) en menos de 2 minutos. |
 | RNF-04 | Usabilidad | La recepción, con una capacitación breve, completa la carga de un turno en menos de 1 minuto. |
-| RNF-05 | Seguridad | El sistema no maneja pagos reales ni datos de tarjeta: la seña es un mock que imita el flujo de pago y solo registra el estado en MySQL. |
+| RNF-05 | Seguridad | El sistema no guarda datos de tarjeta: de la seña solo registra el estado en MySQL. |
 | RNF-06 | Seguridad | Los datos de contacto y de salud de la paciente se guardan en la base MySQL del instituto. A servicios externos (Google Calendar, Telegram/WhatsApp, IA) solo se envía lo mínimo necesario; al asistente de IA no se le envían datos personales ni de salud. |
 | RNF-07 | Compatibilidad | La terminal funciona en pantalla táctil de al menos 768×1024 px; Gestión, en ventana de escritorio de 960×600 px como mínimo; la web, en celular y escritorio. |
 | RNF-08 | Mantenibilidad | La recepción puede actualizar precios y protocolos sin intervención técnica del equipo. |
@@ -115,7 +115,6 @@ Como paciente, quiero pagar la seña al confirmar mi turno en la terminal,
 para asegurar mi reserva y saber cuánto se cobra por adelantado.
 
 Criterios de aceptación:
-- El pago es simulado (mock): imita el flujo de un pago real pero no se conecta a ninguna pasarela.
 - El monto se ve antes de confirmar (30% del precio final; 40% en cirugías).
 - El sistema no pide ni guarda ningún dato de tarjeta.
 ```
@@ -270,8 +269,8 @@ El **ticket promedio por turno** que usan los cálculos es **$150.000**.
   resto.
 - Si no es apta, el instituto **se queda con el 10%** de la consulta y
   devuelve el resto.
-- Como todo el pago es mock, la devolución y la retención son cambios de
-  estado y de monto en el sistema, no movimientos de dinero real.
+- La devolución y la retención son cambios de estado y de monto en el
+  sistema.
 
 ## Backlog inicial
 

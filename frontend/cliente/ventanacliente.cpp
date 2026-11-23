@@ -231,7 +231,7 @@ void VentanaCliente::armarPasos()
 
     /* El botón de la seña queda apretado (checkable): cambia el texto (RF-08). */
     connect(ui->btnSena, &QPushButton::toggled, this, [this](bool pagada) {
-        ui->btnSena->setText(pagada ? "✓  Seña pagada" : "Pagar seña (simulado)");
+        ui->btnSena->setText(pagada ? "✓  Seña pagada" : "Pagar seña");
     });
 }
 
@@ -512,8 +512,8 @@ void VentanaCliente::pintarResumen()
     ui->lblSena->setText(Formato::pesos(c.sena));
     ui->lblReglaSena->setText(QString("%1. Te la devolvemos si cancelás con más de 24 h.")
                                   .arg(c.hayCirugia ? "40 % en cirugías, 30 % en el resto" : "30 % del total"));
-    ui->lblNotaSena->setText(tarjetaCodigo.isEmpty() ? "Pago simulado: no se pide tarjeta ni se cobra dinero."
-                                                     : "La seña se descuenta del saldo de tu tarjeta de regalo (pago simulado).");
+    ui->lblNotaSena->setText(tarjetaCodigo.isEmpty() ? "Se paga al confirmar el turno."
+                                                     : "La seña se descuenta del saldo de tu tarjeta de regalo.");
 }
 
 void VentanaCliente::olvidarCodigo()
@@ -748,7 +748,7 @@ void VentanaCliente::confirmar()
                     Validaciones::soloDigitos(ui->editTelefono->text()), c.nombres.join(" + "), c.totalFinal,
                     c.sena, inicio, inicio.addSecs(c.duracionMin * 60), EstadoTurno::Confirmado, "Terminal",
                     ui->btnSena->isChecked(), QString(), 0 };
-    if (nuevo.senaPagada)   /* seña simulada: imita un pago real pero no mueve dinero */
+    if (nuevo.senaPagada)
         nuevo.codigoOperacion = ReglasTurno::nuevoCodigoOperacion(turnos);
     turnos.append(nuevo);
     guardarLocal();
@@ -757,7 +757,7 @@ void VentanaCliente::confirmar()
                                       nuevo.inicio, nuevo.sena, nuevo.senaPagada, nuevo.origen, {} });
 
     QString mensaje = mensajeReservado(nuevo.protocolo, inicio);
-    mensaje += nuevo.senaPagada ? QString("\nSeña pagada (simulada): código %1.").arg(nuevo.codigoOperacion)
+    mensaje += nuevo.senaPagada ? QString("\nSeña pagada: código %1.").arg(nuevo.codigoOperacion)
                                 : "\nLa seña quedó sin pagar: acercate a recepción para abonarla.";
     QMessageBox::information(this, "Turno confirmado", mensaje);
 
@@ -1143,7 +1143,7 @@ bool VentanaCliente::buscarOCrearPaciente(int *idPaciente)
     return true;
 }
 
-/* Paso 3 con la base: sp_alta_turno y, si tocó "Pagar seña", sp_registrar_seña (pago simulado). */
+/* Paso 3 con la base: sp_alta_turno y, si tocó "Pagar seña", sp_registrar_seña. */
 bool VentanaCliente::confirmarEnBase(const Cuentas &c, const QVector<const Protocolo *> &elegidos, const QDateTime &inicio)
 {
     int idPaciente = 0;
@@ -1164,11 +1164,11 @@ bool VentanaCliente::confirmarEnBase(const Cuentas &c, const QVector<const Proto
 
     QString mensaje = mensajeReservado(c.nombres.join(" + "), inicio);
     if (ui->btnSena->isChecked()) {
-        /* Con una tarjeta de regalo la seña sale de su saldo; si no, es el pago simulado de siempre. */
+        /* Con una tarjeta de regalo la seña sale de su saldo; si no, se paga con tarjeta. */
         const bool conTarjeta = !tarjetaCodigo.isEmpty();
-        const Respuesta sena = repositorio->registrarSena(turno.id, conTarjeta ? "tarjeta de regalo" : "tarjeta simulada",
+        const Respuesta sena = repositorio->registrarSena(turno.id, conTarjeta ? "tarjeta de regalo" : "tarjeta",
                                                           tarjetaCodigo, "terminal");
-        mensaje += sena.ok ? QString("\nSeña pagada%1: código %2.").arg(conTarjeta ? " con tu tarjeta de regalo" : " (simulada)", sena.dato)
+        mensaje += sena.ok ? QString("\nSeña pagada%1: código %2.").arg(conTarjeta ? " con tu tarjeta de regalo" : "", sena.dato)
                            : QString("\nLa seña no se pudo registrar (%1): acercate a recepción.").arg(sena.mensaje);
     } else {
         mensaje += "\nLa seña quedó sin pagar: acercate a recepción para abonarla.";

@@ -57,7 +57,7 @@ ataca esas cuatro causas con:
 |---|---|
 | Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema |
 | Buscador de precios y protocolos | Búsqueda por palabra clave; deriva a WhatsApp si no encuentra coincidencia |
-| Registro de seña | Simulado (mock que imita un pago real), sin procesar dinero real |
+| Registro de seña | Se registra el estado del pago y su código de operación |
 | Recordatorio de turno | Por Telegram (gratis, en desarrollo) y WhatsApp en producción; botón para agregar el turno a Google Calendar |
 | Cirugías | Consulta previa paga obligatoria; solo se agenda con evaluación "apta" vigente (6 meses) |
 | Buscar turnos | Por DNI o teléfono, sin cuenta; con cuenta opcional se guarda el historial |
@@ -297,7 +297,7 @@ Todo está construido, conectado a la misma base y probado:
   regalo, avisos), 8 reportes, auditoría por fechas y dos reportes `_tuneado` con la medición antes y después.
   Las aplicaciones solo llaman a stored procedures, con un usuario que solo tiene `EXECUTE`.
 - `frontend/`: Qt 6 (Widgets) y `mysql.h`, como pide la cátedra. **Gestión** (`dermalia_gestion`, PC de
-  recepción): cargar, buscar y cancelar turnos con seña simulada y reembolso, protocolos, profesionales con su
+  recepción): cargar, buscar y cancelar turnos con seña y reembolso, protocolos, profesionales con su
   disponibilidad, pacientes, avisos, cupones con QR, tarjetas de regalo, consultas previas de cirugía, reportes,
   auditoría y usuarios. **Terminal** (`dermalia_cliente`, táctil): turno en 3 pasos (hasta 3 protocolos),
   cupón o tarjeta de regalo, Google Calendar, buscar y cancelar, cuenta opcional y **asistente de IA**. Si la
@@ -335,7 +335,7 @@ enseña el material de la cátedra y pide la consigna: la lista de lo que se ree
 
 - **Ensayar el pitch** con cronómetro (5 a 7 minutos) y la demo con `./dermalia.sh recargar-base` antes.
 - **Número de grupo** (opcional): los archivos de la entrega no llevan sufijo; si algún día lo dan, `python3 backend/armar_entrega.py --grupo <número>`.
-- Para producción, fuera del alcance del bimestre: pasarela de pagos real (hoy la seña es simulada), WhatsApp con
+- Para producción, fuera del alcance del bimestre: pasarela de pagos, WhatsApp con
   la API oficial de Meta (hoy enlace `wa.me` y Telegram) y probar las plantillas de n8n en una instancia real.
 - Al agregar un protocolo a la base, correr `npm run generar` en `web/` para que el sitio y las apps lo tengan
   sin conexión.

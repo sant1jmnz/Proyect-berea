@@ -27,7 +27,7 @@ export const INSTITUTO = {
 /* Reglas del negocio tal como las aplica la base (backend/03 y 04). Son el "manual" del asistente. */
 export const REGLAS = [
   { tema: 'sena', claves: ['sena', 'seña', 'adelanto', 'deposito', 'pagar', 'pago', 'cuanto se paga'],
-    texto: 'Para confirmar el turno se paga una seña del 30 % del precio (40 % en cirugías). En esta versión el pago de la seña es simulado: no se cobra dinero real.' },
+    texto: 'Para confirmar el turno se paga una seña del 30 % del precio (40 % en cirugías). Te la devolvemos si cancelás con más de 24 horas.' },
   { tema: 'cancelar', claves: ['cancel', 'reembols', 'devuel', 'no puedo ir', 'falt', 'reprogram', 'cambiar el turno'],
     texto: 'Podés cancelar tu turno con tu DNI o teléfono desde el sitio o la terminal. Si cancelás con más de 24 horas de anticipación se devuelve el 100 % de la seña; con menos de 24 horas o si no venís, la seña no se devuelve.' },
   { tema: 'cirugias', claves: ['cirug', 'opera', 'quirurg', 'lipo', 'rinoplast', 'blefaro', 'consulta previa', 'evaluacion'],

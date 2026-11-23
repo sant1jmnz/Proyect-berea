@@ -1984,7 +1984,7 @@ INSERT INTO pagos.EstadoPago (id_estado_pago, nombre) VALUES
 
 -- Medios de pago
 INSERT INTO pagos.MedioPago (id_medio_pago, nombre) VALUES
-  (1, 'tarjeta simulada'),
+  (1, 'tarjeta'),
   (2, 'transferencia'),
   (3, 'efectivo'),
   (4, 'tarjeta de regalo');
@@ -2033,7 +2033,7 @@ INSERT INTO auditoria.TipoEvento (id_tipo_evento, nombre, descripcion) VALUES
   (13, 'turno_rechazado', 'Un turno no pudo agendarse'),
   (14, 'cancelacion_turno', 'Turno cancelado'),
   (15, 'cambio_estado_turno', 'Turno marcado como realizado o ausente'),
-  (16, 'pago_registrado', 'Seña registrada (simulada)'),
+  (16, 'pago_registrado', 'Seña registrada'),
   (17, 'reembolso', 'Reembolso total o parcial de una seña'),
   (18, 'retencion', 'Seña retenida por el instituto'),
   (19, 'cupon_emitido', 'Cupón generado por una regla'),
@@ -2413,7 +2413,7 @@ UPDATE agenda.Turno SET id_evaluacion_previa = 4 WHERE id_turno = 8;
 UPDATE agenda.Turno SET id_evaluacion_previa = 5 WHERE id_turno = 10;
 UPDATE agenda.Turno SET id_evaluacion_previa = 6 WHERE id_turno = 12;
 
--- Pagos de seña (simulados)
+-- Pagos de seña
 INSERT INTO pagos.PagoSena (id_pago, id_turno, id_estado_pago, id_medio_pago, monto, fecha_pago, codigo_operacion, monto_reembolsado, fecha_resolucion) VALUES
   (1, 1, 3, 2, 24000, '2026-08-28 14:13:00', 'SIM-20260828-00001', 24000, '2026-09-15 15:09:00'),
   (2, 2, 2, 1, 1800000, '2026-09-15 15:30:00', 'SIM-20260915-00002', NULL, NULL),

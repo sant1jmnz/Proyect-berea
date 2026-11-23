@@ -392,11 +392,6 @@
   color: var(--rosa-hover);
 }
 
-.nota--simulada {
-  color: var(--dorado);
-  font-weight: 700;
-}
-
 @media (max-width: 920px) {
   .reserva {
     grid-template-columns: 1fr;
@@ -426,7 +421,7 @@
   margin-inline: auto;
 }
 
-/* ---------- Pago simulado ---------- */
+/* ---------- Pago de la seña ---------- */
 
 .pago {
   width: min(440px, calc(100vw - 32px));

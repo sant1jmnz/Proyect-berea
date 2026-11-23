@@ -138,15 +138,14 @@ Se atacan con el sistema, y justifican la propuesta:
   terminal, la web y la PC de recepción.
 - C2 / C2.1 → buscador de precios y protocolos por palabra clave, contra
   una base propia, en la terminal y en la PC de recepción.
-- C3 / C3.1 → registro de seña simulado (mock que imita un pago real): se marca el
-  estado de pago al confirmar el turno, sin procesar dinero real.
+- C3 / C3.1 → registro de seña: se marca el
+  estado de pago al confirmar el turno.
 - C4 / C4.1 → recordatorio de turno por WhatsApp y Google Calendar.
 
 **Restricción técnica del equipo (actualizada)**: base MySQL, aplicación
 de escritorio en Qt y sitio web, con integraciones externas permitidas
 (Google Calendar, WhatsApp, asistente de IA). El sistema tiene tres
 apartados: terminal táctil en el instituto, PC de recepción y sitio web.
-El pago sigue siendo simulado (mock).
 
 Quedan fuera de alcance de este bimestre: historia clínica de
 tratamientos, gestión de stock de insumos, liquidación de comisiones, app

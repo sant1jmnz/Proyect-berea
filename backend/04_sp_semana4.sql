@@ -17,7 +17,7 @@ DELIMITER //
 --  SEÑA, CANCELACIÓN Y ASISTENCIA (RF-08, RF-09, RF-10)
 -- =====================================================================
 
--- Registra la seña (pago simulado, sin pasarela) y confirma el turno. Devuelve:
+-- Registra la seña y confirma el turno. Devuelve:
 -- id = pago, valor = monto de la seña, dato = código de operación 'SIM-...'.
 -- Si se paga con tarjeta de regalo hay que pasar su código; el turno no puede
 -- tener cupón (un cupón y una tarjeta no van juntos).

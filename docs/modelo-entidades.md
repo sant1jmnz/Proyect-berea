@@ -14,7 +14,6 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). El modelo tiene 27 y e
 - El personal tiene **cuenta propia obligatoria**, para auditar errores.
 - Un turno puede tener **varios protocolos**.
 - Cada protocolo se registra **por profesional** (qué protocolos hace cada uno).
-- La seña es un **mock** que imita un pago real.
 - Los recordatorios salen por **Telegram** (bot gratuito y automático, para
   desarrollo y demo), **Google Calendar** y, en producción, la **API oficial
   de WhatsApp**. Mientras tanto, la recepción puede avisar con un enlace
@@ -103,7 +102,7 @@ Mínimo pedido: 13 entidades (las relaciones no cuentan). El modelo tiene 27 y e
 17. **Canal de notificación** (Telegram, WhatsApp, Google Calendar, WhatsApp asistido)
 18. **Resultado de evaluación** (apto, no apto)
 19. **Origen** (terminal, web, gestión, sistema): desde dónde se hizo algo
-20. **Medio de pago** (tarjeta simulada, transferencia, efectivo, tarjeta de regalo)
+20. **Medio de pago** (tarjeta, transferencia, efectivo, tarjeta de regalo)
 21. **Tipo de regla** (frecuencia de visitas, gasto acumulado, promoción general)
 22. **Estado de notificación** (pendiente, enviada, fallida)
 23. **Tipo de notificación** (recordatorio de turno, confirmación, cancelación, cupón nuevo)
@@ -187,7 +186,7 @@ y *Profesional–Protocolo* ("realiza").
 ### Atributos
 | Entidad | Atributos |
 |---|---|
-| **Pago de seña** | id_pago (PK), monto, fecha_pago, codigo_operacion *(simulado)*, monto_reembolsado, fecha_resolucion *(opc: cuando se devuelve o retiene)* |
+| **Pago de seña** | id_pago (PK), monto, fecha_pago, codigo_operacion, monto_reembolsado, fecha_resolucion *(opc: cuando se devuelve o retiene)* |
 | **Estado del pago** | id_estado_pago (PK), nombre *(pendiente, pagada, reembolsada, reembolsada parcial, retenida)* |
 | **Medio de pago** | id_medio_pago (PK), nombre |
 | **Evaluación previa** | id_evaluacion (PK), observaciones *(opc)*, fecha_resultado *(opc, hasta que se resuelve)*, fecha_reclamo *(opc)* |

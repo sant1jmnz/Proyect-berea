@@ -300,8 +300,8 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
       if (d && !suyo(d)) return enviar(chat, 'Ese turno ya no está en tus próximos turnos.');
       const alta = await escribir('agenda.sp_alta_turno', [vinculada.id_paciente, b, inicioDe(c), a, null, null, 'web', null, null, null]);
       if (!alta.ok) return enviar(chat, `No pude reservar: ${alta.mensaje}`);
-      // seña simulada, igual que en el sitio
-      await escribir('pagos.sp_registrar_sena', [alta.id, 'tarjeta simulada', null, null, 'web', `SIM-${String(Date.now()).slice(-6)}`]);
+      // seña, igual que en el sitio
+      await escribir('pagos.sp_registrar_sena', [alta.id, 'tarjeta', null, null, 'web', `SIM-${String(Date.now()).slice(-6)}`]);
       if (d) await escribir('agenda.sp_cancelar_turno', [d, null, 'web']);
       return enviar(chat, `¡Listo! ${d ? 'Cambié tu turno' : 'Reservé tu turno'} para el ${fechaCorta(inicioDe(c))}. Precio ${pesos(alta.dato)}, seña ${pesos(alta.valor)} pagada.`);
     }
@@ -320,7 +320,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     }
     if (accion === 's') {
       if (t.estado_sena !== 'sin seña') return enviar(chat, 'Ese turno ya tiene la seña.');
-      const r = await escribir('pagos.sp_registrar_sena', [a, 'tarjeta simulada', null, null, 'web', `SIM-${String(Date.now()).slice(-6)}`]);
+      const r = await escribir('pagos.sp_registrar_sena', [a, 'tarjeta', null, null, 'web', `SIM-${String(Date.now()).slice(-6)}`]);
       return enviar(chat, r.ok ? `Listo, seña de ${pesos(t.sena)} pagada. Tu turno queda confirmado.` : r.mensaje);
     }
     return enviar(chat, 'No entendí ese botón. Probá de nuevo desde el menú.');

@@ -285,7 +285,7 @@ document.addEventListener('click', (e) => {
 });
 document.querySelectorAll('.titulo-panel').forEach((h) => (h.tabIndex = -1));
 
-/* ---------- Paso 3: datos, cupón y pago simulado ---------- */
+/* ---------- Paso 3: datos, cupón y pago ---------- */
 
 const formulario = $('[data-formulario]');
 const error = $('[data-error]');
@@ -413,7 +413,7 @@ async function confirmar() {
     senaPagada: true,
     estado: 'confirmado',
   });
-  $('[data-listo-detalle]').textContent = `${nombres}, el ${fechaLarga.format(inicio)} a las ${estado.hora} h. Pagaste ${pesos(enBase ? enBase.cuerpo.sena : c.sena)} de seña ${estado.tarjeta ? 'con tu tarjeta de regalo' : '(simulada)'}. Te vamos a mandar un recordatorio antes del turno.`;
+  $('[data-listo-detalle]').textContent = `${nombres}, el ${fechaLarga.format(inicio)} a las ${estado.hora} h. Pagaste ${pesos(enBase ? enBase.cuerpo.sena : c.sena)} de seña${estado.tarjeta ? ' con tu tarjeta de regalo' : ''}. Te vamos a mandar un recordatorio antes del turno.`;
   $('[data-calendar]').href = enlaceCalendar(inicio, c.duracion, nombres);
   if (enBase) pedir('/estado').then((r) => {
     if (!r?.cuerpo?.telegram) return;

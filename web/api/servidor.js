@@ -7,7 +7,7 @@
  *
  *   GET  /api/protocolos?texto=laser                    catálogo con precio, duración y seña
  *   GET  /api/horarios?fecha=2026-11-20&protocolos=1,2  horarios libres (con el profesional de cada uno)
- *   POST /api/turnos                                    reserva un turno y registra la seña simulada
+ *   POST /api/turnos                                    reserva un turno y registra la seña
  *   GET  /api/turnos?clave=30111222                     turnos de un DNI o teléfono
  *   POST /api/turnos/:id/cancelar                       cancela (la base decide si devuelve la seña)
  *   GET  /api/cupones?dni=30111222                      cupones de una paciente (para validar el código al reservar)
@@ -290,12 +290,12 @@ export function crearManejador(pool) {
         const turno = await escribir(pool, 'agenda.sp_alta_turno',
           [paciente.id, d.profesional, aFechaHora(d.inicio), ...tresProtocolos(d.protocolos || []), 'web', null, d.cupon || null, null]);
         if (!turno.ok) return responder(res, 409, { error: turno.mensaje, codigo: turno.codigo });
-        // la seña es simulada (RNF-05): se marca como pagada con tarjeta simulada
+        // la seña se marca como pagada con tarjeta
         /* El código de operación lo genera el servidor; la base solo lo guarda. */
         const codigoOperacion = `SIM-${randomInt(100000, 1000000)}`;
-        // con una tarjeta de regalo la seña sale de su saldo; si no, es el pago simulado de siempre
+        // con una tarjeta de regalo la seña sale de su saldo; si no, se paga con tarjeta
         const sena = await escribir(pool, 'pagos.sp_registrar_sena',
-          [turno.id, d.tarjeta ? 'tarjeta de regalo' : 'tarjeta simulada', d.tarjeta || null, null, 'web', codigoOperacion]);
+          [turno.id, d.tarjeta ? 'tarjeta de regalo' : 'tarjeta', d.tarjeta || null, null, 'web', codigoOperacion]);
         return responder(res, 201, { turno: turno.id, sena: turno.valor, precioFinal: Number(turno.dato), senaRegistrada: sena.ok, codigoOperacion: sena.dato, aviso: sena.ok ? null : sena.mensaje });
       }
       if (req.method === 'GET' && ruta === '/api/turnos') {

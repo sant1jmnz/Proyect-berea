@@ -143,9 +143,8 @@ falta uno nuevo: SVG de 24×24, solo línea (sin relleno), grosor 2, color
   unos 39 px de alto porque no entra más en 1024 px.
 - **Poco texto para escribir**: nombre y teléfono recién en el paso 3.
 - **Le habla a la paciente, de vos**: "Elegí tu protocolo", "Elegí tu
-  horario", "Confirmá tu turno", "Pagar seña (simulado)", "Tocá una opción
+  horario", "Confirmá tu turno", "Pagar seña", "Tocá una opción
   para continuar". Nunca "slot" ni "booking".
-- Dejar siempre visible que la seña es simulada: no se pide tarjeta.
 
 Pantallas de Cliente (de `docs/05-maquetado.md`):
 

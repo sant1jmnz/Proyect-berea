@@ -71,8 +71,7 @@ los horarios libres de los profesionales que hacen ese protocolo.
 - Los domingos el instituto no atiende.
 
 **3. Confirmá tu turno.** Escribí tu nombre y apellido, tu DNI y tu teléfono. A la derecha se
-ve la **seña** (30% del precio; 40% en cirugías). *Pagar seña (simulado)* la marca como paga: no
-se pide tarjeta ni se cobra dinero. Si tenés un **cupón** (un descuento personal, que se revisa con
+ve la **seña** (30% del precio; 40% en cirugías). *Pagar seña* la marca como paga. Si tenés un **cupón** (un descuento personal, que se revisa con
 tu DNI) o una **tarjeta de regalo** (la seña sale de su saldo), escribí el código y tocá *Aplicar*.
 Tocá *Confirmar turno*.
 
@@ -287,4 +286,3 @@ Parámetros y columnas de cada uno: [`12-contrato-sp.md`](12-contrato-sp.md).
   captura vieja.
 - **¿Y una tarjeta de regalo?** Tiene un monto y un saldo que se gasta en varios turnos, también por
   otra persona. **No se puede usar junto con un cupón** en el mismo turno.
-- **¿La seña es real?** No: es una simulación. Nunca se pide ni se guarda información de tarjetas.

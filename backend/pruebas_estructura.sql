@@ -59,7 +59,7 @@ CALL pruebas.probar('Estado del turno', "INSERT INTO agenda.EstadoTurno (id_esta
 CALL pruebas.probar('Origen', "INSERT INTO agenda.Origen (id_origen, nombre) VALUES (1, 'web')", 0);
 CALL pruebas.probar('Dos turnos', "INSERT INTO agenda.Turno (id_turno, id_paciente, id_profesional, id_estado_turno, id_origen, fecha_hora_inicio, fecha_hora_fin) VALUES (1, 1, 1, 1, 1, '2026-11-02 09:00', '2026-11-02 10:00'), (2, 2, 1, 1, 1, '2026-11-02 10:00', '2026-11-02 11:00')", 0);
 CALL pruebas.probar('Estado del pago', "INSERT INTO pagos.EstadoPago (id_estado_pago, nombre) VALUES (1, 'pagada')", 0);
-CALL pruebas.probar('Medio de pago', "INSERT INTO pagos.MedioPago (id_medio_pago, nombre) VALUES (1, 'tarjeta simulada')", 0);
+CALL pruebas.probar('Medio de pago', "INSERT INTO pagos.MedioPago (id_medio_pago, nombre) VALUES (1, 'tarjeta')", 0);
 CALL pruebas.probar('Pago de seña', "INSERT INTO pagos.PagoSena (id_turno, id_estado_pago, id_medio_pago, monto, fecha_pago, monto_reembolsado) VALUES (1, 1, 1, 7500, NOW(), 0)", 0);
 CALL pruebas.probar('Tarjeta de regalo', "INSERT INTO pagos.TarjetaRegalo (id_tarjeta, id_medio_pago, codigo, monto_inicial, fecha_compra, fecha_vencimiento) VALUES (1, 1, 'REGALO-8F2K-91QZ', 300000, '2026-10-01', '2027-04-01')", 0);
 CALL pruebas.probar('Movimiento negativo (devolución)', "INSERT INTO pagos.MovimientoTarjeta (id_tarjeta, id_turno, monto) VALUES (1, 2, -5000)", 0);

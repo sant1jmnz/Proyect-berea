@@ -53,7 +53,7 @@
 
 ### Pendiente
 
-- Seña simulada (RF-08/09) y cancelación con reembolso (RF-10).
+- Seña (RF-08/09) y cancelación con reembolso (RF-10).
 - Decidir con Bautista el mínimo de la seña: los requerimientos dicen $20.000
   y el modelo de la base solo tiene porcentaje.
 - Separar nombre y apellido en dos campos, como pide la entidad Paciente.

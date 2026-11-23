@@ -40,7 +40,7 @@ test('reserva de punta a punta por HTTP', { skip: !hayBase && 'definir DERMALIA_
     assert.equal(sinNacimiento.estado, 422);
     assert.equal(sinNacimiento.cuerpo.necesitaNacimiento, true);
 
-    // con fecha de nacimiento: turno + seña simulada
+    // con fecha de nacimiento: turno + seña
     const turno = await pedir('/api/turnos', { method: 'POST', body: JSON.stringify({ ...datos, nacimiento: '1990-05-05' }) });
     assert.equal(turno.estado, 201, JSON.stringify(turno.cuerpo));
     assert.ok(turno.cuerpo.turno > 0);

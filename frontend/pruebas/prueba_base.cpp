@@ -104,7 +104,7 @@ private slots:
         QVERIFY(!pisado.ok);
         QCOMPARE(pisado.codigo, 52081);
 
-        // 4. Seña simulada: confirma el turno y devuelve el código SIM-...
+        // 4. Seña: confirma el turno y devuelve el código SIM-...
         const Respuesta sena = repo->registrarSena(turno.id, "efectivo", QString(), "gestion");
         QVERIFY2(sena.ok, qPrintable(sena.mensaje));
         QVERIFY(sena.dato.startsWith("SIM-"));

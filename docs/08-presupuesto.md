@@ -118,8 +118,7 @@ mismos indicadores de la MML):
    beneficio neto sería $11.700.000 + $1.776.000 − $4.800.000 = $8.676.000: el
    retorno del primer año bajaría a ≈ 38% y se recuperaría en ~2,6 años. Conviene mostrar esta
    sensibilidad en el pitch.
-3. **Que la seña simulada se vuelva real** en una etapa posterior (integración
-   con una pasarela de pagos): hoy el sistema no mueve dinero (RNF-05).
+3. **Integrar una pasarela de pagos** para la seña en una etapa posterior.
 
 ## 7. Cómo repartir este documento en el pitch
 

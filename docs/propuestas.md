@@ -85,7 +85,7 @@ que llegan por teléfono, y un sitio web para la paciente.
 | Módulo | Función |
 |---|---|
 | Cargar turno en 3 pasos | Protocolo → horario disponible → confirmación, con agenda propia de los profesionales en el sistema; lo hace la paciente en la terminal o la recepción cuando llama por teléfono |
-| Registro de seña | Simulado (mock que imita un pago real): se registra el estado de pago, sin procesar dinero real ni guardar datos de tarjeta |
+| Registro de seña | Se registra el estado de pago, sin guardar datos de tarjeta |
 | Buscador de precios y protocolos | Búsqueda por palabra clave contra la base propia, más un asistente de IA; si no hay respuesta, deriva al WhatsApp del instituto |
 | Buscar turnos | Por DNI sin cuenta, o con la cuenta opcional de la paciente |
 | Cupones, tarjetas de regalo y fidelidad | Cupones por código o QR, tarjetas de regalo con saldo y cupones automáticos por buenas rachas |
@@ -93,7 +93,7 @@ que llegan por teléfono, y un sitio web para la paciente.
 **Restricción técnica del equipo** (actualizada después de este
 relevamiento inicial): base de datos MySQL, aplicación de escritorio en Qt
 y sitio web, con integraciones externas permitidas (Google Calendar,
-WhatsApp, asistente de IA). El pago sigue siendo un mock. El detalle
+WhatsApp, asistente de IA). El detalle
 completo, actualizado, está en `docs/03-matriz-marco-logico.md` y
 `docs/04-requerimientos.md`.
 
@@ -122,15 +122,12 @@ diseña.
   de la zona.
 - Datos personales: los datos de contacto y protocolo de la paciente son
   sensibles y se guardan solo en la base local del instituto.
-- Fidelidad del mock: el pago y las respuestas del buscador son
-  simulados, así que el pitch tiene que dejar claro qué está simulado y
-  qué no, sin esconder la diferencia.
 
 ### Viabilidad para el bimestre
 
 Alta. Alcance delimitado, decisiones técnicas defendibles en el pitch. El
 riesgo de armar demasiadas integraciones externas quedó resuelto de raíz
-por mantener el pago como mock. Con las APIs ahora permitidas (Google
+por no integrar una pasarela de pagos. Con las APIs ahora permitidas (Google
 Calendar, WhatsApp, IA) el riesgo de integraciones vuelve a existir:
 conviene marcar cuáles son núcleo (reserva + seña + log) y cuáles
 deseables (asistente de IA, WhatsApp automático, fidelidad).

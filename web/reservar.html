@@ -129,7 +129,7 @@
               <p class="error" data-error aria-live="assertive"></p>
               <div class="acciones campo-grupo--ancho">
                 <button class="boton" type="button" data-anterior="2">Volver</button>
-                <button class="boton boton--primario" type="submit">Pagar seña (simulado)</button>
+                <button class="boton boton--primario" type="submit">Pagar seña</button>
               </div>
             </form>
           </section>
@@ -162,7 +162,6 @@
             <span class="etiqueta-campo">Seña a pagar</span>
             <p class="resumen__monto numero" data-resumen-sena>$ 0</p>
             <p class="nota" data-resumen-regla>30 % del total (40 % en cirugías). Te la devolvemos si cancelás con más de 24 h.</p>
-            <p class="nota nota--simulada">El pago es simulado: no te pedimos tarjeta.</p>
           </div>
         </aside>
       </div>
@@ -173,15 +172,14 @@
       <button class="boton boton--chico boton--primario" type="button" data-barra-continuar>Continuar</button>
     </div>
 
-    <!-- Pago simulado (RF-08): imita el paso por una pasarela, sin dinero real. -->
+    <!-- Pago de la seña (RF-08) -->
     <dialog class="pago" data-pago aria-labelledby="titulo-pago">
       <form method="dialog" class="pago__caja">
         <h2 class="titulo-panel" id="titulo-pago">Pago de la seña</h2>
-        <p class="nota">Esto es una simulación: no se cobra nada.</p>
         <p class="pago__monto numero" data-pago-monto></p>
         <div class="pago__estado" data-pago-estado hidden>
           <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle class="pago__giro" cx="24" cy="24" r="20" stroke="#A8475F" stroke-width="3" stroke-linecap="round" /></svg>
-          <span>Procesando el pago simulado…</span>
+          <span>Procesando el pago…</span>
         </div>
         <div class="acciones">
           <button class="boton" value="cancelar" type="submit" data-pago-cancelar>Cancelar</button>

@@ -1,5 +1,5 @@
 // Prueba de la terminal (dermalia_cliente) conectada a la base real: catálogo de la base,
-// horarios libres, reserva de una paciente nueva con seña simulada, búsqueda por DNI y
+// horarios libres, reserva de una paciente nueva con seña, búsqueda por DNI y
 // cancelación. Necesita MySQL con la base cargada (backend/) y DERMALIA_DB_HOST, _USER, _PASS.
 // Sin base, se saltea. ATENCIÓN: escribe en la base (usar una de pruebas).
 //   QT_QPA_PLATFORM=offscreen DERMALIA_DB_USER=root DERMALIA_DB_PASS=... ./prueba_cliente_base
@@ -124,7 +124,7 @@ private slots:
         contestar("", "15/03/1990");             // fecha de nacimiento
         QTimer::singleShot(200, [&confirmado] { contestar("OK", QString(), &confirmado); });
         w.findChild<QPushButton *>("btnConfirmar")->click();
-        QVERIFY2(confirmado.contains("SIM-"), qPrintable(confirmado));   // seña simulada registrada
+        QVERIFY2(confirmado.contains("SIM-"), qPrintable(confirmado));   // seña registrada
 
         // Quedó en la base y la terminal lo muestra en "Buscar mi turno".
         const QVector<TurnoBD> enLaBase = repo.buscarTurnos(dni);

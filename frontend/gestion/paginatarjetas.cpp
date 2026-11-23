@@ -56,7 +56,7 @@ PaginaTarjetas::PaginaTarjetas(QWidget *parent) : QWidget(parent)
     editTelefono->setValidator(new QRegularExpressionValidator(Validaciones::filtroTelefono(), this));
     comboMedio = new QComboBox;
     comboMedio->setObjectName("comboMedioTarjeta");
-    comboMedio->addItems({ "efectivo", "transferencia", "tarjeta simulada" });
+    comboMedio->addItems({ "efectivo", "transferencia", "tarjeta" });
 
     auto *formulario = new QFormLayout;
     formulario->addRow("Monto ($)", editMonto);

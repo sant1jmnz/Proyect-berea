@@ -2889,7 +2889,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
              <item>
               <widget class="QLabel" name="lblNotaSena">
                <property name="text">
-                <string>Registro simulado: el sistema no procesa dinero real ni pide datos de tarjeta, solo guarda el estado. El cobro lo hace la recepción por fuera del sistema.</string>
+                <string>El sistema guarda el estado de la seña. El cobro lo hace la recepción.</string>
                </property>
                <property name="wordWrap">
                 <bool>true</bool>

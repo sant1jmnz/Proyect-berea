@@ -106,7 +106,7 @@ Por qué un inversor o el instituto lo elegiría:
    precios, cuidados y reglas del instituto, no recibe datos personales y, si no sabe, deriva a una persona.
 3. **Resuelve los cuatro problemas medidos.** Cada función sale de una causa del
    Árbol de Problemas: agenda propia (superposiciones), buscador y asistente
-   (95 min/día de consultas), seña simulada (turnos perdidos) y recordatorios.
+   (95 min/día de consultas), seña (turnos perdidos) y recordatorios.
 4. **Sin abono por profesional ni comisiones por paciente.** Con 20
    profesionales los competidores cuestan entre USD 3.600 y USD 4.900 por año
    solo de abono (sección 2); Dermalia es un pago único más un soporte
@@ -144,5 +144,5 @@ Por qué un inversor o el instituto lo elegiría:
   pueden resultar "Sí" en algún competidor.
 - El ticket promedio ($150.000), el costo de los turnos perdidos y los 95
   minutos diarios son supuestos y mediciones del equipo (`docs/01-arbol-de-problemas.md`).
-- Dermalia todavía no tiene usuarios reales: las ventajas son de diseño y de
-  costo, no de resultados medidos.
+- Las ventajas de Dermalia son de diseño y de costo, no de resultados
+  medidos.

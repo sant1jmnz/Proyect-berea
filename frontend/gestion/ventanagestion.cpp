@@ -476,7 +476,7 @@ void VentanaGestion::confirmarTurno()
                     Sena::calcular(p->precio, p->categoria.porcentajeSena), inicio,
                     inicio.addSecs(p->duracionMin * 60), EstadoTurno::Confirmado, "Gestión",
                     ui->btnSena->isChecked(), QString(), 0 };
-    /* Seña simulada (RF-09, RNF-05): imita un pago real pero no mueve dinero. */
+    /* Seña paga (RF-09): queda con su código de operación. */
     if (nuevo.senaPagada)
         nuevo.codigoOperacion = ReglasTurno::nuevoCodigoOperacion(turnos);
     turnos.append(nuevo);
@@ -495,7 +495,7 @@ void VentanaGestion::confirmarTurno()
     QString mensaje = QString("El turno quedó cargado.\n%1 · %2, %3")
                           .arg(nuevo.paciente, Formato::fechaLarga(inicio.date()), inicio.toString("HH:mm"));
     if (nuevo.senaPagada)
-        mensaje += QString("\nPago de la seña simulado y aprobado (código %1).").arg(nuevo.codigoOperacion);
+        mensaje += QString("\nPago de la seña aprobado (código %1).").arg(nuevo.codigoOperacion);
     /* Sin base, el turno se guarda en este equipo hasta que vuelva la conexión (RNF-09). */
     if (!conexion->hayConexion()) {
         if (conexion->guardarEnContingencia({ nuevo.paciente, nuevo.dni, nuevo.telefono, nuevo.protocolo,
@@ -898,7 +898,7 @@ bool VentanaGestion::buscarOCrearPaciente(int *idPaciente)
     return true;
 }
 
-/* Carga el turno con los stored procedures: alta del turno y, si se marcó, seña simulada. */
+/* Carga el turno con los stored procedures: alta del turno y, si se marcó, la seña. */
 void VentanaGestion::confirmarTurnoEnBase(const Protocolo *p, const QDateTime &inicio)
 {
     int idPaciente = 0;
@@ -918,7 +918,7 @@ void VentanaGestion::confirmarTurnoEnBase(const Protocolo *p, const QDateTime &i
     if (ui->btnSena->isChecked()) {
         bool ok = false;
         const QString medio = QInputDialog::getItem(this, "Medio de pago", "¿Cómo pagó la seña?",
-            { "efectivo", "transferencia", "tarjeta simulada", "tarjeta de regalo" }, 0, false, &ok);
+            { "efectivo", "transferencia", "tarjeta", "tarjeta de regalo" }, 0, false, &ok);
         QString codigoTarjeta;
         while (ok && medio == "tarjeta de regalo") {
             codigoTarjeta = QInputDialog::getText(this, "Tarjeta de regalo", "Código de la tarjeta:", QLineEdit::Normal, codigoTarjeta, &ok);
@@ -930,7 +930,7 @@ void VentanaGestion::confirmarTurnoEnBase(const Protocolo *p, const QDateTime &i
         if (ok) {
             const Respuesta sena = repositorio->registrarSena(turno.id, medio, codigoTarjeta.trimmed(), "gestion", idUsuario);
             if (sena.ok)
-                mensaje += QString("\nPago de la seña simulado y aprobado (código %1).").arg(sena.dato);
+                mensaje += QString("\nPago de la seña aprobado (código %1).").arg(sena.dato);
             else
                 mensaje += QString("\nLa seña no se pudo registrar: %1").arg(sena.mensaje);
         } else {

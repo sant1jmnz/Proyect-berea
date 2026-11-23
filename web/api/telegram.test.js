@@ -125,7 +125,7 @@ test('avisos: manda los de Telegram, marca enviada, y un chat bloqueado o invent
   const alta = await escribir('agenda.sp_alta_turno', [1, libre.id_profesional, libre.inicio, 1, null, null, 'web', null, null, null]);
   assert.ok(alta.ok, alta.mensaje);
   // los avisos (confirmación y recordatorio) se crean al registrar la seña
-  const sena = await escribir('pagos.sp_registrar_sena', [alta.id, 'tarjeta simulada', null, null, 'web', 'SIM-999001']);
+  const sena = await escribir('pagos.sp_registrar_sena', [alta.id, 'tarjeta', null, null, 'web', 'SIM-999001']);
   assert.ok(sena.ok, sena.mensaje);
   const antes = enviados.length;
   await bot().enviarPendientes();

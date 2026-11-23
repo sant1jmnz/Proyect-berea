@@ -67,7 +67,7 @@ struct Turno {
     EstadoTurno estado;
     QString origen;         /* Origen (tabla maestra): Gestión, Terminal, Web */
     bool senaPagada;
-    QString codigoOperacion;   /* de la seña (mock): SIM-000123; vacío si no se pagó */
+    QString codigoOperacion;   /* de la seña: SIM-000123; vacío si no se pagó */
     int reembolsado = 0;       /* seña devuelta al cancelar (RF-10) */
     int id = 0;                /* id del turno en la base (0 = dato de prueba) */
     int idPaciente = 0;

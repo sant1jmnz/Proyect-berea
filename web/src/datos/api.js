@@ -51,7 +51,7 @@ export async function horariosDeBase(dia, idsWeb) {
   return [...porHora.values()].sort((a, b) => a.hora.localeCompare(b.hora));
 }
 
-/* Reserva el turno y registra la seña simulada. Devuelve { ok, cuerpo } o null si no hay API. */
+/* Reserva el turno y registra la seña. Devuelve { ok, cuerpo } o null si no hay API. */
 export async function reservarEnBase({ nombre, dni, telefono, nacimiento, idsWeb, profesional, inicio, cupon, tarjeta }) {
   const ids = await idsDe(idsWeb);
   if (!ids) return null;

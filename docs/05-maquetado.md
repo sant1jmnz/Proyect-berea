@@ -41,7 +41,7 @@ diseño final pixel a pixel.
 
 El apartado Web ya tiene un primer maquetado navegable en [`web/`](../web/)
 (Vite + GSAP + Three.js, con datos fijos y sin base todavía): inicio con
-catálogo y buscador, reserva en 3 pasos con seña simulada y "Mi turno" para
+catálogo y buscador, reserva en 3 pasos con seña y "Mi turno" para
 buscar y cancelar por DNI o teléfono. Usa la misma paleta y tipografías que
 la app de escritorio; el movimiento sale de cinco sitios de referencia
 (ver [`web/REFERENCIAS.md`](../web/REFERENCIAS.md)).
@@ -58,7 +58,7 @@ flowchart LR
     end
     subgraph Web["Apartado Web (paciente)"]
         W1[Catálogo y reserva<br/>RF-01, RF-21] --> W2[Cupón o tarjeta de regalo<br/>RF-17, RF-23]
-        W2 --> W3[Pagar seña simulada<br/>RF-08] --> W4[Agregar a Google Calendar<br/>RF-19]
+        W2 --> W3[Pagar seña<br/>RF-08] --> W4[Agregar a Google Calendar<br/>RF-19]
         W1 -.cuenta opcional.-> W5[Mi historial y cupones<br/>RF-15, RF-24]
     end
     subgraph Gestion["Apartado Gestión (recepción / profesional)"]
@@ -111,7 +111,7 @@ y, si corresponde, un cupón o una tarjeta aplicados.
 | Pantalla | RF cubiertos |
 |---|---|
 | Catálogo y reserva (`index.html`, `reservar.html`) | RF-01, RF-04, RF-05, RF-07, RF-21 |
-| Cupón y pago de seña simulado (`reservar.html`, paso 3) | RF-08, RF-10, RF-17 |
+| Cupón y pago de seña (`reservar.html`, paso 3) | RF-08, RF-10, RF-17 |
 | Agregar a Google Calendar (`reservar.html`, al confirmar) | RF-19 |
 | Buscar y cancelar mi turno (`mi-turno.html`) | RF-12, RF-16 |
 | Tarjeta de regalo (`reservar.html`, paso 3) | RF-23 |
@@ -134,7 +134,7 @@ Todas las pantallas están construidas: las capturas de cada una están en
   resumen del turno: la evidencia de `propuestas.md` dice que puede
   generar resistencia en la paciente, así que el monto y la regla (30%
   del precio final, 40% en cirugías, mínimo $20.000, reembolsable con +24h, RF-10)
-  quedan visibles antes de confirmar el pago simulado, en vez de aparecer
+  quedan visibles antes de confirmar el pago, en vez de aparecer
   como un cargo sorpresa.
 - El buscador de precios y protocolos muestra de dónde sale cada
   resultado ("Base de precios y protocolos" o derivación a WhatsApp), en
@@ -172,10 +172,9 @@ Todas las pantallas están construidas: las capturas de cada una están en
 2. El buscador deriva a WhatsApp cuando no encuentra coincidencia en los
    dos apartados, ¿alcanza con marcarlo en pantalla, o la terminal (sin
    nadie de recepción cerca en ese momento) necesita un paso adicional?
-3. La seña se simula imitando un pago real (estilo pasarela), ¿esa
-   simulación se entiende con solo texto en pantalla, o hace falta una
-   aclaración visual más explícita, sobre todo en la terminal donde nadie de
-   recepción está ahí para aclararlo en el momento?
+3. El pago de la seña imita una pasarela, ¿se entiende con solo texto en
+   pantalla, o hace falta una aclaración visual más explícita, sobre todo en
+   la terminal donde nadie de recepción está ahí para aclararlo en el momento?
 4. Con cupones, tarjetas de regalo y QR, ¿el paso de confirmación sigue
    siendo de 3 pasos, o se vuelve demasiado cargado?
 

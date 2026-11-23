@@ -147,7 +147,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 3.
 | [x] Conectar Gestión 1-3 y 5 con la base real (alta de turno, búsqueda y cancelación). Pasa a la semana siguiente: depende de la base y los stored procedures; la capa de conexión y el modo contingencia ya están | [x] Conectar Cliente 1-3, 5 y el buscador con la base real. Pasa a la semana siguiente por el mismo motivo |
 | [x] Validaciones de DNI y teléfono (formato, largo, solo dígitos) en los formularios de Gestión | [x] Validaciones en Cliente (DNI/teléfono) y en el ABM de protocolos (precio ≥ 0, duración > 0). Cliente (DNI/teléfono/nombre) y, en la pantalla de protocolos de Gestión, las funciones de precio y duración de `frontend/comun/validaciones` |
 | [x] Integrar seña y reembolso (RF-10) al flujo de confirmar y cancelar (Gestión: botón *Cancelar turno* en "Buscar turnos") | [x] Recordatorio de turno (RF-11): registro de cada aviso (pantalla *Avisos* de Gestión; Cliente muestra el recordatorio de cada turno) |
-| [x] Registro de seña como mock que imita un pago real (RF-08/09, RNF-05): código de operación `SIM-…` | [x] **Casos de prueba funcional**: planilla con un caso por RF y resultado de cada uno (`docs/10-casos-de-prueba-cliente.md`) |
+| [x] Registro de seña (RF-08/09, RNF-05): código de operación `SIM-…` | [x] **Casos de prueba funcional**: planilla con un caso por RF y resultado de cada uno (`docs/10-casos-de-prueba-cliente.md`) |
 
 Criterio de "Beta": los RF Must (RF-01 a RF-09, RF-11, RF-20 y RF-21) funcionando de punta a punta y sin errores críticos.
 
@@ -249,7 +249,7 @@ Entregable de la cátedra: ver `plan-4to-bimestre.md`, Semana 6.
 | Santiago | Bautista |
 |---|---|
 | [x] **Manual técnico**: arquitectura (MySQL + Qt + sitio web), cómo instalar, compilar y crear la base | [x] **Manual de usuario**: uso de la terminal (paciente) y de Gestión (recepción), con capturas |
-| [ ] Preparar la **demo en vivo**: base con datos de ejemplo, orden de pasos y plan B si falla la conexión | [ ] Preparar respuestas a **objeciones** (competencia, seña simulada, seguridad de datos, costo) |
+| [ ] Preparar la **demo en vivo**: base con datos de ejemplo, orden de pasos y plan B si falla la conexión | [ ] Preparar respuestas a **objeciones** (competencia, seña, seguridad de datos, costo) |
 | [ ] Ensayar y cronometrar el pitch completo (≤ 7 min) | [ ] Ensayar y cronometrar; ajustar el reparto de tiempo |
 | [ ] Congelar `main`: tag de la versión final | [ ] Congelar la documentación y revisar que el README esté actualizado |
 | [ ] Coevaluación al resto de los equipos | [ ] Coevaluación al resto de los equipos |

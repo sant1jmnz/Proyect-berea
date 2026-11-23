@@ -653,7 +653,7 @@ private slots:
             cerrarDialogo(QMessageBox::Ok, &texto);
             w.findChild<QPushButton *>("btnConfirmar")->click();
             QVERIFY2(texto.contains("guardó en este equipo"), qPrintable(texto));
-            QVERIFY2(texto.contains("SIM-"), qPrintable(texto));          // seña simulada aprobada
+            QVERIFY2(texto.contains("SIM-"), qPrintable(texto));          // seña aprobada
 
             QCOMPARE(tablaAvisos->rowCount(), avisosAntes + 1);           // aviso 24 h antes
             QVERIFY(w.findChild<AvisoConexion *>("avisoConexion")->texto().contains("1 turno guardado"));

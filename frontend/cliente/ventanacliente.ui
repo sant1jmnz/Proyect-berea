@@ -634,7 +634,7 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                 <item>
                  <widget class="QLabel" name="lblComoDetalle3">
                   <property name="text">
-                   <string>30 % del valor (40 % en cirugías). El pago es simulado: no se pide tarjeta.</string>
+                   <string>30 % del valor (40 % en cirugías). Se paga al confirmar el turno.</string>
                   </property>
                   <property name="wordWrap">
                    <bool>true</bool>
@@ -1674,7 +1674,7 @@ mi turno</string>
              <item>
               <widget class="QPushButton" name="btnSena">
                <property name="text">
-                <string>Pagar seña (simulado)</string>
+                <string>Pagar seña</string>
                </property>
                <property name="checkable">
                 <bool>true</bool>
@@ -1687,7 +1687,7 @@ mi turno</string>
              <item>
               <widget class="QLabel" name="lblNotaSena">
                <property name="text">
-                <string>Pago simulado: no se pide tarjeta ni se cobra dinero.</string>
+                <string>Se paga al confirmar el turno.</string>
                </property>
                <property name="wordWrap">
                 <bool>true</bool>

@@ -98,7 +98,7 @@ Cada uno tiene que **correr la prueba de lo que trae** (`DERMALIA_DB_USER=root c
 
 1. **Plantillas de n8n sin probar:** se escribieron según el formato de n8n pero no hay una instancia acá para
    importarlas. Hay que importarlas, poner las credenciales y probar un aviso real.
-2. **Pasarela de pagos real, WhatsApp oficial (Meta) y Google Calendar:** hoy la seña es simulada, WhatsApp es
+2. **Pasarela de pagos real, WhatsApp oficial (Meta) y Google Calendar:** hoy WhatsApp es
    un enlace `wa.me` que abre la recepción y el botón de Calendar es un enlace.
 3. ~~**Pantallas para cupones por QR, tarjetas de regalo y consulta previa de cirugías**~~: hechas en Gestión
    (pantallas *Cupones*, *Tarjetas de regalo* y *Consultas previas*, con `backend/09_sp_pantallas.sql`).

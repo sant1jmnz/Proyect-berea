@@ -17,6 +17,8 @@
  * Si se prefiere n8n (n8n/), poner TELEGRAM_ENVIOS=n8n y TAREAS_DIARIAS=n8n: la API deja de hacerlo
  * para que no se manden dos veces. */
 
+import { pasoReserva } from './reservachat.js';
+
 const soloDigitos = (t) => String(t ?? '').replace(/\D/g, '');
 const fechaCorta = (texto) => {
   const [f, h] = String(texto).split(' ');
@@ -149,8 +151,12 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     const quiereCambiar = comando === '/reprogramar' || /(quiero|quisiera|necesito)\b.*\b(cambiar|reprogramar|mover|pasar)\b.*turno/i.test(texto);
     if (quiereReservar || quiereCancelar || quiereCambiar) {
       if (!vinculada) return enviar(chat, 'Para reservar o cambiar turnos por acá primero vinculá tu cuenta con /start (o reservá en el sitio).');
-      if (quiereReservar) return elegirProtocolo(chat);
+      if (quiereReservar) return reservarConIA(chat, comando === '/reservar' ? 'quiero un turno' : texto);
       return elegirTurno(chat, vinculada, quiereCancelar ? 'c' : 'm', quiereCancelar ? '¿Qué turno querés cancelar?' : '¿Qué turno querés cambiar?');
+    }
+    // Texto o voz libre con ganas de reservar ("quiero un peeling mañana"): mismo flujo que el sitio y la terminal
+    if (vinculada && !texto.startsWith('/') && (!pideTurnos || /(quiero|quisiera|necesito|me gustar[ií]a)\s+(un|el)\s+turno/i.test(texto))) {
+      if (await reservarConIA(chat, texto, true)) return;
     }
     if (comando === '/recepcion') {
       const avisada = await derivar(chat, vinculada, 'Pidió que la contacte la recepción.');
@@ -206,9 +212,32 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
   // 202612021500 -> '2026-12-02 15:00:00'
   const inicioDe = (c) => `${c.slice(0, 4)}-${c.slice(4, 6)}-${c.slice(6, 8)} ${c.slice(8, 10)}:${c.slice(10, 12)}:00`;
 
-  async function elegirProtocolo(chat) {
-    const protocolos = await catalogo();
-    return enviar(chat, '¿Qué tratamiento querés reservar?', teclado(protocolos.map((p) => boton(p.nombre, `rp:${p.id_protocolo}`)), 2));
+  // El estado de la reserva viaja en el botón (límite de 64 bytes): q:p=12;f=20261123;i=202611231500;r=3;c=1;x=1
+  const aBoton = (r, cats) => 'q:' + Object.entries({ p: r.protocolo, f: r.fecha?.replace(/-/g, ''), i: r.inicio && compacto(r.inicio), r: r.profesional,
+    c: r.categoria && cats.indexOf(r.categoria), x: r.cancelar ? 1 : null }).filter(([, v]) => v != null && v !== -1).map(([k, v]) => `${k}=${v}`).join(';');
+  const desdeBoton = (datos, cats) => {
+    const v = Object.fromEntries(datos.split(';').map((x) => x.split('=')));
+    return { ...(v.p && { protocolo: Number(v.p) }), ...(v.f && { fecha: `${v.f.slice(0, 4)}-${v.f.slice(4, 6)}-${v.f.slice(6, 8)}` }),
+      ...(v.i && { inicio: inicioDe(v.i) }), ...(v.r && { profesional: Number(v.r) }), ...(v.c && { categoria: cats[Number(v.c)] }), ...(v.x && { cancelar: true }) };
+  };
+  const compacto = (inicio) => String(inicio).slice(0, 16).replace(/\D/g, '');
+
+  /* Un paso de la reserva con IA. Devuelve false si el texto no era una reserva (sigue el asistente normal). */
+  async function reservarConIA(chat, pregunta, soloSiEntiende = false, reserva = {}, eligio = false) {
+    const cat = await catalogo();
+    const cats = [...new Set(cat.map((p) => p.categoria))];
+    const paso = await pasoReserva({ pregunta, reserva, eligio, catalogo: cat, ahora: ahora(),
+      horarios: (fecha, id) => llamar('agenda.sp_horarios_libres', [fecha, id, null, null, null]) });
+    if (!paso) return soloSiEntiende ? false : enviar(chat, 'No entendí. Escribime qué tratamiento querés, por ejemplo "quiero un peeling".');
+    if (paso.formulario) { const r = paso.reserva; await pedirConfirmacion(chat, String(r.protocolo), String(r.profesional), compacto(r.inicio), null, cat); return true; }
+    await enviar(chat, paso.respuesta, paso.opciones.length ? teclado(paso.opciones.map((o) => boton(o.texto.slice(0, 60), aBoton(o.reserva, cats))), 2) : {});
+    return true;
+  }
+
+  async function pedirConfirmacion(chat, a, b, c, d, cat = null) {
+    const p = (cat ?? await catalogo()).find((x) => String(x.id_protocolo) === a);
+    return enviar(chat, `${d ? 'Cambiar tu turno a' : 'Reservar'} ${p?.nombre ?? 'el tratamiento'} el ${fechaCorta(inicioDe(c))}. Precio ${pesos(p?.precio)}. ¿Confirmás?`,
+      teclado([boton('Confirmar', `rok:${a}:${b}:${c}${d ? `:${d}` : ''}`), boton('No', 'x')], 2));
   }
 
   async function elegirTurno(chat, vinculada, prefijo, pregunta) {
@@ -232,6 +261,10 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
   async function procesarBoton(cb) {
     const chat = String(cb.message.chat.id);
     const [accion, a, b, c, d] = String(cb.data ?? '').split(':');
+    if (accion === 'q') {
+      const cats = [...new Set((await catalogo()).map((p) => p.categoria))];
+      return reservarConIA(chat, '', false, desdeBoton(String(cb.data).slice(2), cats), true);
+    }
     if (accion === 'x') return enviar(chat, 'Listo, no cambié nada.');
     if (accion === 'v') return enviar(chat, '¡Gracias por confirmar! Te esperamos.');
     const vinculada = (await llamar('personas.sp_paciente_por_telegram', [chat]))[0] ?? null;
@@ -248,10 +281,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
         `rh:${a}:${l.id_profesional}:${String(l.inicio).slice(0, 16).replace(/\D/g, '')}${c ? `:${c}` : ''}`)), 2));
     }
     if (accion === 'rh') {
-      const p = (await catalogo()).find((x) => String(x.id_protocolo) === a);
-      const inicio = inicioDe(c);
-      return enviar(chat, `${d ? 'Cambiar tu turno a' : 'Reservar'} ${p?.nombre ?? 'el tratamiento'} el ${fechaCorta(inicio)}. Precio ${pesos(p?.precio)}. ¿Confirmás?`,
-        teclado([boton('Confirmar', `rok:${a}:${b}:${c}${d ? `:${d}` : ''}`), boton('No', 'x')], 2));
+      return pedirConfirmacion(chat, a, b, c, d);
     }
     if (accion === 'rok') {
       if (d && !suyo(d)) return enviar(chat, 'Ese turno ya no está en tus próximos turnos.');

@@ -125,3 +125,8 @@ test('"jueves a la mañana" muestra solo horarios de la mañana y la franja sigu
   const h = await pasoReserva({ pregunta: 'x', eligio: true, reserva: limpiarReserva(t.opciones[0].reserva), catalogo: cat3, horarios: hs, ahora });
   assert.deepEqual(h.opciones.filter((o) => o.reserva.inicio).map((o) => o.texto.slice(0, 5)), ['15:00']);
 });
+test('cambiar de mañana a tarde borra el horario ya elegido', async () => {
+  const hs = async (dia) => ['09:00', '15:00'].map((h) => ({ id_profesional: 1, profesional: 'A', inicio: `${dia} ${h}:00` }));
+  const r = await pasoReserva({ pregunta: 'mejor a la tarde', reserva: { protocolo: 2, fecha: '2026-11-23', inicio: '2026-11-23 09:00:00', profesional: 1, franja: 'manana' }, catalogo: cat3, horarios: hs, ahora });
+  assert.deepEqual(r.opciones.filter((o) => o.reserva.inicio).map((o) => o.texto.slice(0, 5)), ['15:00']);
+});

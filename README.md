@@ -105,7 +105,7 @@ y 2 del maquetado ("Elegir protocolo", "Elegir horario")*.
 | 6 | Software: Gestión, terminal y sitio web | `frontend/`, `web/` | Hecho, conectado a la base, con asistente de IA; se instala con `./dermalia.sh` |
 | 7 | Base de datos (consigna de Bases de Datos) | `backend/`, [`docs/consigna-bbdd.md`](docs/consigna-bbdd.md) | Hecho: 9 schemas, stored procedures, 8 reportes, auditoría y tuning; entrega en `entrega-hito-2/` |
 | 8 | Diagramas Chen y Codd | [`docs/diagramas/`](docs/diagramas/) | Hecho (`.drawio` y `.png`) |
-| 9 | Pruebas | [`docs/09`](docs/09-casos-de-prueba.md), [`docs/10`](docs/10-casos-de-prueba-cliente.md), [`docs/11`](docs/11-pruebas-bbdd.md) | 255 casos de stored procedures, 44 de estructura, 6 programas de prueba Qt y 54 de la API: todo OK |
+| 9 | Pruebas | [`docs/09`](docs/09-casos-de-prueba.md), [`docs/10`](docs/10-casos-de-prueba-cliente.md), [`docs/11`](docs/11-pruebas-bbdd.md) | 259 casos de stored procedures aprobados (255 con el script en MySQL 8.0.46; los 4 de turno perdido a mano en Aiven, MySQL 8.4.11), 44 de estructura, 6 programas de prueba Qt y 61 de la API |
 | 10 | Análisis de competencia y PUV | [`docs/07-competencia.md`](docs/07-competencia.md) | Hecho |
 | 11 | Presupuesto, monetización y retorno | [`docs/08-presupuesto.md`](docs/08-presupuesto.md) | Hecho |
 | 12 | Pitch de venta (5 a 7 min) con demo | [`docs/06-pitch.md`](docs/06-pitch.md) | Guion, demo y objeciones listos; falta ensayar |

@@ -4,8 +4,18 @@ Pruebas funcionales de los **stored procedures** de Dermalia, con el formato que
 pide la consigna (`docs/consigna-bbdd.md`, punto 6b) y la plantilla de la cátedra
 (`docs/catedra/semana-3-casos-de-prueba-funcional.md`).
 
-**Resultado: 255 casos, 255 aprobados, 0 con fallas** (MySQL 8.0.46, base
-recién cargada con `backend/01` a `06` y `09`).
+**Resultado: 259 casos, 259 aprobados, 0 con fallas.** 255 se corrieron con el script
+(MySQL 8.0.46, base recién cargada con `backend/01` a `06` y `09`). Los 4 de
+`sp_avisar_turno_perdido` (aviso por Telegram de un turno que pierde su horario al
+sincronizar) se corrieron después, **a mano y no con el script**, contra la base real de
+Aiven (MySQL 8.4.11): mismas verificaciones, con un enlace de Telegram de prueba
+temporal para María y borrado de lo creado al terminar. Falta correr el script completo
+con esos 4 casos en una base limpia.
+
+Además, el 2026-11-23 se corrieron contra Aiven las pruebas de la API web (`npm run test:api`: reserva,
+cupones y tarjetas de consulta, cuenta y webhook; 4 de 4 aprobadas) y una prueba manual de punta a punta del
+cupón con QR (emitir, token del QR, validar con token malo y bueno) y de la compra y consulta de una tarjeta
+de regalo: 9 de 9 verificaciones correctas, con borrado de lo creado al terminar.
 
 ## Cómo se corren
 
@@ -85,7 +95,7 @@ regla y de notificación, resultado de evaluación) tienen los valores que defin
 (entre 3 y 5), no 20: no tendría sentido inventar estados. Conviene confirmar este criterio con el
 docente.
 
-## Detalle de los 255 casos
+## Detalle de los 255 casos corridos
 
 | Caso | Tipo | Descripción | Resultado |
 |---|---|---|---|

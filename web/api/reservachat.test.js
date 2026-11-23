@@ -141,3 +141,10 @@ test('"a las 5 de la tarde" arranca los horarios desde las 17:00', async () => {
   const r = await pasoReserva({ pregunta: 'turno el lunes a las 5 de la tarde para peeling', catalogo: cat3, horarios: hs, ahora });
   assert.deepEqual(r.opciones.filter((o) => o.reserva.inicio).map((o) => o.texto.slice(0, 5)), ['17:30', '18:00']);
 });
+
+test('"a las 10:30 de la mañana" y "a las 5:30 de la tarde" arrancan desde esa hora', async () => {
+  const hs = async (dia) => ['09:00', '10:30', '11:00', '15:00', '17:30', '18:00'].map((h) => ({ id_profesional: 1, profesional: 'A', inicio: `${dia} ${h}:00` }));
+  const horas = async (q) => (await pasoReserva({ pregunta: q, catalogo: cat3, horarios: hs, ahora })).opciones.filter((o) => o.reserva.inicio).map((o) => o.texto.slice(0, 5));
+  assert.deepEqual(await horas('turno el lunes a las 10:30 de la mañana para peeling'), ['10:30', '11:00']);
+  assert.deepEqual(await horas('turno el lunes a las 5:30 de la tarde para peeling'), ['17:30', '18:00']);
+});

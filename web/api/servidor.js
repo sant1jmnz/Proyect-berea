@@ -248,7 +248,8 @@ export function crearManejador(pool) {
         if (catalogo.length) {
           try {
             const eligio = d.eleccion && typeof d.eleccion === 'object';
-            const paso = await pasoReserva({ pregunta, reserva: eligio ? d.eleccion : d.reserva, eligio: Boolean(eligio), catalogo, horarios });
+            const ultima = String([...historial].reverse().find((m) => m?.rol === 'asistente')?.texto ?? '').slice(0, 1000);
+            const paso = await pasoReserva({ pregunta, reserva: eligio ? d.eleccion : d.reserva, eligio: Boolean(eligio), catalogo, horarios, ultima });
             if (paso) return responder(res, 200, { ...paso, derivada: false, fuente: 'reserva', registrada: false, transcripcion });
           } catch (e) { console.warn('Reserva en el chat:', e.message); }
         }
@@ -262,12 +263,13 @@ export function crearManejador(pool) {
             [sesion?.paciente ?? null, origen, r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null])).ok;
         } catch (e) { console.warn('Asistente: no se pudo registrar la consulta:', e.message); }
         let opciones = r.derivada ? [] : ofrecerReserva(pregunta, catalogo, r.respuesta);
-        let reserva = opciones.length ? { activa: true } : null, derivada = r.derivada;
-        // si estaba reservando, después de contestar vuelve a mostrar el paso en el que iba (no lo manda a WhatsApp)
-        if (!opciones.length && d.reserva && typeof d.reserva === 'object' && catalogo.length) {
+        let reserva = opciones.length ? { activa: true } : null;
+        const derivada = r.derivada;
+        // si estaba reservando (o pidió turno y preguntó algo), después de contestar muestra el paso en el que va
+        if (!opciones.length && catalogo.length) {
           try {
-            const p = await pasoReserva({ pregunta: '', reserva: d.reserva, eligio: true, catalogo, horarios });
-            if (p?.opciones?.length > 1) ({ opciones, reserva } = p), derivada = false;
+            const p = await pasoReserva({ pregunta, reserva: d.reserva, catalogo, horarios, contestada: true });
+            if (p?.opciones?.length > 1) ({ opciones, reserva } = p);
           } catch (e) { console.warn('Reserva en el chat:', e.message); }
         }
         return responder(res, 200, { respuesta: r.respuesta, derivada, fuente: r.fuente, registrada, transcripcion, ...(opciones.length && { opciones, reserva }) });

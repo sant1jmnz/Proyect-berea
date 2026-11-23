@@ -70,7 +70,7 @@ test('local: cuidados de antes y después del tratamiento', () => {
   assert.match(r.respuesta, /protector solar/);
 });
 
-test('el tope por persona manda a Gemini solo 10 veces por hora y después responde el local', async () => {
+test('el tope por persona manda a Gemini hasta el máximo por hora y después responde el local', async () => {
   reiniciarLimites();
   let llamadas = 0;
   const fetchImpl = async () => { llamadas++; return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: '{"respuesta":"ok","derivar":false}' }] } }] }) }; };
@@ -147,4 +147,16 @@ test('"quiero un turno" indica dónde reservar según desde dónde escribe, sin 
   }
   assert.doesNotMatch(responderLocal('cómo cancelo mi turno', [], null, 'terminal').respuesta, /Volver/);
   assert.match(instruccionSistema([], null, new Date(), null, null, 'terminal'), /acá mismo/);
+});
+
+test('local: pedir una persona deriva sin decir "no tengo esa información"', () => {
+  const r = responderLocal('quiero hablar con una persona', catalogo);
+  assert.equal(r.derivada, true);
+  assert.doesNotMatch(r.respuesta, /No tengo esa información/);
+  assert.equal(responderLocal('cuanto sale el peeling?', catalogo).derivada, false);
+});
+test('local: embarazo no da la ficha ni el precio, deriva a la profesional', () => {
+  const r = responderLocal('estoy embarazada, puedo hacerme botox?', catalogo);
+  assert.equal(r.derivada, true);
+  assert.doesNotMatch(r.respuesta, /\$/);
 });

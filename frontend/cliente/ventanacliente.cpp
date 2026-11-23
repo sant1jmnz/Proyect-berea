@@ -313,6 +313,13 @@ void VentanaCliente::probarConexion(const QString &archivoContingencia)
     qobject_cast<QVBoxLayout *>(ui->central->layout())->insertWidget(0, franja);
     conexion = new ConexionApp(franja, ConfigBD::desdeEntorno(), archivoContingencia, this);
     connect(conexion, &ConexionApp::conectada, this, &VentanaCliente::conectarBase);
+    connect(conexion, &ConexionApp::relojDesfasado, this, [this](int minutos) {
+        QMessageBox::warning(this, "Reloj del equipo",
+            QString("El reloj de este equipo difiere %1 minutos de la hora de la base (%2).\n\n"
+                    "Los turnos de \"hoy\" y los horarios libres se calculan con la hora de este equipo: "
+                    "conviene corregirla. Es solo un aviso.")
+                .arg(qAbs(minutos)).arg(minutos > 0 ? "adelantado" : "atrasado"));
+    });
     QTimer::singleShot(0, conexion, &ConexionApp::probar);
 }
 

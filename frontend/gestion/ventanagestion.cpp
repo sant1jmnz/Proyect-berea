@@ -177,6 +177,13 @@ void VentanaGestion::probarConexion(const QString &archivoContingencia)
     conexion = new ConexionApp(franja, ConfigBD::desdeEntorno(), archivoContingencia, this);
     /* Cuando la conexión se logra (ahora o con "Reintentar"), se pide el ingreso y se leen los datos de la base. */
     connect(conexion, &ConexionApp::conectada, this, &VentanaGestion::conectarBase);
+    connect(conexion, &ConexionApp::relojDesfasado, this, [this](int minutos) {
+        QMessageBox::warning(this, "Reloj del equipo",
+            QString("El reloj de este equipo difiere %1 minutos de la hora de la base (%2).\n\n"
+                    "Los turnos de \"hoy\" y los horarios libres se calculan con la hora de este equipo: "
+                    "conviene corregirla. Es solo un aviso.")
+                .arg(qAbs(minutos)).arg(minutos > 0 ? "adelantado" : "atrasado"));
+    });
     connect(conexion, &ConexionApp::pendientesSincronizados, this, [this](int enviados, const QStringList &problemas) {
         QString texto = QString("Volvió la conexión: se enviaron %1 turnos guardados en este equipo.").arg(enviados);
         if (!problemas.isEmpty())

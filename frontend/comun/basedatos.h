@@ -17,6 +17,7 @@
 #ifndef BASEDATOS_H
 #define BASEDATOS_H
 
+#include <QDateTime>
 #include <QString>
 #include <QStringList>
 #include <QVariantList>
@@ -65,6 +66,8 @@ public:
     bool conectar();               /* false: el motivo queda en ultimoError() */
     void cerrar();
     bool conectado() const { return conn != nullptr; }
+    /* Hora del servidor en UTC; inválida si no hay conexión o la consulta falla. */
+    QDateTime horaServidorUtc();
     QString ultimoError() const { return error; }
 
     /* Ejecuta CALL sp(p1, p2, ...). Los textos van entre comillas simples,

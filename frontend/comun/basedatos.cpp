@@ -185,6 +185,23 @@ bool BaseDatos::conectar()
     return true;
 }
 
+// Pregunta la hora a la base (UTC) para poder avisar si el reloj de este equipo no coincide.
+QDateTime BaseDatos::horaServidorUtc()
+{
+    if (!conn || mysql_query(sesion(conn), "SELECT UTC_TIMESTAMP()") != 0)
+        return QDateTime();
+    QDateTime hora;
+    if (MYSQL_RES *res = mysql_store_result(sesion(conn))) {
+        if (MYSQL_ROW fila = mysql_fetch_row(res))
+            if (fila[0])
+                hora = QDateTime::fromString(QString::fromUtf8(fila[0]), "yyyy-MM-dd HH:mm:ss");
+        mysql_free_result(res);
+    }
+    if (hora.isValid())
+        hora.setTimeSpec(Qt::UTC);
+    return hora;
+}
+
 Resultado BaseDatos::llamar(const QString &sp, const QVariantList &parametros)
 {
     Resultado r;
@@ -257,6 +274,7 @@ BaseDatos::BaseDatos(const ConfigBD &c) : config(c) {}
 // Sin MySQL no hay nada que cerrar.
 BaseDatos::~BaseDatos() {}
 void BaseDatos::cerrar() {}
+QDateTime BaseDatos::horaServidorUtc() { return QDateTime(); }
 
 bool BaseDatos::conectar()
 {

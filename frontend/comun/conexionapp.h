@@ -16,6 +16,8 @@ class ConexionApp : public QObject
     Q_OBJECT
 
 public:
+    static constexpr int TOLERANCIA_RELOJ_MIN = 5;
+
     /* `archivoContingencia` vacío: carpeta de datos de la aplicación. */
     ConexionApp(AvisoConexion *aviso, const ConfigBD &config,
                 const QString &archivoContingencia = QString(), QObject *parent = nullptr);
@@ -39,6 +41,8 @@ public:
 signals:
     /* Se avisa cada vez que se logra conectar (al arrancar o con "Reintentar"). */
     void conectada();
+    /* El reloj de este equipo difiere de la hora de la base en `minutos` (positivo: adelantado). Solo aviso. */
+    void relojDesfasado(int minutos);
     /* Tras sincronizar los turnos guardados: cuántos se enviaron y por qué no se pudieron enviar los demás. */
     void pendientesSincronizados(int enviados, const QStringList &problemas);
 

@@ -21,6 +21,12 @@ bool ConexionApp::probar()
             emit pendientesSincronizados(enviados, problemas);
         }
         aviso->mostrarConectado(local.cantidad());
+        const QDateTime servidor = base_.horaServidorUtc();
+        if (servidor.isValid()) {
+            const int minutos = int(servidor.secsTo(QDateTime::currentDateTimeUtc()) / 60);
+            if (qAbs(minutos) >= TOLERANCIA_RELOJ_MIN)
+                emit relojDesfasado(minutos);
+        }
         emit this->conectada();
     }
     else

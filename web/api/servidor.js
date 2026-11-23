@@ -15,7 +15,8 @@
  *   POST /api/cuenta                                    crea la cuenta opcional de una paciente (RF-15) y la deja con sesión iniciada
  *   POST /api/sesion                                    inicia sesión con usuario y contraseña
  *   POST /api/sesion/cerrar                             cierra la sesión
- *   GET  /api/mi-cuenta                                 datos y turnos de la paciente con sesión iniciada
+ *   GET  /api/mi-cuenta                                 datos, turnos y cupones de la paciente con sesión iniciada
+ *   GET  /api/cupon-token?codigo=ABC                    token vigente (5 min) del cupón de la paciente con sesión, para su QR
  *   POST /api/consultas                                 registra una pregunta al asistente
  *   POST /api/asistente                                 pregunta al asistente de IA (Gemini o respuestas locales) y la registra
  *   GET  /api/estado                                    si hay base y si el asistente usa Gemini (para el arranque y la demo)
@@ -351,7 +352,16 @@ export function crearManejador(pool) {
         if (!sesion) return responder(res, 401, { error: 'Tu sesión venció. Volvé a ingresar.' });
         const paciente = await pacientePorId(pool, sesion.paciente);
         if (!paciente) return responder(res, 404, { error: 'No encontramos a la paciente de esta cuenta.' });
-        return responder(res, 200, { paciente: datosPublicos(paciente), turnos: await llamar(pool, 'agenda.sp_buscar_turnos', [paciente.dni, 0]) });
+        const turnos = await llamar(pool, 'agenda.sp_buscar_turnos', [paciente.dni, 0]);
+        const cupones = (await llamar(pool, 'beneficios.sp_listar_cupones', [paciente.dni])).filter((c) => c.id_paciente === paciente.id_paciente);
+        return responder(res, 200, { paciente: datosPublicos(paciente), turnos, cupones });
+      }
+      if (req.method === 'GET' && ruta === '/api/cupon-token') {
+        const sesion = sesionDe(req);
+        if (!sesion) return responder(res, 401, { error: 'Tu sesión venció. Volvé a ingresar.' });
+        // el SP rechaza (52141) un cupón que no es de esta paciente, así que el id sale de la sesión y no del pedido
+        const r = await escribir(pool, 'beneficios.sp_generar_token_cupon', [url.searchParams.get('codigo') || '', sesion.paciente]);
+        return responder(res, r.ok ? 200 : 409, r.ok ? { token: r.dato, segundos: Math.round(r.valor) } : { error: r.mensaje, codigo: r.codigo });
       }
       if (req.method === 'POST' && ruta === '/api/consultas') {
         const d = await leerJson(req);

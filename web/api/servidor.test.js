@@ -133,6 +133,13 @@ test('cuenta opcional: crear, ingresar, ver mis datos y cerrar sesión', { skip:
     assert.equal(mia.estado, 200);
     assert.equal(mia.cuerpo.paciente.dni, dni);
     assert.deepEqual(mia.cuerpo.turnos, []);
+    assert.deepEqual(mia.cuerpo.cupones, []);
+
+    // token del QR: sin sesión no hay; con sesión, un cupón que no existe se rechaza con su código
+    assert.equal((await pedir('/api/cupon-token?codigo=NOEXISTE')).estado, 401);
+    const sinCupon = await pedir('/api/cupon-token?codigo=NOEXISTE', undefined, creada.cuerpo.token);
+    assert.equal(sinCupon.estado, 409);
+    assert.equal(sinCupon.cuerpo.codigo, 52140);
     assert.equal((await pedir('/api/mi-cuenta')).estado, 401);
     assert.equal((await pedir('/api/mi-cuenta', undefined, `${creada.cuerpo.token}x`)).estado, 401);
 

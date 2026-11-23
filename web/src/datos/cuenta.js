@@ -50,3 +50,12 @@ export async function miCuenta() {
   if (r && r.estado === 401) guardarSesion(null);
   return r?.ok ? r.cuerpo : null;
 }
+
+/* Token del QR de un cupón (cambia cada 5 minutos). Devuelve { token, segundos } o { error }. */
+export async function tokenCupon(codigo) {
+  const sesion = leerSesion();
+  if (!sesion) return { error: 'Tu sesión venció. Volvé a ingresar.' };
+  const r = await pedir(`/cupon-token?codigo=${encodeURIComponent(codigo)}`, conToken(sesion));
+  if (!r) return { error: 'Ahora no podemos conectar con el servidor. Probá de nuevo en un rato.' };
+  return r.ok ? r.cuerpo : { error: r.cuerpo.error };
+}

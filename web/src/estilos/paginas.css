@@ -628,3 +628,26 @@
     padding-bottom: 160px;
   }
 }
+
+/* Cuenta: lista de cupones y su QR. */
+.cupones {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cupon-tarjeta {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 16px 18px;
+}
+
+.cupon-qr__dibujo svg {
+  display: block;
+  width: min(240px, 100%);
+  height: auto;
+  border: 1px solid var(--borde-tarjeta);
+}

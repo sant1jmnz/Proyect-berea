@@ -1,17 +1,21 @@
 #include "paginacupones.h"
 
+#include "codigoqr.h"
 #include "formato.h"
 
 #include "repositorio.h"
 #include "validaciones.h"
 
 #include <QDateTime>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QPixmap>
 #include <QPushButton>
 #include <QRegularExpressionValidator>
 #include <QTableWidget>
@@ -24,8 +28,8 @@ PaginaCupones::PaginaCupones(QWidget *parent) : QWidget(parent)
 {
     auto *raiz = Formato::armarPagina(this, "Cupones",
                                       "Los cupones se ganan por visitas, por gasto acumulado o por promoción, y solo los tienen "
-                                      "las pacientes con cuenta. Para usarlo, la paciente muestra el QR con el token: "
-                                      "cambia cada 5 minutos.");
+                                      "las pacientes con cuenta. Para usarlo, la paciente muestra el QR de su cuenta web "
+                                      "(cambia cada 5 minutos) y acá se escanea o se escribe el token.");
 
     /* Búsqueda por DNI */
     auto *busqueda = new QHBoxLayout;
@@ -164,13 +168,30 @@ void PaginaCupones::verToken()
         return;
     }
     const int segundos = qRound(r.valor);
-    QMessageBox::information(this, "Token del cupón",
-        QString("Cupón %1\n\nToken: %2\n\nVale por %3:%4 minutos más.")
-            .arg(c["codigo"].toString(), r.dato)
-            .arg(segundos / 60).arg(segundos % 60, 2, 10, QChar('0')));
+    const QString codigo = c["codigo"].toString();
+    const CodigoQr qr = CodigoQr::codificar(CodigoQr::textoDeCupon(codigo, r.dato));
+
+    QDialog dialogo(this);
+    dialogo.setWindowTitle("Token del cupón");
+    auto *capa = new QVBoxLayout(&dialogo);
+    if (qr.valido()) {
+        auto *imagen = new QLabel(&dialogo);
+        imagen->setPixmap(QPixmap::fromImage(qr.imagen(6, 4)));
+        imagen->setAlignment(Qt::AlignCenter);
+        capa->addWidget(imagen);
+    }
+    auto *texto = new QLabel(QString("Cupón %1\nToken: %2\nVale por %3:%4 minutos más.")
+                                 .arg(codigo, r.dato)
+                                 .arg(segundos / 60).arg(segundos % 60, 2, 10, QChar('0')), &dialogo);
+    texto->setAlignment(Qt::AlignCenter);
+    capa->addWidget(texto);
+    auto *botones = new QDialogButtonBox(QDialogButtonBox::Close, &dialogo);
+    connect(botones, &QDialogButtonBox::rejected, &dialogo, &QDialog::reject);
+    capa->addWidget(botones);
+    dialogo.exec();
 }
 
-/* La paciente dicta el token que ve en su QR y la base lo valida (RF-22). */
+/* La recepción escanea el QR de la paciente (o escribe el token) y la base lo valida (RF-22). */
 void PaginaCupones::validar()
 {
     const int fila = filaElegida();
@@ -180,13 +201,19 @@ void PaginaCupones::validar()
     }
     const QVariantMap &c = cupones.filas[fila];
     bool ok = false;
-    const QString token = QInputDialog::getText(this, "Validar cupón",
-                                                "Token que muestra el QR de la paciente:", QLineEdit::Normal,
-                                                QString(), &ok).trimmed();
+    const QString lectura = QInputDialog::getText(this, "Validar cupón",
+                                                  "Escaneá el QR de la paciente (o escribí el token):", QLineEdit::Normal,
+                                                  QString(), &ok).trimmed();
     if (!ok)
         return;
+    if (lectura.isEmpty()) {
+        QMessageBox::warning(this, "Falta el token", "Escaneá el QR o escribí el token que muestra.");
+        return;
+    }
+    const QString token = CodigoQr::tokenDeCupon(lectura, c["codigo"].toString());
     if (token.isEmpty()) {
-        QMessageBox::warning(this, "Falta el token", "Escribí el token que muestra el QR.");
+        QMessageBox::warning(this, "QR de otro cupón",
+                             QString("Ese QR no es del cupón %1 que elegiste en la lista.").arg(c["codigo"].toString()));
         return;
     }
     const Respuesta r = repo->validarCupon(c["codigo"].toString(), token, c["id_paciente"].toInt(), "gestion", idUsuario);

@@ -33,7 +33,7 @@ export const REGLAS = [
   { tema: 'cirugias', claves: ['cirug', 'opera', 'quirurg', 'lipo', 'rinoplast', 'blefaro', 'consulta previa', 'evaluacion'],
     texto: 'Toda cirugía necesita antes una consulta previa paga con el profesional. Si el resultado es "apta", tenés 6 meses para agendar la cirugía y la seña de la consulta se descuenta. Si no es apta, el instituto retiene el 10 % de la seña de la consulta y devuelve el resto. La seña de una cirugía es del 40 %.' },
   { tema: 'cupones', claves: ['cupon', 'descuento', 'promo', 'oferta', 'qr', 'codigo'],
-    texto: 'Las pacientes con cuenta reciben cupones de descuento por fidelidad (por ejemplo, por visitas frecuentes o por gasto acumulado). El cupón se ingresa al reservar, en "¿Tenés un cupón?", o se muestra como QR en el instituto. Cada cupón se usa una sola vez.' },
+    texto: 'Las pacientes con cuenta reciben cupones de descuento por fidelidad (por ejemplo, por visitas frecuentes o por gasto acumulado). El cupón se ingresa al reservar, en "¿Tenés un cupón?", o se muestra como QR en el instituto: lo sacás desde "Mi cuenta" en la web y cambia cada 5 minutos. Cada cupón se usa una sola vez.' },
   { tema: 'tarjetas', claves: ['tarjeta de regalo', 'gift', 'regal', 'saldo'],
     texto: 'Hay tarjetas de regalo por monto: tienen saldo, se pueden gastar en varios turnos y se consulta el saldo con su código en el sitio o en la terminal.' },
   { tema: 'cuenta', claves: ['cuenta', 'registr', 'usuario', 'contrasena', 'historial', 'login', 'ingresar'],

@@ -41,6 +41,8 @@ add_library(dermalia_comun STATIC
     comun/almacenlocal.h
     comun/formato.cpp        # pesos, fechas y textos que muestran las pantallas
     comun/formato.h
+    comun/codigoqr.cpp       # QR del token de cupón (Qt no trae generador)
+    comun/codigoqr.h
     comun/reglasturno.cpp    # reglas de un turno que comparten las dos aplicaciones
     comun/reglasturno.h
     comun/buscadorprecios.cpp
@@ -140,6 +142,7 @@ if(Qt6Test_FOUND)
     endfunction()
 
     prueba(validaciones   prueba_validaciones   dermalia_comun)              # nombre, DNI, teléfono, seña
+    prueba(codigoqr       prueba_codigoqr       dermalia_comun)              # QR del cupón: tamaño, buscadores, imagen
     prueba(gestion        prueba_gestion        dermalia_gestion_pantallas)  # reglas y pantallas de Gestión
     prueba(base           prueba_base           dermalia_comun)              # stored procedures (con base)
     prueba(gestion_base   prueba_gestion_base   dermalia_gestion_pantallas)  # Gestión conectada a la base

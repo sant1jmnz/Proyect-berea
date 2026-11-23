@@ -117,11 +117,13 @@ int ConexionApp::sincronizar(QStringList *problemas)
         const QString origen = t.origen == "Gestión" ? "gestion" : t.origen.toLower();   // "Terminal" → "terminal"
 
         Resultado paciente = repo.buscarPaciente(t.dni);
-        /* Paciente nueva reservada sin conexión: se la da de alta con la fecha de nacimiento que dejó. */
-        if (paciente.ok && paciente.filas.isEmpty() && t.nacimiento.isValid()) {
+        /* Paciente nueva reservada sin conexión: se la da de alta. Si no se sabe su nacimiento (la columna es
+         * NOT NULL y el SP no lo deja modificar después) va 1900-01-01, que significa "no informada". */
+        if (paciente.ok && paciente.filas.isEmpty()) {
             QString nombre, apellido;
             Formato::separarNombre(t.paciente, &nombre, &apellido);
-            if (repo.altaPaciente(t.dni, nombre, apellido, t.nacimiento, QString(), t.telefono, origen).ok)
+            const QDate nacimiento = t.nacimiento.isValid() ? t.nacimiento : QDate(1900, 1, 1);
+            if (repo.altaPaciente(t.dni, nombre, apellido, nacimiento, QString(), t.telefono, origen).ok)
                 paciente = repo.buscarPaciente(t.dni);
         }
         int idProtocolo = 0;

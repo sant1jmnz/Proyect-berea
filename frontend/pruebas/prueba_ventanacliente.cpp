@@ -61,25 +61,6 @@ QPushButton *boton(VentanaCliente &w, const char *nombre) { return w.findChild<Q
 QLineEdit *campo(VentanaCliente &w, const char *nombre) { return w.findChild<QLineEdit *>(nombre); }
 int pagina(VentanaCliente &w) { return w.findChild<QStackedWidget *>("paginas")->currentIndex(); }
 
-/* Contesta el cuadro que pide la fecha de nacimiento (turno sin conexión). */
-int generacionNacimiento = 0;   /* se sube tras cada clic: un contestador sin usar deja de esperar */
-void responderNacimiento(int generacion = -1)
-{
-    if (generacion < 0)
-        generacion = generacionNacimiento;
-    QTimer::singleShot(30, [generacion]() {
-        if (generacion != generacionNacimiento)
-            return;
-        auto *d = qobject_cast<QInputDialog *>(QApplication::activeModalWidget());
-        if (!d) {
-            responderNacimiento(generacion);
-            return;
-        }
-        d->setTextValue("05/05/1990");
-        d->accept();
-    });
-}
-
 /* Recorre los pasos hasta dejar el turno confirmado. Devuelve false si algo no avanzó. */
 bool sacarTurno(VentanaCliente &w, const QDate &dia, int filaHorario, const QString &nombre, const QString &dni,
                 const QString &tel, bool pagarSena)
@@ -103,11 +84,8 @@ bool sacarTurno(VentanaCliente &w, const QDate &dia, int filaHorario, const QStr
     campo(w, "editDni")->setText(dni);
     campo(w, "editTelefono")->setText(tel);
     boton(w, "btnSena")->setChecked(pagarSena);
-    /* Sin base, primero pide la fecha de nacimiento y después muestra el cartel "Turno confirmado". */
-    responderNacimiento();
     tocarEnDialogo("OK");
     boton(w, "btnConfirmar")->click();
-    ++generacionNacimiento;
     return true;
 }
 
@@ -525,9 +503,7 @@ private slots:
         boton(w, "btnAplicarCodigo")->click();
         boton(w, "btnSena")->setChecked(true);
         tocarEnDialogo("OK");
-        responderNacimiento();
         boton(w, "btnConfirmar")->click();
-        ++generacionNacimiento;
         QCOMPARE(w.turnosCargados().size(), 1);
         const Turno &t = w.turnosCargados().first();
         QCOMPARE(t.protocolo, QString("Limpieza facial profunda + Peeling químico"));

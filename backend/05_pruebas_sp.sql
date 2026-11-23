@@ -2,7 +2,6 @@
 -- Se corre sobre la base recién cargada (01 a 06):
 --   mysql -u root -p < backend/codigobasededatossolotablas.sql   (y 02, 03, 04, 05, 06)
 --   mysql -u root -p < backend/05_pruebas_sp.sql        (o abrirlo en Workbench / DBeaver)
--- Automático:  python3 backend/pruebas/correr_pruebas.py --recargar
 --
 -- ATENCIÓN: el script modifica datos (agenda turnos, paga señas, etc.). Para
 -- repetirlo hay que volver a cargar la base.

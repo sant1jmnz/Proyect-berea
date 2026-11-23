@@ -27,7 +27,7 @@ Para traer **una carpeta entera** (por ejemplo las pruebas): `git checkout origi
 Para **ver** un archivo sin traerlo: `git show origin/<rama-de-origen>:docs/07-competencia.md`.
 
 Antes de cada semana, **probar en limpio**: cargar los scripts en orden (ver `13-manual-tecnico.md`)
-y, para la base, `python3 backend/pruebas/correr_pruebas.py --recargar` (necesita `pymysql`).
+y, para la base, ejecutar `backend/05_pruebas_sp.sql`.
 
 ## Dónde estamos (martes 3 de noviembre de 2026, Semana 5)
 
@@ -41,7 +41,7 @@ reportes de la Semana 5 dependen de ellas.
 |---|---|---|---|
 | Miércoles | **Poblar el modelo**: 50+ turnos y 20+ filas por tabla; el log queda vacío | `backend/02_datos.sql` | `docs/11-pruebas-bbdd.md` (tabla de datos), `backend/REVISION.md` |
 | Jueves | **SP de login y logs, alta de turno, ABM de protocolos y profesionales, horarios libres** | `backend/03_sp_semana3.sql` | `docs/12-contrato-sp.md` (columnas y códigos de error) |
-| Jueves | **Pruebas (4 casos por SP)** de lo anterior | `backend/05_pruebas_sp.sql` (casos de las secciones C a I) y `backend/pruebas/correr_pruebas.py` | `docs/consigna-bbdd.md` punto 6 |
+| Jueves | **Pruebas (4 casos por SP)** de lo anterior | `backend/05_pruebas_sp.sql` (casos de las secciones C a I) | `docs/consigna-bbdd.md` punto 6 |
 | Martes | Validaciones y casos de prueba funcional de la app | Ya están en `frontend/` y `docs/09`, `docs/10` | — |
 
 ## Semana 4 (martes 27 de octubre al lunes 2 de noviembre): funcionalidades en SP; análisis de competencia

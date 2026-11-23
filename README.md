@@ -172,7 +172,7 @@ backend/                 # base MySQL: tablas en 9 schemas, datos, stored proced
   01 codigobasededatossolotablas.sql  02_datos.sql  02b_numero.sql  03_sp_semana3.sql  04_sp_semana4.sql
   05_reportes_semana5.sql  06_tuning_semana6.sql  09_sp_pantallas.sql  07_actividad_con_sps.sql
   08_usuarios.sql  05_pruebas_sp.sql
-  medir_tuning.sql  pruebas/correr_pruebas.py
+  medir_tuning.sql
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)
 web/                     # sitio web para la paciente (Vite, GSAP, Three.js) y su API (Node), con el asistente de IA
 diseno-dermalia/         # guía de estética de las pantallas
@@ -316,7 +316,7 @@ Todo está construido, conectado a la misma base y probado:
 
 ## Entrega del Hito 2 de Bases de Datos
 
-Carpeta `entrega-hito-2/` (la arma `python3 backend/armar_entrega.py --grupo <número>` a partir de los
+Carpeta `entrega-hito-2/` (armada a partir de los
 scripts de `backend/`, que son la fuente única):
 
 | Archivo | Qué es |
@@ -324,7 +324,7 @@ scripts de `backend/`, que son la fuente única):
 | `03_ModeloSQL.sql` | Punto 3: 9 schemas y 31 tablas con todas las restricciones. Recrea todo, se puede repetir |
 | `04_DatosSQL.sql` | Punto 4: datos de ejemplo (66 pacientes, 163 turnos). El log queda vacío: lo llenan los stored procedures |
 | `05_Backend.sql` | Punto 5: stored procedures y funciones, 8 reportes, auditoría con parámetros y los dos `_tuneado` |
-| `06_PruebasSQL.xlsx` | Punto 6: 255 casos con la planilla de la cátedra (`python3 backend/armar_planilla_pruebas.py`) |
+| `06_PruebasSQL.xlsx` | Punto 6: 255 casos con la planilla de la cátedra |
 | `Diagrama_Chen.png`, `Diagrama_Codd.png` | Diagramas conceptual y lógico, con fondo blanco |
 
 El orden correcto es 03, 04 y 05, y la secuencia completa se puede repetir. El backend usa solo lo que
@@ -334,7 +334,7 @@ enseña el material de la cátedra y pide la consigna: la lista de lo que se ree
 ## Qué falta
 
 - **Ensayar el pitch** con cronómetro (5 a 7 minutos) y la demo con `./dermalia.sh recargar-base` antes.
-- **Número de grupo** (opcional): los archivos de la entrega no llevan sufijo; si algún día lo dan, `python3 backend/armar_entrega.py --grupo <número>`.
+- **Número de grupo** (opcional): los archivos de la entrega no llevan sufijo; si algún día lo dan, renombrarlos a mano.
 - Para producción, fuera del alcance del bimestre: pasarela de pagos, WhatsApp con
   la API oficial de Meta (hoy enlace `wa.me` y Telegram) y probar las plantillas de n8n en una instancia real.
 - Al agregar un protocolo a la base, correr `npm run generar` en `web/` para que el sitio y las apps lo tengan

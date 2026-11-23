@@ -15,12 +15,6 @@ El script es `backend/05_pruebas_sp.sql`. Dos formas:
    `02` a `06` y `09`) y ejecutar `05_pruebas_sp.sql`. Cada caso empieza con un comentario
    `-- @caso ...` y las líneas `-- @espera ...` dicen qué tiene que pasar; se compara con lo
    que muestra el cliente.
-2. **Automática:** `pip install pymysql` y
-   ```bash
-   python3 backend/pruebas/correr_pruebas.py --recargar
-   ```
-   El corredor lee las anotaciones, ejecuta todo y verifica solo (`--markdown salida.md` genera la
-   tabla de abajo). Variables: `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`.
 
 > El script **modifica datos** (agenda turnos, paga señas, vende tarjetas). Para repetirlo hay
 > que volver a cargar la base; el corredor lo hace con `--recargar`. Un **reloj simulado**

@@ -100,8 +100,7 @@ mysql -u root -p < backend/08_usuarios.sql                   # usuarios de las a
 > El primer script **borra** los 9 schemas y los vuelve a crear. No correrlo sobre datos reales.
 
 Para verificar: `mysql -u root -p < backend/pruebas_estructura.sql` (44 pruebas de las
-restricciones de las tablas) y
-`python3 backend/pruebas/correr_pruebas.py --recargar` (255 casos de los SP; ver
+restricciones de las tablas) y ejecutar `backend/05_pruebas_sp.sql` (255 casos de los SP; ver
 [`11-pruebas-bbdd.md`](11-pruebas-bbdd.md)).
 
 ### Usuarios y varias PCs

@@ -17,7 +17,7 @@
  * Si se prefiere n8n (n8n/), poner TELEGRAM_ENVIOS=n8n y TAREAS_DIARIAS=n8n: la API deja de hacerlo
  * para que no se manden dos veces. */
 
-import { pasoReserva } from './reservachat.js';
+import { pasoReserva, ofrecerReserva } from './reservachat.js';
 
 const soloDigitos = (t) => String(t ?? '').replace(/\D/g, '');
 const fechaCorta = (texto) => {
@@ -193,7 +193,12 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     const respuesta = await preguntarAsistente(texto, vinculada?.id_paciente ?? null, chat, vinculada?.nombre ?? null, turnos);
     // sin Gemini la respuesta local no ve su agenda: para "¿qué turnos tengo?" mejor la lista
     if (pideTurnos && respuesta?.fuente !== 'gemini') return listarTurnos();
-    if (!respuesta.derivada) return enviar(chat, respuesta.respuesta);
+    if (!respuesta.derivada) {
+      const cat = await catalogo();
+      const cats = [...new Set(cat.map((p) => p.categoria))];
+      const op = ofrecerReserva(texto, cat);
+      return enviar(chat, respuesta.respuesta, op.length ? teclado(op.map((o) => boton(o.texto.slice(0, 60), aBoton(o.reserva, cats))), 1) : {});
+    }
     const avisada = await derivar(chat, vinculada, texto);
     return enviar(chat, `${respuesta.respuesta}\n\n${avisada ? 'Le pasé tu consulta a la recepción: te van a contactar.' : 'También podés escribirle a la recepción por WhatsApp.'}`);
   }

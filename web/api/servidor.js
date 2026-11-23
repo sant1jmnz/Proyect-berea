@@ -38,7 +38,7 @@ import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto
 import mysql from 'mysql2/promise';
 import { responderAsistente, transcribirAudio, consultarAgenda } from './asistente.js';
 import { crearBotTelegram } from './telegram.js';
-import { pasoReserva } from './reservachat.js';
+import { pasoReserva, ofrecerReserva } from './reservachat.js';
 
 /* El bot de Telegram (si hay token) se crea al arrancar; /api/estado muestra su usuario para el enlace t.me. */
 let botTelegram = null;
@@ -261,7 +261,8 @@ export function crearManejador(pool) {
           registrada = (await escribir(pool, 'asistente.sp_registrar_consulta',
             [sesion?.paciente ?? null, origen, r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null])).ok;
         } catch (e) { console.warn('Asistente: no se pudo registrar la consulta:', e.message); }
-        return responder(res, 200, { respuesta: r.respuesta, derivada: r.derivada, fuente: r.fuente, registrada, transcripcion });
+        const opciones = r.derivada ? [] : ofrecerReserva(pregunta, catalogo);
+        return responder(res, 200, { respuesta: r.respuesta, derivada: r.derivada, fuente: r.fuente, registrada, transcripcion, ...(opciones.length && { opciones, reserva: { activa: true } }) });
       }
       if (req.method === 'GET' && ruta === '/api/protocolos') {
         return responder(res, 200, await llamar(pool, 'clinica.sp_listar_protocolos', [url.searchParams.get('texto') || null, null, 0]));

@@ -196,7 +196,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     if (!respuesta.derivada) {
       const cat = await catalogo();
       const cats = [...new Set(cat.map((p) => p.categoria))];
-      const op = ofrecerReserva(texto, cat);
+      const op = ofrecerReserva(texto, cat, respuesta.respuesta);
       return enviar(chat, respuesta.respuesta, op.length ? teclado(op.map((o) => boton(o.texto.slice(0, 60), aBoton(o.reserva, cats))), 1) : {});
     }
     const avisada = await derivar(chat, vinculada, texto);

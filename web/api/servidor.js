@@ -261,7 +261,7 @@ export function crearManejador(pool) {
           registrada = (await escribir(pool, 'asistente.sp_registrar_consulta',
             [sesion?.paciente ?? null, origen, r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null])).ok;
         } catch (e) { console.warn('Asistente: no se pudo registrar la consulta:', e.message); }
-        const opciones = r.derivada ? [] : ofrecerReserva(pregunta, catalogo);
+        const opciones = r.derivada ? [] : ofrecerReserva(pregunta, catalogo, r.respuesta);
         return responder(res, 200, { respuesta: r.respuesta, derivada: r.derivada, fuente: r.fuente, registrada, transcripcion, ...(opciones.length && { opciones, reserva: { activa: true } }) });
       }
       if (req.method === 'GET' && ruta === '/api/protocolos') {

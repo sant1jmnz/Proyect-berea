@@ -130,3 +130,9 @@ test('cambiar de mañana a tarde borra el horario ya elegido', async () => {
   const r = await pasoReserva({ pregunta: 'mejor a la tarde', reserva: { protocolo: 2, fecha: '2026-11-23', inicio: '2026-11-23 09:00:00', profesional: 1, franja: 'manana' }, catalogo: cat3, horarios: hs, ahora });
   assert.deepEqual(r.opciones.filter((o) => o.reserva.inicio).map((o) => o.texto.slice(0, 5)), ['15:00']);
 });
+test('sinComoReservar no corta un precio con punto y el "no hay lugar" conserva la franja', async () => {
+  assert.equal(sinComoReservar('Sale $120.000. Lo sacás acá mismo desde $120.000. Hola.'), 'Sale $120.000. Hola.');
+  const hs = async () => [];
+  const r = await pasoReserva({ pregunta: 'x', eligio: true, reserva: { protocolo: 2, fecha: '2026-11-23', franja: 'tarde' }, catalogo: cat3, horarios: hs, ahora });
+  assert.equal(r.reserva.franja, 'tarde');
+});

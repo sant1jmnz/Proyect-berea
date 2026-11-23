@@ -155,3 +155,6 @@ test('"a las 9 de la mañana" arranca desde las 9 y una pregunta de precio con "
   assert.deepEqual(r.opciones.filter((o) => o.reserva.inicio).map((o) => o.texto.slice(0, 5)), ['09:00']);
   assert.equal(await pasoReserva({ pregunta: 'cuánto sale el peeling a la tarde', catalogo: cat3, horarios: hs, ahora }), null);
 });
+test('una frase suelta con "a la tarde" no abre la reserva', async () => {
+  assert.equal(await pasoReserva({ pregunta: 'lo hago a la tarde', catalogo: cat3, horarios: async () => [], ahora }), null);
+});

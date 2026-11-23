@@ -43,14 +43,17 @@ export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo,
   if (r.cancelar) return { respuesta: 'Listo, no reservé nada. Cuando quieras, pedime un turno de nuevo.', reserva: null, opciones: [] };
 
   // lo que se entiende del texto libre (también de una nota de voz) se aplica sin preguntar de nuevo
+  let entendio = false;
   if (!eligio) {
     const c = buscarProtocolos(pregunta, catalogo, true);
-    if (c.length === 1) r = { ...r, protocolo: c[0].id_protocolo, categoria: undefined };
+    if (c.length === 1) { r = { ...r, protocolo: c[0].id_protocolo, categoria: undefined }; entendio = true; }
     else if (c.length > 1 && !r.protocolo) {
       return { respuesta: 'Encontré varios, ¿cuál querés?', reserva: r, opciones: [...c.slice(0, 5).map((p) => opcion(p.nombre, { ...r, protocolo: p.id_protocolo })), CANCELAR] };
     }
     const f = fechaPedida(pregunta, ahora);
-    if (f) r = { ...r, fecha: f, inicio: undefined, profesional: undefined };
+    if (f) { r = { ...r, fecha: f, inicio: undefined, profesional: undefined }; entendio = true; }
+    // pregunta suelta en medio de la reserva ('qué me recomendás?'): la contesta la IA, no se repite el paso
+    if (!entendio && !hayIntencion) return null;
   }
   // si el texto no aportó nada y no hay nada elegido, no es una reserva: sigue el asistente normal
 

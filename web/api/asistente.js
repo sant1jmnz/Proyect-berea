@@ -232,6 +232,8 @@ export const quiereReservar = (t) => /\b(reserv\w*|agend\w*|(sacar|pedir|generar
 export function responderLocal(pregunta, catalogo, agenda = null, origen = 'web') {
   if (agenda) return { respuesta: `${agenda.texto}\nPara reservar: en el sitio (Reservar turno), en la terminal o con el botón Reservar del bot de Telegram.`, derivada: false };
   const t = normalizar(pregunta);
+  if (/(embaraz|lactan|amamant)/.test(t)) return { respuesta: 'En el embarazo o la lactancia no te puedo decir si un tratamiento es para vos: lo tiene que evaluar la profesional. Te paso con el equipo por WhatsApp para coordinar una consulta.', derivada: true };
+  if (/(hablar con|con una persona|persona real|humano|asesor|alguien que me (atienda|ayude)|\brecepcion)/.test(t)) return { respuesta: 'Dale, te paso con el equipo del instituto por WhatsApp para que te atienda una persona.', derivada: true };
   if (quiereReservar(t)) return { respuesta: `${DONDE_RESERVAR[origen] ?? DONDE_RESERVAR.web} Elegís el protocolo (hasta 3 en un mismo turno), un horario libre y confirmás con la seña. Si querés saber qué horarios hay, preguntame por un tratamiento y un día.`, derivada: false };
   const partes = [];
   const reglas = REGLAS.filter((r) => r.claves.some((c) => t.includes(normalizar(c))));
@@ -372,7 +374,7 @@ const MODELO_DE_RESPALDO = 'gemini-flash-latest';
  * chat de Telegram) y en total por día. Pasado el tope se responde con el asistente local, sin error.
  * shortcut: el contador vive en memoria, en Vercel se reinicia cuando la función se apaga; el tope firme
  * lo pone la cuota gratuita de Google (sin facturación no se puede cobrar), no este contador. */
-export const LIMITE_POR_PERSONA = { max: 10, ventanaMs: 60 * 60 * 1000 };   // 10 por hora
+export const LIMITE_POR_PERSONA = { max: 40, ventanaMs: 60 * 60 * 1000 };   // 40 por hora: una charla larga no cae al modo local
 export const LIMITE_TOTAL = { max: 300, ventanaMs: 24 * 60 * 60 * 1000 };   // 300 por día
 const usos = new Map();
 export function gastaGemini(quien, ahora = Date.now()) {

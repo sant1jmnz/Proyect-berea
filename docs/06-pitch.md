@@ -33,7 +33,7 @@ ejemplo de la base (`backend/02_datos.sql`): paciente **Carla Gómez, DNI
 |---|---|---|---|---|
 | 1 | 0:35 | Terminal (Cliente) | La paciente elige **Peeling químico + Mesoterapia**, el sistema ofrece solo los horarios libres de profesionales que hacen **los dos**, confirma | "Solo muestra lo realmente disponible (RF-04): cero superposiciones" |
 | 2 | 0:25 | Terminal | Paga la seña **simulada**: mostrar monto (30%) y el código de operación | "No mueve dinero real (RNF-05); calcula el 30%, 40% en cirugías" |
-| 2b | 0:20 | Terminal o sitio | **Asistente**: preguntar "¿cuánto sale el botox?" y "me quiero operar la nariz" | "Responde solo con el catálogo y las reglas del instituto: buena parte de los 95 minutos diarios de WhatsApp los contesta él" |
+| 2b | 0:20 | Terminal o sitio | **Asistente**: preguntar "¿cuánto sale el botox?" y "me quiero operar la nariz"; después "quiero un turno para peeling el jueves a la mañana" y tocar un horario (reserva dentro del chat, solo horarios de la mañana) | "Responde solo con el catálogo y las reglas del instituto, y también reserva: el mismo flujo anda en la web, la terminal y Telegram" |
 | 3 | 0:30 | Gestión (recepción) | Buscar a Carla por DNI, ver el turno **confirmado**, intentar cargar otro turno en el mismo horario → mensaje de error | "La regla vive en la base: ni la recepción puede pisar un horario" |
 | 4 | 0:25 | Gestión | **Cancelar** el turno con más de 24 h → seña **reembolsada**; mostrar que con menos de 24 h queda retenida | "Reglas de seña y reembolso (RF-10), automáticas" |
 | 5 | 0:35 | Gestión → Auditoría | Abrir el reporte de **auditoría** del día: aparecen el alta, el pago y la cancelación con usuario, hora y origen | "Cada acción queda registrada solo por los stored procedures (RF-20)" |
@@ -94,7 +94,7 @@ resultados medidos.
 **"¿Es realizable con el equipo que son?"** Para el bimestre sí, y está hecho: la base completa (reglas,
 reportes, auditoría), Gestión con 13 pantallas, la terminal y el sitio conectados a ella, el asistente de IA,
 cupones con QR, tarjetas de regalo y cirugías con consulta previa; 255 casos de prueba de la base, 44 de la
-estructura, 6 programas de prueba de las apps y 18 de la API, y se instala con un solo comando
+estructura, 6 programas de prueba de las apps y 54 de la API, y se instala con un solo comando
 (`./dermalia.sh instalar`). Lo que queda para una etapa posterior —pasarela de pagos real y WhatsApp con la
 API oficial de Meta— está identificado y presupuestado.
 

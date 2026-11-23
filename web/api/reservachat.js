@@ -44,7 +44,7 @@ export function ofrecerReserva(pregunta, catalogo, respuesta = '') {
 }
 const CANCELAR_NO = { texto: 'No, gracias', reserva: { cancelar: true } };
 // con los botones del paso ya a la vista, sobra el "escribime qué tratamiento querés" de la IA
-export const sinComoReservar = (t) => String(t).replace(/\s*Lo sac[aá]s ac[aá] mismo[^.]*\./i, '').trim() || t;
+export const sinComoReservar = (t) => String(t).replace(/\s*Lo sac[aá]s ac[aá] mismo[\s\S]*?\.(?=\s|$)/i, '').trim() || t;
 
 /* `ultima`: lo último que dijo el asistente (para entender "sí, dale").
  * `contestada`: la IA ya contestó la pregunta; solo se busca el paso de la reserva para mostrarlo debajo. */
@@ -97,7 +97,7 @@ export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo,
   const libres = async (dia) => (await horarios(dia, protocolo.id_protocolo)).filter(enFranja);
   const hoy = hoyISO(ahora);
   const diasPosibles = r.fecha && r.fecha >= hoy ? [r.fecha] : Array.from({ length: 10 }, (_, i) => sumarDias(hoy, i));
-  if (r.fecha && r.fecha < hoy) return { respuesta: 'Ese día ya pasó. Elegí otro.', reserva: { protocolo: protocolo.id_protocolo }, opciones: [CANCELAR] };
+  if (r.fecha && r.fecha < hoy) return { respuesta: 'Ese día ya pasó. Elegí otro.', reserva: { protocolo: protocolo.id_protocolo, ...fr }, opciones: [CANCELAR] };
 
   if (!r.fecha) {
     const opciones = [];
@@ -113,7 +113,7 @@ export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo,
   const filas = await horarios(r.fecha, protocolo.id_protocolo);
   if (!r.inicio) {
     if (!filas.filter(enFranja).length) {
-      return { respuesta: `El ${nombreDia(r.fecha)} no hay lugar ${r.franja ? (r.franja === 'manana' ? 'a la mañana ' : 'a la tarde ') : ''}para ${protocolo.nombre}. Elegí otro día.`, reserva: { protocolo: protocolo.id_protocolo }, opciones: [opcion('Ver otros días', { protocolo: protocolo.id_protocolo, ...fr }), CANCELAR] };
+      return { respuesta: `El ${nombreDia(r.fecha)} no hay lugar ${r.franja ? (r.franja === 'manana' ? 'a la mañana ' : 'a la tarde ') : ''}para ${protocolo.nombre}. Elegí otro día.`, reserva: { protocolo: protocolo.id_protocolo, ...fr }, opciones: [opcion('Ver otros días', { protocolo: protocolo.id_protocolo, ...fr }), CANCELAR] };
     }
     // un botón por hora (con la primera profesional libre) y "Más tarde" para ver el resto del día
     const unicos = [...new Map(filas.filter((f) => enFranja(f) && hora(f.inicio) >= (r.desde ?? '00:00')).map((f) => [hora(f.inicio), f])).values()];

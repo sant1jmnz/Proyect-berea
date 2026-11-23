@@ -1,9 +1,9 @@
 #include "conexionapp.h"
 
-#include "repositorio.h"
-
-#include <QDate>
-#include <QStringList>
+#include "repositorio.h"
+
+#include <QDate>
+#include <QStringList>
 #include <algorithm>
 
 // Guarda el aviso de conexión, la base y el archivo de contingencia; el botón Reintentar del aviso vuelve a probar.

@@ -50,6 +50,11 @@ test('buscarProtocolos entiende errores de tipeo y de voz, y no inventa con salu
   assert.equal(buscarProtocolos('hola gracias', cat, true).length, 0);
 });
 
+test('"quiero saber si el peeling duele" es una consulta, no una reserva', async () => {
+  const cat = [{ id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 60 }];
+  assert.equal(await pasoReserva({ pregunta: 'quiero saber si el peeling duele', reserva: null, catalogo: cat, horarios: async () => [] }), null);
+});
+
 test('"cuánto cuesta un turno de peeling" es una consulta, no una reserva', async () => {
   const cat = [{ id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 60 }];
   assert.equal(await pasoReserva({ pregunta: 'cuanto cuesta un turno de peeling', reserva: null, catalogo: cat, horarios: async () => [] }), null);

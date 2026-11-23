@@ -35,11 +35,11 @@ test('limpiarReserva descarta campos raros', () => {
   assert.deepEqual(limpiarReserva({ protocolo: '2; DROP', fecha: 'x', otro: 1, cancelar: true }), { cancelar: true });
 });
 
-test('tras "quiero un turno", un texto que no se entiende vuelve a mostrar las opciones', async () => {
+test('tras "quiero un turno", una pregunta libre la contesta la IA (el servidor repone las opciones)', async () => {
   const cat = [{ id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 45 }];
   const a = await pasoReserva({ pregunta: 'quiero un turno', reserva: null, catalogo: cat, horarios: async () => [] });
   const b = await pasoReserva({ pregunta: 'no tengo idea, recomiéndame uno', reserva: a.reserva, catalogo: cat, horarios: async () => [] });
-  assert.ok(b?.opciones?.length);
+  assert.equal(b, null);
 });
 
 test('buscarProtocolos entiende errores de tipeo y de voz, y no inventa con saludos', async () => {
@@ -53,6 +53,11 @@ test('buscarProtocolos entiende errores de tipeo y de voz, y no inventa con salu
 test('"quiero saber si el peeling duele" es una consulta, no una reserva', async () => {
   const cat = [{ id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 60 }];
   assert.equal(await pasoReserva({ pregunta: 'quiero saber si el peeling duele', reserva: null, catalogo: cat, horarios: async () => [] }), null);
+});
+
+test('pregunta libre en medio de la reserva pasa a la IA', async () => {
+  const cat = [{ id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 60 }];
+  assert.equal(await pasoReserva({ pregunta: 'mm no se, la verdad vengo por curiosidad, que me recomendarias?', reserva: { activa: true }, catalogo: cat, horarios: async () => [] }), null);
 });
 
 test('"cuánto cuesta un turno de peeling" es una consulta, no una reserva', async () => {

@@ -244,11 +244,11 @@ export function crearManejador(pool) {
         try { catalogo = await catalogoParaAsistente(pool); } catch (e) { console.warn('Asistente sin catálogo de la base:', e.message); }
         const historial = Array.isArray(d.historial) ? d.historial : [];
         // reserva dentro del chat: opciones para tocar, el servidor no guarda estado (ver reservachat.js)
+        const horarios = (fecha, idProtocolo) => llamar(pool, 'agenda.sp_horarios_libres', [fecha, idProtocolo, null, null, null]);
         if (catalogo.length) {
           try {
             const eligio = d.eleccion && typeof d.eleccion === 'object';
-            const paso = await pasoReserva({ pregunta, reserva: eligio ? d.eleccion : d.reserva, eligio: Boolean(eligio), catalogo,
-              horarios: (fecha, idProtocolo) => llamar(pool, 'agenda.sp_horarios_libres', [fecha, idProtocolo, null, null, null]) });
+            const paso = await pasoReserva({ pregunta, reserva: eligio ? d.eleccion : d.reserva, eligio: Boolean(eligio), catalogo, horarios });
             if (paso) return responder(res, 200, { ...paso, derivada: false, fuente: 'reserva', registrada: false, transcripcion });
           } catch (e) { console.warn('Reserva en el chat:', e.message); }
         }
@@ -261,8 +261,16 @@ export function crearManejador(pool) {
           registrada = (await escribir(pool, 'asistente.sp_registrar_consulta',
             [sesion?.paciente ?? null, origen, r.preguntaGuardada, r.respuesta, r.derivada ? 1 : 0, null])).ok;
         } catch (e) { console.warn('Asistente: no se pudo registrar la consulta:', e.message); }
-        const opciones = r.derivada ? [] : ofrecerReserva(pregunta, catalogo, r.respuesta);
-        return responder(res, 200, { respuesta: r.respuesta, derivada: r.derivada, fuente: r.fuente, registrada, transcripcion, ...(opciones.length && { opciones, reserva: { activa: true } }) });
+        let opciones = r.derivada ? [] : ofrecerReserva(pregunta, catalogo, r.respuesta);
+        let reserva = opciones.length ? { activa: true } : null, derivada = r.derivada;
+        // si estaba reservando, después de contestar vuelve a mostrar el paso en el que iba (no lo manda a WhatsApp)
+        if (!opciones.length && d.reserva && typeof d.reserva === 'object' && catalogo.length) {
+          try {
+            const p = await pasoReserva({ pregunta: '', reserva: d.reserva, eligio: true, catalogo, horarios });
+            if (p?.opciones?.length > 1) ({ opciones, reserva } = p), derivada = false;
+          } catch (e) { console.warn('Reserva en el chat:', e.message); }
+        }
+        return responder(res, 200, { respuesta: r.respuesta, derivada, fuente: r.fuente, registrada, transcripcion, ...(opciones.length && { opciones, reserva }) });
       }
       if (req.method === 'GET' && ruta === '/api/protocolos') {
         return responder(res, 200, await llamar(pool, 'clinica.sp_listar_protocolos', [url.searchParams.get('texto') || null, null, 0]));

@@ -76,6 +76,9 @@ export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo,
     if (f) { r = { ...r, fecha: f, inicio: undefined, profesional: undefined }; entendio = true; }
     const franja = /\b(a|por|de) la manana\b|\btemprano\b/.test(t) ? 'manana' : /\b(a|por|de) la tarde\b/.test(t) ? 'tarde' : null;
     if (franja) { r = { ...r, franja, desde: undefined, ...(franja !== r.franja && { inicio: undefined, profesional: undefined }) }; entendio = true; }
+    // 'a las 5 de la tarde': además de la franja, los horarios arrancan desde esa hora
+    const hh = franja && t.match(/\ba las (\d{1,2})(?::(\d{2}))?(?: ?hs)? de la (?:manana|tarde)\b/);
+    if (hh && Number(hh[1]) < 24) r = { ...r, desde: `${String(franja === 'tarde' && Number(hh[1]) < 12 ? Number(hh[1]) + 12 : Number(hh[1])).padStart(2, '0')}:${hh[2] ?? '00'}` };
     // pregunta suelta en medio de la reserva ('qué me recomendás?'): la contesta la IA, no se repite el paso
     if (!entendio && !hayIntencion && !contestada) return null;
   }

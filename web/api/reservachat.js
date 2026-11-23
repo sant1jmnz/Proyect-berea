@@ -23,6 +23,14 @@ export function limpiarReserva(r) {
 
 const opcion = (texto, reserva) => ({ texto, reserva });
 
+/* Tras una recomendación de la IA: botones para sacar turno de lo que la persona nombró (máx. 3). */
+export function ofrecerReserva(pregunta, catalogo) {
+  const c = buscarProtocolos(pregunta, catalogo);
+  if (!c.length || c.length > 3) return [];
+  return [...c.map((p) => opcion(`Sacar turno: ${p.nombre}`, { protocolo: p.id_protocolo, activa: true })), CANCELAR_NO];
+}
+const CANCELAR_NO = { texto: 'No, gracias', reserva: { cancelar: true } };
+
 export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo, horarios, ahora = new Date() }) {
   let r = limpiarReserva(reserva);
   const t = normalizar(pregunta);

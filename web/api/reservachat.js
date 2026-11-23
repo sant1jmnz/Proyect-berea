@@ -24,8 +24,11 @@ export function limpiarReserva(r) {
 const opcion = (texto, reserva) => ({ texto, reserva });
 
 /* Tras una recomendación de la IA: botones para sacar turno de lo que la persona nombró (máx. 3). */
-export function ofrecerReserva(pregunta, catalogo) {
-  const c = buscarProtocolos(pregunta, catalogo);
+export function ofrecerReserva(pregunta, catalogo, respuesta = '') {
+  if (/(precio|cuesta|cuanto|sale|sena|cancel|donde|direccion|horario|abren|descuento|cupon)/.test(normalizar(pregunta))) return [];
+  const r = normalizar(respuesta);
+  // solo lo que la persona nombró Y la respuesta también menciona (evita botones de tratamientos al azar)
+  const c = buscarProtocolos(pregunta, catalogo).filter((p) => r.includes(normalizar(p.nombre).replace(/\s*\(.*$/, '')));
   if (!c.length || c.length > 3) return [];
   return [...c.map((p) => opcion(`Sacar turno: ${p.nombre}`, { protocolo: p.id_protocolo, activa: true })), CANCELAR_NO];
 }
@@ -34,7 +37,7 @@ const CANCELAR_NO = { texto: 'No, gracias', reserva: { cancelar: true } };
 export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo, horarios, ahora = new Date() }) {
   let r = limpiarReserva(reserva);
   const t = normalizar(pregunta);
-  const hayIntencion = quiereReservar(t) || preguntaPorDisponibilidad(pregunta, ahora) || (!/(precio|cuesta|cuanto|sale|sena|dura|cancel)/.test(t) && /\b(quiero|quisiera|necesito|me gustaria|turno)\b/.test(t)); // "cuánto cuesta un turno" es una consulta
+  const hayIntencion = quiereReservar(t) || preguntaPorDisponibilidad(pregunta, ahora) || (!/(precio|cuesta|cuanto|sale|sena|dura|cancel|persona|recepcion|humano|asesor|hablar|whatsapp|donde|direccion|horarios? de)/.test(t) && /\b(quiero|quisiera|necesito|me gustaria|turno)\b/.test(t)); // "cuánto cuesta un turno" es una consulta
   if (!eligio && !Object.keys(r).length && !hayIntencion) return null;
   r = { ...r, activa: true };
   if (r.cancelar) return { respuesta: 'Listo, no reservé nada. Cuando quieras, pedime un turno de nuevo.', reserva: null, opciones: [] };

@@ -57,7 +57,7 @@ test('"cuánto cuesta un turno de peeling" es una consulta, no una reserva', asy
 
 test('ofrecerReserva: tras una recomendación ofrece sacar turno del tratamiento nombrado', () => {
   const cat = [{ id_protocolo: 6, nombre: 'Tratamiento anti-acné', categoria: 'Faciales', duracion_min: 50 }, { id_protocolo: 2, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 45 }];
-  const op = ofrecerReserva('recomendame algo para el acne', cat);
+  const op = ofrecerReserva('recomendame algo para el acne', cat, 'Para el acné: Tratamiento anti-acné');
   assert.equal(op[0].reserva.protocolo, 6);
   assert.deepEqual(ofrecerReserva('hola', cat), []);
 });

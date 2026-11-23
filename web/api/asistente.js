@@ -94,6 +94,7 @@ const conSinonimos = (t) => SINONIMOS.reduce((acc, [patron, reemplazo]) => acc.r
 const PALABRAS_VACIAS = new Set(['turno', 'turnos', 'mismo', 'sesion', 'cancelo', 'cancelar', 'reservo', 'reservar', 'abren', 'quiero',
   'hacerme', 'hacer', 'mucho', 'cuesta', 'valor', 'valen', 'vale', 'informacion', 'consulta', 'consultar', 'pregunta','para', 'como', 'cuanto', 'cuesta', 'sale', 'precio', 'tiene', 'tienen', 'hacen', 'quiero',
   'saber', 'sobre', 'esta', 'este', 'esto', 'tratamiento', 'tratamientos', 'protocolo', 'protocolos', 'hola', 'dura', 'cuantos',
+  'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo', 'tarde', 'manana', 'noche', 'semana', 'proxima', 'proximo', 'horario', 'horarios', 'lugar', 'disponible', 'persona', 'recepcion', 'atencion', 'queda', 'tengo', 'senar', 'quisiera',
   'cuales', 'donde', 'puedo', 'necesito', 'seria', 'tambien', 'gracias', 'una', 'unos', 'unas', 'los', 'las', 'del', 'que', 'con']);
 
 /* Protocolos cuyo nombre, categoría o descripción tienen palabras de la pregunta, de mejor a peor. */

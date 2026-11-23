@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pasoReserva, ofrecerReserva, limpiarReserva } from './reservachat.js';
+import { pasoReserva, ofrecerReserva, limpiarReserva, sinComoReservar } from './reservachat.js';
 
 const catalogo = [
   { id_protocolo: 2, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 45 },
@@ -112,4 +112,7 @@ test('horarios: una hora por botón y "Más tarde" para el resto', async () => {
 });
 test('ofrecerReserva: embarazo no lleva botón de turno', () => {
   assert.deepEqual(ofrecerReserva('estoy embarazada, puedo hacerme un peeling?', cat3, 'Lo tiene que evaluar la profesional antes del Peeling químico.'), []);
+});
+test('con los botones del paso a la vista se saca el "escribime qué tratamiento querés"', () => {
+  assert.equal(sinComoReservar('Sale $90.000. Lo sacás acá mismo: escribime qué tratamiento querés y te muestro días y horarios.'), 'Sale $90.000.');
 });

@@ -42,6 +42,8 @@ export function ofrecerReserva(pregunta, catalogo, respuesta = '') {
   return [...c.map((p) => opcion(`Sacar turno: ${p.nombre}`, { protocolo: p.id_protocolo, activa: true })), CANCELAR_NO];
 }
 const CANCELAR_NO = { texto: 'No, gracias', reserva: { cancelar: true } };
+// con los botones del paso ya a la vista, sobra el "escribime qué tratamiento querés" de la IA
+export const sinComoReservar = (t) => String(t).replace(/\s*Lo sac[aá]s ac[aá] mismo[^.]*\./i, '').trim() || t;
 
 /* `ultima`: lo último que dijo el asistente (para entender "sí, dale").
  * `contestada`: la IA ya contestó la pregunta; solo se busca el paso de la reserva para mostrarlo debajo. */

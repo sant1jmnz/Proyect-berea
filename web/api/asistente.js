@@ -222,9 +222,9 @@ export async function consultarAgenda({ pregunta, historial = [], catalogo, hora
 
 /* Cómo se reserva según desde dónde escribe: la persona ya está en el lugar donde se reserva. */
 const DONDE_RESERVAR = {
-  terminal: 'Tocá "Volver" y elegí "Reservar turno" en la pantalla principal de esta terminal.',
-  web: 'Tocá "Reservar turno" en el menú del sitio.',
-  telegram: 'Usá el botón "Reservar" del menú de este chat.',
+  terminal: 'Lo sacás acá mismo: escribime qué tratamiento querés y te muestro días y horarios.',
+  web: 'Lo sacás acá mismo: escribime qué tratamiento querés y te muestro días y horarios.',
+  telegram: 'Lo sacás acá mismo: escribime qué tratamiento querés o tocá "Reservar".',
 };
 export const quiereReservar = (t) => /\b(reserv\w*|agend\w*|(sacar|pedir|generar|hacer|sac\w+|gener\w+) (un |el )?turno|quiero (un )?turno)/.test(t)
   && !/cancel|reprogram|mis turnos/.test(t);
@@ -265,6 +265,7 @@ export function instruccionSistema(catalogo, nombre = null, hoy = new Date(), tu
     `Sos el asistente virtual de ${INSTITUTO.nombre}. Respondés en español rioplatense (vos), con calidez y en no más de 4 oraciones.`,
     'REGLA PRINCIPAL: respondé SOLO con la información de abajo. No inventes precios, protocolos, profesionales, promociones ni datos médicos.',
     'No des diagnósticos ni indicaciones médicas personales: para eso, sugerí una consulta con el profesional.',
+    'RECOMENDAR: si pide una recomendación, NUNCA te niegues ni digas que no podés recomendar. Contar qué protocolo del catálogo apunta a cada cosa NO es un diagnóstico. Si no dijo qué quiere mejorar, preguntale en una frase (por ejemplo acné, manchas, arrugas, flacidez, vello o modelado corporal) y nombrá 2 o 3 protocolos del catálogo como ejemplo. Si ya lo dijo, nombrá los protocolos del catálogo que sirven para eso. No la mandes al menú del sitio: el turno se saca en este mismo chat.',
     'Si la pregunta no se puede responder con esta información, o la persona pide hablar con alguien, poné "derivar": true y decí que el equipo le responde por WhatsApp.',
     'Nunca pidas datos personales (DNI, teléfono, email).',
     `RESERVAR: la persona ya está en el lugar donde se reserva. Si quiere sacar, generar o agendar un turno, decile exactamente esto y no la mandes a la recepción ni a WhatsApp (derivar: false): ${DONDE_RESERVAR[origen] ?? DONDE_RESERVAR.web}`,

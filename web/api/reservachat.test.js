@@ -70,4 +70,6 @@ test('ofrecerReserva: tras una recomendación ofrece sacar turno del tratamiento
   const op = ofrecerReserva('recomendame algo para el acne', cat, 'Para el acné: Tratamiento anti-acné');
   assert.equal(op[0].reserva.protocolo, 6);
   assert.deepEqual(ofrecerReserva('hola', cat), []);
+  // "recomendame uno" sin decir qué: botones de lo que nombró la IA
+  assert.deepEqual(ofrecerReserva('recomiendame uno tu', cat, 'Te recomiendo un peeling quimico.').map((o) => o.reserva.protocolo), [2, undefined]);
 });

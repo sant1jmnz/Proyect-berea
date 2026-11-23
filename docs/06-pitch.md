@@ -20,8 +20,8 @@ competencia). Si se suman Nicolás y Clovis, se reparte el tiempo de la demo.
 | 5. Números | 1:00 | Santiago | "Desarrollo: 847 horas, **$16,9 millones**. Precio de implantación **$22 millones** más un abono de **$400.000 por mes**. El instituto recupera **156 turnos al año ($23,4 millones)** y **296 horas** de recepción: **se paga en unos 13 meses**. Si el ticket fuera la mitad, en 2,6 años." | Costos, precio, retorno (`08-presupuesto.md`) |
 | 6. Cierre | 0:30 | Santiago | "Buscamos que un instituto lo use cuatro semanas y medir los cuatro indicadores. La pregunta para ustedes: ¿qué necesitarían ver para pilotear esto?" | Gracias / pedido |
 
-Total: 6:00 más 0:30 de margen. **Ensayar con cronómetro** (Semana 6): si pasa de
-7 minutos, se recorta la competencia, nunca la demo.
+Total: 6:00 más 0:30 de margen. **Ensayar con cronómetro** (Semana 6): ideal 7 minutos y
+máximo 10: si pasa de 7, se recorta la competencia, nunca la demo.
 
 ## Guion de la demo (2:30)
 

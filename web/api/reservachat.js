@@ -75,7 +75,7 @@ export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo,
     const f = fechaPedida(pregunta, ahora);
     if (f) { r = { ...r, fecha: f, inicio: undefined, profesional: undefined }; entendio = true; }
     const franja = /\b(a|por|de) la manana\b|\btemprano\b/.test(t) ? 'manana' : /\b(a|por|de) la tarde\b/.test(t) ? 'tarde' : null;
-    if (franja) { r = { ...r, franja, desde: undefined }; entendio = true; }
+    if (franja) { r = { ...r, franja, desde: undefined, ...(franja !== r.franja && { inicio: undefined, profesional: undefined }) }; entendio = true; }
     // pregunta suelta en medio de la reserva ('qué me recomendás?'): la contesta la IA, no se repite el paso
     if (!entendio && !hayIntencion && !contestada) return null;
   }

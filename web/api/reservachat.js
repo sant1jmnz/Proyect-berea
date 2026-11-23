@@ -19,6 +19,7 @@ export function limpiarReserva(r) {
   if (r.cancelar === true) o.cancelar = true;
   if (r.activa === true) o.activa = true; // la reserva ya empezó aunque todavía no haya elegido nada
   if (/^\d{2}:\d{2}$/.test(r.desde ?? '')) o.desde = r.desde; // "Más tarde": horarios desde esa hora
+  if (r.franja === 'manana' || r.franja === 'tarde') o.franja = r.franja; // "a la mañana" / "a la tarde"
   return o;
 }
 
@@ -73,6 +74,8 @@ export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo,
     }
     const f = fechaPedida(pregunta, ahora);
     if (f) { r = { ...r, fecha: f, inicio: undefined, profesional: undefined }; entendio = true; }
+    const franja = /\b(a|por|de) la manana\b|\btemprano\b/.test(t) ? 'manana' : /\b(a|por|de) la tarde\b/.test(t) ? 'tarde' : null;
+    if (franja) { r = { ...r, franja, desde: undefined }; entendio = true; }
     // pregunta suelta en medio de la reserva ('qué me recomendás?'): la contesta la IA, no se repite el paso
     if (!entendio && !hayIntencion && !contestada) return null;
   }
@@ -88,6 +91,10 @@ export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo,
     return { respuesta: 'Dale, te saco el turno. ¿Qué tipo de tratamiento querés?', reserva: r, opciones: [...cats.slice(0, MAX_OPCIONES).map((c) => opcion(c, { ...(r.fecha ? { fecha: r.fecha } : {}), categoria: c })), CANCELAR] };
   }
 
+  // mañana = antes de las 13; la franja viaja en cada botón para no perderse al elegir día
+  const enFranja = (f) => !r.franja || (hora(f.inicio) < '13:00') === (r.franja === 'manana');
+  const fr = r.franja ? { franja: r.franja } : {};
+  const libres = async (dia) => (await horarios(dia, protocolo.id_protocolo)).filter(enFranja);
   const hoy = hoyISO(ahora);
   const diasPosibles = r.fecha && r.fecha >= hoy ? [r.fecha] : Array.from({ length: 10 }, (_, i) => sumarDias(hoy, i));
   if (r.fecha && r.fecha < hoy) return { respuesta: 'Ese día ya pasó. Elegí otro.', reserva: { protocolo: protocolo.id_protocolo }, opciones: [CANCELAR] };
@@ -95,24 +102,24 @@ export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo,
   if (!r.fecha) {
     const opciones = [];
     for (const dia of diasPosibles) {
-      if ((await horarios(dia, protocolo.id_protocolo)).length) opciones.push(opcion(nombreDia(dia), { protocolo: protocolo.id_protocolo, fecha: dia }));
+      if ((await libres(dia)).length) opciones.push(opcion(nombreDia(dia), { protocolo: protocolo.id_protocolo, fecha: dia, ...fr }));
       if (opciones.length === 5) break;
     }
     return opciones.length
-      ? { respuesta: `${protocolo.nombre} (dura ${duracion(protocolo.duracion_min)}). ¿Qué día te queda bien?`, reserva: { protocolo: protocolo.id_protocolo }, opciones: [...opciones, CANCELAR] }
+      ? { respuesta: `${protocolo.nombre} (dura ${duracion(protocolo.duracion_min)}). ¿Qué día te queda bien?`, reserva: { protocolo: protocolo.id_protocolo, ...fr }, opciones: [...opciones, CANCELAR] }
       : { respuesta: `Para ${protocolo.nombre} no hay horarios libres en los próximos 10 días. Probá más adelante o escribinos por WhatsApp.`, reserva: null, opciones: [] };
   }
 
   const filas = await horarios(r.fecha, protocolo.id_protocolo);
   if (!r.inicio) {
-    if (!filas.length) {
-      return { respuesta: `El ${nombreDia(r.fecha)} no hay lugar para ${protocolo.nombre}. Elegí otro día.`, reserva: { protocolo: protocolo.id_protocolo }, opciones: [opcion('Ver otros días', { protocolo: protocolo.id_protocolo }), CANCELAR] };
+    if (!filas.filter(enFranja).length) {
+      return { respuesta: `El ${nombreDia(r.fecha)} no hay lugar ${r.franja ? (r.franja === 'manana' ? 'a la mañana ' : 'a la tarde ') : ''}para ${protocolo.nombre}. Elegí otro día.`, reserva: { protocolo: protocolo.id_protocolo }, opciones: [opcion('Ver otros días', { protocolo: protocolo.id_protocolo, ...fr }), CANCELAR] };
     }
     // un botón por hora (con la primera profesional libre) y "Más tarde" para ver el resto del día
-    const unicos = [...new Map(filas.filter((f) => hora(f.inicio) >= (r.desde ?? '00:00')).map((f) => [hora(f.inicio), f])).values()];
+    const unicos = [...new Map(filas.filter((f) => enFranja(f) && hora(f.inicio) >= (r.desde ?? '00:00')).map((f) => [hora(f.inicio), f])).values()];
     const op = unicos.slice(0, MAX_OPCIONES).map((f) => opcion(`${hora(f.inicio)} · ${f.profesional}`, { protocolo: protocolo.id_protocolo, fecha: r.fecha, inicio: String(f.inicio), profesional: f.id_profesional }));
-    const mas = unicos[MAX_OPCIONES] ? [opcion('Más tarde', { protocolo: protocolo.id_protocolo, fecha: r.fecha, desde: hora(unicos[MAX_OPCIONES].inicio) })] : [];
-    return { respuesta: `${nombreDia(r.fecha)}, ${protocolo.nombre}. Elegí el horario:`, reserva: { protocolo: protocolo.id_protocolo, fecha: r.fecha }, opciones: [...op, ...mas, opcion('Otro día', { protocolo: protocolo.id_protocolo }), CANCELAR] };
+    const mas = unicos[MAX_OPCIONES] ? [opcion('Más tarde', { protocolo: protocolo.id_protocolo, fecha: r.fecha, desde: hora(unicos[MAX_OPCIONES].inicio), ...fr })] : [];
+    return { respuesta: `${nombreDia(r.fecha)}, ${protocolo.nombre}. Elegí el horario:`, reserva: { protocolo: protocolo.id_protocolo, fecha: r.fecha, ...fr }, opciones: [...op, ...mas, opcion('Otro día', { protocolo: protocolo.id_protocolo, ...fr }), CANCELAR] };
   }
 
   const fila = filas.find((f) => String(f.inicio) === r.inicio && f.id_profesional === r.profesional);

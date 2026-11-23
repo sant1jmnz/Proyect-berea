@@ -213,6 +213,16 @@ test('una nota de voz se transcribe y se responde como si fuera texto', { skip: 
   assert.equal(ultimo(), 'El peeling sale $120.000.');
 });
 
+test('la franja "a la tarde" viaja en los botones y filtra los horarios', { skip: !hayBase }, async () => {
+  const b = bot();
+  await b.procesarActualizacion(mensaje('quiero sacar turno de peeling quimico a la tarde'));
+  assert.ok(botones().filter((d) => d.includes(';f=')).every((d) => /;m=t/.test(d)), 'cada botón lleva la franja');
+  await b.procesarActualizacion(toque(botones()[0]));
+  assert.match(ultimo(), /Elegí el horario/);
+  const horas = (enviados.at(-1).reply_markup.inline_keyboard.flat()).map((x) => x.text.slice(0, 5)).filter((h) => /^\d\d:\d\d$/.test(h));
+  assert.ok(horas.length && horas.every((h) => h >= '13:00'), `solo tarde: ${horas}`);
+});
+
 test('/salir desvincula', { skip: !hayBase }, async () => {
   await bot().procesarActualizacion(mensaje('/salir'));
   assert.match(ultimo(), /ya no vas a recibir/);

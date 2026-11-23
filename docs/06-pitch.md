@@ -94,7 +94,7 @@ resultados medidos.
 **"¿Es realizable con el equipo que son?"** Para el bimestre sí, y está hecho: la base completa (reglas,
 reportes, auditoría), Gestión con 13 pantallas, la terminal y el sitio conectados a ella, el asistente de IA,
 cupones con QR, tarjetas de regalo y cirugías con consulta previa; 255 casos de prueba de la base, 44 de la
-estructura, 6 programas de prueba de las apps y 60 de la API, y se instala con un solo comando
+estructura, 6 programas de prueba de las apps y 61 de la API, y se instala con un solo comando
 (`./dermalia.sh instalar`). Lo que queda para una etapa posterior —pasarela de pagos real y WhatsApp con la
 API oficial de Meta— está identificado y presupuestado.
 

@@ -819,14 +819,31 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLabel" name="lblNombre2">
-                    <property name="text">
-                     <string>Horario disponible</string>
+                   <layout class="QVBoxLayout" name="layoutFilaTxt2">
+                    <property name="spacing">
+                     <number>0</number>
                     </property>
-                    <property name="rol" stdset="0">
-                     <string notr="true">apagado</string>
-                    </property>
-                   </widget>
+                    <item>
+                     <widget class="QLabel" name="lblNombre2">
+                      <property name="text">
+                       <string>Lucía Fernández</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">valor</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="lblDetalle2">
+                      <property name="text">
+                       <string>Peeling químico</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">nota</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </item>
                   <item>
                    <spacer name="espacioFila2">
@@ -840,6 +857,22 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                      </size>
                     </property>
                    </spacer>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="lblSenaFila2">
+                    <property name="text">
+                     <string>Pagada</string>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>24</height>
+                     </size>
+                    </property>
+                    <property name="etiqueta" stdset="0">
+                     <string notr="true">ok</string>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </widget>
@@ -1016,14 +1049,31 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLabel" name="lblNombre4">
-                    <property name="text">
-                     <string>Horario disponible</string>
+                   <layout class="QVBoxLayout" name="layoutFilaTxt4">
+                    <property name="spacing">
+                     <number>0</number>
                     </property>
-                    <property name="rol" stdset="0">
-                     <string notr="true">apagado</string>
-                    </property>
-                   </widget>
+                    <item>
+                     <widget class="QLabel" name="lblNombre4">
+                      <property name="text">
+                       <string>Lucía Fernández</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">valor</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="lblDetalle4">
+                      <property name="text">
+                       <string>Peeling químico</string>
+                      </property>
+                      <property name="rol" stdset="0">
+                       <string notr="true">nota</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </item>
                   <item>
                    <spacer name="espacioFila4">
@@ -1037,6 +1087,22 @@ QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }</string>
                      </size>
                     </property>
                    </spacer>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="lblSenaFila4">
+                    <property name="text">
+                     <string>Pagada</string>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>24</height>
+                     </size>
+                    </property>
+                    <property name="etiqueta" stdset="0">
+                     <string notr="true">ok</string>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </widget>

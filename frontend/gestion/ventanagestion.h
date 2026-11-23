@@ -82,6 +82,7 @@ private:
     void cargarHorariosDeBase(const QDate &dia);
     void refrescarTurnosDeBase(const QString &texto);
     void mostrarTurnos();            /* dibuja la tabla de turnos con lo que hay en `turnos` */
+    void actualizarInicio();         /* hero, agenda de hoy, contadores y próximos días, con lo que hay en `turnos` */
     void confirmarTurnoEnBase(const Protocolo *p, const QDateTime &inicio);
     bool buscarOCrearPaciente(int *idPaciente);
     int profesionalElegido() const;

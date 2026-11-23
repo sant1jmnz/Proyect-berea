@@ -597,6 +597,103 @@ void VentanaGestion::mostrarTurnos()
 
     const int cantidad = encontrados.size();
     ui->lblCuenta->setText(cantidad == 1 ? "1 turno" : QString("%1 turnos").arg(cantidad));
+    if (!enModoBase || texto.size() < 3)   /* con una búsqueda en la base `turnos` es solo el resultado */
+        actualizarInicio();
+}
+
+/* Inicio: el próximo turno, la agenda de hoy, los contadores y los próximos días salen de `turnos`
+ * (los de la base cuando hay sesión, los locales si no). */
+void VentanaGestion::actualizarInicio()
+{
+    const QDateTime ahora = QDateTime::currentDateTime();
+    const QDate hoy = ahora.date();
+    QVector<Turno> deHoy, proximos;
+    int sinSena = 0;
+    for (const Turno &t : std::as_const(turnos)) {
+        if (t.estado == EstadoTurno::Cancelado)
+            continue;
+        if (t.inicio.date() == hoy)
+            deHoy.append(t);
+        else if (ReglasTurno::esVigente(t, ahora))
+            proximos.append(t);
+        if (ReglasTurno::esVigente(t, ahora) && !t.senaPagada)
+            ++sinSena;
+    }
+    const auto porHora = [](const Turno &a, const Turno &b) { return a.inicio < b.inicio; };
+    std::sort(deHoy.begin(), deHoy.end(), porHora);
+    std::sort(proximos.begin(), proximos.end(), porHora);
+
+    const auto poner = [this](QLabel *l, const char *propiedad, const QString &valor) {
+        l->setProperty(propiedad, valor);
+        l->style()->unpolish(l);
+        l->style()->polish(l);
+    };
+    const QStringList colores = { "rosa", "dorado", "salvia" };
+    const auto inicial = [](const QString &nombre) { return nombre.trimmed().left(1).toUpper(); };
+    const QLocale es(QLocale::Spanish, QLocale::Argentina);
+
+    /* Hero: el primer turno de hoy que todavía no empezó, o el próximo que haya. */
+    const Turno *siguiente = nullptr;
+    for (const Turno &t : std::as_const(deHoy))
+        if (t.inicio > ahora) { siguiente = &t; break; }
+    if (!siguiente && !proximos.isEmpty())
+        siguiente = &proximos.first();
+    if (siguiente) {
+        ui->lblHeroEtiqueta->setText(QString("PRÓXIMO TURNO · %1").arg(siguiente->protocolo.toUpper()));
+        ui->lblHeroTitulo->setText(QString("%1 · %2")
+            .arg(siguiente->inicio.date() == hoy ? siguiente->inicio.toString("HH:mm")
+                                                 : es.toString(siguiente->inicio, "ddd d · HH:mm"),
+                 siguiente->paciente));
+    } else {
+        ui->lblHeroEtiqueta->setText("PRÓXIMO TURNO");
+        ui->lblHeroTitulo->setText("Sin turnos pendientes");
+    }
+
+    /* Agenda de hoy: hasta 5 filas; las que sobran se esconden. */
+    ui->lblAgenda->setText(deHoy.isEmpty() ? "Hoy en el instituto · sin turnos" : "Hoy en el instituto");
+    for (int n = 1; n <= 5; ++n) {
+        auto *fila = findChild<QFrame *>(QString("filaAgenda%1").arg(n));
+        if (!fila)
+            continue;
+        const bool hay = n <= deHoy.size();
+        fila->setVisible(hay);
+        if (!hay)
+            continue;
+        const Turno &t = deHoy[n - 1];
+        findChild<QLabel *>(QString("lblHora%1").arg(n))->setText(t.inicio.toString("HH:mm"));
+        findChild<QLabel *>(QString("lblNombre%1").arg(n))->setText(t.paciente);
+        findChild<QLabel *>(QString("lblDetalle%1").arg(n))->setText(t.protocolo);
+        auto *avatar = findChild<QLabel *>(QString("avatarAgenda%1").arg(n));
+        avatar->setText(inicial(t.paciente));
+        poner(avatar, "avatar", colores[(n - 1) % colores.size()]);
+        auto *sena = findChild<QLabel *>(QString("lblSenaFila%1").arg(n));
+        sena->setText(t.senaPagada ? "Pagada" : "Sin seña");
+        poner(sena, "etiqueta", t.senaPagada ? "ok" : "pendiente");
+    }
+
+    /* Contadores. */
+    ui->lblNumHoy->setText(QString::number(deHoy.size()));
+    ui->lblNumLibres->setText(QString::number(ReglasTurno::horariosLibresSinBase(hoy, turnos, ahora).size()));
+    ui->lblNumProximos->setText(QString::number(proximos.size()));
+    ui->lblNumSinSena->setText(QString::number(sinSena));
+
+    /* Próximos días: los 3 siguientes que no son de hoy. */
+    for (int n = 1; n <= 3; ++n) {
+        auto *fila = findChild<QFrame *>(QString("filaProximo%1").arg(n));
+        if (!fila)
+            continue;
+        const bool hay = n <= proximos.size();
+        fila->setVisible(hay);
+        if (!hay)
+            continue;
+        const Turno &t = proximos[n - 1];
+        findChild<QLabel *>(QString("lblProximoNombre%1").arg(n))->setText(t.paciente);
+        findChild<QLabel *>(QString("lblProximoDetalle%1").arg(n))->setText(
+            QString("%1 · %2").arg(es.toString(t.inicio, "ddd d · HH:mm"), t.protocolo));
+        auto *avatar = findChild<QLabel *>(QString("avatarProximo%1").arg(n));
+        avatar->setText(inicial(t.paciente));
+        poner(avatar, "avatar", colores[(n - 1) % colores.size()]);
+    }
 }
 
 /* Muestra el recordatorio del turno elegido y habilita Cancelar solo si se

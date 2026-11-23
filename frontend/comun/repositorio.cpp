@@ -350,6 +350,14 @@ Respuesta Repositorio::emitirCupones(const QString &origen)
 }
 
 /* Pide el token vigente de un cupón (lo muestra la app o el QR de la paciente). dato = token, valor = segundos que le quedan. */
+/* notificaciones.sp_avisar_turno_perdido: el mensaje sale por Telegram si la paciente lo vinculó, si no queda en Avisos. */
+Respuesta Repositorio::avisarTurnoPerdido(int idPaciente, const QDateTime &inicio, const QString &protocolo,
+                                          const QString &opciones, const QString &origen)
+{
+    return aRespuesta(base.llamar("notificaciones.sp_avisar_turno_perdido",
+                                  { idPaciente, inicio.toString(FORMATO_FECHA_HORA), protocolo, textoONulo(opciones), origen }));
+}
+
 Respuesta Repositorio::tokenCupon(const QString &codigo, int idPaciente)
 {
     return aRespuesta(base.llamar("beneficios.sp_generar_token_cupon", { codigo, idPaciente }));

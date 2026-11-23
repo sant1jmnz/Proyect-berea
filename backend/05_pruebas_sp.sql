@@ -2214,3 +2214,30 @@ CALL notificaciones.sp_notificaciones_telegram(9999);
 CALL notificaciones.sp_notificaciones_telegram(500);
 SELECT n.id_notificacion, tn.nombre AS tipo, n.mensaje, n.fecha_programada, n.intentos, n.id_turno, p.nombre AS destinatario_nombre, p.telegram_chat_id FROM notificaciones.Notificacion n JOIN notificaciones.EstadoNotificacion en ON en.id_estado_notificacion = n.id_estado_notificacion AND en.nombre = 'pendiente' JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal AND c.nombre = 'Telegram' JOIN notificaciones.TipoNotificacion tn ON tn.id_tipo_notificacion = n.id_tipo_notificacion JOIN personas.Paciente p ON p.id_paciente = n.id_paciente WHERE n.fecha_programada <= @ahora_simulado ORDER BY n.fecha_programada, n.id_notificacion LIMIT 500;
 SET @ahora_simulado = NULL;
+
+-- @caso sp_avisar_turno_perdido.1 | Éxito | Deja el aviso por Telegram con los horarios de la semana (la paciente tiene chat vinculado)
+SET @ahora_simulado = '2026-11-03 09:00:00';
+SELECT id_paciente INTO @pac_maria FROM personas.Paciente WHERE dni = '30111222';
+-- @espera ok
+CALL notificaciones.sp_avisar_turno_perdido(@pac_maria, '2026-11-10 10:00:00', 'Limpieza facial profunda', 'mar 10/11 11:00, mié 11/11 09:00', 'sistema');
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM notificaciones.Notificacion n JOIN notificaciones.CanalNotificacion c ON c.id_canal = n.id_canal JOIN notificaciones.TipoNotificacion t ON t.id_tipo_notificacion = n.id_tipo_notificacion JOIN personas.Paciente p ON p.id_paciente = n.id_paciente WHERE p.dni = '30111222' AND c.nombre = 'Telegram' AND t.nombre = 'turno perdido' AND n.mensaje LIKE '%mar 10/11 11:00, mié 11/11 09:00%') = 1) AS verificacion;
+
+-- @caso sp_avisar_turno_perdido.2 | Sin coincidencias | Paciente que no existe (52181)
+-- @espera error 52181
+CALL notificaciones.sp_avisar_turno_perdido(999999, '2026-11-10 10:00:00', 'Limpieza facial profunda', 'mar 10/11 11:00', 'sistema');
+
+-- @caso sp_avisar_turno_perdido.3 | Nulos y límites | Falta la paciente, el horario o el tratamiento (52180); sin horarios libres igual avisa
+-- @espera error 52180
+CALL notificaciones.sp_avisar_turno_perdido(NULL, '2026-11-10 10:00:00', 'Limpieza facial profunda', NULL, 'sistema');
+-- @espera error 52180
+CALL notificaciones.sp_avisar_turno_perdido(@pac_maria, NULL, 'Limpieza facial profunda', NULL, 'sistema');
+-- @espera error 52180
+CALL notificaciones.sp_avisar_turno_perdido(@pac_maria, '2026-11-10 10:00:00', '', NULL, 'sistema');
+-- @espera ok
+CALL notificaciones.sp_avisar_turno_perdido(@pac_maria, '2026-11-10 10:00:00', 'Limpieza facial profunda', NULL, 'sistema');
+
+-- @caso sp_avisar_turno_perdido.4 | Consistencia | Los rechazos no dejan avisos: solo quedan los 2 de los casos que salieron bien
+-- @espera verdadero
+SELECT ((SELECT COUNT(*) FROM notificaciones.Notificacion n JOIN notificaciones.TipoNotificacion t ON t.id_tipo_notificacion = n.id_tipo_notificacion WHERE t.nombre = 'turno perdido') = 2) AS verificacion;
+SET @ahora_simulado = NULL;

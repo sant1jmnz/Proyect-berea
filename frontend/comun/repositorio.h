@@ -140,6 +140,9 @@ public:
     /* ---- cupones (RF-17, RF-22) ---- */
     Resultado listarCupones(const QString &dni);
     Respuesta emitirCupones(const QString &origen);                      /* valor = cuántos se emitieron */
+    /* Deja el aviso "tu turno se perdió" con los horarios libres de esa semana (Telegram o recepción). */
+    Respuesta avisarTurnoPerdido(int idPaciente, const QDateTime &inicio, const QString &protocolo,
+                                 const QString &opciones, const QString &origen);
     Respuesta tokenCupon(const QString &codigo, int idPaciente);         /* dato = token, valor = segundos que le quedan */
     Respuesta validarCupon(const QString &codigo, const QString &token, int idPaciente,
                            const QString &origen, int idUsuario = 0);    /* valor = % de descuento */

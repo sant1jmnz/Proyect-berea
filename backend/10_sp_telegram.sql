@@ -140,6 +140,59 @@ BEGIN
      LIMIT v_limite;
 END//
 
+-- Avisa a la paciente que su turno cargado sin conexión se perdió: mientras la terminal o
+-- Gestión estaban offline, ese horario lo tomó otra persona. El mensaje trae los horarios que
+-- sí quedaban libres esa semana (los arma la app con agenda.sp_horarios_libres) para que reagende.
+-- Sale por Telegram si la paciente lo vinculó; si no, queda como aviso de "WhatsApp asistido"
+-- y lo ve la recepción en Avisos. Códigos 52180-52182 y 52189.
+DROP PROCEDURE IF EXISTS notificaciones.sp_avisar_turno_perdido//
+CREATE PROCEDURE notificaciones.sp_avisar_turno_perdido(IN p_id_paciente INT, IN p_inicio DATETIME, IN p_protocolo VARCHAR(100), IN p_opciones VARCHAR(600), IN p_origen VARCHAR(50))
+BEGIN
+    DECLARE v_codigo INT DEFAULT NULL;
+    DECLARE v_mensaje VARCHAR(255) DEFAULT NULL;
+    DECLARE v_canal INT DEFAULT NULL;
+    DECLARE v_telegram VARCHAR(50) DEFAULT NULL;
+    DECLARE v_id INT DEFAULT NULL;
+    DECLARE v_texto VARCHAR(1000);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT 'ERROR' AS estado, 52189 AS codigo, 'No se pudo dejar el aviso' AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END;
+
+    IF p_id_paciente IS NULL OR p_inicio IS NULL OR p_protocolo IS NULL OR p_protocolo = '' THEN
+        SET v_codigo = 52180;
+        SET v_mensaje = 'Faltan la paciente, el horario o el tratamiento';
+    END IF;
+    IF v_codigo IS NULL AND NOT EXISTS (SELECT 1 FROM personas.Paciente WHERE id_paciente = p_id_paciente) THEN
+        SET v_codigo = 52181;
+        SET v_mensaje = 'La paciente no existe';
+    END IF;
+
+    IF v_codigo IS NULL THEN
+        SELECT telegram_chat_id INTO v_telegram FROM personas.Paciente WHERE id_paciente = p_id_paciente;
+        SET v_canal = (SELECT id_canal FROM notificaciones.CanalNotificacion WHERE nombre = IF(v_telegram IS NULL, 'WhatsApp asistido', 'Telegram'));
+        SET v_texto = CONCAT('Tu turno de ', p_protocolo, ' del ', DATE_FORMAT(p_inicio, '%d/%m'), ' a las ', DATE_FORMAT(p_inicio, '%H:%i'),
+                             ' no se pudo confirmar: ese horario se ocupó mientras el sistema estaba sin conexión. ',
+                             IF(p_opciones IS NULL OR p_opciones = '', 'Escribinos o entrá al sitio para elegir otro horario.',
+                                CONCAT('Esta semana quedan libres: ', p_opciones, '. Elegí uno desde el sitio, la terminal o escribinos.')));
+        START TRANSACTION;
+        INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, mensaje, fecha_programada)
+        VALUES (v_canal,
+                (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
+                (SELECT id_tipo_notificacion FROM notificaciones.TipoNotificacion WHERE nombre = 'turno perdido'),
+                p_id_paciente, v_texto, COALESCE(@ahora_simulado, NOW()));
+        SET v_id = LAST_INSERT_ID();
+        CALL auditoria.sp_registrar_log('modificacion_paciente', NULL, p_id_paciente, COALESCE(p_origen, 'sistema'),
+            CONCAT('Aviso de turno perdido por sincronización (', DATE_FORMAT(p_inicio, '%d/%m %H:%i'), ')'),
+            'notificaciones.Notificacion', v_id, NULL, NULL, 1, NULL);
+        COMMIT;
+        SELECT 'OK' AS estado, 0 AS codigo, 'Aviso dejado' AS mensaje, v_id AS id, NULL AS valor, IF(v_telegram IS NULL, 'WhatsApp asistido', 'Telegram') AS dato;
+    ELSE
+        SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
+    END IF;
+END//
+
 -- =====================================================================
 --  MEMORIA DEL BOT (en Vercel cada mensaje puede caer en otra instancia, así que la
 --  charla y el paso del /start se guardan acá y no en la memoria del programa)

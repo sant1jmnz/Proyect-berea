@@ -1,6 +1,10 @@
 #include "conexionapp.h"
 
-#include "repositorio.h"
+#include "repositorio.h"
+
+#include <QDate>
+#include <QStringList>
+#include <algorithm>
 
 // Guarda el aviso de conexión, la base y el archivo de contingencia; el botón Reintentar del aviso vuelve a probar.
 ConexionApp::ConexionApp(AvisoConexion *franja, const ConfigBD &config,
@@ -75,6 +79,27 @@ bool ConexionApp::guardarEnContingencia(const TurnoPendiente &turno)
     return guardado;
 }
 
+/* Los horarios libres de los 7 días desde el turno perdido (hoy como mínimo), hasta 2 por día y 10 en total:
+ * "lun 14/12 09:00, lun 14/12 10:00, ...". Es el texto que lee la paciente para reagendar. */
+static QString opcionesDeLaSemana(Repositorio &repo, const QDate &desde, int idProtocolo)
+{
+    static const char *dias[] = { "lun", "mar", "mié", "jue", "vie", "sáb", "dom" };
+    const QDateTime ahora = QDateTime::currentDateTime();
+    QStringList opciones;
+    for (QDate dia = qMax(desde, ahora.date()); dia < qMax(desde, ahora.date()).addDays(7) && opciones.size() < 10; dia = dia.addDays(1)) {
+        QStringList horas;
+        for (const HorarioLibre &h : repo.horariosLibres(dia, { idProtocolo })) {
+            const QString hora = h.inicio.toString("HH:mm");
+            if (h.inicio > ahora && !horas.contains(hora))
+                horas.append(hora);
+        }
+        std::sort(horas.begin(), horas.end());
+        for (int i = 0; i < horas.size() && i < 2 && opciones.size() < 10; ++i)
+            opciones.append(QString("%1 %2 %3").arg(dias[dia.dayOfWeek() - 1], dia.toString("dd/MM"), horas[i]));
+    }
+    return opciones.join(", ");
+}
+
 /* Manda a la base, uno por uno, los turnos guardados en contingencia. Para cada uno busca la paciente
  * (por DNI), el protocolo (por nombre) y el profesional libre en ese horario, y llama a sp_alta_turno
  * y, si la seña estaba paga, a sp_registrar_sena. */
@@ -112,6 +137,11 @@ int ConexionApp::sincronizar(QStringList *problemas)
             motivo = QString("El protocolo \"%1\" no está en el catálogo.").arg(t.protocolo);
         } else if (idProfesional == 0) {
             motivo = QString("El horario %1 ya no está libre.").arg(t.inicio.toString("dd/MM/yyyy HH:mm"));
+            /* Se le avisa a la paciente (Telegram o recepción) con los horarios que sí quedan esa semana. */
+            const Respuesta av = repo.avisarTurnoPerdido(paciente.filas.first().value("id_paciente").toInt(), t.inicio,
+                                                            t.protocolo, opcionesDeLaSemana(repo, t.inicio.date(), idProtocolo), origen);
+            motivo += av.ok ? (av.dato == "Telegram" ? " Se le avisó por Telegram." : " Se dejó el aviso en Avisos para la recepción.")
+                            : QString(" No se pudo avisarle: %1").arg(av.mensaje);
         } else {
             const Respuesta turno = repo.altaTurno(paciente.filas.first().value("id_paciente").toInt(), idProfesional,
                                                    t.inicio, { idProtocolo }, origen);

@@ -2008,7 +2008,8 @@ INSERT INTO notificaciones.TipoNotificacion (id_tipo_notificacion, nombre) VALUE
   (1, 'recordatorio de turno'),
   (2, 'confirmación'),
   (3, 'cancelación'),
-  (4, 'cupón nuevo');
+  (4, 'cupón nuevo'),
+  (5, 'turno perdido');
 
 -- Tipos de evento del log (el log en sí queda vacío)
 INSERT INTO auditoria.TipoEvento (id_tipo_evento, nombre, descripcion) VALUES

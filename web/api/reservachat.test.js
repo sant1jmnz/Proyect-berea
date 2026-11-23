@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pasoReserva, limpiarReserva } from './reservachat.js';
+import { pasoReserva, ofrecerReserva, limpiarReserva } from './reservachat.js';
 
 const catalogo = [
   { id_protocolo: 2, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 45 },
@@ -53,4 +53,11 @@ test('buscarProtocolos entiende errores de tipeo y de voz, y no inventa con salu
 test('"cuánto cuesta un turno de peeling" es una consulta, no una reserva', async () => {
   const cat = [{ id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 60 }];
   assert.equal(await pasoReserva({ pregunta: 'cuanto cuesta un turno de peeling', reserva: null, catalogo: cat, horarios: async () => [] }), null);
+});
+
+test('ofrecerReserva: tras una recomendación ofrece sacar turno del tratamiento nombrado', () => {
+  const cat = [{ id_protocolo: 6, nombre: 'Tratamiento anti-acné', categoria: 'Faciales', duracion_min: 50 }, { id_protocolo: 2, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 45 }];
+  const op = ofrecerReserva('recomendame algo para el acne', cat);
+  assert.equal(op[0].reserva.protocolo, 6);
+  assert.deepEqual(ofrecerReserva('hola', cat), []);
 });

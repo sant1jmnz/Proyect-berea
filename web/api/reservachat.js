@@ -51,7 +51,7 @@ export const sinComoReservar = (t) => String(t).replace(/\s*Lo sac[aá]s ac[aá]
 export async function pasoReserva({ pregunta, reserva, eligio = false, catalogo, horarios, ahora = new Date(), ultima = '', contestada = false }) {
   let r = limpiarReserva(reserva);
   const t = normalizar(pregunta);
-  const hayIntencion = quiereReservar(t) || preguntaPorDisponibilidad(pregunta, ahora) || /\b(a|por|de) la (manana|tarde)\b/.test(t) || (!/(precio|cuesta|cuanto|sale|sena|dura|cancel|persona|recepcion|humano|asesor|hablar|whatsapp|donde|direccion|horarios? de|saber|duele|dolor|sirve|funciona|informacion|consulta|pregunta)/.test(t) && /\b(quiero|quisiera|necesito|me gustaria|turno)\b/.test(t)); // "cuánto cuesta un turno" es una consulta
+  const hayIntencion = quiereReservar(t) || preguntaPorDisponibilidad(pregunta, ahora) || (/\b(a|por|de) la (manana|tarde)\b/.test(t) && /\b(turno|lugar|disponib|horario|hay|sacar|agendar)\b/.test(t)) || (!/(precio|cuesta|cuanto|sale|sena|dura|cancel|persona|recepcion|humano|asesor|hablar|whatsapp|donde|direccion|horarios? de|saber|duele|dolor|sirve|funciona|informacion|consulta|pregunta)/.test(t) && /\b(quiero|quisiera|necesito|me gustaria|turno)\b/.test(t)); // "cuánto cuesta un turno" es una consulta
   // "sí, dale" después de que el asistente ofreció turno: toma lo que nombró
   let ofrecidos = !eligio && !r.protocolo && ultima && esAfirmacion(pregunta) && (r.activa || /turno|agend|reserv/.test(normalizar(ultima)))
     ? catalogo.filter(nombradoEn(ultima)) : [];

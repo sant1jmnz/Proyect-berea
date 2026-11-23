@@ -17,7 +17,7 @@
  * Si se prefiere n8n (n8n/), poner TELEGRAM_ENVIOS=n8n y TAREAS_DIARIAS=n8n: la API deja de hacerlo
  * para que no se manden dos veces. */
 
-import { pasoReserva, ofrecerReserva, esAfirmacion } from './reservachat.js';
+import { pasoReserva, ofrecerReserva, esAfirmacion, sinComoReservar } from './reservachat.js';
 
 const soloDigitos = (t) => String(t ?? '').replace(/\D/g, '');
 const fechaCorta = (texto) => {
@@ -200,7 +200,7 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
       // pidió turno y preguntó algo ("quiero un turno, ¿cuánto sale el peeling?"): debajo de la respuesta, el paso de la reserva
       if (!op.length && vinculada) {
         const paso = await pasoReserva({ pregunta: texto, reserva: {}, catalogo: cat, ahora: ahora(), contestada: true, horarios: horariosDe }).catch(() => null);
-        if (paso?.opciones?.length > 1) op = paso.opciones;
+        if (paso?.opciones?.length > 1) op = paso.opciones, respuesta.respuesta = sinComoReservar(respuesta.respuesta);
       }
       return enviar(chat, respuesta.respuesta, op.length ? teclado(op.map((o) => boton(o.texto.slice(0, 60), aBoton(o.reserva, cats))), 1) : {});
     }

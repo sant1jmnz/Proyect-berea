@@ -40,6 +40,9 @@ static bool leerPrecio(const QString &texto, double *valor)
     return ok;
 }
 
+/* Valida el formulario de protocolo y devuelve la lista de errores (vacía = todo bien):
+ *  * nombre de 3 a 100 caracteres con letras y sin repetir; precio numérico y válido; duración en minutos válida.
+ *  * Para cambiar un límite (ej. precio máximo) se toca Validaciones::precioValido / duracionValida. */
 QStringList PaginaProtocolos::revisar(const QString &nombre, const QString &precio, const QString &duracion,
                                       const QVector<Protocolo> &existentes, int indiceEditado)
 {
@@ -175,6 +178,8 @@ PaginaProtocolos::PaginaProtocolos(QVector<Protocolo> *protocolos, QWidget *pare
     recargarTabla();
 }
 
+/* Dibuja la tabla de protocolos: nombre, categoría, duración, PRECIO, % de seña y estado (los de baja, en gris).
+ *  * Para agregar o sacar una columna se toca el arreglo 'columnas' y el enum Col*. */
 void PaginaProtocolos::recargarTabla()
 {
     tabla->blockSignals(true);
@@ -199,6 +204,7 @@ void PaginaProtocolos::recargarTabla()
         tabla->selectRow(editado);
 }
 
+/* Al tocar una fila de la tabla, pasa sus datos al formulario y cambia el modo a 'Modificar protocolo'. */
 void PaginaProtocolos::elegirFila()
 {
     const int fila = tabla->currentRow();
@@ -218,6 +224,7 @@ void PaginaProtocolos::elegirFila()
     btnResumen->setEnabled(true);
 }
 
+/* Vacía el formulario y vuelve al modo 'Nuevo protocolo'. */
 void PaginaProtocolos::limpiar()
 {
     editado = -1;
@@ -233,6 +240,9 @@ void PaginaProtocolos::limpiar()
     editNombre->setFocus();
 }
 
+/* Botón 'Guardar': valida, arma el protocolo y lo graba. Con base llama a repo->altaProtocolo o
+ *  * repo->modificarProtocolo (así se cambia un PRECIO: se edita el campo y se guarda); la base aplica sus reglas.
+ *  * Después actualiza la tabla y avisa a la ventana con la señal 'cambiaron'. */
 void PaginaProtocolos::guardar()
 {
     const QStringList errores = revisar(editNombre->text(), editPrecio->text(), editDuracion->text(),
@@ -272,6 +282,8 @@ void PaginaProtocolos::guardar()
                              esAlta ? "El protocolo quedó dado de alta." : "Los cambios quedaron guardados.");
 }
 
+/* Botón 'Dar de baja / Reactivar': pide confirmación al dar de baja, lo informa a la base (modificarProtocolo
+ *  * con el flag activo invertido) y actualiza la tabla. Los turnos ya cargados conservan el protocolo. */
 void PaginaProtocolos::cambiarEstado()
 {
     if (editado < 0 || editado >= datos->size())

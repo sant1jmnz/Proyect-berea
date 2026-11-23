@@ -161,12 +161,14 @@ PaginaProfesionales::PaginaProfesionales(QVector<Profesional> *profesionales,
     recargarProfesionales(0);
 }
 
+/* Devuelve el profesional marcado en la lista de la izquierda, o nullptr si no hay ninguno. */
 Profesional *PaginaProfesionales::actual()
 {
     const int fila = lista->currentRow();
     return (fila >= 0 && fila < datos->size()) ? &(*datos)[fila] : nullptr;
 }
 
+/* Redibuja la lista de profesionales (nombre, matrícula y '· de baja') y marca la fila 'elegir'. */
 void PaginaProfesionales::recargarProfesionales(int elegir)
 {
     cargando = true;
@@ -178,17 +180,20 @@ void PaginaProfesionales::recargarProfesionales(int elegir)
     recargarDetalle();
 }
 
+/* Al marcar un profesional en la lista, muestra su detalle (protocolos y franjas). */
 void PaginaProfesionales::elegirProfesional()
 {
     if (!cargando)
         recargarDetalle();
 }
 
+/* Se llama cuando cambió el catálogo de protocolos: vuelve a dibujar el detalle. */
 void PaginaProfesionales::recargarProtocolos()
 {
     recargarDetalle();
 }
 
+/* Dibuja el panel de la derecha para el profesional marcado: protocolos que atiende y franjas horarias. */
 void PaginaProfesionales::recargarDetalle()
 {
     const Profesional *p = actual();
@@ -224,6 +229,7 @@ void PaginaProfesionales::recargarDetalle()
     cargando = false;
 }
 
+/* Botón 'Agregar': valida nombre y matrícula antes de dar de alta al profesional (con base, vía repositorio). */
 void PaginaProfesionales::agregarProfesional()
 {
     QString errorNombre;
@@ -275,6 +281,7 @@ void PaginaProfesionales::agregarProfesional()
     recargarProfesionales(datos->size() - 1);
 }
 
+/* Botón 'Dar de baja / Reactivar': con base llama a repo->modificarProfesional con el activo invertido y actualiza la lista. */
 void PaginaProfesionales::cambiarEstadoProfesional()
 {
     Profesional *p = actual();

@@ -82,6 +82,9 @@ static QString enlaceTelegram()
     return enlace;
 }
 
+/* Constructor de la pantalla del cliente (la terminal). Arma todo en este orden:
+ *  * máscaras de los campos, navegación, botón de cuenta, pasos, código de cupón, calendario y 'Mi turno';
+ *  * después carga datos locales/catálogo y prueba la conexión a la base (si falla, queda en modo contingencia). */
 VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QString &archivoContingencia)
     : QMainWindow(parent), ui(new Ui::VentanaCliente),
       archivoLocal(archivo.isEmpty() ? AlmacenLocal::rutaPorDefecto() : archivo)
@@ -313,12 +316,14 @@ void VentanaCliente::probarConexion(const QString &archivoContingencia)
     QTimer::singleShot(0, conexion, &ConexionApp::probar);
 }
 
+/* Destructor: libera el Repositorio y la interfaz del .ui. */
 VentanaCliente::~VentanaCliente()
 {
     delete repositorio;
     delete ui;
 }
 
+/* Cambia de pantalla: pagina es una de las constantes PagInicio, PagProtocolo, ... (índice del QStackedWidget 'paginas' del .ui). */
 void VentanaCliente::irA(int pagina)
 {
     ui->paginas->setCurrentIndex(pagina);
@@ -386,6 +391,7 @@ void VentanaCliente::cargarProtocolos()
     ui->buscador->setCatalogo(DatosPrueba::comoTratamientos(protocolos));   /* "Consultar precios" usa el mismo catálogo */
 }
 
+/* Devuelve los tratamientos marcados en la lista, en el orden en que se tocaron (máximo MAX_PROTOCOLOS). */
 QVector<const Protocolo *> VentanaCliente::protocolosElegidos() const
 {
     QVector<const Protocolo *> elegidos;
@@ -451,6 +457,8 @@ void VentanaCliente::protocolosCambiaron()
     }
 }
 
+/* Si el tratamiento tocado es una cirugía, muestra el aviso (RF-25): primero hace falta una consulta prequirúrgica paga.
+ *  * Si esa consulta existe en el catálogo ofrece un botón para sumarla; si no, manda a la recepción. */
 void VentanaCliente::avisarCirugia(const Protocolo &cirugia)
 {
     const int fila = filaDeConsultaPrequirurgica(protocolos, protocolosVisibles);
@@ -468,6 +476,7 @@ void VentanaCliente::avisarCirugia(const Protocolo &cirugia)
     btnSumarConsulta->show();
 }
 
+/* Botón 'sumar consulta': marca en la lista la consulta prequirúrgica y oculta el aviso. */
 void VentanaCliente::sumarConsultaPrequirurgica()
 {
     const int fila = filaDeConsultaPrequirurgica(protocolos, protocolosVisibles);
@@ -516,6 +525,7 @@ void VentanaCliente::pintarResumen()
                                                      : "La seña se descuenta del saldo de tu tarjeta de regalo.");
 }
 
+/* Borra el cupón o la tarjeta aplicados (y su descuento). Se llama cuando cambia la selección y el descuento ya no valdría. */
 void VentanaCliente::olvidarCodigo()
 {
     const bool habiaCodigo = !cuponCodigo.isEmpty() || !tarjetaCodigo.isEmpty() || cuponDescuento != 0;
@@ -591,6 +601,7 @@ void VentanaCliente::aplicarCodigo()
     pintarResumen();
 }
 
+/* Devuelve fecha y hora del horario marcado en la lista. Con la base, la fecha viaja dentro del ítem; sin base se arma con el día del calendario + el texto 'HH:mm'. Devuelve vacío si no hay ninguno. */
 QDateTime VentanaCliente::horarioElegido() const
 {
     const QListWidgetItem *item = ui->listaHorarios->currentItem();
@@ -601,6 +612,7 @@ QDateTime VentanaCliente::horarioElegido() const
     return QDateTime(ui->calendario->selectedDate(), QTime::fromString(item->text(), "HH:mm"));
 }
 
+/* Botón 'Continuar' del paso 1: exige al menos un tratamiento y pasa al paso de horarios. */
 void VentanaCliente::continuarProtocolo()
 {
     const Cuentas c = cuentas();
@@ -673,6 +685,7 @@ void VentanaCliente::actualizarHorarios()
         ui->lblNotaHorario->setText("No quedan horarios libres ese día. Probá con otro.");
 }
 
+/* Botón 'Continuar' del paso 2: exige un horario elegido y pasa al paso de datos personales. */
 void VentanaCliente::continuarHorario()
 {
     const QDateTime inicio = horarioElegido();
@@ -796,6 +809,7 @@ void VentanaCliente::reiniciarCarga()
  * Buscar mi turno y cancelarlo
  * --------------------------------------------------------------------------- */
 
+/* Esconde la tarjeta de 'Mi turno' y desactiva los botones de Google Calendar y Telegram. */
 void VentanaCliente::ocultarTurno()
 {
     turnoMostrado = -1;
@@ -888,6 +902,7 @@ bool VentanaCliente::mostrarTurnosDe(const QString &buscado)
     return true;
 }
 
+/* Pinta la tarjeta de 'Mi turno' con el turno de la posición indice (próximo o último, estado, seña y botones). */
 void VentanaCliente::mostrarTurno(int indice, int vigentes)
 {
     turnoMostrado = indice;
@@ -1215,6 +1230,7 @@ void VentanaCliente::empezarSesion(const SesionPaciente &nueva)
     relojSesion->start();
 }
 
+/* Cierra la sesión del paciente: avisa a la base (queda en el log), limpia los campos y vuelve el botón a 'Ingresar'. */
 void VentanaCliente::cerrarSesion()
 {
     if (!sesion.activa())
@@ -1233,6 +1249,7 @@ void VentanaCliente::cerrarSesion()
     ocultarTurno();
 }
 
+/* Con sesión iniciada, rellena nombre, DNI y teléfono (y la búsqueda de turno) con los datos de la cuenta. */
 void VentanaCliente::completarConLaCuenta()
 {
     if (!sesion.activa())
@@ -1243,6 +1260,7 @@ void VentanaCliente::completarConLaCuenta()
     ui->editBuscarTurno->setText(sesion.dni);
 }
 
+/* Cada clic, tecla o toque reinicia el reloj de inactividad: pasados 3 minutos sin tocar nada, la sesión se cierra sola. */
 bool VentanaCliente::eventFilter(QObject *objeto, QEvent *evento)
 {
     if (sesion.activa() && (evento->type() == QEvent::MouseButtonPress || evento->type() == QEvent::KeyPress

@@ -155,6 +155,7 @@ PaginaPacientes::PaginaPacientes(QVector<Paciente> *pacientes, QWidget *parent)
     filtrar();
 }
 
+/* Dibuja la tabla de pacientes (nombre, DNI, teléfono, email) filtrada por lo escrito en el buscador. */
 void PaginaPacientes::filtrar()
 {
     filaADato = buscar(*datos, editBuscar->text());
@@ -171,6 +172,7 @@ void PaginaPacientes::filtrar()
         tabla->selectRow(fila);
 }
 
+/* Al tocar una fila pasa los datos al formulario y pasa al modo 'Modificar paciente'. */
 void PaginaPacientes::elegirFila()
 {
     const int fila = tabla->currentRow();
@@ -187,6 +189,7 @@ void PaginaPacientes::elegirFila()
     btnTurno->setEnabled(true);
 }
 
+/* Vacía el formulario y vuelve al modo 'Nueva paciente'. */
 void PaginaPacientes::limpiar()
 {
     editada = -1;
@@ -200,6 +203,8 @@ void PaginaPacientes::limpiar()
     editNombre->setFocus();
 }
 
+/* Botón 'Guardar': valida con revisar(). Con base llama a repo->altaPaciente o modificar; el DNI y el
+ *  * nacimiento no se pueden modificar (el SP no los cambia). Después actualiza la tabla y avisa a la ventana. */
 void PaginaPacientes::guardar()
 {
     Paciente p = { editNombre->text().simplified(), Validaciones::soloDigitos(editDni->text()),

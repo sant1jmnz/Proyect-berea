@@ -51,6 +51,9 @@ enum { MenuCargarTurno = 1, MenuBuscarTurnos = 3 };
 /* Columnas de `tablaTurnos`. */
 enum { ColPaciente, ColDni, ColTelefono, ColProtocolo, ColFecha, ColEstado, ColSena };
 
+/* Constructor de la pantalla de Gestión (la de la recepción). Arma la interfaz del .ui, el formulario de carga,
+ *  * las señales (botones -> funciones), las pantallas nuevas del menú, y prueba la conexión a la base.
+ *  * Sin base queda en modo contingencia con datos locales. */
 VentanaGestion::VentanaGestion(QWidget *parent, const QString &archivoContingencia, bool datosDeEjemplo)
     : QMainWindow(parent), ui(new Ui::VentanaGestion)
 {
@@ -183,6 +186,7 @@ void VentanaGestion::probarConexion(const QString &archivoContingencia)
     QTimer::singleShot(0, conexion, &ConexionApp::probar);
 }
 
+/* Destructor: guarda los datos locales antes de cerrar y libera la interfaz. */
 VentanaGestion::~VentanaGestion()
 {
     guardarLocal();
@@ -280,11 +284,13 @@ void VentanaGestion::armarPantallasNuevas()
     capaCentral->insertWidget(lugar, columna, 1);
 }
 
+/* Cambia de página del QStackedWidget 'paginas' (PagProtocolo, PagHorario, PagConfirmar, ...). */
 void VentanaGestion::irA(int pagina)
 {
     ui->paginas->setCurrentIndex(pagina);
 }
 
+/* Se dispara al tocar un ítem del menú lateral: traduce la fila del menú a su página y la muestra. */
 void VentanaGestion::cambiarSeccion(int fila)
 {
     if (fila < 0)
@@ -294,6 +300,8 @@ void VentanaGestion::cambiarSeccion(int fila)
         sincronizarPacientes();   /* al entrar, la lista ya está al día */
 }
 
+/* Llena la lista de tratamientos del paso 1: solo los activos, con nombre, duración y precio.
+ *  * Para cambiar cómo se ve cada ítem (ej. el precio) se toca el QString del addItem. */
 void VentanaGestion::cargarProtocolos()
 {
     ui->listaProtocolos->clear();
@@ -308,6 +316,7 @@ void VentanaGestion::cargarProtocolos()
     ui->buscador->setCatalogo(DatosPrueba::comoTratamientos(protocolos));   /* el buscador de precios usa el mismo catálogo */
 }
 
+/* Se llama cuando se edita el catálogo de protocolos: refresca la lista, la pantalla de profesionales y guarda. */
 void VentanaGestion::protocolosCambiaron()
 {
     cargarProtocolos();
@@ -315,6 +324,7 @@ void VentanaGestion::protocolosCambiaron()
     guardarLocal();
 }
 
+/* Salta a 'Cargar turno' con nombre, DNI y teléfono ya completados (se usa desde la pantalla de pacientes). */
 void VentanaGestion::cargarTurnoPara(const QString &nombre, const QString &dni, const QString &telefono)
 {
     ui->editPaciente->setText(nombre);
@@ -323,6 +333,7 @@ void VentanaGestion::cargarTurnoPara(const QString &nombre, const QString &dni, 
     ui->menu->setCurrentRow(MenuCargarTurno);
 }
 
+/* Devuelve el protocolo marcado en la lista, o nullptr si no hay ninguno. */
 const Protocolo *VentanaGestion::protocoloElegido() const
 {
     const int fila = ui->listaProtocolos->currentRow();
@@ -331,6 +342,8 @@ const Protocolo *VentanaGestion::protocoloElegido() const
     return (fila >= 0 && fila < protocolosVisibles.size()) ? &protocolos[protocolosVisibles[fila]] : nullptr;
 }
 
+/* Devuelve fecha y hora del horario marcado, o un QDateTime vacío si no hay ninguno.
+ *  * Con la base el horario completo viaja en el ítem (Qt::UserRole); sin base se arma con el día del calendario + el texto 'HH:mm'. */
 QDateTime VentanaGestion::horarioElegido() const
 {
     const QListWidgetItem *item = ui->listaHorarios->currentItem();
@@ -420,6 +433,8 @@ void VentanaGestion::actualizarHorarios()
     }
 }
 
+/* Botón 'Continuar' del paso 2: exige un horario, arma el resumen del paso 3 (paciente, precio, seña,
+ *  * fecha, recordatorio 24 h antes) y muestra la página de confirmación. */
 void VentanaGestion::continuarPaso2()
 {
     const QDateTime inicio = horarioElegido();
@@ -450,6 +465,9 @@ void VentanaGestion::continuarPaso2()
     irA(PagConfirmar);
 }
 
+/* Botón 'Confirmar' del paso 3: con base delega en confirmarTurnoEnBase; sin base revisa que el horario
+ *  * no se haya ocupado, guarda el turno, programa el recordatorio de 24 h, avisa y, si no hay conexión,
+ * lo deja en contingencia (RNF-09). Al final vuelve a la búsqueda mostrando ese turno. */
 void VentanaGestion::confirmarTurno()
 {
     const Protocolo *p = protocoloElegido();
@@ -533,6 +551,8 @@ void VentanaGestion::buscarTurnos()
     mostrarTurnos();
 }
 
+/* Filtra y dibuja la tabla de turnos: si lo escrito son números busca por DNI o teléfono, si es texto por nombre.
+ *  * Ordena por fecha, pinta de gris los realizados/cancelados y muestra el estado de la seña. */
 void VentanaGestion::mostrarTurnos()
 {
     const QString texto = ui->editBuscar->text().simplified();
@@ -822,6 +842,7 @@ void VentanaGestion::cargarHorariosDeBase(const QDate &dia)
     }
 }
 
+/* Devuelve el id del profesional del horario marcado (guardado en el ítem), o 0 si no hay. */
 int VentanaGestion::profesionalElegido() const
 {
     const QListWidgetItem *item = ui->listaHorarios->currentItem();

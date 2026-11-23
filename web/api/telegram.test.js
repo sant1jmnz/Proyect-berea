@@ -145,12 +145,13 @@ const botones = () => (enviados.at(-1)?.reply_markup?.inline_keyboard ?? []).fla
 test('botones: reservar por chat (tratamiento, día, hora, confirmar) y cancelar', { skip: !hayBase }, async () => {
   const b = bot();
   await b.procesarActualizacion(mensaje('Reservar'));
-  assert.match(ultimo(), /Qué tratamiento/);
-  assert.ok(botones().includes('rp:1'));
-  await b.procesarActualizacion(toque('rp:1'));
+  assert.match(ultimo(), /Qué tipo de tratamiento/);
+  await b.procesarActualizacion(toque(botones()[0]));
+  assert.match(ultimo(), /cuál querés/);
+  await b.procesarActualizacion(toque(botones()[0]));
   assert.match(ultimo(), /Qué día/);
   await b.procesarActualizacion(toque(botones()[0]));
-  assert.match(ultimo(), /Horarios del/);
+  assert.match(ultimo(), /Elegí el horario/);
   await b.procesarActualizacion(toque(botones()[0]));
   assert.match(ultimo(), /Confirmás/);
   await b.procesarActualizacion(toque(botones().find((d) => d.startsWith('rok:'))));
@@ -163,6 +164,29 @@ test('botones: reservar por chat (tratamiento, día, hora, confirmar) y cancelar
   assert.match(ultimo(), /Cancelar el turno/);
   await b.procesarActualizacion(toque(c.replace('c:', 'cok:')));
   assert.equal(ultimo(), 'Listo, cancelé tu turno.');
+});
+
+test('texto libre con error de tipeo: entiende el tratamiento, ofrece días y horarios y reserva igual que el sitio', { skip: !hayBase }, async () => {
+  const b = bot();
+  await b.procesarActualizacion(mensaje('quiero un peelng quimico'));
+  assert.match(ultimo(), /Peeling químico.*¿Qué día/);
+  assert.ok(botones().every((d) => d.length <= 64));
+  await b.procesarActualizacion(toque(botones()[0]));
+  assert.match(ultimo(), /Elegí el horario/);
+  await b.procesarActualizacion(toque(botones()[0]));
+  assert.match(ultimo(), /Confirmás/);
+  await b.procesarActualizacion(toque(botones().find((d) => d.startsWith('rok:'))));
+  assert.match(ultimo(), /Listo! Reservé tu turno/);
+  await b.procesarActualizacion(mensaje('Cancelar turno'));
+  const c = botones().at(-1);
+  await b.procesarActualizacion(toque(c.replace('c:', 'cok:')));
+  assert.equal(ultimo(), 'Listo, cancelé tu turno.');
+});
+
+test('texto libre sin entender: muestra opciones y no manda a la recepción', { skip: !hayBase }, async () => {
+  await bot().procesarActualizacion(mensaje('quiero un turno'));
+  assert.match(ultimo(), /Qué tipo de tratamiento/);
+  assert.ok(botones().length > 2);
 });
 
 test('botones: un turno ajeno no se toca; el recordatorio "Confirmo" agradece', { skip: !hayBase }, async () => {

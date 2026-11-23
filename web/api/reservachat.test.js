@@ -49,3 +49,8 @@ test('buscarProtocolos entiende errores de tipeo y de voz, y no inventa con salu
   assert.equal(buscarProtocolos('depilacion lazer', cat, true)[0]?.id_protocolo, 2);
   assert.equal(buscarProtocolos('hola gracias', cat, true).length, 0);
 });
+
+test('"cuánto cuesta un turno de peeling" es una consulta, no una reserva', async () => {
+  const cat = [{ id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 60 }];
+  assert.equal(await pasoReserva({ pregunta: 'cuanto cuesta un turno de peeling', reserva: null, catalogo: cat, horarios: async () => [] }), null);
+});

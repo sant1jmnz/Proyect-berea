@@ -16,6 +16,7 @@
  * hace falta ningún dato personal para contestar. */
 
 import { fichaDe } from '../src/datos/fichas.js';
+import Fuse from 'fuse.js';
 
 export const INSTITUTO = {
   nombre: 'Dermalia, Instituto de Estética Médica',
@@ -96,7 +97,21 @@ const PALABRAS_VACIAS = new Set(['turno', 'turnos', 'mismo', 'sesion', 'cancelo'
   'cuales', 'donde', 'puedo', 'necesito', 'seria', 'tambien', 'gracias', 'una', 'unos', 'unas', 'los', 'las', 'del', 'que', 'con']);
 
 /* Protocolos cuyo nombre, categoría o descripción tienen palabras de la pregunta, de mejor a peor. */
+/* Con errores de tipeo o de voz ("peelng", "depilacion lazzer") la búsqueda exacta no encuentra nada: se prueba aproximada (fuse.js). */
 export function buscarProtocolos(pregunta, catalogo, soloPorNombre = false) {
+  const exactos = buscarExacto(pregunta, catalogo, soloPorNombre);
+  if (exactos.length) return exactos;
+  const palabras = conSinonimos(normalizar(pregunta)).split(/[^a-z0-9]+/).filter((w) => w.length >= 5 && !PALABRAS_VACIAS.has(w));
+  if (!palabras.length) return [];
+  const fuse = new Fuse(catalogo.map((p) => ({ p, nombre: normalizar(p.nombre), categoria: normalizar(p.categoria ?? '') })),
+    { keys: soloPorNombre ? ['nombre'] : ['nombre', 'categoria'], threshold: 0.3, ignoreLocation: true, includeScore: true });
+  const mejor = new Map();
+  for (const w of palabras) for (const r of fuse.search(w)) mejor.set(r.item.p, Math.min(mejor.get(r.item.p) ?? 1, r.score));
+  const min = Math.min(...mejor.values());
+  return [...mejor].filter(([, sc]) => sc <= min + 0.05).map(([p]) => p);
+}
+
+function buscarExacto(pregunta, catalogo, soloPorNombre = false) {
   const palabras = conSinonimos(normalizar(pregunta)).split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !PALABRAS_VACIAS.has(w));
   if (palabras.length === 0) return [];
   const raiz = (w) => w.slice(0, Math.max(4, w.length - 2)); // "peelings" y "peeling", "faciales" y "facial"

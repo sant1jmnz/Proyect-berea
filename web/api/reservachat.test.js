@@ -41,3 +41,11 @@ test('tras "quiero un turno", un texto que no se entiende vuelve a mostrar las o
   const b = await pasoReserva({ pregunta: 'no tengo idea, recomiéndame uno', reserva: a.reserva, catalogo: cat, horarios: async () => [] });
   assert.ok(b?.opciones?.length);
 });
+
+test('buscarProtocolos entiende errores de tipeo y de voz, y no inventa con saludos', async () => {
+  const { buscarProtocolos } = await import('./asistente.js');
+  const cat = [{ id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales' }, { id_protocolo: 2, nombre: 'Depilación láser', categoria: 'Aparatología' }];
+  assert.equal(buscarProtocolos('peelng quimico', cat, true)[0]?.id_protocolo, 1);
+  assert.equal(buscarProtocolos('depilacion lazer', cat, true)[0]?.id_protocolo, 2);
+  assert.equal(buscarProtocolos('hola gracias', cat, true).length, 0);
+});

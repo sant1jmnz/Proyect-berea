@@ -73,3 +73,43 @@ test('ofrecerReserva: tras una recomendación ofrece sacar turno del tratamiento
   // "recomendame uno" sin decir qué: botones de lo que nombró la IA
   assert.deepEqual(ofrecerReserva('recomiendame uno tu', cat, 'Te recomiendo un peeling quimico.').map((o) => o.reserva.protocolo), [2, undefined]);
 });
+
+const cat3 = [
+  { id_protocolo: 1, nombre: 'Peeling químico', categoria: 'Faciales', duracion_min: 45 },
+  { id_protocolo: 2, nombre: 'Limpieza facial profunda', categoria: 'Faciales', duracion_min: 60 },
+  { id_protocolo: 3, nombre: 'Toxina botulínica (rostro completo)', categoria: 'Medicina', duracion_min: 45 },
+  ...Array.from({ length: 10 }, (_, i) => ({ id_protocolo: 10 + i, nombre: `Facial ${i}`, categoria: 'Faciales', duracion_min: 30 })),
+];
+const libres = async (dia) => (dia === '2026-11-23'
+  ? Array.from({ length: 12 }, (_, i) => ({ id_profesional: 1 + (i % 2), profesional: 'P', inicio: `2026-11-23 ${String(9 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}:00` })) : []);
+
+test('"¿cuánto sale?" en medio de la reserva: primero contesta la IA, después vuelve el paso', async () => {
+  const a = { pregunta: 'cuanto sale la limpieza facial?', reserva: { activa: true }, catalogo: cat3, horarios: libres, ahora };
+  assert.equal(await pasoReserva(a), null);
+  const b = await pasoReserva({ ...a, contestada: true });
+  assert.match(b.respuesta, /Limpieza facial profunda/);
+});
+test('"si dale" toma lo que el asistente ofreció', async () => {
+  const uno = await pasoReserva({ pregunta: 'si dale', catalogo: cat3, horarios: libres, ahora, ultima: 'Te recomiendo la Limpieza facial profunda. ¿Querés sacar turno?' });
+  assert.match(uno.respuesta, /Limpieza facial profunda.*Qué día/);
+  const dos = await pasoReserva({ pregunta: 'ok', reserva: { activa: true }, catalogo: cat3, horarios: libres, ahora, ultima: 'Para el acné sirven el Peeling químico y la Limpieza facial profunda.' });
+  assert.equal(dos.respuesta, 'Dale. ¿Cuál de estos?');
+  assert.equal(dos.opciones.length, 3);
+  assert.equal(await pasoReserva({ pregunta: 'si', catalogo: cat3, horarios: libres, ahora, ultima: 'El peeling químico dura 45 minutos.' }), null);
+});
+test('la lista de una categoría muestra todos los tratamientos', async () => {
+  const r = await pasoReserva({ pregunta: 'x', eligio: true, reserva: { categoria: 'Faciales' }, catalogo: cat3, horarios: libres, ahora });
+  assert.equal(r.opciones.length, 13); // 12 faciales + Cancelar
+});
+test('horarios: una hora por botón y "Más tarde" para el resto', async () => {
+  const r = await pasoReserva({ pregunta: 'x', eligio: true, reserva: { protocolo: 1, fecha: '2026-11-23' }, catalogo: cat3, horarios: libres, ahora });
+  const mas = r.opciones.find((o) => o.texto === 'Más tarde');
+  assert.equal(r.opciones[0].texto, '09:00 · P');
+  assert.equal(mas.reserva.desde, '13:00');
+  const r2 = await pasoReserva({ pregunta: 'x', eligio: true, reserva: limpiarReserva(mas.reserva), catalogo: cat3, horarios: libres, ahora });
+  assert.equal(r2.opciones[0].texto, '13:00 · P');
+  assert.ok(!r2.opciones.some((o) => o.texto === 'Más tarde'));
+});
+test('ofrecerReserva: embarazo no lleva botón de turno', () => {
+  assert.deepEqual(ofrecerReserva('estoy embarazada, puedo hacerme un peeling?', cat3, 'Lo tiene que evaluar la profesional antes del Peeling químico.'), []);
+});

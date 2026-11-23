@@ -17,7 +17,7 @@
  * Si se prefiere n8n (n8n/), poner TELEGRAM_ENVIOS=n8n y TAREAS_DIARIAS=n8n: la API deja de hacerlo
  * para que no se manden dos veces. */
 
-import { pasoReserva, ofrecerReserva } from './reservachat.js';
+import { pasoReserva, ofrecerReserva, esAfirmacion } from './reservachat.js';
 
 const soloDigitos = (t) => String(t ?? '').replace(/\D/g, '');
 const fechaCorta = (texto) => {
@@ -196,7 +196,12 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
     if (!respuesta.derivada) {
       const cat = await catalogo();
       const cats = [...new Set(cat.map((p) => p.categoria))];
-      const op = ofrecerReserva(texto, cat, respuesta.respuesta);
+      let op = ofrecerReserva(texto, cat, respuesta.respuesta);
+      // pidió turno y preguntó algo ("quiero un turno, ¿cuánto sale el peeling?"): debajo de la respuesta, el paso de la reserva
+      if (!op.length && vinculada) {
+        const paso = await pasoReserva({ pregunta: texto, reserva: {}, catalogo: cat, ahora: ahora(), contestada: true, horarios: horariosDe }).catch(() => null);
+        if (paso?.opciones?.length > 1) op = paso.opciones;
+      }
       return enviar(chat, respuesta.respuesta, op.length ? teclado(op.map((o) => boton(o.texto.slice(0, 60), aBoton(o.reserva, cats))), 1) : {});
     }
     const avisada = await derivar(chat, vinculada, texto);
@@ -219,20 +224,23 @@ export function crearBotTelegram({ token, llamar, escribir, preguntarAsistente, 
 
   // El estado de la reserva viaja en el botón (límite de 64 bytes): q:p=12;f=20261123;i=202611231500;r=3;c=1;x=1
   const aBoton = (r, cats) => 'q:' + Object.entries({ p: r.protocolo, f: r.fecha?.replace(/-/g, ''), i: r.inicio && compacto(r.inicio), r: r.profesional,
-    c: r.categoria && cats.indexOf(r.categoria), x: r.cancelar ? 1 : null }).filter(([, v]) => v != null && v !== -1).map(([k, v]) => `${k}=${v}`).join(';');
+    c: r.categoria && cats.indexOf(r.categoria), d: r.desde?.replace(':', ''), x: r.cancelar ? 1 : null }).filter(([, v]) => v != null && v !== -1).map(([k, v]) => `${k}=${v}`).join(';');
   const desdeBoton = (datos, cats) => {
     const v = Object.fromEntries(datos.split(';').map((x) => x.split('=')));
     return { ...(v.p && { protocolo: Number(v.p) }), ...(v.f && { fecha: `${v.f.slice(0, 4)}-${v.f.slice(4, 6)}-${v.f.slice(6, 8)}` }),
-      ...(v.i && { inicio: inicioDe(v.i) }), ...(v.r && { profesional: Number(v.r) }), ...(v.c && { categoria: cats[Number(v.c)] }), ...(v.x && { cancelar: true }) };
+      ...(v.i && { inicio: inicioDe(v.i) }), ...(v.r && { profesional: Number(v.r) }), ...(v.c && { categoria: cats[Number(v.c)] }), ...(v.d && { desde: `${v.d.slice(0, 2)}:${v.d.slice(2)}` }), ...(v.x && { cancelar: true }) };
   };
+  const horariosDe = (fecha, id) => llamar('agenda.sp_horarios_libres', [fecha, id, null, null, null]);
   const compacto = (inicio) => String(inicio).slice(0, 16).replace(/\D/g, '');
 
   /* Un paso de la reserva con IA. Devuelve false si el texto no era una reserva (sigue el asistente normal). */
   async function reservarConIA(chat, pregunta, soloSiEntiende = false, reserva = {}, eligio = false) {
     const cat = await catalogo();
     const cats = [...new Set(cat.map((p) => p.categoria))];
-    const paso = await pasoReserva({ pregunta, reserva, eligio, catalogo: cat, ahora: ahora(),
-      horarios: (fecha, id) => llamar('agenda.sp_horarios_libres', [fecha, id, null, null, null]) });
+    // "sí, dale": lo último que dijo el asistente dice qué ofreció
+    const ultima = !eligio && esAfirmacion(pregunta)
+      ? String((await llamar('asistente.sp_historial_telegram', [String(chat), 6]).catch(() => [])).filter((m) => m.rol === 'asistente').pop()?.texto ?? '') : '';
+    const paso = await pasoReserva({ pregunta, reserva, eligio, catalogo: cat, ahora: ahora(), ultima, horarios: horariosDe });
     if (!paso) return soloSiEntiende ? false : enviar(chat, 'No entendí. Escribime qué tratamiento querés, por ejemplo "quiero un peeling".');
     if (paso.formulario) { const r = paso.reserva; await pedirConfirmacion(chat, String(r.protocolo), String(r.profesional), compacto(r.inicio), null, cat); return true; }
     await enviar(chat, paso.respuesta, paso.opciones.length ? teclado(paso.opciones.map((o) => boton(o.texto.slice(0, 60), aBoton(o.reserva, cats))), 2) : {});

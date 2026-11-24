@@ -82,7 +82,9 @@ async function buscar(clave) {
     .sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
 }
 
+let actuales = [];
 function pintar(turnos) {
+  actuales = turnos;
   resultado.innerHTML = turnos.length
     ? turnos.map(tarjeta).join('')
     : `<div class="turno tarjeta"><h2>No encontramos turnos</h2><p class="nota">Revisá el número. Si reservaste por teléfono, probá con el DNI. También podés <a href="/reservar.html" data-transicion>sacar un turno nuevo</a>.</p></div>`;
@@ -118,16 +120,25 @@ resultado.addEventListener('click', async (e) => {
     boton.textContent = 'Tocá de nuevo para cancelar';
     return;
   }
+  const articulo = boton.closest('[data-turno]');
+  // Respuesta al toque: la base remota tarda, y sin esto parece que no pasó nada.
+  boton.disabled = true;
+  boton.textContent = 'Cancelando…';
+  const espera = movimientoReducido() ? null : gsap.to(articulo, { autoAlpha: 0.55, duration: 0.8, repeat: -1, yoyo: true, ease: 'sine.inOut' });
   if (id === 'ejemplo') canceladosAhora.add(id);
   else if (id.startsWith('bd-')) {
     const r = await cancelarEnBase(id);   // la base decide si devuelve la seña (24 h)
     if (!r?.ok) {
+      espera?.kill();
+      if (espera) gsap.set(articulo, { autoAlpha: 1 });
+      boton.disabled = false;
       boton.textContent = r?.cuerpo?.error ?? 'No pudimos cancelar. Probá de nuevo.';
       return;
     }
   } else cancelarReserva(id);
-  const articulo = boton.closest('[data-turno]');
-  const repintar = async () => pintar(await buscar(ultima));
+  espera?.kill();
+  // Se marca cancelado acá mismo: no hace falta volver a pedir la lista a la base.
+  const repintar = () => pintar(actuales.map((t) => (t.id === id ? { ...t, estado: 'cancelado' } : t)));
   if (movimientoReducido()) repintar();
   else gsap.to(articulo, { rotateX: 12, y: -10, autoAlpha: 0.4, duration: 0.4, transformPerspective: 900, onComplete: repintar });
 });

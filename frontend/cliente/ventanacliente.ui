@@ -97,6 +97,8 @@ QCalendarWidget QToolButton:pressed { background: #F7E8EB; }
 QCalendarWidget QToolButton#qt_calendar_prevmonth { qproperty-icon: none; qproperty-text: &quot;‹&quot;; font-size: 28px; }
 QCalendarWidget QToolButton#qt_calendar_nextmonth { qproperty-icon: none; qproperty-text: &quot;›&quot;; font-size: 28px; }
 QCalendarWidget QAbstractItemView { background: #FFFDFA; alternate-background-color: #FFFDFA; selection-background-color: #A8475F; selection-color: #FFFFFF; outline: 0; border: none; font-size: 16px; }
+QCalendarWidget QAbstractItemView:enabled { color: #3A2B2B; }
+QCalendarWidget QAbstractItemView::item:selected { background: #A8475F; color: #FFFFFF; }
 QCalendarWidget QAbstractItemView:disabled { color: #CFC4BA; }
 
 /* ---- barras de desplazamiento ---- */

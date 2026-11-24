@@ -1,5 +1,5 @@
--- Dermalia: datos de ejemplo (MySQL 8). Se corre DESPUÉS de codigobasededatossolotablas.sql.
---   mysql -u root -p < backend/codigobasededatossolotablas.sql
+-- Dermalia: datos de ejemplo (MySQL 8). Se corre DESPUÉS de 01_tablas.sql.
+--   mysql -u root -p < backend/01_tablas.sql
 --   mysql -u root -p < backend/02_datos.sql
 -- Consigna punto 4: más de 50 turnos (tabla principal) y 20 o más filas en las
 -- demás tablas, salvo los catálogos cerrados (roles, estados, canales...), que

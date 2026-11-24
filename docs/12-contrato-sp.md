@@ -65,7 +65,7 @@ devuelven 0 filas y no dan error.
 
 
 
-### Semana 3 (`backend/03_sp_semana3.sql`): login, ABM, horarios libres, alta de turno y listados para las pantallas
+### Semana 3 (`backend/03_sp_turnos.sql`): login, ABM, horarios libres, alta de turno y listados para las pantallas
 
 | SP / función | Parámetros | Qué hace |
 |---|---|---|
@@ -96,7 +96,7 @@ devuelven 0 filas y no dan error.
 | `seguridad.sp_crear_cuenta_paciente` (SP) | `p_dni VARCHAR(15), p_nombre_usuario VARCHAR(50), p_email VARCHAR(100), p_password VARCHAR(255), p_origen VARCHAR(50)` | Cuenta opcional de una paciente (RF-15): se vincula con su DNI. |
 | `seguridad.sp_login` (SP) | `p_usuario VARCHAR(50), p_password VARCHAR(255), p_ip VARCHAR(45), p_origen VARCHAR(50)` | Ingreso al sistema. La contraseña se compara tal cual. Tras 5 intentos fallidos en 15 minutos la cuenta se bloquea temporalmente; los intentos se cuentan desde el log (modelo, grupo 4, decisión 6). |
 
-### Semana 4 (`backend/04_sp_semana4.sql`): seña, cancelación, cirugías, cupones, tarjetas, avisos, asistente
+### Semana 4 (`backend/04_sp_sena_cancelar.sql`): seña, cancelación, cirugías, cupones, tarjetas, avisos, asistente
 
 | SP / función | Parámetros | Qué hace |
 |---|---|---|
@@ -141,7 +141,7 @@ devuelven 0 filas y no dan error.
 | `personas.sp_paciente_por_telegram` (SP) | `p_chat_id VARCHAR(50)` | Qué paciente tiene vinculado ese chat (para el comando /turnos). Devuelve: `id_paciente, dni, nombre, apellido`. Sin coincidencias: 0 filas. |
 | `notificaciones.sp_notificaciones_telegram` (SP) | `p_limite INT` | Avisos pendientes que salen por Telegram cuya hora ya llegó, los más viejos primero. Límite entre 1 y 500 (por defecto 50). Devuelve: `id_notificacion, tipo, mensaje, fecha_programada, intentos, id_turno, destinatario_nombre, telegram_chat_id`. |
 
-### Semana 5 (`backend/05_reportes_semana5.sql`): 8 reportes y auditoría
+### Semana 5 (`backend/05_reportes.sql`): 8 reportes y auditoría
 
 | SP / función | Parámetros | Qué hace |
 |---|---|---|
@@ -155,7 +155,7 @@ devuelven 0 filas y no dan error.
 | `pagos.sp_reporte_ingresos_sena` (SP) | `p_desde DATE, p_hasta DATE` | Reporte 2: ingresos por seña, reembolsos y retenciones, por mes y medio de pago. Lo retenido es lo que el instituto se queda de las señas ya resueltas. |
 | `pagos.sp_reporte_tarjetas_regalo` (SP) | `p_desde DATE, p_hasta DATE` | Reporte 8: saldo y uso de las tarjetas de regalo compradas en el rango. El código se muestra recortado: el código completo funciona como un billete. |
 
-### Semana 6 (`backend/06_tuning_semana6.sql`): versiones `_tuneado`
+### Semana 6 (`backend/06_tuning.sql`): versiones `_tuneado`
 
 | SP / función | Parámetros | Qué hace |
 |---|---|---|

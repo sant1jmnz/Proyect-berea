@@ -44,7 +44,7 @@ ejemplo de la base (`backend/02_datos.sql`): paciente **Carla Gómez, DNI
 **Plan B si falla la conexión** (RNF-09): el programa entra en **modo
 contingencia** (franja amarilla), guarda el turno en el equipo y avisa. Si
 también falla el programa, mostrar el sitio web (`web/`, `npm run dev`) y los
-reportes ya ejecutados en Workbench (`backend/05_reportes_semana5.sql`).
+reportes ya ejecutados en Workbench (`backend/05_reportes.sql`).
 **Antes de empezar:** `./dermalia.sh recargar-base` y `./dermalia.sh iniciar` (deja la base con los datos de
 ejemplo y abre el sitio, Gestión y la terminal); ingresar con `recepcion1` / `dermalia2026`; `./dermalia.sh estado`
 tiene que decir que la API llega a la base. Para recortar los 20 segundos del asistente, se saca del paso 4. Las pantallas de Gestión y de la terminal ya trabajan con la base (si no hay conexión, usan los datos

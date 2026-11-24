@@ -1,7 +1,7 @@
--- Pruebas de la estructura: cada restricción de codigobasededatossolotablas.sql
+-- Pruebas de la estructura: cada restricción de 01_tablas.sql
 -- rechaza lo que tiene que rechazar y deja pasar lo válido.
 -- Se corre después de crear las tablas:
---   mysql -u root -p < backend/codigobasededatossolotablas.sql
+--   mysql -u root -p < backend/01_tablas.sql
 --   mysql -u root -p < backend/pruebas_estructura.sql
 -- Todo va dentro de una transacción que al final se deshace (ROLLBACK): las
 -- tablas quedan vacías como estaban. Solo queda el schema "pruebas" con el

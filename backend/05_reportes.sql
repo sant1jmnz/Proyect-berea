@@ -5,8 +5,8 @@ DELIMITER //
 /*
  =============================================================================
    DERMALIA - REPORTES Y AUDITORIA (SEMANA 5) - MySQL 8
-   Se corre despues de 04_sp_semana4.sql:
-       mysql -u root -p < backend/05_reportes_semana5.sql
+   Se corre despues de 04_sp_sena_cancelar.sql:
+       mysql -u root -p < backend/05_reportes.sql
 
    Consigna 5c: al menos 8 reportes de distinta indole, todos con funciones de
    agrupamiento, reuniones (INNER JOIN / LEFT JOIN) y gestion de fechas.
@@ -18,7 +18,7 @@ DELIMITER //
 
    Todos reciben un rango de fechas (p_desde y p_hasta, ambos inclusive).
    Con parametros NULL o con p_desde > p_hasta devuelven 0 filas, sin error.
-   Los dos reportes con version _tuneado estan en 06_tuning_semana6.sql.
+   Los dos reportes con version _tuneado estan en 06_tuning.sql.
  =============================================================================
 */
 

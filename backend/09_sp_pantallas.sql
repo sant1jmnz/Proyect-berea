@@ -1,10 +1,10 @@
 -- Dermalia: stored procedures para las pantallas de Cupones, Consultas previas y Usuarios (MySQL 8).
--- Se corre después de 04_sp_semana4.sql:
+-- Se corre después de 04_sp_sena_cancelar.sql:
 --   mysql -u root -p < backend/09_sp_pantallas.sql
 --
 -- Las pantallas de Gestión necesitan listar lo que ya existe; el resto de las
 -- acciones (emitir cupones, pedir el token, validar, cargar el resultado de una
--- evaluación, reclamar) ya están en 04_sp_semana4.sql.
+-- evaluación, reclamar) ya están en 04_sp_sena_cancelar.sql.
 -- Mismo manejo de errores que en la clase (PPT 006): EXIT HANDLER FOR SQLEXCEPTION,
 -- GET DIAGNOSTICS y una fila con estado = 'ERROR'.
 

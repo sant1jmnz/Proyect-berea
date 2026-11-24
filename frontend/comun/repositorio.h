@@ -1,5 +1,5 @@
 /* Repositorio: la capa que le habla a los stored procedures de la base
- * (backend/03_sp_semana3.sql y 04_sp_semana4.sql) y devuelve datos ya
+ * (backend/03_sp_turnos.sql y 04_sp_sena_cancelar.sql) y devuelve datos ya
  * interpretados. Las pantallas de Gestión y Cliente usan esta clase en vez de
  * escribir CALL a mano: así hay un solo lugar donde cambia el nombre de un SP
  * o el orden de sus parámetros.

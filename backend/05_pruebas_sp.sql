@@ -1,6 +1,6 @@
 -- Dermalia: pruebas funcionales de los stored procedures (consigna 6).
 -- Se corre sobre la base recién cargada (01 a 06):
---   mysql -u root -p < backend/codigobasededatossolotablas.sql   (y 02, 03, 04, 05, 06)
+--   mysql -u root -p < backend/01_tablas.sql   (y 02, 03, 04, 05, 06)
 --   mysql -u root -p < backend/05_pruebas_sp.sql        (o abrirlo en Workbench / DBeaver)
 --
 -- ATENCIÓN: el script modifica datos (agenda turnos, paga señas, etc.). Para

@@ -1,6 +1,6 @@
 # Revisión del script de tablas
 
-Revisión de `codigobasededatossolotablas.sql` (la versión que subió Bautista)
+Revisión de `01_tablas.sql` (la versión que subió Bautista)
 contra la consigna (`docs/consigna-bbdd.md`) y el modelo
 (`docs/modelo-entidades.md`). El script ya estaba muy bien encaminado: las 27
 entidades más las 2 tablas N:M, los teléfonos como tabla aparte (multivaluado,
@@ -11,7 +11,7 @@ los nombres de tablas, columnas y constraints.
 ## Cómo probarlo
 
 ```
-mysql -u root -p < backend/codigobasededatossolotablas.sql
+mysql -u root -p < backend/01_tablas.sql
 mysql -u root -p < backend/pruebas_estructura.sql
 ```
 

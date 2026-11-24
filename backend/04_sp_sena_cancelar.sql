@@ -1,6 +1,6 @@
 -- Dermalia: stored procedures de la Semana 4 (MySQL 8).
--- Se corre después de 03_sp_semana3.sql:
---   mysql -u root -p < backend/04_sp_semana4.sql
+-- Se corre después de 03_sp_turnos.sql:
+--   mysql -u root -p < backend/04_sp_sena_cancelar.sql
 --
 -- Contenido: seña, cancelación y reembolso, asistencia, regla de cirugías
 -- (evaluación previa, reclamo y vencimiento), cupones con token rotativo,

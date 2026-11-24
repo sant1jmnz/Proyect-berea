@@ -9,10 +9,10 @@ Cambiá solo el archivo que corresponda de `backend/`:
 
 | Qué piden | Archivo |
 |---|---|
-| Tablas | `codigobasededatossolotablas.sql` |
+| Tablas | `01_tablas.sql` |
 | Datos de ejemplo | `02_datos.sql` |
-| Stored procedures | `03_sp_semana3.sql`, `04_sp_semana4.sql`, `09_sp_pantallas.sql`, `10_sp_telegram.sql` |
-| Reportes | `05_reportes_semana5.sql` |
+| Stored procedures | `03_sp_turnos.sql`, `04_sp_sena_cancelar.sql`, `09_sp_pantallas.sql`, `10_sp_telegram.sql` |
+| Reportes | `05_reportes.sql` |
 | Usuarios | `08_usuarios.sql` |
 
 Si no sabés cuál es: `git grep -n "nombre_del_sp" backend`

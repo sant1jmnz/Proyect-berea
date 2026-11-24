@@ -1,6 +1,6 @@
 -- Dermalia: tuning de la Semana 6 (MySQL 8).
--- Se corre después de 05_reportes_semana5.sql:
---   mysql -u root -p < backend/06_tuning_semana6.sql
+-- Se corre después de 05_reportes.sql:
+--   mysql -u root -p < backend/06_tuning.sql
 --
 -- Consigna 5e: dos reportes que lo justifican, con una versión `_tuneado` del
 -- stored procedure (mismo nombre + `_tuneado`, mismos parámetros, mismas filas):

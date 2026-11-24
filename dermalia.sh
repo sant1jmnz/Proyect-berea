@@ -96,8 +96,8 @@ instalar() {
   asegurar_mysql_andando
   conectar_admin
   cd "$RAIZ/backend"
-  for f in codigobasededatossolotablas.sql 02_datos.sql 02b_numero.sql 03_sp_semana3.sql 04_sp_semana4.sql \
-           05_reportes_semana5.sql 06_tuning_semana6.sql 09_sp_pantallas.sql 10_sp_telegram.sql 07_actividad_con_sps.sql 08_usuarios.sql; do
+  for f in 01_tablas.sql 02_datos.sql 02b_numero.sql 03_sp_turnos.sql 04_sp_sena_cancelar.sql \
+           05_reportes.sql 06_tuning.sql 09_sp_pantallas.sql 10_sp_telegram.sql 07_actividad_con_sps.sql 08_usuarios.sql; do
     printf '  %-40s' "$f"
     "${MYSQL_ADMIN[@]}" --default-character-set=utf8mb4 < "$f" >/dev/null && verde "ok"
   done
@@ -203,7 +203,7 @@ probar() {
   conectar_admin
   local ok=0
   paso "Estructura de la base (44 casos, sobre tablas vacías: después se recarga todo)"
-  "${MYSQL_ADMIN[@]}" < "$RAIZ/backend/codigobasededatossolotablas.sql"
+  "${MYSQL_ADMIN[@]}" < "$RAIZ/backend/01_tablas.sql"
   "${MYSQL_ADMIN[@]}" < "$RAIZ/backend/pruebas_estructura.sql" | tail -1
 
   paso "Stored procedures: se prueban a mano con backend/05_pruebas_sp.sql (ver docs/11-pruebas-bbdd.md)"
@@ -222,8 +222,8 @@ probar() {
 
 instalar_solo_base() {
   cd "$RAIZ/backend"
-  for f in codigobasededatossolotablas.sql 02_datos.sql 02b_numero.sql 03_sp_semana3.sql 04_sp_semana4.sql \
-           05_reportes_semana5.sql 06_tuning_semana6.sql 09_sp_pantallas.sql 10_sp_telegram.sql 07_actividad_con_sps.sql 08_usuarios.sql; do
+  for f in 01_tablas.sql 02_datos.sql 02b_numero.sql 03_sp_turnos.sql 04_sp_sena_cancelar.sql \
+           05_reportes.sql 06_tuning.sql 09_sp_pantallas.sql 10_sp_telegram.sql 07_actividad_con_sps.sql 08_usuarios.sql; do
     "${MYSQL_ADMIN[@]}" --default-character-set=utf8mb4 < "$f" >/dev/null
   done
   "${MYSQL_ADMIN[@]}" -e "ALTER USER 'dermalia_app'@'%' IDENTIFIED BY '$(de_env DERMALIA_DB_PASS)'; FLUSH PRIVILEGES;"

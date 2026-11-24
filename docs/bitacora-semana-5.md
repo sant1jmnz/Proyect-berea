@@ -28,7 +28,7 @@ presupuesto final.
 
 **Base de datos (backend)**
 - Backend completo en una primera versión: datos de ejemplo, stored procedures, **los 8 reportes y la auditoría
-  por rango de fechas** (`backend/05_reportes_semana5.sql`), tuning y pruebas.
+  por rango de fechas** (`backend/05_reportes.sql`), tuning y pruebas.
 - Pruebas de los stored procedures: **198 casos, todos OK**.
 - Medición del tuning con **300.000 turnos** y actividad de ejemplo generada **solo con stored procedures**
   (`backend/07_actividad_con_sps.sql`), para que el log tenga movimiento real.

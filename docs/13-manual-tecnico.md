@@ -84,13 +84,13 @@ Hace falta MySQL 8 con permiso para crear schemas. En Ubuntu: `sudo apt install 
 Después, en este orden (cada archivo supone los anteriores):
 
 ```bash
-mysql -u root -p < backend/codigobasededatossolotablas.sql   # schemas y tablas (borra y recrea todo)
+mysql -u root -p < backend/01_tablas.sql   # schemas y tablas (borra y recrea todo)
 mysql -u root -p < backend/02_datos.sql                      # catálogos y datos de ejemplo
 mysql -u root -p < backend/02b_numero.sql                    # tabla auxiliar de números (la usan horarios libres y cupones)
-mysql -u root -p < backend/03_sp_semana3.sql                 # login, ABM, horarios, alta de turno
-mysql -u root -p < backend/04_sp_semana4.sql                 # seña, cancelación, cirugías, cupones, tarjetas, avisos
-mysql -u root -p < backend/05_reportes_semana5.sql           # 8 reportes + auditoría
-mysql -u root -p < backend/06_tuning_semana6.sql             # versiones _tuneado
+mysql -u root -p < backend/03_sp_turnos.sql                 # login, ABM, horarios, alta de turno
+mysql -u root -p < backend/04_sp_sena_cancelar.sql                 # seña, cancelación, cirugías, cupones, tarjetas, avisos
+mysql -u root -p < backend/05_reportes.sql           # 8 reportes + auditoría
+mysql -u root -p < backend/06_tuning.sql             # versiones _tuneado
 mysql -u root -p < backend/09_sp_pantallas.sql               # listados de las pantallas Cupones y Consultas previas
 mysql -u root -p < backend/10_sp_telegram.sql                # bot de Telegram: vincular la paciente y sus avisos
 mysql -u root -p < backend/07_actividad_con_sps.sql          # (opcional) actividad de ejemplo que llena el log
@@ -131,7 +131,7 @@ usuarios y turnos.
 - **Los estados y saldos no se guardan, se calculan**: el precio final y la seña de cada turno salen
   de la vista `agenda.PrecioTurno`; el saldo de una tarjeta, de sus movimientos; la vigencia de cupones
   y evaluaciones, de sus fechas.
-- **Lo que usan varios SP está en una vista**, escrita una sola vez al principio de `03_sp_semana3.sql`:
+- **Lo que usan varios SP está en una vista**, escrita una sola vez al principio de `03_sp_turnos.sql`:
   `agenda.PrecioTurno`, `agenda.DetalleTurno` (lo que muestran las pantallas de un turno; la usan
   `sp_buscar_turnos` y `sp_turnos_del_periodo`) y `personas.PrimerTelefonoPaciente`.
 - La hora es `COALESCE(@ahora_simulado, NOW())`: la de la PC, salvo que la sesión defina

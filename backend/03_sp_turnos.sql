@@ -1,6 +1,6 @@
 -- Dermalia: stored procedures de la Semana 3 (MySQL 8).
--- Se corre después de codigobasededatossolotablas.sql y 02_datos.sql:
---   mysql -u root -p < backend/03_sp_semana3.sql
+-- Se corre después de 01_tablas.sql y 02_datos.sql:
+--   mysql -u root -p < backend/03_sp_turnos.sql
 --
 -- Contenido: auxiliares (reloj, log, reembolso), login y cuentas, ABM de
 -- pacientes, profesionales, disponibilidad y protocolos, horarios libres,

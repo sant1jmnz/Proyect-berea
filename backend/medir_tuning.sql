@@ -1,5 +1,5 @@
 -- Dermalia: medición del tuning (consigna 5e) con datos de volumen.
--- Se corre DESPUÉS de 06_tuning_semana6.sql, con la base cargada:
+-- Se corre DESPUÉS de 06_tuning.sql, con la base cargada:
 --   mysql -u root -p < backend/medir_tuning.sql
 --
 -- Con los 150 turnos de ejemplo no se nota la diferencia entre un SP y su versión

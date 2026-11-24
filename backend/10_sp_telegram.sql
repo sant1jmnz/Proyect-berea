@@ -8,7 +8,7 @@
 --   /salir           -> sp_desvincular_telegram
 --   /turnos          -> sp_paciente_por_telegram + agenda.sp_buscar_turnos
 --   cada minuto      -> sp_notificaciones_telegram + sp_marcar_notificacion
--- Se carga después de 04_sp_semana4.sql. Mismas convenciones que el resto:
+-- Se carga después de 04_sp_sena_cancelar.sql. Mismas convenciones que el resto:
 -- validación con IF y código 529xx, log solo desde el SP, 6 columnas de respuesta.
 
 DELIMITER //

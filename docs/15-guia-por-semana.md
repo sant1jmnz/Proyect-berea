@@ -17,7 +17,7 @@ Desde tu rama de trabajo:
 ```bash
 git fetch origin <rama-de-origen>
 git checkout santiago                    # o bautista
-git checkout origin/<rama-de-origen> -- backend/03_sp_semana3.sql docs/12-contrato-sp.md
+git checkout origin/<rama-de-origen> -- backend/03_sp_turnos.sql docs/12-contrato-sp.md
 git status                                # revisar qué entró
 git commit -m "Semana 3: stored procedures de login, ABM, horarios y alta de turno"
 git push -u origin santiago
@@ -40,7 +40,7 @@ reportes de la Semana 5 dependen de ellas.
 | Cuándo | Qué es | Traer de esta rama | Para entender |
 |---|---|---|---|
 | Miércoles | **Poblar el modelo**: 50+ turnos y 20+ filas por tabla; el log queda vacío | `backend/02_datos.sql` | `docs/11-pruebas-bbdd.md` (tabla de datos), `backend/REVISION.md` |
-| Jueves | **SP de login y logs, alta de turno, ABM de protocolos y profesionales, horarios libres** | `backend/03_sp_semana3.sql` | `docs/12-contrato-sp.md` (columnas y códigos de error) |
+| Jueves | **SP de login y logs, alta de turno, ABM de protocolos y profesionales, horarios libres** | `backend/03_sp_turnos.sql` | `docs/12-contrato-sp.md` (columnas y códigos de error) |
 | Jueves | **Pruebas (4 casos por SP)** de lo anterior | `backend/05_pruebas_sp.sql` (casos de las secciones C a I) | `docs/consigna-bbdd.md` punto 6 |
 | Martes | Validaciones y casos de prueba funcional de la app | Ya están en `frontend/` y `docs/09`, `docs/10` | — |
 
@@ -49,12 +49,12 @@ reportes de la Semana 5 dependen de ellas.
 | Cuándo | Qué es | Traer de esta rama | Para entender |
 |---|---|---|---|
 | Martes | **Informe de competencia, matriz comparativa y PUV** | `docs/07-competencia.md` | Completar las celdas "a verificar" probando las demos de cada competidor |
-| Miércoles | SP de **cancelación, seña y reembolso**; regla de **cirugías** | `backend/04_sp_semana4.sql` (seña, cancelación, evaluaciones) | `docs/modelo-entidades.md` (sección Cirugías) |
-| Miércoles | SP de **cupones** (token de 5 minutos) y **tarjetas de regalo** | `backend/04_sp_semana4.sql` (cupones, tarjetas) | `docs/modelo-entidades.md` (grupo 3, "Qué hace el token") |
-| Jueves | SP de **notificaciones** y **consultas al asistente** | `backend/04_sp_semana4.sql` (avisos, asistente) | `docs/arquitectura.md` (n8n) |
+| Miércoles | SP de **cancelación, seña y reembolso**; regla de **cirugías** | `backend/04_sp_sena_cancelar.sql` (seña, cancelación, evaluaciones) | `docs/modelo-entidades.md` (sección Cirugías) |
+| Miércoles | SP de **cupones** (token de 5 minutos) y **tarjetas de regalo** | `backend/04_sp_sena_cancelar.sql` (cupones, tarjetas) | `docs/modelo-entidades.md` (grupo 3, "Qué hace el token") |
+| Jueves | SP de **notificaciones** y **consultas al asistente** | `backend/04_sp_sena_cancelar.sql` (avisos, asistente) | `docs/arquitectura.md` (n8n) |
 | Jueves | Pruebas de cada SP | `backend/05_pruebas_sp.sql` (secciones J a O) | — |
 
-El archivo `04_sp_semana4.sql` es uno solo; se puede subir de una vez o por partes.
+El archivo `04_sp_sena_cancelar.sql` es uno solo; se puede subir de una vez o por partes.
 
 ## Semana 5 (martes 3 al lunes 9 de noviembre): reportes y auditoría; presupuesto y pitch — **esta semana**
 
@@ -62,8 +62,8 @@ El archivo `04_sp_semana4.sql` es uno solo; se puede subir de una vez o por part
 |---|---|---|---|
 | Martes (Santiago) | **Presupuesto**, precio de venta y retorno | `docs/08-presupuesto.md` | Cambiar los supuestos 🔶 por los que defina el equipo |
 | Martes (Bautista) | **Modelo de monetización**, guion de la demo, pitch de 5 a 7 minutos | `docs/06-pitch.md` (secciones de monetización en `08`) | Ensayar con cronómetro |
-| Miércoles | **Reportes 1 a 3 (Santiago) y 5 a 7 (Bautista)** | `backend/05_reportes_semana5.sql` | `docs/12-contrato-sp.md` (columnas) |
-| Jueves | **Reporte 4 (Santiago) y 8 (Bautista)** + **SP de auditoría por rango de fechas** | `backend/05_reportes_semana5.sql` | — |
+| Miércoles | **Reportes 1 a 3 (Santiago) y 5 a 7 (Bautista)** | `backend/05_reportes.sql` | `docs/12-contrato-sp.md` (columnas) |
+| Jueves | **Reporte 4 (Santiago) y 8 (Bautista)** + **SP de auditoría por rango de fechas** | `backend/05_reportes.sql` | — |
 | Jueves | Pruebas de los reportes y la auditoría | `backend/05_pruebas_sp.sql` (secciones A y P) | — |
 | Cualquier día | Que la base tenga actividad real en el log | `backend/07_actividad_con_sps.sql` | consigna 4c |
 
@@ -72,7 +72,7 @@ El archivo `04_sp_semana4.sql` es uno solo; se puede subir de una vez o por part
 | Cuándo | Qué es | Traer de esta rama | Para entender |
 |---|---|---|---|
 | Martes | **Manual técnico** (Santiago) y **de usuario** (Bautista) | `docs/13-manual-tecnico.md`, `docs/14-manual-usuario.md` | Completar con capturas de pantalla propias |
-| Miércoles | **Tuning**: 2 reportes `_tuneado` y medición antes/después | `backend/06_tuning_semana6.sql`, `backend/medir_tuning.sql` | `docs/11-pruebas-bbdd.md` (tabla de tiempos) |
+| Miércoles | **Tuning**: 2 reportes `_tuneado` y medición antes/después | `backend/06_tuning.sql`, `backend/medir_tuning.sql` | `docs/11-pruebas-bbdd.md` (tabla de tiempos) |
 | Miércoles | **Documento de pruebas** de la cátedra | `docs/11-pruebas-bbdd.md` | Pasar a la plantilla que entrega el docente |
 | Jueves | **Defensa técnica** | Todo lo anterior | Ver "Preguntas de defensa" abajo |
 

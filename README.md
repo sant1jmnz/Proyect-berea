@@ -169,8 +169,8 @@ docs/
   diagramas/             # diagramas de la base (.drawio y .png)
 dermalia.sh              # instalar, iniciar, parar y probar todo con un comando
 backend/                 # base MySQL: tablas en 9 schemas, datos, stored procedures, reportes, tuning y pruebas
-  01 codigobasededatossolotablas.sql  02_datos.sql  02b_numero.sql  03_sp_semana3.sql  04_sp_semana4.sql
-  05_reportes_semana5.sql  06_tuning_semana6.sql  09_sp_pantallas.sql  07_actividad_con_sps.sql
+  01 01_tablas.sql  02_datos.sql  02b_numero.sql  03_sp_turnos.sql  04_sp_sena_cancelar.sql
+  05_reportes.sql  06_tuning.sql  09_sp_pantallas.sql  07_actividad_con_sps.sql
   08_usuarios.sql  10_sp_telegram.sql  05_pruebas_sp.sql
   medir_tuning.sql  pruebas/ (plantilla de casos de prueba)
 frontend/                # interfaz en Qt Widgets (apartados Gestión y Cliente)

@@ -21,7 +21,7 @@ de regalo: 9 de 9 verificaciones correctas, con borrado de lo creado al terminar
 
 El script es `backend/05_pruebas_sp.sql`. Dos formas:
 
-1. **A mano (Workbench / DBeaver / consola):** cargar la base (`codigobasededatossolotablas.sql`,
+1. **A mano (Workbench / DBeaver / consola):** cargar la base (`01_tablas.sql`,
    `02` a `06` y `09`) y ejecutar `05_pruebas_sp.sql`. Cada caso empieza con un comentario
    `-- @caso ...` y las líneas `-- @espera ...` dicen qué tiene que pasar; se compara con lo
    que muestra el cliente.
@@ -48,7 +48,7 @@ Para los reportes, el caso 4 compara el SP con su consulta `SELECT` directa; par
 
 ## Resultados medidos del tuning (consigna 5e)
 
-Dos reportes con versión `_tuneado` (`backend/06_tuning_semana6.sql`), medidos con
+Dos reportes con versión `_tuneado` (`backend/06_tuning.sql`), medidos con
 `backend/medir_tuning.sql` sobre **300.150 turnos y 240.145 pagos** (un mes de datos, 2025-03).
 La técnica es la de la cátedra (PPT 004, "Caracol" contra "Cheetah A"): el original junta las
 tablas completas y filtra al final; el tuneado filtra y proyecta cada tabla **antes** de juntarlas

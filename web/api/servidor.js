@@ -288,8 +288,11 @@ export function crearManejador(pool) {
         const d = await leerJson(req);
         const paciente = await pacienteDe(pool, d);
         if (!paciente.ok) return responder(res, paciente.necesitaNacimiento ? 422 : 409, { error: paciente.mensaje, codigo: paciente.codigo ?? 0, necesitaNacimiento: !!paciente.necesitaNacimiento });
+        // un cupón y una tarjeta de regalo no se usan en el mismo turno: se corta antes de crear nada
+        if (d.cupon && d.tarjeta) return responder(res, 409, { error: 'Usá un cupón o una tarjeta de regalo, no los dos en el mismo turno.', codigo: 0 });
+        const cirugia = Number.isInteger(d.cirugia) ? d.cirugia : null; // cirugía para la que es esta consulta previa
         const turno = await escribir(pool, 'agenda.sp_alta_turno',
-          [paciente.id, d.profesional, aFechaHora(d.inicio), ...tresProtocolos(d.protocolos || []), 'web', null, d.cupon || null, null]);
+          [paciente.id, d.profesional, aFechaHora(d.inicio), ...tresProtocolos(d.protocolos || []), 'web', null, d.cupon || null, cirugia]);
         if (!turno.ok) return responder(res, 409, { error: turno.mensaje, codigo: turno.codigo });
         // la seña se marca como pagada con tarjeta
         /* El código de operación lo genera el servidor; la base solo lo guarda. */

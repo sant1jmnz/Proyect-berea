@@ -52,13 +52,14 @@ export async function horariosDeBase(dia, idsWeb) {
 }
 
 /* Reserva el turno y registra la seña. Devuelve { ok, cuerpo } o null si no hay API. */
-export async function reservarEnBase({ nombre, dni, telefono, nacimiento, idsWeb, profesional, inicio, cupon, tarjeta }) {
+export async function reservarEnBase({ nombre, dni, telefono, nacimiento, idsWeb, profesional, inicio, cupon, tarjeta, cirugiaWeb }) {
   const ids = await idsDe(idsWeb);
   if (!ids) return null;
+  const cirugia = cirugiaWeb ? (await idsDe([cirugiaWeb]))?.[0] : undefined;
   return pedir('/turnos', {
     method: 'POST',
     body: JSON.stringify({ nombre, dni, telefono, nacimiento: nacimiento || undefined, protocolos: ids, profesional,
-      inicio: `${aTextoFecha(inicio)} ${dosDigitos(inicio.getHours())}:${dosDigitos(inicio.getMinutes())}:00`, cupon: cupon || undefined, tarjeta: tarjeta || undefined }),
+      inicio: `${aTextoFecha(inicio)} ${dosDigitos(inicio.getHours())}:${dosDigitos(inicio.getMinutes())}:00`, cupon: cupon || undefined, tarjeta: tarjeta || undefined, cirugia }),
   });
 }
 

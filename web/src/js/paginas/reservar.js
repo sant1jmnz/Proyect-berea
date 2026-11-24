@@ -14,7 +14,7 @@ iniciarComun();
 const CUPONES = { BIENVENIDA: { descuento: 10, texto: '10 % de descuento en tu primer turno' } };
 
 /* `cupon`: { codigo, descuento, texto } · `tarjeta`: { codigo, saldo } (la seña sale de su saldo). */
-const estado = { elegidos: new Set(), dia: null, hora: null, cupon: null, tarjeta: null, paso: 1, profesionales: null };
+const estado = { elegidos: new Set(), dia: null, hora: null, cupon: null, tarjeta: null, cirugia: null, paso: 1, profesionales: null };
 const $ = (s) => document.querySelector(s);
 const fechaLarga = new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 const diaCorto = new Intl.DateTimeFormat('es-AR', { weekday: 'short' });
@@ -116,6 +116,7 @@ chipsProtocolo.addEventListener('click', (e) => {
 
 /* Toda cirugía necesita una consulta prequirúrgica antes (RF-25): no se reserva directo. */
 function avisarCirugia(p) {
+  estado.cirugia = p.id;
   const consulta = protocoloPorId(CONSULTA_PREQUIRURGICA);
   avisoCirugia.innerHTML = `
     <p><strong>${p.nombre}</strong> empieza con una consulta prequirúrgica de <span class="numero">${pesos(consulta.precio)}</span>, con su propia seña.
@@ -394,7 +395,8 @@ async function confirmar() {
     ? await reservarEnBase({ nombre: formulario.nombre.value.trim(), dni: soloDigitos(formulario.dni.value),
         telefono: soloDigitos(formulario.telefono.value), nacimiento: formulario.nacimiento.value,
         idsWeb: [...estado.elegidos], profesional: estado.profesionales.get(estado.hora), inicio,
-        cupon: estado.cupon?.codigo, tarjeta: estado.tarjeta?.codigo })
+        cupon: estado.cupon?.codigo, tarjeta: estado.tarjeta?.codigo,
+        cirugiaWeb: estado.elegidos.has(CONSULTA_PREQUIRURGICA) ? estado.cirugia : null })
     : null;
   if (enBase && !enBase.ok) {
     irA(3);

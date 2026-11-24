@@ -131,13 +131,15 @@ int ConexionApp::sincronizar(QStringList *problemas)
             if (p.nombre.compare(t.protocolo, Qt::CaseInsensitive) == 0)
                 idProtocolo = p.id;
         }
+        /* El horario se busca en la base. Si el Cliente anotó con qué profesional lo eligió, se prefiere ese; si ya
+         * no está libre con él (o es un pendiente viejo), sirve cualquier otro profesional libre a esa hora. */
         int idProfesional = 0;
         if (idProtocolo > 0) {
             for (const HorarioLibre &h : repo.horariosLibres(t.inicio.date(), { idProtocolo })) {
-                if (h.inicio == t.inicio) {
+                if (h.inicio != t.inicio)
+                    continue;
+                if (idProfesional == 0 || h.idProfesional == t.profesional)
                     idProfesional = h.idProfesional;
-                    break;
-                }
             }
         }
 

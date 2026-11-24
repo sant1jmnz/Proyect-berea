@@ -6,6 +6,7 @@
 #ifndef VENTANACLIENTE_H
 #define VENTANACLIENTE_H
 
+#include "agendareal.h"
 #include "datosprueba.h"
 
 #include "dialogocuenta.h"
@@ -103,6 +104,10 @@ private:
     /* Con la base */
     void conectarBase();
     void horariosDeBase(const QDate &dia);
+    void horariosDeFoto(const QDate &dia);   /* sin conexión: horarios de la agenda real guardada en este equipo */
+    QVector<HorarioLibre> libresDeFoto(const QDate &dia) const;
+    QString rutaFoto() const;
+    void tomarFoto();                        /* con conexión: guarda la agenda real para usarla si se corta */
     void sincronizarBase();            /* cada 3 segundos: trae lo que cambió Gestión */
     bool confirmarEnBase(const Cuentas &c, const QVector<const Protocolo *> &elegidos, const QDateTime &inicio);
     bool buscarOCrearPaciente(int *idPaciente);
@@ -146,6 +151,7 @@ private:
     SesionPaciente sesion;
     QTimer *relojSesion = nullptr;     /* la terminal es compartida: sin tocar nada, la sesión se cierra */
     QString resumenAgenda;             /* para saber si los turnos de la base cambiaron */
+    AgendaReal::Foto fotoAgenda;       /* agenda real (profesionales, franjas, turnos) de la última vez que hubo conexión */
     QVector<Turno> agendaDeBase;       /* última agenda leída de la base: sin conexión evita ofrecer horarios ocupados */
 };
 

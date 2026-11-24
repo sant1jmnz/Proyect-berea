@@ -1,7 +1,9 @@
 /* Pruebas de la terminal del Cliente con el diseño de ventanacliente: sacar un turno en memoria,
  * encontrarlo en "Buscar mi turno", cancelarlo, y las fechas que ya pasaron.
  * Se corre con: QT_QPA_PLATFORM=offscreen ./prueba_ventanacliente */
+#include "agendareal.h"
 #include "almacenlocal.h"
+#include "contingencia.h"
 #include "ventanacliente.h"
 #include "dialogoasistente.h"
 
@@ -107,7 +109,11 @@ private slots:
         for (const char *v : { "DERMALIA_DB_HOST", "DERMALIA_DB_USER", "DERMALIA_DB_PASS" })
             qunsetenv(v);   /* estas pruebas son sin base (las de la base están en prueba_cliente_base) */
     }
-    void init() { QFile::remove(carpeta.filePath("local.json")); }   /* cada prueba arranca sin datos */
+    void init()
+    {
+        QFile::remove(carpeta.filePath("local.json"));
+        QFile::remove(carpeta.filePath("agenda_real.json"));
+    }   /* cada prueba arranca sin datos */
 
     /* El asistente le pregunta a la API (acá, un servidor de mentira que contesta como /api/asistente). */
     void elAsistenteMuestraLaRespuestaDeLaApi()
@@ -396,6 +402,73 @@ private slots:
         QCOMPARE(w.turnosCargados().first().inicio.date(), QDate(2027, 3, 3));
         QVERIFY(w.findChild<QLabel *>("lblResTurnoFecha")->text().contains("2027"));
     }
+    /* Sin conexión pero con la agenda real guardada: solo se ofrecen horarios que existen en la base, y el turno
+     * queda en contingencia con el profesional elegido, para que se pueda sincronizar. */
+    void sinConexionSeOfreceLaAgendaRealYElTurnoGuardaElProfesional()
+    {
+        QString protocolo;
+        {
+            VentanaCliente w0;
+            protocolo = w0.findChild<QListWidget *>("listaProtocolos")->item(0)->text().section('\n', 0, 0);
+        }
+        const QDate dia = diaHabil(10);
+        AgendaReal::Foto foto;
+        Protocolo p {};
+        p.nombre = protocolo;
+        p.duracionMin = 30;
+        p.id = 1;
+        foto.protocolos = { p };
+        Profesional prof {};
+        prof.id = 42;
+        prof.nombre = "Prueba Real";
+        prof.activo = true;
+        prof.protocolos = { protocolo };
+        prof.franjas = { Franja { dia, QTime(9, 0), QTime(10, 0), true, 0 } };
+        foto.profesionales = { prof };
+        foto.tomada = QDateTime::currentDateTime();
+        QVERIFY(AgendaReal::guardar(carpeta.filePath("agenda_real.json"), foto));
+
+        VentanaCliente w;
+        w.show();
+        const int antes = Contingencia().cantidad();
+
+        auto *protocolos = w.findChild<QListWidget *>("listaProtocolos");
+        protocolos->setCurrentRow(0);
+        protocolos->item(0)->setSelected(true);
+        boton(w, "btnContinuar1")->click();
+        QCOMPARE(pagina(w), 2);
+
+        /* Un día que la agenda guardada no cubre: no se inventan horarios. */
+        auto *cal = w.findChild<QCalendarWidget *>("calendario");
+        auto *horarios = w.findChild<QListWidget *>("listaHorarios");
+        cal->setSelectedDate(diaHabil(13));
+        QCOMPARE(horarios->count(), 0);
+
+        /* El día con franja ofrece solo 09:00 y 09:30 (la franja es de una hora y el tratamiento dura 30 min). */
+        cal->setSelectedDate(dia);
+        QCOMPARE(horarios->count(), 2);
+        QCOMPARE(horarios->item(0)->text(), QString("09:00"));
+        QCOMPARE(horarios->item(1)->text(), QString("09:30"));
+
+        horarios->setCurrentRow(1);
+        horarios->item(1)->setSelected(true);
+        boton(w, "btnContinuar2")->click();
+        QCOMPARE(pagina(w), 3);
+        campo(w, "editNombre")->setText("Ana Paz");
+        campo(w, "editDni")->setText("35111222");
+        campo(w, "editTelefono")->setText("1166667777");
+        boton(w, "btnSena")->setChecked(false);
+        tocarEnDialogo("OK");
+        boton(w, "btnConfirmar")->click();
+
+        QCOMPARE(w.turnosCargados().size(), 1);
+        QCOMPARE(w.turnosCargados().first().profesional, QString("Prueba Real"));
+        QCOMPARE(Contingencia().cantidad(), antes + 1);
+        const TurnoPendiente guardado = Contingencia().pendientes().last();
+        QCOMPARE(guardado.profesional, 42);
+        QCOMPARE(guardado.inicio, QDateTime(dia, QTime(9, 30)));
+    }
+
     // ---- Lo que la terminal hace igual que el sitio web ----
 
     /* Marca el protocolo con ese nombre en la lista del paso 1. */

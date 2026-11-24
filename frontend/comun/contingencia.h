@@ -21,6 +21,7 @@ struct TurnoPendiente {
     QString origen;         /* Gestión, Terminal, Web */
     QDateTime guardado;     /* cuándo se guardó en este equipo */
     QDate nacimiento;       /* para dar de alta a la paciente si todavía no está en la base (puede venir vacía) */
+    int profesional = 0;    /* id del profesional del horario elegido sin conexión (0 = no se sabe: se busca por horario) */
 };
 
 class Contingencia

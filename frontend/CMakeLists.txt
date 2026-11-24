@@ -45,6 +45,8 @@ add_library(dermalia_comun STATIC
     comun/codigoqr.h
     comun/reglasturno.cpp    # reglas de un turno que comparten las dos aplicaciones
     comun/reglasturno.h
+    comun/agendareal.cpp     # foto de la agenda real: horarios libres sin conexión
+    comun/agendareal.h
     comun/buscadorprecios.cpp
     comun/buscadorprecios.h
     comun/buscadorprecios.ui
@@ -142,6 +144,7 @@ if(Qt6Test_FOUND)
     endfunction()
 
     prueba(validaciones   prueba_validaciones   dermalia_comun)              # nombre, DNI, teléfono, seña
+    prueba(agendareal     prueba_agendareal     dermalia_comun)              # horarios libres sin conexión sobre la agenda real
     prueba(codigoqr       prueba_codigoqr       dermalia_comun)              # QR del cupón: tamaño, buscadores, imagen
     prueba(gestion        prueba_gestion        dermalia_gestion_pantallas)  # reglas y pantallas de Gestión
     prueba(base           prueba_base           dermalia_comun)              # stored procedures (con base)

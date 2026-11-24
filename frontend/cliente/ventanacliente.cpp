@@ -17,6 +17,8 @@
 #include <QApplication>
 #include <QCalendarWidget>
 #include <QDesktopServices>
+#include <QDir>
+#include <QFileInfo>
 #include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
@@ -107,6 +109,7 @@ VentanaCliente::VentanaCliente(QWidget *parent, const QString &archivo, const QS
 
     /* Sin base arranca con el archivo local; el catálogo y los horarios ya se muestran. */
     recargarLocal();
+    AgendaReal::leer(rutaFoto(), &fotoAgenda);   /* sin conexión desde el arranque: se usa la última agenda real */
     cargarProtocolos();
     actualizarHorarios();
 
@@ -701,6 +704,11 @@ void VentanaCliente::actualizarHorarios()
         horariosDeBase(dia);
         return;
     }
+    if (!fotoAgenda.vacia()) {   /* solo se ofrece lo que existe en la base, para que el turno se pueda sincronizar */
+        horariosDeFoto(dia);
+        return;
+    }
+    ui->lblNotaHorario->setText("Sin conexión y sin agenda guardada en este equipo: el horario se confirma al volver internet.");
     ui->listaHorarios->addItems(ReglasTurno::horariosLibresSinBase(dia, conAgendaDeBase(turnos, agendaDeBase),
                                                                    QDateTime::currentDateTime()));
     if (ui->listaHorarios->count() == 0)
@@ -771,7 +779,15 @@ void VentanaCliente::confirmar()
         return;
     }
     recargarLocal();
-    if (ReglasTurno::horarioOcupado(conAgendaDeBase(turnos, agendaDeBase), inicio)) {
+    const QListWidgetItem *elegido = ui->listaHorarios->currentItem();
+    const int idProfesional = elegido ? elegido->data(Qt::UserRole + 1).toInt() : 0;
+    bool libre = !ReglasTurno::horarioOcupado(conAgendaDeBase(turnos, agendaDeBase), inicio);
+    if (!fotoAgenda.vacia()) {   /* con la agenda real, el horario está libre si sigue libre para ese profesional */
+        libre = false;
+        for (const HorarioLibre &h : libresDeFoto(inicio.date()))
+            libre = libre || (h.inicio == inicio && h.idProfesional == idProfesional);
+    }
+    if (!libre) {
         QMessageBox::warning(this, "Horario ocupado", "Ese horario ya no está libre. Elegí otro.");
         actualizarHorarios();
         irA(PagHorario);
@@ -785,11 +801,17 @@ void VentanaCliente::confirmar()
                     ui->btnSena->isChecked(), QString(), 0 };
     if (nuevo.senaPagada)
         nuevo.codigoOperacion = ReglasTurno::nuevoCodigoOperacion(turnos);
+    for (const Profesional &p : fotoAgenda.profesionales) {
+        if (p.id == idProfesional)
+            nuevo.profesional = p.nombre;   /* así ese profesional queda ocupado en la agenda de este equipo */
+    }
     turnos.append(nuevo);
     guardarLocal();
     /* Sin base, el turno también queda en contingencia: se manda solo cuando vuelve la conexión (RNF-09). */
-    conexion->guardarEnContingencia({ nuevo.paciente, nuevo.dni, nuevo.telefono, nuevo.protocolo,
-                                      nuevo.inicio, nuevo.sena, nuevo.senaPagada, nuevo.origen });
+    TurnoPendiente pendiente { nuevo.paciente, nuevo.dni, nuevo.telefono, nuevo.protocolo,
+                               nuevo.inicio, nuevo.sena, nuevo.senaPagada, nuevo.origen };
+    pendiente.profesional = idProfesional;
+    conexion->guardarEnContingencia(pendiente);
 
     QString mensaje = mensajeReservado(nuevo.protocolo, inicio);
     mensaje += nuevo.senaPagada ? QString("\nSeña pagada: código %1.").arg(nuevo.codigoOperacion)
@@ -1050,6 +1072,7 @@ void VentanaCliente::conectarBase()
     enModoBase = true;
     QString errorAgenda;
     DatosBase::cargarTurnos(*repositorio, QDate::currentDate(), ReglasTurno::DIAS_AGENDA, agendaDeBase, &errorAgenda);
+    tomarFoto();
     cargarProtocolos();
     actualizarHorarios();
     ocultarTurno();
@@ -1096,6 +1119,7 @@ void VentanaCliente::sincronizarBase()
     if (resumen == resumenAgenda)
         return;
     resumenAgenda = resumen;
+    tomarFoto();
 
     const QListWidgetItem *horario = ui->listaHorarios->currentItem();
     const QString horarioElegido = horario && horario->isSelected() ? horario->text() : QString();
@@ -1132,6 +1156,60 @@ void VentanaCliente::horariosDeBase(const QDate &dia)
         item->setToolTip("Con " + DatosBase::nombreYApellido(h.profesional));
         item->setData(Qt::UserRole, h.inicio);               /* cuándo */
         item->setData(Qt::UserRole + 1, h.idProfesional);    /* con quién */
+        ui->listaHorarios->addItem(item);
+    }
+    if (ui->listaHorarios->count() == 0)
+        ui->lblNotaHorario->setText("No quedan horarios libres ese día. Probá con otro.");
+}
+
+/* Con conexión: lee de la base profesionales, franjas, protocolos y turnos y los guarda en este equipo.
+ * Si algo falla se queda con la foto anterior (mejor una agenda vieja que ninguna). */
+void VentanaCliente::tomarFoto()
+{
+    AgendaReal::Foto nueva;
+    QString error;
+    if (!AgendaReal::tomar(*repositorio, QDate::currentDate(), &nueva, &error))
+        return;
+    fotoAgenda = nueva;
+    AgendaReal::guardar(rutaFoto(), fotoAgenda);
+}
+
+/* Junto al archivo local, así las pruebas (que lo aíslan) no tocan la agenda real de esta PC. */
+QString VentanaCliente::rutaFoto() const
+{
+    return QFileInfo(archivoLocal).dir().filePath("agenda_real.json");
+}
+
+QVector<HorarioLibre> VentanaCliente::libresDeFoto(const QDate &dia) const
+{
+    QStringList nombres;
+    for (const Protocolo *p : protocolosElegidos())
+        nombres << p->nombre;
+    return AgendaReal::horariosLibres(fotoAgenda, nombres, dia, QDateTime::currentDateTime(), turnos);
+}
+
+/* Sin conexión: mismos horarios que daría la base, calculados sobre la última agenda real guardada. */
+void VentanaCliente::horariosDeFoto(const QDate &dia)
+{
+    const QVector<const Protocolo *> elegidos = protocolosElegidos();
+    if (elegidos.isEmpty()) {
+        ui->lblNotaHorario->setText("Elegí primero el protocolo.");
+        return;
+    }
+    if (!AgendaReal::cubreDia(fotoAgenda, dia)) {
+        ui->lblNotaHorario->setText("Sin conexión: la agenda de ese día no está guardada en este equipo. Probá con otro día.");
+        return;
+    }
+    QStringList yaMostradas;
+    for (const HorarioLibre &h : libresDeFoto(dia)) {
+        const QString hora = h.inicio.toString("HH:mm");
+        if (yaMostradas.contains(hora))
+            continue;
+        yaMostradas << hora;
+        auto *item = new QListWidgetItem(hora);
+        item->setToolTip("Con " + h.profesional);
+        item->setData(Qt::UserRole, h.inicio);
+        item->setData(Qt::UserRole + 1, h.idProfesional);
         ui->listaHorarios->addItem(item);
     }
     if (ui->listaHorarios->count() == 0)

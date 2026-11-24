@@ -16,7 +16,8 @@ static QJsonObject aJson(const TurnoPendiente &t)
              { "protocolo", t.protocolo }, { "inicio", t.inicio.toString(Qt::ISODate) },
              { "sena", t.sena }, { "senaPagada", t.senaPagada }, { "origen", t.origen },
              { "guardado", t.guardado.toString(Qt::ISODate) },
-             { "nacimiento", t.nacimiento.isValid() ? t.nacimiento.toString(Qt::ISODate) : QString() } };
+             { "nacimiento", t.nacimiento.isValid() ? t.nacimiento.toString(Qt::ISODate) : QString() },
+             { "profesional", t.profesional } };
 }
 
 // Arma el turno pendiente desde su JSON (inversa de aJson).
@@ -33,6 +34,7 @@ static TurnoPendiente deJson(const QJsonObject &o)
     t.origen = o["origen"].toString();
     t.guardado = QDateTime::fromString(o["guardado"].toString(), Qt::ISODate);
     t.nacimiento = QDate::fromString(o["nacimiento"].toString(), Qt::ISODate);
+    t.profesional = o["profesional"].toInt();   /* los pendientes viejos no lo traen: queda en 0 */
     return t;
 }
 

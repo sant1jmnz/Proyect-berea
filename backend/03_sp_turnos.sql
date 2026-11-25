@@ -6,7 +6,7 @@
 -- pacientes, profesionales, disponibilidad y protocolos, horarios libres,
 -- alta de turno y búsqueda de turnos.
 --
--- Convención de todos los SP que escriben (como pide la cátedra, PPT 006):
+-- Convención de todos los SP que escriben:
 --   * un EXIT HANDLER FOR SQLEXCEPTION atrapa cualquier error, deshace la
 --     transacción, deja el fallo en el log y DEVUELVE UNA FILA DE ERROR;
 --   * toda respuesta tiene las mismas 6 columnas:

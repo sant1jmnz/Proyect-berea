@@ -28,7 +28,6 @@ DELIMITER //
 -- facturo (a precio de lista) en los realizados. p_id_profesional NULL = todos.
 -- Cada estado se cuenta con LEFT JOIN + COUNT(columna): COUNT(*) cuenta todos los
 -- turnos y COUNT(tr.id_turno) solo los que encontraron su estado (los NULL no se cuentan).
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_turnos_por_periodo_profesional//
 CREATE PROCEDURE agenda.sp_reporte_turnos_por_periodo_profesional(
@@ -72,7 +71,6 @@ END//
 -- REPORTE 2: Ingresos por sena, reembolsos y retenciones, por mes y medio de pago
 -- Lo retenido es lo que el instituto se queda de las senas ya resueltas: se suma
 -- solo en los pagos que encuentran su estado 'retenida' o 'reembolsada parcial'.
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS pagos.sp_reporte_ingresos_sena//
 CREATE PROCEDURE pagos.sp_reporte_ingresos_sena(IN p_desde DATE, IN p_hasta DATE)
@@ -96,13 +94,12 @@ BEGIN
 END//
 
 -- =============================================================================
--- REPORTE 3: Cancelaciones e inasistencias (los "turnos perdidos" de la MML)
+-- REPORTE 3: Cancelaciones e inasistencias (turnos perdidos)
 -- p_agrupar: 'mes' (por defecto) o 'semana'. Por origen: cuantos turnos se
 -- perdieron, la tasa de perdida y la plata de senas retenida.
 -- El formato del periodo sale de una tabla derivada de dos filas (semana / mes) y el
 -- WHERE se queda con la fila que corresponde al parametro. Los estados se cuentan con
 -- LEFT JOIN + COUNT(columna), como en el reporte 1.
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_cancelaciones_inasistencias//
 CREATE PROCEDURE agenda.sp_reporte_cancelaciones_inasistencias(
@@ -149,7 +146,6 @@ END//
 -- de consultas retuvo el instituto. Se cuentan las consultas del rango.
 -- COUNT(columna) no cuenta los NULL: COUNT(tc.id_turno) = evaluaciones con cirugia
 -- agendada y COUNT(ev.fecha_reclamo) = evaluaciones con reclamo.
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS clinica.sp_reporte_evaluaciones_cirugias//
 CREATE PROCEDURE clinica.sp_reporte_evaluaciones_cirugias(IN p_desde DATE, IN p_hasta DATE)
@@ -184,7 +180,7 @@ END//
 -- Puesto en el ranking = 1 + cuantos protocolos tienen mas pedidos (o los mismos
 -- y un nombre anterior en el alfabeto); porcentaje sobre el total de pedidos.
 -- p_limite NULL = 10.
--- Se arma con tablas temporales (Cheetah A del material): primero se filtra y se
+-- Se arma con tablas temporales: primero se filtra y se
 -- agrupa (N1) y despues se compara N1 contra una copia de si misma (N2), porque
 -- MySQL no deja usar dos veces la misma tabla temporal en una sentencia.
 -- =============================================================================
@@ -253,7 +249,6 @@ END//
 -- =============================================================================
 -- REPORTE 6: Ocupacion por profesional = horas con turno / horas de disponibilidad
 -- Si el profesional no tiene horas de disponibilidad, la division por cero da NULL y no se informa el porcentaje.
--- Pipeline: FROM (Profesional + 2 tablas derivadas con LEFT JOIN) -> WHERE -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_ocupacion_profesional//
 CREATE PROCEDURE agenda.sp_reporte_ocupacion_profesional(IN p_desde DATE, IN p_hasta DATE)
@@ -300,7 +295,6 @@ END//
 -- Cupones emitidos en el rango: cuantos se usaron, cuantos vencieron sin usar,
 -- cuantos siguen vigentes, tasa de uso y descuento total otorgado.
 -- COUNT(c.id_turno) cuenta los cupones usados (los sin usar tienen id_turno NULL).
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS beneficios.sp_reporte_cupones//
 CREATE PROCEDURE beneficios.sp_reporte_cupones(IN p_desde DATE, IN p_hasta DATE)
@@ -341,7 +335,6 @@ END//
 -- El codigo se muestra recortado: el codigo completo funciona como un billete.
 -- La situacion sale de cuatro consultas con condiciones que no se pisan (vencida,
 -- agotada, sin uso, en uso) unidas con UNION ALL.
--- Pipeline: FROM (tabla derivada con INNER JOIN + LEFT JOIN) -> UNION ALL -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS pagos.sp_reporte_tarjetas_regalo//
 CREATE PROCEDURE pagos.sp_reporte_tarjetas_regalo(IN p_desde DATE, IN p_hasta DATE)
@@ -474,7 +467,6 @@ END//
 --   p_id_paciente  paciente involucrada
 --   p_exitoso      1 = solo lo que salio bien, 0 = solo los fallos
 --   p_origen       'terminal', 'web', 'gestion' o 'sistema'
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS auditoria.sp_reporte_auditoria//
 CREATE PROCEDURE auditoria.sp_reporte_auditoria(

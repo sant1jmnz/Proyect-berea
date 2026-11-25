@@ -1,5 +1,5 @@
 -- Dermalia: tabla auxiliar de números (0 a 47) del backend.
--- Reemplaza a las consultas recursivas (WITH RECURSIVE), que el material de la cátedra no enseña:
+-- Sirve para generar secuencias de números sin consultas recursivas:
 -- los stored procedures la usan para partir una franja horaria en turnos de 30 minutos
 -- (agenda.sp_horarios_libres) y para emitir un cupón por cada múltiplo del gasto
 -- (beneficios.sp_emitir_cupones). No es una entidad del modelo: vive con el backend.

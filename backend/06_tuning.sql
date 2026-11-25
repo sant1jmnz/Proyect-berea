@@ -8,7 +8,7 @@
 --   Reporte 1  agenda.sp_reporte_turnos_por_periodo_profesional  -> ..._tuneado
 --   Reporte 2  pagos.sp_reporte_ingresos_sena                    -> ..._tuneado
 --
--- Técnica de la cátedra (PPT 004, "Caracol" contra "Cheetah"): el original junta
+-- Técnica "Caracol" contra "Cheetah": el original junta
 -- las tablas completas y filtra al final (Caracol). El tuneado aplica las reglas de
 -- transformación del álgebra relacional (Cheetah A, con tablas temporales):
 --   1. Selección conmutativa: el filtro por fechas (y por profesional) se aplica

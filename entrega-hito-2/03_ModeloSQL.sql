@@ -7,7 +7,7 @@
 -- Dermalia: estructura de la base (solo tablas), MySQL 8.
 -- El modelo está dividido en 9 schemas (consigna 3c). En MySQL un schema es
 -- una base de datos: las tablas se nombran schema.Tabla y las FK cruzan
--- schemas sin problema. Cambios de la revisión explicados en backend/REVISION.md.
+-- schemas sin problema.
 
 -- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
 SET NAMES utf8mb4;

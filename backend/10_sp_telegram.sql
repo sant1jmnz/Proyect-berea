@@ -1,9 +1,8 @@
 -- =====================================================================
 --  BOT DE TELEGRAM (RF-11): vincular el Telegram de la paciente
 -- =====================================================================
--- La base ya tenía la columna personas.Paciente.telegram_chat_id y los SP que
--- eligen Telegram como canal cuando la paciente lo tiene vinculado, pero nada la
--- llenaba. Estos SP los usa el bot (web/api/telegram.js o el flujo de n8n):
+-- Llenan personas.Paciente.telegram_chat_id, que usan los SP de avisos para mandar
+-- por Telegram a la paciente que lo vinculó. Los usa el bot (web/api/telegram.js o n8n):
 --   /start en el bot -> la paciente escribe su DNI y su teléfono -> sp_vincular_telegram
 --   /salir           -> sp_desvincular_telegram
 --   /turnos          -> sp_paciente_por_telegram + agenda.sp_buscar_turnos

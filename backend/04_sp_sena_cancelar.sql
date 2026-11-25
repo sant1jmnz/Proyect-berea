@@ -430,7 +430,7 @@ BEGIN
     SELECT id_estado_turno INTO v_cancelado FROM agenda.EstadoTurno WHERE nombre = 'cancelado';
     START TRANSACTION;
     -- Evaluaciones aptas de hace más de 6 meses, sin cirugía agendada y con la seña pagada:
-    -- el instituto se queda con la seña de la consulta. Se resuelven todas juntas (sin cursor).
+    -- el instituto se queda con la seña de la consulta. Se juntan en una tabla temporal y se resuelven todas de una vez.
     DROP TEMPORARY TABLE IF EXISTS tmp_evaluaciones_vencidas;
     CREATE TEMPORARY TABLE tmp_evaluaciones_vencidas AS
     SELECT ev.id_evaluacion, ps.id_pago, ps.monto, t.id_paciente
@@ -581,8 +581,8 @@ BEGIN
 
     SELECT COALESCE(MAX(id_cupon), 0) INTO v_max_antes FROM beneficios.Cupon;
     START TRANSACTION;
-    -- Primero se arma la lista de cupones a emitir con un número de orden (n); el código y el
-    -- secreto salen de ese número (el material no enseña UUID).
+    -- Primero se arma la lista de cupones a emitir con un número de orden (n);
+    -- el código y el secreto de cada cupón se calculan a partir de ese número.
     DROP TEMPORARY TABLE IF EXISTS tmp_cupones_nuevos;
     CREATE TEMPORARY TABLE tmp_cupones_nuevos (
         n INT AUTO_INCREMENT PRIMARY KEY, id_regla INT, id_paciente INT, pct DECIMAL(5,2), vig INT);
@@ -633,7 +633,7 @@ BEGIN
      ORDER BY n;
 
     SELECT id_canal INTO v_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'WhatsApp asistido';
-    -- Aviso y log de cada cupón nuevo, todos juntos (sin cursor).
+    -- Un aviso a la paciente y una fila de log por cada cupón nuevo (todos con un solo INSERT ... SELECT).
     INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, mensaje, fecha_programada)
     SELECT COALESCE((SELECT cn.id_canal FROM notificaciones.CanalNotificacion cn WHERE cn.nombre = 'Telegram' AND p.telegram_chat_id IS NOT NULL), v_canal),
            (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
@@ -700,7 +700,7 @@ BEGIN
                300 - ((v_minuto - 5 * (v_minuto DIV 5)) * 60 + CAST(DATE_FORMAT(v_ahora, '%s') AS UNSIGNED)) AS valor,
                CAST(v_id * 7919 + CAST(DATE_FORMAT(v_ahora, '%Y%m%d%H') AS UNSIGNED) * 12 + v_minuto DIV 5 AS CHAR) AS dato;
     ELSEIF v_codigo IN (52142, 52143) THEN
-        -- Si el cupón existe pero no se puede usar, igual se devuelve su id (como antes).
+        -- Si el cupón existe pero no se puede usar (vencido o ya usado), el error igual devuelve su id.
         SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
     ELSE
         SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
@@ -967,7 +967,7 @@ END//
 DROP PROCEDURE IF EXISTS notificaciones.sp_notificaciones_pendientes//
 CREATE PROCEDURE notificaciones.sp_notificaciones_pendientes(IN p_limite INT)
 BEGIN
-    -- Sin límite (o fuera de 1 a 500) trae de a 50. LIMIT es el equivalente en MySQL del TOP de la cátedra.
+    -- Trae como máximo p_limite avisos; sin límite (o fuera de 1 a 500) trae 50.
     DECLARE v_limite INT DEFAULT 50;
     IF p_limite BETWEEN 1 AND 500 THEN
         SET v_limite = p_limite;

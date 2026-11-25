@@ -14,7 +14,7 @@
 -- ---------------------------------------------------------------------
 
 -- Dermalia: tabla auxiliar de números (0 a 47) del backend.
--- Reemplaza a las consultas recursivas (WITH RECURSIVE), que el material de la cátedra no enseña:
+-- Sirve para generar secuencias de números sin consultas recursivas:
 -- los stored procedures la usan para partir una franja horaria en turnos de 30 minutos
 -- (agenda.sp_horarios_libres) y para emitir un cupón por cada múltiplo del gasto
 -- (beneficios.sp_emitir_cupones). No es una entidad del modelo: vive con el backend.
@@ -97,7 +97,7 @@ SELECT v.n
 -- pacientes, profesionales, disponibilidad y protocolos, horarios libres,
 -- alta de turno y búsqueda de turnos.
 --
--- Convención de todos los SP que escriben (como pide la cátedra, PPT 006):
+-- Convención de todos los SP que escriben:
 --   * un EXIT HANDLER FOR SQLEXCEPTION atrapa cualquier error, deshace la
 --     transacción, deja el fallo en el log y DEVUELVE UNA FILA DE ERROR;
 --   * toda respuesta tiene las mismas 6 columnas:
@@ -1862,7 +1862,7 @@ BEGIN
     SELECT id_estado_turno INTO v_cancelado FROM agenda.EstadoTurno WHERE nombre = 'cancelado';
     START TRANSACTION;
     -- Evaluaciones aptas de hace más de 6 meses, sin cirugía agendada y con la seña pagada:
-    -- el instituto se queda con la seña de la consulta. Se resuelven todas juntas (sin cursor).
+    -- el instituto se queda con la seña de la consulta. Se juntan en una tabla temporal y se resuelven todas de una vez.
     DROP TEMPORARY TABLE IF EXISTS tmp_evaluaciones_vencidas;
     CREATE TEMPORARY TABLE tmp_evaluaciones_vencidas AS
     SELECT ev.id_evaluacion, ps.id_pago, ps.monto, t.id_paciente
@@ -2013,8 +2013,8 @@ BEGIN
 
     SELECT COALESCE(MAX(id_cupon), 0) INTO v_max_antes FROM beneficios.Cupon;
     START TRANSACTION;
-    -- Primero se arma la lista de cupones a emitir con un número de orden (n); el código y el
-    -- secreto salen de ese número (el material no enseña UUID).
+    -- Primero se arma la lista de cupones a emitir con un número de orden (n);
+    -- el código y el secreto de cada cupón se calculan a partir de ese número.
     DROP TEMPORARY TABLE IF EXISTS tmp_cupones_nuevos;
     CREATE TEMPORARY TABLE tmp_cupones_nuevos (
         n INT AUTO_INCREMENT PRIMARY KEY, id_regla INT, id_paciente INT, pct DECIMAL(5,2), vig INT);
@@ -2065,7 +2065,7 @@ BEGIN
      ORDER BY n;
 
     SELECT id_canal INTO v_canal FROM notificaciones.CanalNotificacion WHERE nombre = 'WhatsApp asistido';
-    -- Aviso y log de cada cupón nuevo, todos juntos (sin cursor).
+    -- Un aviso a la paciente y una fila de log por cada cupón nuevo (todos con un solo INSERT ... SELECT).
     INSERT INTO notificaciones.Notificacion (id_canal, id_estado_notificacion, id_tipo_notificacion, id_paciente, mensaje, fecha_programada)
     SELECT COALESCE((SELECT cn.id_canal FROM notificaciones.CanalNotificacion cn WHERE cn.nombre = 'Telegram' AND p.telegram_chat_id IS NOT NULL), v_canal),
            (SELECT id_estado_notificacion FROM notificaciones.EstadoNotificacion WHERE nombre = 'pendiente'),
@@ -2132,7 +2132,7 @@ BEGIN
                300 - ((v_minuto - 5 * (v_minuto DIV 5)) * 60 + CAST(DATE_FORMAT(v_ahora, '%s') AS UNSIGNED)) AS valor,
                CAST(v_id * 7919 + CAST(DATE_FORMAT(v_ahora, '%Y%m%d%H') AS UNSIGNED) * 12 + v_minuto DIV 5 AS CHAR) AS dato;
     ELSEIF v_codigo IN (52142, 52143) THEN
-        -- Si el cupón existe pero no se puede usar, igual se devuelve su id (como antes).
+        -- Si el cupón existe pero no se puede usar (vencido o ya usado), el error igual devuelve su id.
         SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, v_id AS id, NULL AS valor, NULL AS dato;
     ELSE
         SELECT 'ERROR' AS estado, v_codigo AS codigo, v_mensaje AS mensaje, NULL AS id, NULL AS valor, NULL AS dato;
@@ -2399,7 +2399,7 @@ END//
 DROP PROCEDURE IF EXISTS notificaciones.sp_notificaciones_pendientes//
 CREATE PROCEDURE notificaciones.sp_notificaciones_pendientes(IN p_limite INT)
 BEGIN
-    -- Sin límite (o fuera de 1 a 500) trae de a 50. LIMIT es el equivalente en MySQL del TOP de la cátedra.
+    -- Trae como máximo p_limite avisos; sin límite (o fuera de 1 a 500) trae 50.
     DECLARE v_limite INT DEFAULT 50;
     IF p_limite BETWEEN 1 AND 500 THEN
         SET v_limite = p_limite;
@@ -2587,7 +2587,6 @@ DELIMITER //
 -- facturo (a precio de lista) en los realizados. p_id_profesional NULL = todos.
 -- Cada estado se cuenta con LEFT JOIN + COUNT(columna): COUNT(*) cuenta todos los
 -- turnos y COUNT(tr.id_turno) solo los que encontraron su estado (los NULL no se cuentan).
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_turnos_por_periodo_profesional//
 CREATE PROCEDURE agenda.sp_reporte_turnos_por_periodo_profesional(
@@ -2631,7 +2630,6 @@ END//
 -- REPORTE 2: Ingresos por sena, reembolsos y retenciones, por mes y medio de pago
 -- Lo retenido es lo que el instituto se queda de las senas ya resueltas: se suma
 -- solo en los pagos que encuentran su estado 'retenida' o 'reembolsada parcial'.
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS pagos.sp_reporte_ingresos_sena//
 CREATE PROCEDURE pagos.sp_reporte_ingresos_sena(IN p_desde DATE, IN p_hasta DATE)
@@ -2655,13 +2653,12 @@ BEGIN
 END//
 
 -- =============================================================================
--- REPORTE 3: Cancelaciones e inasistencias (los "turnos perdidos" de la MML)
+-- REPORTE 3: Cancelaciones e inasistencias (turnos perdidos)
 -- p_agrupar: 'mes' (por defecto) o 'semana'. Por origen: cuantos turnos se
 -- perdieron, la tasa de perdida y la plata de senas retenida.
 -- El formato del periodo sale de una tabla derivada de dos filas (semana / mes) y el
 -- WHERE se queda con la fila que corresponde al parametro. Los estados se cuentan con
 -- LEFT JOIN + COUNT(columna), como en el reporte 1.
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_cancelaciones_inasistencias//
 CREATE PROCEDURE agenda.sp_reporte_cancelaciones_inasistencias(
@@ -2708,7 +2705,6 @@ END//
 -- de consultas retuvo el instituto. Se cuentan las consultas del rango.
 -- COUNT(columna) no cuenta los NULL: COUNT(tc.id_turno) = evaluaciones con cirugia
 -- agendada y COUNT(ev.fecha_reclamo) = evaluaciones con reclamo.
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS clinica.sp_reporte_evaluaciones_cirugias//
 CREATE PROCEDURE clinica.sp_reporte_evaluaciones_cirugias(IN p_desde DATE, IN p_hasta DATE)
@@ -2743,7 +2739,7 @@ END//
 -- Puesto en el ranking = 1 + cuantos protocolos tienen mas pedidos (o los mismos
 -- y un nombre anterior en el alfabeto); porcentaje sobre el total de pedidos.
 -- p_limite NULL = 10.
--- Se arma con tablas temporales (Cheetah A del material): primero se filtra y se
+-- Se arma con tablas temporales: primero se filtra y se
 -- agrupa (N1) y despues se compara N1 contra una copia de si misma (N2), porque
 -- MySQL no deja usar dos veces la misma tabla temporal en una sentencia.
 -- =============================================================================
@@ -2812,7 +2808,6 @@ END//
 -- =============================================================================
 -- REPORTE 6: Ocupacion por profesional = horas con turno / horas de disponibilidad
 -- Si el profesional no tiene horas de disponibilidad, la division por cero da NULL y no se informa el porcentaje.
--- Pipeline: FROM (Profesional + 2 tablas derivadas con LEFT JOIN) -> WHERE -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS agenda.sp_reporte_ocupacion_profesional//
 CREATE PROCEDURE agenda.sp_reporte_ocupacion_profesional(IN p_desde DATE, IN p_hasta DATE)
@@ -2859,7 +2854,6 @@ END//
 -- Cupones emitidos en el rango: cuantos se usaron, cuantos vencieron sin usar,
 -- cuantos siguen vigentes, tasa de uso y descuento total otorgado.
 -- COUNT(c.id_turno) cuenta los cupones usados (los sin usar tienen id_turno NULL).
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> GROUP BY -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS beneficios.sp_reporte_cupones//
 CREATE PROCEDURE beneficios.sp_reporte_cupones(IN p_desde DATE, IN p_hasta DATE)
@@ -2900,7 +2894,6 @@ END//
 -- El codigo se muestra recortado: el codigo completo funciona como un billete.
 -- La situacion sale de cuatro consultas con condiciones que no se pisan (vencida,
 -- agotada, sin uso, en uso) unidas con UNION ALL.
--- Pipeline: FROM (tabla derivada con INNER JOIN + LEFT JOIN) -> UNION ALL -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS pagos.sp_reporte_tarjetas_regalo//
 CREATE PROCEDURE pagos.sp_reporte_tarjetas_regalo(IN p_desde DATE, IN p_hasta DATE)
@@ -3033,7 +3026,6 @@ END//
 --   p_id_paciente  paciente involucrada
 --   p_exitoso      1 = solo lo que salio bien, 0 = solo los fallos
 --   p_origen       'terminal', 'web', 'gestion' o 'sistema'
--- Pipeline: FROM (INNER JOIN + LEFT JOIN) -> WHERE -> SELECT -> ORDER BY
 -- =============================================================================
 DROP PROCEDURE IF EXISTS auditoria.sp_reporte_auditoria//
 CREATE PROCEDURE auditoria.sp_reporte_auditoria(
@@ -3093,7 +3085,7 @@ DELIMITER ;
 --   Reporte 1  agenda.sp_reporte_turnos_por_periodo_profesional  -> ..._tuneado
 --   Reporte 2  pagos.sp_reporte_ingresos_sena                    -> ..._tuneado
 --
--- Técnica de la cátedra (PPT 004, "Caracol" contra "Cheetah"): el original junta
+-- Técnica "Caracol" contra "Cheetah": el original junta
 -- las tablas completas y filtra al final (Caracol). El tuneado aplica las reglas de
 -- transformación del álgebra relacional (Cheetah A, con tablas temporales):
 --   1. Selección conmutativa: el filtro por fechas (y por profesional) se aplica
@@ -3343,7 +3335,7 @@ DELIMITER ;
 -- Las pantallas de Gestión necesitan listar lo que ya existe; el resto de las
 -- acciones (emitir cupones, pedir el token, validar, cargar el resultado de una
 -- evaluación, reclamar) ya están en 04_sp_semana4.sql.
--- Mismo manejo de errores que en la clase (PPT 006): EXIT HANDLER FOR SQLEXCEPTION,
+-- Manejo de errores igual que el resto: EXIT HANDLER FOR SQLEXCEPTION,
 -- GET DIAGNOSTICS y una fila con estado = 'ERROR'.
 
 -- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
@@ -3575,9 +3567,8 @@ DELIMITER ;
 -- =====================================================================
 --  BOT DE TELEGRAM (RF-11): vincular el Telegram de la paciente
 -- =====================================================================
--- La base ya tenía la columna personas.Paciente.telegram_chat_id y los SP que
--- eligen Telegram como canal cuando la paciente lo tiene vinculado, pero nada la
--- llenaba. Estos SP los usa el bot (web/api/telegram.js o el flujo de n8n):
+-- Llenan personas.Paciente.telegram_chat_id, que usan los SP de avisos para mandar
+-- por Telegram a la paciente que lo vinculó. Los usa el bot (web/api/telegram.js o n8n):
 --   /start en el bot -> la paciente escribe su DNI y su teléfono -> sp_vincular_telegram
 --   /salir           -> sp_desvincular_telegram
 --   /turnos          -> sp_paciente_por_telegram + agenda.sp_buscar_turnos

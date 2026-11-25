@@ -5,7 +5,7 @@
 -- Las pantallas de Gestión necesitan listar lo que ya existe; el resto de las
 -- acciones (emitir cupones, pedir el token, validar, cargar el resultado de una
 -- evaluación, reclamar) ya están en 04_sp_sena_cancelar.sql.
--- Mismo manejo de errores que en la clase (PPT 006): EXIT HANDLER FOR SQLEXCEPTION,
+-- Manejo de errores igual que el resto: EXIT HANDLER FOR SQLEXCEPTION,
 -- GET DIAGNOSTICS y una fila con estado = 'ERROR'.
 
 -- Que el servidor lea este archivo como UTF-8 (si no, las tildes se guardan rotas: "DepilaciÃ³n").
